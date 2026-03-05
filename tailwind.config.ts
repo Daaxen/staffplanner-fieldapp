@@ -13,6 +13,9 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["'IBM Plex Sans'", "system-ui", "sans-serif"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -57,6 +60,26 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        status: {
+          scheduled: "hsl(var(--status-scheduled))",
+          "in-progress": "hsl(var(--status-in-progress))",
+          completed: "hsl(var(--status-completed))",
+          "on-hold": "hsl(var(--status-on-hold))",
+          cancelled: "hsl(var(--status-cancelled))",
+        },
+        installer: {
+          1: "hsl(var(--installer-1))",
+          2: "hsl(var(--installer-2))",
+          3: "hsl(var(--installer-3))",
+          4: "hsl(var(--installer-4))",
+          5: "hsl(var(--installer-5))",
+          6: "hsl(var(--installer-6))",
+        },
+        gantt: {
+          header: "hsl(var(--gantt-header))",
+          grid: "hsl(var(--gantt-grid))",
+          today: "hsl(var(--gantt-today))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -65,25 +88,22 @@ export default {
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+        "slide-in": {
+          from: { transform: "translateX(-100%)", opacity: "0" },
+          to: { transform: "translateX(0)", opacity: "1" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "slide-in": "slide-in 0.3s ease-out",
       },
     },
   },
