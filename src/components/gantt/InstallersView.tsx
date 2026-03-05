@@ -183,7 +183,7 @@ const InstallersView = ({ projects, installers: allInstallers, days, colWidth, s
         <div className="flex-1 overflow-x-auto gantt-scroll">
           <div style={{ minWidth: days.length * colWidth }}>
             <GanttHeader days={days} colWidth={colWidth} headerHeight={headerHeight} todayStr={todayStr} viewMode={viewMode} />
-            <div className="relative">
+            <div className="relative overflow-hidden">
               <GanttGrid days={days} colWidth={colWidth} totalHeight={totalHeight} todayStr={todayStr} />
               {groups.map((group, gIdx) => {
                 const inst = group.installer;
@@ -213,7 +213,7 @@ const InstallersView = ({ projects, installers: allInstallers, days, colWidth, s
 
                     {/* Project bars */}
                     {group.projects.map((project, pIdx) => {
-                      const { left, width } = getBarPosition(project);
+                      const { left, width, overflowRight } = getBarPosition(project);
                       const yOffset = group.projects.length > 1 ? (pIdx % 2 === 0 ? 6 : 34) : 18;
                       const barHeight = group.projects.length > 1 ? 28 : 34;
                       return (
@@ -224,7 +224,7 @@ const InstallersView = ({ projects, installers: allInstallers, days, colWidth, s
                           initial={{ scaleX: 0, opacity: 0 }}
                           animate={{ scaleX: 1, opacity: 1 }}
                           transition={{ duration: 0.3, delay: gIdx * 0.05 + pIdx * 0.02, ease: "easeOut" }}
-                          style={{ left: Math.max(left, 0), width: Math.max(width, 20), originX: 0, top: yOffset }}
+                          style={{ left, width, originX: 0, top: yOffset }}
                           className={cn(
                             "absolute rounded-md border-l-[3px] flex items-center px-2 cursor-grab active:cursor-grabbing transition-shadow hover:shadow-md z-20",
                             statusBorderMap[project.status],
@@ -232,7 +232,10 @@ const InstallersView = ({ projects, installers: allInstallers, days, colWidth, s
                           )}
                           onClick={() => onSelectProject(project)}
                         >
-                          <span className="text-[11px] font-medium text-foreground truncate" style={{ lineHeight: `${barHeight}px` }}>{project.name}</span>
+                          <span className="text-[11px] font-medium text-foreground truncate flex-1" style={{ lineHeight: `${barHeight}px` }}>{project.name}</span>
+                          {overflowRight && (
+                            <span className="ml-1 text-xs font-bold text-foreground shrink-0">&raquo;</span>
+                          )}
                         </motion.div>
                       );
                     })}

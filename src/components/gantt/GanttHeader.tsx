@@ -17,7 +17,7 @@ function getWeekNumber(d: Date): number {
 
 const GanttHeader = ({ days, colWidth, headerHeight, todayStr, viewMode = 'week' }: GanttHeaderProps) => {
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const hours = Array.from({ length: 10 }, (_, i) => i + 7); // 07:00 - 16:00
+  const hours = Array.from({ length: 7 }, (_, i) => 6 + i * 2); // 06, 08, 10, 12, 14, 16, 18
 
   // Group days by week number
   const weekGroups: { weekNum: number; year: number; count: number }[] = [];

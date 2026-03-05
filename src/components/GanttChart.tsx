@@ -34,12 +34,15 @@ const GanttChart = () => {
       case 'week':
         numDays = 14;
         start = new Date(today);
-        start.setDate(start.getDate() - today.getDay() + 1 + dateOffset * 7);
+        start.setDate(start.getDate() - today.getDay() + 1 + dateOffset * 14);
         break;
-      case 'month':
-        numDays = 31;
-        start = new Date(today.getFullYear(), today.getMonth() + dateOffset, 1);
+      case 'month': {
+        const monthStart = new Date(today.getFullYear(), today.getMonth() + dateOffset, 1);
+        const monthEnd = new Date(today.getFullYear(), today.getMonth() + dateOffset + 1, 0);
+        numDays = monthEnd.getDate();
+        start = monthStart;
         break;
+      }
       default:
         numDays = 14;
         start = new Date(today);

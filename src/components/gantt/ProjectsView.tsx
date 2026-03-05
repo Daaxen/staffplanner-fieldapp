@@ -178,10 +178,10 @@ const ProjectsView = ({ projects, days, colWidth, startDate, todayStr, onSelectP
         <div className="flex-1 overflow-x-auto gantt-scroll">
           <div style={{ minWidth: days.length * colWidth }}>
             <GanttHeader days={days} colWidth={colWidth} headerHeight={headerHeight} todayStr={todayStr} viewMode={viewMode} />
-            <div className="relative">
+            <div className="relative overflow-hidden">
               <GanttGrid days={days} colWidth={colWidth} totalHeight={filteredAndSorted.length * rowHeight} todayStr={todayStr} />
               {filteredAndSorted.map((project, idx) => {
-                const { left, width } = getBarPosition(project);
+                const { left, width, overflowRight } = getBarPosition(project);
                 const assignees = project.assigneeIds.map(id => getInstaller(id)).filter(Boolean) as Installer[];
                 const instColor = assignees.length > 0 && assignees[0] ? installerBgMap[assignees[0].color] : 'bg-muted/40';
                 return (
@@ -194,7 +194,7 @@ const ProjectsView = ({ projects, days, colWidth, startDate, todayStr, onSelectP
                       initial={{ scaleX: 0, opacity: 0 }}
                       animate={{ scaleX: 1, opacity: 1 }}
                       transition={{ duration: 0.4, delay: idx * 0.03, ease: "easeOut" }}
-                      style={{ left: Math.max(left, 0), width: Math.max(width, 20), originX: 0, top: 8 }}
+                      style={{ left, width, originX: 0, top: 8 }}
                       className={cn(
                         "absolute h-9 rounded-md border-l-[3px] flex items-center px-3 cursor-pointer transition-shadow hover:shadow-md",
                         statusBorderMap[project.status],
@@ -202,9 +202,12 @@ const ProjectsView = ({ projects, days, colWidth, startDate, todayStr, onSelectP
                       )}
                       onClick={() => onSelectProject(project)}
                     >
-                      <span className="text-xs font-medium text-foreground truncate">{project.name}</span>
+                      <span className="text-xs font-medium text-foreground truncate flex-1">{project.name}</span>
                       {assignees.length > 1 && (
                         <span className="ml-1 text-[10px] text-muted-foreground shrink-0">+{assignees.length - 1}</span>
+                      )}
+                      {overflowRight && (
+                        <span className="ml-1 text-xs font-bold text-foreground shrink-0">&raquo;</span>
                       )}
                     </motion.div>
                   </div>
