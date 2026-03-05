@@ -101,6 +101,14 @@ const GanttChart = () => {
     ));
   }, []);
 
+  const handleUnassignProject = useCallback((projectId: string) => {
+    setProjectsList(prev => prev.map(p =>
+      p.id === projectId
+        ? { ...p, assigneeIds: [], status: 'open' as ProjectStatus }
+        : p
+    ));
+  }, []);
+
   const handleUpdateProject = useCallback((projectId: string, updates: Partial<Project>) => {
     setProjectsList(prev => prev.map(p =>
       p.id === projectId ? { ...p, ...updates } : p
