@@ -55,7 +55,7 @@ const labelWidth = 280;
 
 const InstallersView = ({
   projects, installers: allInstallers, days, colWidth, startDate, todayStr,
-  onSelectProject, onDropProject, onUpdateProject, activeStatuses, viewMode,
+  onSelectProject, onDropProject, onUnassignProject, onUpdateProject, activeStatuses, viewMode,
 }: InstallersViewProps) => {
   const [pendingChange, setPendingChange] = useState<{
     projectId: string; newStart: string; newEnd: string; installerId?: string;
