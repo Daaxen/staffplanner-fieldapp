@@ -308,7 +308,7 @@ const InstallersView = ({
       </div>
 
       {/* OrderBox - only shows for installers view with internal installers */}
-      <OrderBox projects={projects} onSelectProject={onSelectProject} />
+      <OrderBox projects={projects} onSelectProject={onSelectProject} onUnassignProject={onUnassignProject} />
 
       <DateChangeDialog
         open={!!pendingChange}
