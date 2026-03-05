@@ -1,14 +1,15 @@
-import { useMemo, useState, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, LayoutList, Users } from 'lucide-react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, LayoutList, Users, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { projects as initialProjects, installers, type Project, type ProjectStatus } from '@/data/mockData';
 import ProjectDetailPanel from './ProjectDetailPanel';
 import ProjectsView from './gantt/ProjectsView';
 import InstallersView from './gantt/InstallersView';
+import ClientsView from './gantt/ClientsView';
 import StatusFilter from './gantt/StatusFilter';
 
 type ViewMode = 'day' | 'week' | 'month';
-type GanttMode = 'projects' | 'installers';
+type GanttMode = 'projects' | 'installers' | 'clients';
 
 const allStatuses: ProjectStatus[] = ['open', 'scheduled', 'in-progress', 'completed', 'on-hold', 'cancelled'];
 
@@ -153,6 +154,16 @@ const GanttChart = () => {
               Projects
             </button>
             <button
+              onClick={() => setGanttMode('clients')}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all",
+                ganttMode === 'clients' ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Building2 className="w-3.5 h-3.5" />
+              Clients
+            </button>
+            <button
               onClick={() => setGanttMode('installers')}
               className={cn(
                 "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all",
@@ -207,6 +218,18 @@ const GanttChart = () => {
       {/* Gantt body */}
       {ganttMode === 'projects' ? (
         <ProjectsView
+          projects={projectsList}
+          days={days}
+          colWidth={colWidth}
+          startDate={startDate}
+          todayStr={todayStr}
+          onSelectProject={setSelectedProject}
+          onUpdateProject={handleUpdateProject}
+          activeStatuses={activeStatuses}
+          viewMode={viewMode}
+        />
+      ) : ganttMode === 'clients' ? (
+        <ClientsView
           projects={projectsList}
           days={days}
           colWidth={colWidth}

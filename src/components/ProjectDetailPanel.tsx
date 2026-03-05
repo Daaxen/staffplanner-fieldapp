@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { X, MapPin, User, Calendar, Tag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { type Project, type Installer, statusLabels, type ProjectStatus, installers } from '@/data/mockData';
@@ -30,6 +31,14 @@ interface Props {
 const ProjectDetailPanel = ({ project, installer, onClose }: Props) => {
   const assignees = project.assigneeIds.map(id => installers.find(i => i.id === id)).filter(Boolean) as Installer[];
   const formatDate = (d: string) => new Date(d).toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' });
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   return (
     <AnimatePresence>
