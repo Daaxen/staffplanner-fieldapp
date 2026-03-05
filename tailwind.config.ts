@@ -61,8 +61,10 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
         status: {
+          open: "hsl(var(--status-open))",
           scheduled: "hsl(var(--status-scheduled))",
           "in-progress": "hsl(var(--status-in-progress))",
+          confirmed: "hsl(var(--status-confirmed))",
           completed: "hsl(var(--status-completed))",
           "on-hold": "hsl(var(--status-on-hold))",
           cancelled: "hsl(var(--status-cancelled))",

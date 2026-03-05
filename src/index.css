@@ -47,8 +47,10 @@
     --sidebar-ring: 213 94% 56%;
 
     /* Status colors */
+    --status-open: 260 60% 55%;
     --status-scheduled: 213 94% 56%;
     --status-in-progress: 161 94% 30%;
+    --status-confirmed: 200 80% 44%;
     --status-completed: 142 71% 45%;
     --status-on-hold: 38 92% 50%;
     --status-cancelled: 0 72% 51%;
