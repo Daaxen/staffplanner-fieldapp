@@ -34,7 +34,7 @@ const GanttHeader = ({ days, colWidth, headerHeight, todayStr, viewMode = 'week'
 
   if (viewMode === 'day') {
     return (
-      <div className="sticky top-0 z-20 bg-gantt-header">
+      <div>
         {/* Day names row */}
         <div className="flex border-b border-border bg-gantt-header" style={{ height: 24 }}>
           {days.map((day, i) => {
