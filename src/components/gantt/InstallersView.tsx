@@ -282,12 +282,16 @@ const InstallersView = ({
                           className={cn(
                             "rounded-md border-l-[3px] flex items-center px-2 cursor-grab active:cursor-grabbing transition-shadow hover:shadow-md z-20",
                             statusBorderMap[project.status],
-                            statusColorMap[project.status]
+                            statusColorMap[project.status],
+                            project.status === 'cancelled' && "opacity-60"
                           )}
                           onClick={() => onSelectProject(project)}
                           onDragEnd={(newStart, newEnd) => handleBarDragEnd(project.id, newStart, newEnd, inst?.id)}
                         >
-                          <span className="text-[11px] font-medium text-foreground truncate flex-1" style={{ lineHeight: `${barHeight}px` }}>{project.name}</span>
+                          <span className={cn("text-[11px] font-medium truncate flex-1", project.status === 'cancelled' ? "text-muted-foreground" : "text-foreground")} style={{ lineHeight: `${barHeight}px` }}>{project.name}</span>
+                          {project.assigneeIds.length > 1 && (
+                            <span className="ml-1 text-[10px] text-muted-foreground shrink-0">👥</span>
+                          )}
                           {overflowRight && (
                             <span className="ml-1 text-xs font-bold text-foreground shrink-0">&raquo;</span>
                           )}
