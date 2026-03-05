@@ -291,7 +291,7 @@ const InstallersView = ({
                         >
                           <span className={cn("text-[11px] font-medium truncate flex-1", project.status === 'cancelled' ? "text-muted-foreground" : "text-foreground")} style={{ lineHeight: `${barHeight}px` }}>{project.name}</span>
                           {project.assigneeIds.length > 1 && (
-                            <span className="ml-1 text-[10px] text-muted-foreground shrink-0">👥 +{project.assigneeIds.length - 1}</span>
+                            <span className="ml-1 text-[10px] text-muted-foreground shrink-0">👥{project.assigneeIds.length}</span>
                           )}
                           {overflowRight && (
                             <span className="ml-1 text-xs font-bold text-foreground shrink-0">&raquo;</span>

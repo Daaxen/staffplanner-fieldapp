@@ -229,7 +229,7 @@ const ProjectsView = ({ projects, days, colWidth, startDate, todayStr, onSelectP
                     >
                       <span className={cn("text-xs font-medium truncate flex-1", project.status === 'cancelled' ? "text-muted-foreground" : "text-foreground")}>{project.name}</span>
                       {assignees.length > 1 && (
-                        <span className="ml-1 text-[10px] text-muted-foreground shrink-0">👥 +{assignees.length - 1}</span>
+                        <span className="ml-1 text-[10px] text-muted-foreground shrink-0">👥{assignees.length}</span>
                       )}
                       {overflowRight && (
                         <span className="ml-1 text-xs font-bold text-foreground shrink-0">&raquo;</span>

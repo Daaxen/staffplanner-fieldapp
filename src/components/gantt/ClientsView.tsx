@@ -229,7 +229,7 @@ const ClientsView = ({ projects, days, colWidth, startDate, todayStr, onSelectPr
                             {project.name}
                           </span>
                           {assignees.length > 1 && (
-                            <span className="ml-1 text-[10px] text-muted-foreground shrink-0">👥 +{assignees.length - 1}</span>
+                            <span className="ml-1 text-[10px] text-muted-foreground shrink-0">👥{assignees.length}</span>
                           )}
                           {assignees.length === 1 && (
                             <span className="ml-1 text-[10px] text-muted-foreground shrink-0">🔧1</span>
