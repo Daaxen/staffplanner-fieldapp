@@ -27,6 +27,7 @@ export interface Project {
   startDate: string; // ISO date
   endDate: string;   // ISO date
   description?: string;
+  installerDateOverrides?: Record<string, { startDate: string; endDate: string }>;
 }
 
 const today = new Date();
