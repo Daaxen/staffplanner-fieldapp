@@ -81,14 +81,16 @@ const ProjectDetailPanel = ({ project, installer, onClose }: Props) => {
               <Tag className="w-4 h-4 text-muted-foreground mt-0.5" />
               <div>
                 <p className="text-xs text-muted-foreground">Assigned to</p>
-                {installer && (
-                  <div className="flex items-center gap-2 mt-1">
-                    <div className={cn("w-3 h-3 rounded-full", installerDotMap[installer.color])} />
-                    <p className="text-sm font-medium text-foreground">{installer.name}</p>
-                    {installer.type === 'sub-vendor' && (
+                {assignees.length > 0 ? assignees.map(a => (
+                  <div key={a.id} className="flex items-center gap-2 mt-1">
+                    <div className={cn("w-3 h-3 rounded-full", installerDotMap[a.color])} />
+                    <p className="text-sm font-medium text-foreground">{a.name}</p>
+                    {a.type === 'sub-vendor' && (
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">SUB</span>
                     )}
                   </div>
+                )) : (
+                  <p className="text-sm text-muted-foreground italic mt-1">Unassigned</p>
                 )}
               </div>
             </div>
