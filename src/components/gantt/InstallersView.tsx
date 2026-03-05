@@ -179,10 +179,10 @@ const InstallersView = ({
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-auto gantt-scroll">
         {/* Labels */}
         <div className="shrink-0 border-r border-border bg-card" style={{ width: labelWidth }}>
-          <div className="sticky top-0 z-10">
+          <div className="sticky top-0 z-20 bg-gantt-header">
             <div className="border-b border-border bg-gantt-header" style={{ height: 24 }} />
             <div className="border-b border-border flex items-center px-4 bg-gantt-header" style={{ height: headerHeight - 24 }}>
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Installer</span>
@@ -233,76 +233,74 @@ const InstallersView = ({
         </div>
 
         {/* Timeline */}
-        <div className="flex-1 overflow-x-auto gantt-scroll">
-          <div style={{ minWidth: days.length * colWidth }}>
-            <GanttHeader days={days} colWidth={colWidth} headerHeight={headerHeight} todayStr={todayStr} viewMode={viewMode} />
-            <div className="relative overflow-hidden">
-              <GanttGrid days={days} colWidth={colWidth} totalHeight={totalHeight} todayStr={todayStr} />
-              {groups.map((group, gIdx) => {
-                const inst = group.installer;
-                return (
-                  <div
-                    key={inst?.id ?? 'unassigned'}
-                    className={cn("border-b border-gantt-grid relative", gIdx % 2 === 0 ? "" : "bg-muted/10")}
-                    style={{ height: rowHeight }}
-                    onDragOver={inst ? handleDragOver : undefined}
-                    onDrop={inst ? (e) => handleDrop(e, inst.id) : undefined}
-                  >
-                    {/* Absence bars */}
-                    {inst?.absences.map(absence => {
-                      const { left, width } = getAbsencePosition(absence.startDate, absence.endDate);
-                      return (
-                        <div
-                          key={absence.id}
-                          className="absolute top-1 h-[calc(100%-8px)] rounded bg-destructive/10 border border-dashed border-destructive/30 flex items-center justify-center z-10"
-                          style={{ left: Math.max(left, 0), width: Math.max(width, 20) }}
-                        >
-                          <span className="text-[10px] text-destructive/70 font-medium truncate px-2">
-                            {absence.type === 'vacation' ? '🏖️' : absence.type === 'sick' ? '🤒' : '📅'} {absence.label || absence.type}
-                          </span>
-                        </div>
-                      );
-                    })}
+        <div className="flex-1" style={{ minWidth: days.length * colWidth }}>
+          <GanttHeader days={days} colWidth={colWidth} headerHeight={headerHeight} todayStr={todayStr} viewMode={viewMode} />
+          <div className="relative">
+            <GanttGrid days={days} colWidth={colWidth} totalHeight={totalHeight} todayStr={todayStr} />
+            {groups.map((group, gIdx) => {
+              const inst = group.installer;
+              return (
+                <div
+                  key={inst?.id ?? 'unassigned'}
+                  className={cn("border-b border-gantt-grid relative", gIdx % 2 === 0 ? "" : "bg-muted/10")}
+                  style={{ height: rowHeight }}
+                  onDragOver={inst ? handleDragOver : undefined}
+                  onDrop={inst ? (e) => handleDrop(e, inst.id) : undefined}
+                >
+                  {/* Absence bars */}
+                  {inst?.absences.map(absence => {
+                    const { left, width } = getAbsencePosition(absence.startDate, absence.endDate);
+                    return (
+                      <div
+                        key={absence.id}
+                        className="absolute top-1 h-[calc(100%-8px)] rounded bg-destructive/10 border border-dashed border-destructive/30 flex items-center justify-center z-10"
+                        style={{ left: Math.max(left, 0), width: Math.max(width, 20) }}
+                      >
+                        <span className="text-[10px] text-destructive/70 font-medium truncate px-2">
+                          {absence.type === 'vacation' ? '🏖️' : absence.type === 'sick' ? '🤒' : '📅'} {absence.label || absence.type}
+                        </span>
+                      </div>
+                    );
+                  })}
 
-                    {/* Project bars */}
-                    {group.projects.map((project, pIdx) => {
-                      const dates = getBarDates(project, inst?.id);
-                      const { left, width, overflowRight } = getBarPosition(project, inst?.id);
-                      const yOffset = group.projects.length > 1 ? (pIdx % 2 === 0 ? 6 : 34) : 18;
-                      const barHeight = group.projects.length > 1 ? 28 : 34;
-                      return (
-                        <DraggableBar
-                          key={project.id}
-                          left={left}
-                          width={width}
-                          top={yOffset}
-                          height={barHeight}
-                          colWidth={colWidth}
-                          projectStartDate={dates.startDate}
-                          projectEndDate={dates.endDate}
-                          className={cn(
-                            "rounded-md border-l-[3px] flex items-center px-2 cursor-grab active:cursor-grabbing transition-shadow hover:shadow-md z-20",
-                            statusBorderMap[project.status],
-                            statusColorMap[project.status],
-                            project.status === 'cancelled' && "opacity-60"
-                          )}
-                          onClick={() => onSelectProject(project)}
-                          onDragEnd={(newStart, newEnd) => handleBarDragEnd(project.id, newStart, newEnd, inst?.id)}
-                        >
-                          <span className={cn("text-[11px] font-medium truncate flex-1", project.status === 'cancelled' ? "text-muted-foreground" : "text-foreground")} style={{ lineHeight: `${barHeight}px` }}>{project.name}</span>
-                          {project.assigneeIds.length > 1 && (
-                            <span className="ml-1 text-[10px] text-muted-foreground shrink-0">👥{project.assigneeIds.length}</span>
-                          )}
-                          {overflowRight && (
-                            <span className="ml-1 text-xs font-bold text-foreground shrink-0">&raquo;</span>
-                          )}
-                        </DraggableBar>
-                      );
-                    })}
-                  </div>
-                );
-              })}
-            </div>
+                  {/* Project bars */}
+                  {group.projects.map((project, pIdx) => {
+                    const dates = getBarDates(project, inst?.id);
+                    const { left, width, overflowRight } = getBarPosition(project, inst?.id);
+                    const yOffset = group.projects.length > 1 ? (pIdx % 2 === 0 ? 6 : 34) : 18;
+                    const barHeight = group.projects.length > 1 ? 28 : 34;
+                    return (
+                      <DraggableBar
+                        key={project.id}
+                        left={left}
+                        width={width}
+                        top={yOffset}
+                        height={barHeight}
+                        colWidth={colWidth}
+                        projectStartDate={dates.startDate}
+                        projectEndDate={dates.endDate}
+                        className={cn(
+                          "rounded-md border-l-[3px] flex items-center px-2 cursor-grab active:cursor-grabbing transition-shadow hover:shadow-md z-20",
+                          statusBorderMap[project.status],
+                          statusColorMap[project.status],
+                          project.status === 'cancelled' && "opacity-60"
+                        )}
+                        onClick={() => onSelectProject(project)}
+                        onDragEnd={(newStart, newEnd) => handleBarDragEnd(project.id, newStart, newEnd, inst?.id)}
+                      >
+                        <span className={cn("text-[11px] font-medium truncate flex-1", project.status === 'cancelled' ? "text-muted-foreground" : "text-foreground")} style={{ lineHeight: `${barHeight}px` }}>{project.name}</span>
+                        {project.assigneeIds.length > 1 && (
+                          <span className="ml-1 text-[10px] text-muted-foreground shrink-0">👥{project.assigneeIds.length}</span>
+                        )}
+                        {overflowRight && (
+                          <span className="ml-1 text-xs font-bold text-foreground shrink-0">&raquo;</span>
+                        )}
+                      </DraggableBar>
+                    );
+                  })}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

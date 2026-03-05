@@ -161,10 +161,10 @@ const ProjectsView = ({ projects, days, colWidth, startDate, todayStr, onSelectP
         ))}
       </div>
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-auto gantt-scroll">
         {/* Labels */}
         <div className="shrink-0 border-r border-border bg-card" style={{ width: labelWidth }}>
-          <div className="sticky top-0 z-10">
+          <div className="sticky top-0 z-20 bg-gantt-header">
             <div className="border-b border-border bg-gantt-header" style={{ height: 24 }} />
             <div className="border-b border-border flex items-center px-4 bg-gantt-header" style={{ height: headerHeight - 24 }}>
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Project</span>
@@ -195,50 +195,51 @@ const ProjectsView = ({ projects, days, colWidth, startDate, todayStr, onSelectP
         </div>
 
         {/* Timeline */}
-        <div className="flex-1 overflow-x-auto gantt-scroll">
-          <div style={{ minWidth: days.length * colWidth }}>
-            <GanttHeader days={days} colWidth={colWidth} headerHeight={headerHeight} todayStr={todayStr} viewMode={viewMode} />
-            <div className="relative overflow-hidden">
-              <GanttGrid days={days} colWidth={colWidth} totalHeight={filteredAndSorted.length * rowHeight} todayStr={todayStr} />
-              {filteredAndSorted.map((project, idx) => {
-                const { left, width, overflowRight } = getBarPosition(project);
-                const assignees = project.assigneeIds.map(id => getInstaller(id)).filter(Boolean) as Installer[];
-                const instColor = assignees.length > 0 && assignees[0] ? installerBgMap[assignees[0].color] : 'bg-muted/40';
-                return (
-                  <div
-                    key={project.id}
-                    className={cn("relative border-b border-gantt-grid", idx % 2 === 0 ? "" : "bg-muted/10")}
-                    style={{ height: rowHeight }}
+        <div className="flex-1" style={{ minWidth: days.length * colWidth }}>
+          <GanttHeader days={days} colWidth={colWidth} headerHeight={headerHeight} todayStr={todayStr} viewMode={viewMode} />
+          <div className="relative">
+            <GanttGrid days={days} colWidth={colWidth} totalHeight={filteredAndSorted.length * rowHeight} todayStr={todayStr} />
+            {filteredAndSorted.map((project, idx) => {
+              const { left, width, overflowRight } = getBarPosition(project);
+              const assignees = project.assigneeIds.map(id => getInstaller(id)).filter(Boolean) as Installer[];
+              const instColor = assignees.length > 0 && assignees[0] ? installerBgMap[assignees[0].color] : 'bg-muted/40';
+              return (
+                <div
+                  key={project.id}
+                  className={cn("relative border-b border-gantt-grid", idx % 2 === 0 ? "" : "bg-muted/10")}
+                  style={{ height: rowHeight }}
+                >
+                  <DraggableBar
+                    left={left}
+                    width={width}
+                    top={8}
+                    height={36}
+                    colWidth={colWidth}
+                    projectStartDate={project.startDate}
+                    projectEndDate={project.endDate}
+                    className={cn(
+                      "rounded-md border-l-[3px] flex items-center px-3 cursor-grab active:cursor-grabbing transition-shadow hover:shadow-md",
+                      statusBorderMap[project.status],
+                      instColor,
+                      project.status === 'cancelled' && "opacity-60"
+                    )}
+                    onClick={() => onSelectProject(project)}
+                    onDragEnd={(newStart, newEnd) => handleBarDragEnd(project.id, newStart, newEnd)}
                   >
-                    <DraggableBar
-                      left={left}
-                      width={width}
-                      top={8}
-                      height={36}
-                      colWidth={colWidth}
-                      projectStartDate={project.startDate}
-                      projectEndDate={project.endDate}
-                      className={cn(
-                        "rounded-md border-l-[3px] flex items-center px-3 cursor-grab active:cursor-grabbing transition-shadow hover:shadow-md",
-                        statusBorderMap[project.status],
-                        instColor,
-                        project.status === 'cancelled' && "opacity-60"
-                      )}
-                      onClick={() => onSelectProject(project)}
-                      onDragEnd={(newStart, newEnd) => handleBarDragEnd(project.id, newStart, newEnd)}
-                    >
-                      <span className={cn("text-xs font-medium truncate flex-1", project.status === 'cancelled' ? "text-muted-foreground" : "text-foreground")}>{project.name}</span>
-                      {assignees.length > 1 && (
-                        <span className="ml-1 text-[10px] text-muted-foreground shrink-0">👥{assignees.length}</span>
-                      )}
-                      {overflowRight && (
-                        <span className="ml-1 text-xs font-bold text-foreground shrink-0">&raquo;</span>
-                      )}
-                    </DraggableBar>
-                  </div>
-                );
-              })}
-            </div>
+                    <span className={cn("text-xs font-medium truncate flex-1", project.status === 'cancelled' ? "text-muted-foreground" : "text-foreground")}>{project.name}</span>
+                    {assignees.length > 1 && (
+                      <span className="ml-1 text-[10px] text-muted-foreground shrink-0">👥{assignees.length}</span>
+                    )}
+                    {assignees.length === 1 && (
+                      <span className="ml-1 text-[10px] text-muted-foreground shrink-0">🔧1</span>
+                    )}
+                    {overflowRight && (
+                      <span className="ml-1 text-xs font-bold text-foreground shrink-0">&raquo;</span>
+                    )}
+                  </DraggableBar>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
