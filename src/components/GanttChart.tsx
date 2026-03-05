@@ -1,23 +1,16 @@
 import { useMemo, useState, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, LayoutList, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { projects as initialProjects, installers, statusLabels, type Project, type ProjectStatus } from '@/data/mockData';
+import { projects as initialProjects, installers, type Project, type ProjectStatus } from '@/data/mockData';
 import ProjectDetailPanel from './ProjectDetailPanel';
 import ProjectsView from './gantt/ProjectsView';
 import InstallersView from './gantt/InstallersView';
+import StatusFilter from './gantt/StatusFilter';
 
 type ViewMode = 'day' | 'week' | 'month';
 type GanttMode = 'projects' | 'installers';
 
-const statusColorMap: Record<ProjectStatus, string> = {
-  'open': 'bg-status-open',
-  'scheduled': 'bg-status-scheduled',
-  'in-progress': 'bg-status-in-progress',
-  'confirmed': 'bg-status-confirmed',
-  'completed': 'bg-status-completed',
-  'on-hold': 'bg-status-on-hold',
-  'cancelled': 'bg-status-cancelled',
-};
+const allStatuses: ProjectStatus[] = ['open', 'scheduled', 'in-progress', 'completed', 'on-hold', 'cancelled'];
 
 const GanttChart = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('week');
@@ -25,6 +18,7 @@ const GanttChart = () => {
   const [dateOffset, setDateOffset] = useState(0);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [projectsList, setProjectsList] = useState<Project[]>(initialProjects);
+  const [activeStatuses, setActiveStatuses] = useState<Set<ProjectStatus>>(new Set(allStatuses));
 
   const { days, startDate } = useMemo(() => {
     const today = new Date();
@@ -75,9 +69,26 @@ const GanttChart = () => {
   const handleDropProject = useCallback((projectId: string, installerId: string) => {
     setProjectsList(prev => prev.map(p =>
       p.id === projectId
-        ? { ...p, assigneeId: installerId, status: p.status === 'open' ? 'scheduled' : p.status }
+        ? {
+            ...p,
+            assigneeIds: p.assigneeIds.includes(installerId) ? p.assigneeIds : [...p.assigneeIds, installerId],
+            status: p.status === 'open' ? 'scheduled' as ProjectStatus : p.status,
+          }
         : p
     ));
+  }, []);
+
+  const handleToggleStatus = useCallback((status: ProjectStatus) => {
+    setActiveStatuses(prev => {
+      const next = new Set(prev);
+      if (next.has(status)) next.delete(status);
+      else next.add(status);
+      return next;
+    });
+  }, []);
+
+  const handleShowAll = useCallback(() => {
+    setActiveStatuses(new Set(allStatuses));
   }, []);
 
   return (
@@ -148,15 +159,12 @@ const GanttChart = () => {
         </div>
       </div>
 
-      {/* Status legend */}
-      <div className="flex items-center gap-4 px-6 py-2 border-b border-border bg-card">
-        {(Object.entries(statusLabels) as [ProjectStatus, string][]).map(([key, label]) => (
-          <div key={key} className="flex items-center gap-1.5">
-            <div className={cn("w-2.5 h-2.5 rounded-sm", statusColorMap[key])} />
-            <span className="text-xs text-muted-foreground">{label}</span>
-          </div>
-        ))}
-      </div>
+      {/* Interactive status filter */}
+      <StatusFilter
+        activeStatuses={activeStatuses}
+        onToggleStatus={handleToggleStatus}
+        onShowAll={handleShowAll}
+      />
 
       {/* Gantt body */}
       {ganttMode === 'projects' ? (
@@ -167,6 +175,8 @@ const GanttChart = () => {
           startDate={startDate}
           todayStr={todayStr}
           onSelectProject={setSelectedProject}
+          activeStatuses={activeStatuses}
+          viewMode={viewMode}
         />
       ) : (
         <InstallersView
@@ -178,6 +188,8 @@ const GanttChart = () => {
           todayStr={todayStr}
           onSelectProject={setSelectedProject}
           onDropProject={handleDropProject}
+          activeStatuses={activeStatuses}
+          viewMode={viewMode}
         />
       )}
 
@@ -185,7 +197,7 @@ const GanttChart = () => {
       {selectedProject && (
         <ProjectDetailPanel
           project={selectedProject}
-          installer={getInstaller(selectedProject.assigneeId)}
+          installer={getInstaller(selectedProject.assigneeIds[0] ?? null)}
           onClose={() => setSelectedProject(null)}
         />
       )}

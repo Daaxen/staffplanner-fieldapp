@@ -1,13 +1,12 @@
 import { X, MapPin, User, Calendar, Tag } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { type Project, type Installer, statusLabels, type ProjectStatus } from '@/data/mockData';
+import { type Project, type Installer, statusLabels, type ProjectStatus, installers } from '@/data/mockData';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const statusColorMap: Record<ProjectStatus, string> = {
   'open': 'bg-status-open/15 text-status-open',
   'scheduled': 'bg-status-scheduled/15 text-status-scheduled',
   'in-progress': 'bg-status-in-progress/15 text-status-in-progress',
-  'confirmed': 'bg-status-confirmed/15 text-status-confirmed',
   'completed': 'bg-status-completed/15 text-status-completed',
   'on-hold': 'bg-status-on-hold/15 text-status-on-hold',
   'cancelled': 'bg-status-cancelled/15 text-status-cancelled',
@@ -29,6 +28,7 @@ interface Props {
 }
 
 const ProjectDetailPanel = ({ project, installer, onClose }: Props) => {
+  const assignees = project.assigneeIds.map(id => installers.find(i => i.id === id)).filter(Boolean) as Installer[];
   const formatDate = (d: string) => new Date(d).toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' });
 
   return (
@@ -81,14 +81,16 @@ const ProjectDetailPanel = ({ project, installer, onClose }: Props) => {
               <Tag className="w-4 h-4 text-muted-foreground mt-0.5" />
               <div>
                 <p className="text-xs text-muted-foreground">Assigned to</p>
-                {installer && (
-                  <div className="flex items-center gap-2 mt-1">
-                    <div className={cn("w-3 h-3 rounded-full", installerDotMap[installer.color])} />
-                    <p className="text-sm font-medium text-foreground">{installer.name}</p>
-                    {installer.type === 'sub-vendor' && (
+                {assignees.length > 0 ? assignees.map(a => (
+                  <div key={a.id} className="flex items-center gap-2 mt-1">
+                    <div className={cn("w-3 h-3 rounded-full", installerDotMap[a.color])} />
+                    <p className="text-sm font-medium text-foreground">{a.name}</p>
+                    {a.type === 'sub-vendor' && (
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">SUB</span>
                     )}
                   </div>
+                )) : (
+                  <p className="text-sm text-muted-foreground italic mt-1">Unassigned</p>
                 )}
               </div>
             </div>

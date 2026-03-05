@@ -6,7 +6,6 @@ const stats: { key: ProjectStatus | 'total'; label: string; color?: string }[] =
   { key: 'open', label: 'Open', color: 'bg-status-open' },
   { key: 'in-progress', label: 'In Progress', color: 'bg-status-in-progress' },
   { key: 'scheduled', label: 'Scheduled', color: 'bg-status-scheduled' },
-  { key: 'confirmed', label: 'Confirmed', color: 'bg-status-confirmed' },
   { key: 'completed', label: 'Completed', color: 'bg-status-completed' },
 ];
 
@@ -20,7 +19,7 @@ const StatsBar = () => {
   };
 
   return (
-    <div className="grid grid-cols-7 gap-4 px-6 py-4 border-b border-border bg-card">
+    <div className="grid grid-cols-5 gap-4 px-6 py-4 border-b border-border bg-card">
       {stats.map(({ key, label, color }) => (
         <div key={key} className="flex items-center gap-3">
           {color && <div className={cn("w-2 h-8 rounded-full", color)} />}
