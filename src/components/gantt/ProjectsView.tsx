@@ -1,6 +1,8 @@
+import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { type Project, type Installer, type ProjectStatus, installers } from '@/data/mockData';
 import { motion } from 'framer-motion';
+import { ArrowUpDown, Filter } from 'lucide-react';
 import GanttHeader from './GanttHeader';
 import GanttGrid from './GanttGrid';
 
@@ -8,7 +10,6 @@ const statusColorMap: Record<ProjectStatus, string> = {
   'open': 'bg-status-open',
   'scheduled': 'bg-status-scheduled',
   'in-progress': 'bg-status-in-progress',
-  'confirmed': 'bg-status-confirmed',
   'completed': 'bg-status-completed',
   'on-hold': 'bg-status-on-hold',
   'cancelled': 'bg-status-cancelled',
@@ -18,7 +19,6 @@ const statusBorderMap: Record<ProjectStatus, string> = {
   'open': 'border-status-open',
   'scheduled': 'border-status-scheduled',
   'in-progress': 'border-status-in-progress',
-  'confirmed': 'border-status-confirmed',
   'completed': 'border-status-completed',
   'on-hold': 'border-status-on-hold',
   'cancelled': 'border-status-cancelled',
@@ -33,6 +33,8 @@ const installerBgMap: Record<number, string> = {
   6: 'bg-installer-6/15',
 };
 
+type SortField = 'name' | 'status' | 'startDate' | 'installer';
+
 interface ProjectsViewProps {
   projects: Project[];
   days: Date[];
@@ -40,14 +42,56 @@ interface ProjectsViewProps {
   startDate: Date;
   todayStr: string;
   onSelectProject: (project: Project) => void;
+  activeStatuses: Set<ProjectStatus>;
+  viewMode?: 'day' | 'week' | 'month';
 }
 
 const rowHeight = 52;
 const headerHeight = 60;
 const labelWidth = 260;
 
-const ProjectsView = ({ projects, days, colWidth, startDate, todayStr, onSelectProject }: ProjectsViewProps) => {
-  const getInstaller = (id: string | null) => id ? installers.find(i => i.id === id) : null;
+const ProjectsView = ({ projects, days, colWidth, startDate, todayStr, onSelectProject, activeStatuses, viewMode }: ProjectsViewProps) => {
+  const [sortField, setSortField] = useState<SortField>('startDate');
+  const [sortAsc, setSortAsc] = useState(true);
+  const [filterInstaller, setFilterInstaller] = useState<string>('all');
+
+  const getInstaller = (id: string) => installers.find(i => i.id === id) ?? null;
+  const getFirstInstaller = (p: Project) => p.assigneeIds.length > 0 ? getInstaller(p.assigneeIds[0]) : null;
+
+  const filteredAndSorted = useMemo(() => {
+    let result = projects.filter(p => activeStatuses.has(p.status));
+
+    if (filterInstaller !== 'all') {
+      if (filterInstaller === 'unassigned') {
+        result = result.filter(p => p.assigneeIds.length === 0);
+      } else {
+        result = result.filter(p => p.assigneeIds.includes(filterInstaller));
+      }
+    }
+
+    result.sort((a, b) => {
+      let cmp = 0;
+      switch (sortField) {
+        case 'name': cmp = a.name.localeCompare(b.name); break;
+        case 'status': cmp = a.status.localeCompare(b.status); break;
+        case 'startDate': cmp = a.startDate.localeCompare(b.startDate); break;
+        case 'installer': {
+          const aI = getFirstInstaller(a)?.name ?? 'zzz';
+          const bI = getFirstInstaller(b)?.name ?? 'zzz';
+          cmp = aI.localeCompare(bI);
+          break;
+        }
+      }
+      return sortAsc ? cmp : -cmp;
+    });
+
+    return result;
+  }, [projects, activeStatuses, filterInstaller, sortField, sortAsc]);
+
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) setSortAsc(!sortAsc);
+    else { setSortField(field); setSortAsc(true); }
+  };
 
   const getBarPosition = (project: Project) => {
     const pStart = new Date(project.startDate);
@@ -58,70 +102,108 @@ const ProjectsView = ({ projects, days, colWidth, startDate, todayStr, onSelectP
   };
 
   return (
-    <div className="flex-1 flex overflow-hidden">
-      {/* Labels */}
-      <div className="shrink-0 border-r border-border bg-card" style={{ width: labelWidth }}>
-        <div className="sticky top-0 z-10">
-          <div className="border-b border-border bg-gantt-header" style={{ height: 24 }} />
-          <div className="border-b border-border flex items-center px-4 bg-gantt-header" style={{ height: headerHeight - 24 }}>
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Project</span>
-          </div>
-        </div>
-        {projects.map((project, idx) => {
-          const inst = getInstaller(project.assigneeId);
-          return (
-            <div
-              key={project.id}
-              onClick={() => onSelectProject(project)}
-              className={cn(
-                "flex items-center gap-3 px-4 border-b border-border cursor-pointer transition-colors hover:bg-secondary/50",
-                idx % 2 === 0 ? "bg-card" : "bg-muted/20"
-              )}
-              style={{ height: rowHeight }}
-            >
-              <div className={cn("w-1 h-8 rounded-full", statusColorMap[project.status])} />
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-foreground truncate">{project.name}</p>
-                <p className="text-xs text-muted-foreground truncate">{inst?.name ?? '— Unassigned —'}</p>
-              </div>
-            </div>
-          );
-        })}
+    <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Sort/Filter bar */}
+      <div className="flex items-center gap-3 px-4 py-1.5 border-b border-border bg-muted/30">
+        <Filter className="w-3.5 h-3.5 text-muted-foreground" />
+        <select
+          value={filterInstaller}
+          onChange={(e) => setFilterInstaller(e.target.value)}
+          className="text-xs bg-card border border-border rounded px-2 py-1 text-foreground"
+        >
+          <option value="all">All installers</option>
+          <option value="unassigned">Unassigned</option>
+          {installers.map(inst => (
+            <option key={inst.id} value={inst.id}>{inst.name}</option>
+          ))}
+        </select>
+        <div className="w-px h-4 bg-border" />
+        <ArrowUpDown className="w-3.5 h-3.5 text-muted-foreground" />
+        {(['name', 'status', 'startDate', 'installer'] as SortField[]).map(field => (
+          <button
+            key={field}
+            onClick={() => toggleSort(field)}
+            className={cn(
+              "text-xs px-2 py-1 rounded transition-colors capitalize",
+              sortField === field ? "text-foreground font-semibold bg-secondary" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {field === 'startDate' ? 'Date' : field}
+            {sortField === field && (sortAsc ? ' ↑' : ' ↓')}
+          </button>
+        ))}
       </div>
 
-      {/* Timeline */}
-      <div className="flex-1 overflow-x-auto gantt-scroll">
-        <div style={{ minWidth: days.length * colWidth }}>
-          <GanttHeader days={days} colWidth={colWidth} headerHeight={headerHeight} todayStr={todayStr} />
-          <div className="relative">
-            <GanttGrid days={days} colWidth={colWidth} totalHeight={projects.length * rowHeight} todayStr={todayStr} />
-            {projects.map((project, idx) => {
-              const { left, width } = getBarPosition(project);
-              const inst = getInstaller(project.assigneeId);
-              const instColor = inst ? installerBgMap[inst.color] : 'bg-muted/40';
-              return (
-                <div
-                  key={project.id}
-                  className={cn("border-b border-gantt-grid", idx % 2 === 0 ? "" : "bg-muted/10")}
-                  style={{ height: rowHeight }}
-                >
-                  <motion.div
-                    initial={{ scaleX: 0, opacity: 0 }}
-                    animate={{ scaleX: 1, opacity: 1 }}
-                    transition={{ duration: 0.4, delay: idx * 0.03, ease: "easeOut" }}
-                    style={{ left: Math.max(left, 0), width: Math.max(width, 20), originX: 0, top: 8 }}
-                    className={cn(
-                      "absolute h-9 rounded-md border-l-[3px] flex items-center px-3 cursor-pointer transition-shadow hover:shadow-md",
-                      statusBorderMap[project.status],
-                      instColor
-                    )}
-                    onClick={() => onSelectProject(project)}
-                  >
-                    <span className="text-xs font-medium text-foreground truncate">{project.name}</span>
-                  </motion.div>
+      <div className="flex-1 flex overflow-hidden">
+        {/* Labels */}
+        <div className="shrink-0 border-r border-border bg-card" style={{ width: labelWidth }}>
+          <div className="sticky top-0 z-10">
+            <div className="border-b border-border bg-gantt-header" style={{ height: 24 }} />
+            <div className="border-b border-border flex items-center px-4 bg-gantt-header" style={{ height: headerHeight - 24 }}>
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Project</span>
+            </div>
+          </div>
+          {filteredAndSorted.map((project, idx) => {
+            const assignees = project.assigneeIds.map(id => getInstaller(id)).filter(Boolean) as Installer[];
+            return (
+              <div
+                key={project.id}
+                onClick={() => onSelectProject(project)}
+                className={cn(
+                  "flex items-center gap-3 px-4 border-b border-border cursor-pointer transition-colors hover:bg-secondary/50",
+                  idx % 2 === 0 ? "bg-card" : "bg-muted/20"
+                )}
+                style={{ height: rowHeight }}
+              >
+                <div className={cn("w-1 h-8 rounded-full", statusColorMap[project.status])} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-foreground truncate">{project.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {assignees.length > 0 ? assignees.map(a => a.name).join(', ') : '— Unassigned —'}
+                  </p>
                 </div>
-              );
-            })}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Timeline */}
+        <div className="flex-1 overflow-x-auto gantt-scroll">
+          <div style={{ minWidth: days.length * colWidth }}>
+            <GanttHeader days={days} colWidth={colWidth} headerHeight={headerHeight} todayStr={todayStr} viewMode={viewMode} />
+            <div className="relative">
+              <GanttGrid days={days} colWidth={colWidth} totalHeight={filteredAndSorted.length * rowHeight} todayStr={todayStr} />
+              {filteredAndSorted.map((project, idx) => {
+                const { left, width } = getBarPosition(project);
+                const assignees = project.assigneeIds.map(id => getInstaller(id)).filter(Boolean) as Installer[];
+                const instColor = assignees.length > 0 && assignees[0] ? installerBgMap[assignees[0].color] : 'bg-muted/40';
+                return (
+                  <div
+                    key={project.id}
+                    className={cn("border-b border-gantt-grid", idx % 2 === 0 ? "" : "bg-muted/10")}
+                    style={{ height: rowHeight }}
+                  >
+                    <motion.div
+                      initial={{ scaleX: 0, opacity: 0 }}
+                      animate={{ scaleX: 1, opacity: 1 }}
+                      transition={{ duration: 0.4, delay: idx * 0.03, ease: "easeOut" }}
+                      style={{ left: Math.max(left, 0), width: Math.max(width, 20), originX: 0, top: 8 }}
+                      className={cn(
+                        "absolute h-9 rounded-md border-l-[3px] flex items-center px-3 cursor-pointer transition-shadow hover:shadow-md",
+                        statusBorderMap[project.status],
+                        instColor
+                      )}
+                      onClick={() => onSelectProject(project)}
+                    >
+                      <span className="text-xs font-medium text-foreground truncate">{project.name}</span>
+                      {assignees.length > 1 && (
+                        <span className="ml-1 text-[10px] text-muted-foreground shrink-0">+{assignees.length - 1}</span>
+                      )}
+                    </motion.div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>

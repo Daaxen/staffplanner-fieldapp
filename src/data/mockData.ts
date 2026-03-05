@@ -1,4 +1,4 @@
-export type ProjectStatus = 'open' | 'scheduled' | 'in-progress' | 'confirmed' | 'completed' | 'on-hold' | 'cancelled';
+export type ProjectStatus = 'open' | 'scheduled' | 'in-progress' | 'completed' | 'on-hold' | 'cancelled';
 
 export interface Installer {
   id: string;
@@ -23,7 +23,7 @@ export interface Project {
   client: string;
   location: string;
   status: ProjectStatus;
-  assigneeId: string | null; // null = unassigned/open
+  assigneeIds: string[]; // multiple assignees
   startDate: string; // ISO date
   endDate: string;   // ISO date
   description?: string;
@@ -52,24 +52,23 @@ export const installers: Installer[] = [
 ];
 
 export const projects: Project[] = [
-  { id: 'proj-1', name: 'IKEA Barkarby Kitchen', client: 'IKEA', location: 'Barkarby', status: 'in-progress', assigneeId: 'inst-1', startDate: d(-2), endDate: d(3) },
-  { id: 'proj-2', name: 'Elgiganten Display Wall', client: 'Elgiganten', location: 'Kista', status: 'scheduled', assigneeId: 'inst-2', startDate: d(1), endDate: d(4) },
-  { id: 'proj-3', name: 'H&M Flagship Refit', client: 'H&M', location: 'Drottninggatan', status: 'confirmed', assigneeId: 'inst-3', startDate: d(-5), endDate: d(1) },
-  { id: 'proj-4', name: 'Clas Ohlson Shelf System', client: 'Clas Ohlson', location: 'Kungens Kurva', status: 'on-hold', assigneeId: 'inst-4', startDate: d(2), endDate: d(8) },
-  { id: 'proj-5', name: 'Stadium Sports Corner', client: 'Stadium', location: 'Mall of Scandinavia', status: 'scheduled', assigneeId: 'inst-5', startDate: d(5), endDate: d(10) },
-  { id: 'proj-6', name: 'Systembolaget Renovation', client: 'Systembolaget', location: 'Södermalm', status: 'completed', assigneeId: 'inst-6', startDate: d(-10), endDate: d(-3) },
-  { id: 'proj-7', name: 'Jula Workshop Install', client: 'Jula', location: 'Bromma', status: 'in-progress', assigneeId: 'inst-1', startDate: d(0), endDate: d(6) },
-  { id: 'proj-8', name: 'Bauhaus Garden Center', client: 'Bauhaus', location: 'Arninge', status: 'open', assigneeId: null, startDate: d(6), endDate: d(12) },
-  { id: 'proj-9', name: 'Granit Store Concept', client: 'Granit', location: 'Götgatan', status: 'cancelled', assigneeId: 'inst-3', startDate: d(3), endDate: d(7) },
-  { id: 'proj-10', name: 'Kjell & Co Tech Wall', client: 'Kjell & Company', location: 'Täby', status: 'confirmed', assigneeId: 'inst-4', startDate: d(-1), endDate: d(5) },
-  { id: 'proj-11', name: 'Åhléns Window Display', client: 'Åhléns', location: 'City', status: 'open', assigneeId: null, startDate: d(3), endDate: d(6) },
+  { id: 'proj-1', name: 'IKEA Barkarby Kitchen', client: 'IKEA', location: 'Barkarby', status: 'in-progress', assigneeIds: ['inst-1'], startDate: d(-2), endDate: d(3) },
+  { id: 'proj-2', name: 'Elgiganten Display Wall', client: 'Elgiganten', location: 'Kista', status: 'scheduled', assigneeIds: ['inst-2'], startDate: d(1), endDate: d(4) },
+  { id: 'proj-3', name: 'H&M Flagship Refit', client: 'H&M', location: 'Drottninggatan', status: 'in-progress', assigneeIds: ['inst-3', 'inst-1'], startDate: d(-5), endDate: d(1) },
+  { id: 'proj-4', name: 'Clas Ohlson Shelf System', client: 'Clas Ohlson', location: 'Kungens Kurva', status: 'on-hold', assigneeIds: ['inst-4'], startDate: d(2), endDate: d(8) },
+  { id: 'proj-5', name: 'Stadium Sports Corner', client: 'Stadium', location: 'Mall of Scandinavia', status: 'scheduled', assigneeIds: ['inst-5'], startDate: d(5), endDate: d(10) },
+  { id: 'proj-6', name: 'Systembolaget Renovation', client: 'Systembolaget', location: 'Södermalm', status: 'completed', assigneeIds: ['inst-6'], startDate: d(-10), endDate: d(-3) },
+  { id: 'proj-7', name: 'Jula Workshop Install', client: 'Jula', location: 'Bromma', status: 'in-progress', assigneeIds: ['inst-1'], startDate: d(0), endDate: d(6) },
+  { id: 'proj-8', name: 'Bauhaus Garden Center', client: 'Bauhaus', location: 'Arninge', status: 'open', assigneeIds: [], startDate: d(6), endDate: d(12) },
+  { id: 'proj-9', name: 'Granit Store Concept', client: 'Granit', location: 'Götgatan', status: 'cancelled', assigneeIds: ['inst-3'], startDate: d(3), endDate: d(7) },
+  { id: 'proj-10', name: 'Kjell & Co Tech Wall', client: 'Kjell & Company', location: 'Täby', status: 'scheduled', assigneeIds: ['inst-4', 'inst-2'], startDate: d(-1), endDate: d(5) },
+  { id: 'proj-11', name: 'Åhléns Window Display', client: 'Åhléns', location: 'City', status: 'open', assigneeIds: [], startDate: d(3), endDate: d(6) },
 ];
 
 export const statusLabels: Record<ProjectStatus, string> = {
   'open': 'Open / Unassigned',
   'scheduled': 'Scheduled',
   'in-progress': 'In Progress',
-  'confirmed': 'Confirmed',
   'completed': 'Completed',
   'on-hold': 'On Hold',
   'cancelled': 'Cancelled',
