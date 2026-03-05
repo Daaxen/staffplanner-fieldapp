@@ -1,10 +1,11 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { type Project, type Installer, type ProjectStatus } from '@/data/mockData';
-import { motion } from 'framer-motion';
 import GanttHeader from './GanttHeader';
 import GanttGrid from './GanttGrid';
 import OrderBox from './OrderBox';
+import DraggableBar from './DraggableBar';
+import DateChangeDialog from './DateChangeDialog';
 
 const statusBorderMap: Record<ProjectStatus, string> = {
   'open': 'border-status-open',
@@ -42,6 +43,7 @@ interface InstallersViewProps {
   todayStr: string;
   onSelectProject: (project: Project) => void;
   onDropProject: (projectId: string, installerId: string) => void;
+  onUpdateProject: (projectId: string, updates: Partial<Project>) => void;
   activeStatuses: Set<ProjectStatus>;
   viewMode?: 'day' | 'week' | 'month';
 }
@@ -50,7 +52,14 @@ const rowHeight = 72;
 const headerHeight = 60;
 const labelWidth = 280;
 
-const InstallersView = ({ projects, installers: allInstallers, days, colWidth, startDate, todayStr, onSelectProject, onDropProject, activeStatuses, viewMode }: InstallersViewProps) => {
+const InstallersView = ({
+  projects, installers: allInstallers, days, colWidth, startDate, todayStr,
+  onSelectProject, onDropProject, onUpdateProject, activeStatuses, viewMode,
+}: InstallersViewProps) => {
+  const [pendingChange, setPendingChange] = useState<{
+    projectId: string; newStart: string; newEnd: string; installerId?: string;
+  } | null>(null);
+
   const groups = useMemo(() => {
     const map: { installer: Installer | null; projects: Project[] }[] = [];
 
@@ -71,9 +80,17 @@ const InstallersView = ({ projects, installers: allInstallers, days, colWidth, s
 
   const totalGridWidth = days.length * colWidth;
 
-  const getBarPosition = (project: Project) => {
-    const pStart = new Date(project.startDate);
-    const pEnd = new Date(project.endDate);
+  const getBarDates = (project: Project, installerId?: string) => {
+    if (installerId && project.installerDateOverrides?.[installerId]) {
+      return project.installerDateOverrides[installerId];
+    }
+    return { startDate: project.startDate, endDate: project.endDate };
+  };
+
+  const getBarPosition = (project: Project, installerId?: string) => {
+    const dates = getBarDates(project, installerId);
+    const pStart = new Date(dates.startDate);
+    const pEnd = new Date(dates.endDate);
     const startDiff = Math.floor((pStart.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
     const duration = Math.floor((pEnd.getTime() - pStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     const rawLeft = startDiff * colWidth;
@@ -123,6 +140,41 @@ const InstallersView = ({ projects, installers: allInstallers, days, colWidth, s
     e.dataTransfer.setData('projectId', projectId);
     e.dataTransfer.effectAllowed = 'move';
   };
+
+  const handleBarDragEnd = useCallback((projectId: string, newStart: string, newEnd: string, installerId?: string) => {
+    setPendingChange({ projectId, newStart, newEnd, installerId });
+  }, []);
+
+  const pendingProject = pendingChange ? projects.find(p => p.id === pendingChange.projectId) : null;
+  const isMultiInstaller = (pendingProject?.assigneeIds.length ?? 0) > 1;
+
+  const handleConfirmAll = useCallback(() => {
+    if (!pendingChange) return;
+    onUpdateProject(pendingChange.projectId, {
+      startDate: pendingChange.newStart,
+      endDate: pendingChange.newEnd,
+    });
+    setPendingChange(null);
+  }, [pendingChange, onUpdateProject]);
+
+  const handleConfirmOne = useCallback(() => {
+    if (!pendingChange || !pendingChange.installerId) {
+      handleConfirmAll();
+      return;
+    }
+    const project = projects.find(p => p.id === pendingChange.projectId);
+    if (!project) return;
+    onUpdateProject(pendingChange.projectId, {
+      installerDateOverrides: {
+        ...project.installerDateOverrides,
+        [pendingChange.installerId]: {
+          startDate: pendingChange.newStart,
+          endDate: pendingChange.newEnd,
+        },
+      },
+    });
+    setPendingChange(null);
+  }, [pendingChange, projects, onUpdateProject, handleConfirmAll]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -213,30 +265,33 @@ const InstallersView = ({ projects, installers: allInstallers, days, colWidth, s
 
                     {/* Project bars */}
                     {group.projects.map((project, pIdx) => {
-                      const { left, width, overflowRight } = getBarPosition(project);
+                      const dates = getBarDates(project, inst?.id);
+                      const { left, width, overflowRight } = getBarPosition(project, inst?.id);
                       const yOffset = group.projects.length > 1 ? (pIdx % 2 === 0 ? 6 : 34) : 18;
                       const barHeight = group.projects.length > 1 ? 28 : 34;
                       return (
-                        <motion.div
+                        <DraggableBar
                           key={project.id}
-                          draggable
-                          onDragStart={(e) => handleDragStart(e as unknown as React.DragEvent, project.id)}
-                          initial={{ scaleX: 0, opacity: 0 }}
-                          animate={{ scaleX: 1, opacity: 1 }}
-                          transition={{ duration: 0.3, delay: gIdx * 0.05 + pIdx * 0.02, ease: "easeOut" }}
-                          style={{ left, width, originX: 0, top: yOffset }}
+                          left={left}
+                          width={width}
+                          top={yOffset}
+                          height={barHeight}
+                          colWidth={colWidth}
+                          projectStartDate={dates.startDate}
+                          projectEndDate={dates.endDate}
                           className={cn(
-                            "absolute rounded-md border-l-[3px] flex items-center px-2 cursor-grab active:cursor-grabbing transition-shadow hover:shadow-md z-20",
+                            "rounded-md border-l-[3px] flex items-center px-2 cursor-grab active:cursor-grabbing transition-shadow hover:shadow-md z-20",
                             statusBorderMap[project.status],
                             statusColorMap[project.status]
                           )}
                           onClick={() => onSelectProject(project)}
+                          onDragEnd={(newStart, newEnd) => handleBarDragEnd(project.id, newStart, newEnd, inst?.id)}
                         >
                           <span className="text-[11px] font-medium text-foreground truncate flex-1" style={{ lineHeight: `${barHeight}px` }}>{project.name}</span>
                           {overflowRight && (
                             <span className="ml-1 text-xs font-bold text-foreground shrink-0">&raquo;</span>
                           )}
-                        </motion.div>
+                        </DraggableBar>
                       );
                     })}
                   </div>
@@ -249,6 +304,14 @@ const InstallersView = ({ projects, installers: allInstallers, days, colWidth, s
 
       {/* OrderBox - only shows for installers view with internal installers */}
       <OrderBox projects={projects} onSelectProject={onSelectProject} />
+
+      <DateChangeDialog
+        open={!!pendingChange}
+        isMultiInstaller={isMultiInstaller}
+        onConfirmAll={handleConfirmAll}
+        onConfirmOne={handleConfirmOne}
+        onCancel={() => setPendingChange(null)}
+      />
     </div>
   );
 };

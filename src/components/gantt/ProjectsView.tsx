@@ -1,10 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { type Project, type Installer, type ProjectStatus, installers } from '@/data/mockData';
-import { motion } from 'framer-motion';
 import { ArrowUpDown, Filter } from 'lucide-react';
 import GanttHeader from './GanttHeader';
 import GanttGrid from './GanttGrid';
+import DraggableBar from './DraggableBar';
+import DateChangeDialog from './DateChangeDialog';
 
 const statusColorMap: Record<ProjectStatus, string> = {
   'open': 'bg-status-open',
@@ -42,6 +43,7 @@ interface ProjectsViewProps {
   startDate: Date;
   todayStr: string;
   onSelectProject: (project: Project) => void;
+  onUpdateProject: (projectId: string, updates: Partial<Project>) => void;
   activeStatuses: Set<ProjectStatus>;
   viewMode?: 'day' | 'week' | 'month';
 }
@@ -50,10 +52,11 @@ const rowHeight = 52;
 const headerHeight = 60;
 const labelWidth = 260;
 
-const ProjectsView = ({ projects, days, colWidth, startDate, todayStr, onSelectProject, activeStatuses, viewMode }: ProjectsViewProps) => {
+const ProjectsView = ({ projects, days, colWidth, startDate, todayStr, onSelectProject, onUpdateProject, activeStatuses, viewMode }: ProjectsViewProps) => {
   const [sortField, setSortField] = useState<SortField>('startDate');
   const [sortAsc, setSortAsc] = useState(true);
   const [filterInstaller, setFilterInstaller] = useState<string>('all');
+  const [pendingChange, setPendingChange] = useState<{ projectId: string; newStart: string; newEnd: string } | null>(null);
 
   const getInstaller = (id: string) => installers.find(i => i.id === id) ?? null;
   const getFirstInstaller = (p: Project) => p.assigneeIds.length > 0 ? getInstaller(p.assigneeIds[0]) : null;
@@ -107,6 +110,23 @@ const ProjectsView = ({ projects, days, colWidth, startDate, todayStr, onSelectP
     const overflowRight = rawRight > totalGridWidth;
     return { left: clippedLeft, width: Math.max(clippedRight - clippedLeft, 20), overflowRight };
   };
+
+  const handleBarDragEnd = useCallback((projectId: string, newStart: string, newEnd: string) => {
+    setPendingChange({ projectId, newStart, newEnd });
+  }, []);
+
+  const handleConfirmAll = useCallback(() => {
+    if (!pendingChange) return;
+    onUpdateProject(pendingChange.projectId, {
+      startDate: pendingChange.newStart,
+      endDate: pendingChange.newEnd,
+    });
+    setPendingChange(null);
+  }, [pendingChange, onUpdateProject]);
+
+  const isMultiInstaller = pendingChange
+    ? (projects.find(p => p.id === pendingChange.projectId)?.assigneeIds.length ?? 0) > 1
+    : false;
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -190,17 +210,21 @@ const ProjectsView = ({ projects, days, colWidth, startDate, todayStr, onSelectP
                     className={cn("border-b border-gantt-grid", idx % 2 === 0 ? "" : "bg-muted/10")}
                     style={{ height: rowHeight }}
                   >
-                    <motion.div
-                      initial={{ scaleX: 0, opacity: 0 }}
-                      animate={{ scaleX: 1, opacity: 1 }}
-                      transition={{ duration: 0.4, delay: idx * 0.03, ease: "easeOut" }}
-                      style={{ left, width, originX: 0, top: 8 }}
+                    <DraggableBar
+                      left={left}
+                      width={width}
+                      top={8}
+                      height={36}
+                      colWidth={colWidth}
+                      projectStartDate={project.startDate}
+                      projectEndDate={project.endDate}
                       className={cn(
-                        "absolute h-9 rounded-md border-l-[3px] flex items-center px-3 cursor-pointer transition-shadow hover:shadow-md",
+                        "rounded-md border-l-[3px] flex items-center px-3 cursor-grab active:cursor-grabbing transition-shadow hover:shadow-md",
                         statusBorderMap[project.status],
                         instColor
                       )}
                       onClick={() => onSelectProject(project)}
+                      onDragEnd={(newStart, newEnd) => handleBarDragEnd(project.id, newStart, newEnd)}
                     >
                       <span className="text-xs font-medium text-foreground truncate flex-1">{project.name}</span>
                       {assignees.length > 1 && (
@@ -209,7 +233,7 @@ const ProjectsView = ({ projects, days, colWidth, startDate, todayStr, onSelectP
                       {overflowRight && (
                         <span className="ml-1 text-xs font-bold text-foreground shrink-0">&raquo;</span>
                       )}
-                    </motion.div>
+                    </DraggableBar>
                   </div>
                 );
               })}
@@ -217,6 +241,14 @@ const ProjectsView = ({ projects, days, colWidth, startDate, todayStr, onSelectP
           </div>
         </div>
       </div>
+
+      <DateChangeDialog
+        open={!!pendingChange}
+        isMultiInstaller={isMultiInstaller}
+        onConfirmAll={handleConfirmAll}
+        onConfirmOne={handleConfirmAll}
+        onCancel={() => setPendingChange(null)}
+      />
     </div>
   );
 };

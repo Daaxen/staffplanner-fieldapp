@@ -12,6 +12,14 @@ type GanttMode = 'projects' | 'installers';
 
 const allStatuses: ProjectStatus[] = ['open', 'scheduled', 'in-progress', 'completed', 'on-hold', 'cancelled'];
 
+function getISOWeekNumber(date: Date): number {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+}
+
 const GanttChart = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('week');
   const [ganttMode, setGanttMode] = useState<GanttMode>('projects');
@@ -67,6 +75,18 @@ const GanttChart = () => {
     return `${first.toLocaleDateString('en', { month: 'short', day: 'numeric' })} – ${last.toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' })}`;
   }, [days]);
 
+  const todayLabel = useMemo(() => {
+    const now = new Date();
+    switch (viewMode) {
+      case 'day':
+        return now.toLocaleDateString('en', { month: 'short', day: 'numeric' });
+      case 'week':
+        return `Week ${getISOWeekNumber(now)}`;
+      case 'month':
+        return now.toLocaleDateString('en', { month: 'long' });
+    }
+  }, [viewMode]);
+
   const getInstaller = (id: string | null) => id ? installers.find(i => i.id === id) ?? null : null;
 
   const handleDropProject = useCallback((projectId: string, installerId: string) => {
@@ -79,6 +99,13 @@ const GanttChart = () => {
           }
         : p
     ));
+  }, []);
+
+  const handleUpdateProject = useCallback((projectId: string, updates: Partial<Project>) => {
+    setProjectsList(prev => prev.map(p =>
+      p.id === projectId ? { ...p, ...updates } : p
+    ));
+    setSelectedProject(prev => prev?.id === projectId ? { ...prev, ...updates } : prev);
   }, []);
 
   const handleToggleStatus = useCallback((status: ProjectStatus) => {
@@ -153,7 +180,7 @@ const GanttChart = () => {
               <ChevronLeft className="w-4 h-4 text-muted-foreground" />
             </button>
             <button onClick={() => setDateOffset(0)} className="px-3 py-1.5 text-xs font-medium rounded-lg hover:bg-secondary transition-colors text-muted-foreground">
-              Today
+              {todayLabel}
             </button>
             <button onClick={() => setDateOffset(d => d + 1)} className="p-2 rounded-lg hover:bg-secondary transition-colors">
               <ChevronRight className="w-4 h-4 text-muted-foreground" />
@@ -178,6 +205,7 @@ const GanttChart = () => {
           startDate={startDate}
           todayStr={todayStr}
           onSelectProject={setSelectedProject}
+          onUpdateProject={handleUpdateProject}
           activeStatuses={activeStatuses}
           viewMode={viewMode}
         />
@@ -191,6 +219,7 @@ const GanttChart = () => {
           todayStr={todayStr}
           onSelectProject={setSelectedProject}
           onDropProject={handleDropProject}
+          onUpdateProject={handleUpdateProject}
           activeStatuses={activeStatuses}
           viewMode={viewMode}
         />
