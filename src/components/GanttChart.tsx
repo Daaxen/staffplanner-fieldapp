@@ -154,6 +154,16 @@ const GanttChart = () => {
               Projects
             </button>
             <button
+              onClick={() => setGanttMode('clients')}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all",
+                ganttMode === 'clients' ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Building2 className="w-3.5 h-3.5" />
+              Clients
+            </button>
+            <button
               onClick={() => setGanttMode('installers')}
               className={cn(
                 "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all",

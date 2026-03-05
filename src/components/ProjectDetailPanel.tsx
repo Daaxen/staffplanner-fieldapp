@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { X, MapPin, User, Calendar, Tag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { type Project, type Installer, statusLabels, type ProjectStatus, installers } from '@/data/mockData';
