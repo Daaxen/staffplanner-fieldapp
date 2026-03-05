@@ -43,6 +43,7 @@ interface InstallersViewProps {
   todayStr: string;
   onSelectProject: (project: Project) => void;
   onDropProject: (projectId: string, installerId: string) => void;
+  onUnassignProject: (projectId: string) => void;
   onUpdateProject: (projectId: string, updates: Partial<Project>) => void;
   activeStatuses: Set<ProjectStatus>;
   viewMode?: 'day' | 'week' | 'month';
