@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 
 const stats: { key: ProjectStatus | 'total'; label: string; color?: string }[] = [
   { key: 'total', label: 'Total Projects' },
-  { key: 'open', label: 'Open', color: 'bg-status-open' },
+  { key: 'open', label: 'Unassigned', color: 'bg-status-open' },
   { key: 'in-progress', label: 'In Progress', color: 'bg-status-in-progress' },
   { key: 'scheduled', label: 'Scheduled', color: 'bg-status-scheduled' },
   { key: 'completed', label: 'Completed', color: 'bg-status-completed' },

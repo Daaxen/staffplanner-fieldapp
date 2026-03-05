@@ -207,7 +207,7 @@ const ProjectsView = ({ projects, days, colWidth, startDate, todayStr, onSelectP
                 return (
                   <div
                     key={project.id}
-                    className={cn("border-b border-gantt-grid", idx % 2 === 0 ? "" : "bg-muted/10")}
+                    className={cn("relative border-b border-gantt-grid", idx % 2 === 0 ? "" : "bg-muted/10")}
                     style={{ height: rowHeight }}
                   >
                     <DraggableBar
