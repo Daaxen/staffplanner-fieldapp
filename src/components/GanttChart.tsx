@@ -227,6 +227,7 @@ const GanttChart = () => {
           todayStr={todayStr}
           onSelectProject={setSelectedProject}
           onDropProject={handleDropProject}
+          onUnassignProject={handleUnassignProject}
           onUpdateProject={handleUpdateProject}
           activeStatuses={activeStatuses}
           viewMode={viewMode}
