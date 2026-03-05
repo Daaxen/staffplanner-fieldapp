@@ -149,99 +149,108 @@ const ClientsView = ({ projects, days, colWidth, startDate, todayStr, onSelectPr
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      <div className="flex-1 flex overflow-auto gantt-scroll">
-        {/* Labels */}
-        <div className="shrink-0 border-r border-border bg-card" style={{ width: labelWidth }}>
-          <div className="sticky top-0 z-20 bg-gantt-header">
-            <div className="border-b border-border bg-gantt-header" style={{ height: 24 }} />
-            <div className="border-b border-border flex items-center px-4 bg-gantt-header" style={{ height: headerHeight - 24 }}>
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Client</span>
-              <span className="ml-auto text-xs font-semibold text-muted-foreground uppercase tracking-wider">Active</span>
+      <div className="flex-1 overflow-auto gantt-scroll relative">
+        <div className="relative" style={{ minWidth: days.length * colWidth + labelWidth }}>
+          {/* Header row */}
+          <div className="sticky top-0 z-30 flex">
+            <div className="sticky left-0 z-40 shrink-0 border-r border-border bg-gantt-header" style={{ width: labelWidth }}>
+              <div className="border-b border-border bg-gantt-header" style={{ height: 24 }} />
+              <div className="border-b border-border flex items-center px-4 bg-gantt-header" style={{ height: headerHeight - 24 }}>
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Client</span>
+                <span className="ml-auto text-xs font-semibold text-muted-foreground uppercase tracking-wider">Active</span>
+              </div>
+            </div>
+            <div className="flex-1">
+              <GanttHeader days={days} colWidth={colWidth} headerHeight={headerHeight} todayStr={todayStr} viewMode={viewMode} />
             </div>
           </div>
-          {clientGroups.map((group, idx) => (
-            <div
-              key={group.client}
-              className={cn(
-                "flex items-center gap-3 px-4 border-b border-border",
-                idx % 2 === 0 ? "bg-card" : "bg-muted/20"
-              )}
-              style={{ height: getRowHeight(group) }}
-            >
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-foreground truncate">{group.client}</p>
-                <p className="text-xs text-muted-foreground">
-                  {group.projects.length} project{group.projects.length !== 1 ? 's' : ''}
-                </p>
-              </div>
-              <div className="shrink-0">
-                <span className={cn(
-                  "text-sm font-bold tabular-nums",
-                  group.activeCount > 0 ? "text-primary" : "text-muted-foreground"
-                )}>
-                  {group.activeCount}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
 
-        {/* Timeline */}
-        <div className="flex-1" style={{ minWidth: days.length * colWidth }}>
-          <GanttHeader days={days} colWidth={colWidth} headerHeight={headerHeight} todayStr={todayStr} viewMode={viewMode} />
-          <div className="relative">
-            <GanttGrid days={days} colWidth={colWidth} totalHeight={totalHeight} todayStr={todayStr} />
-            {clientGroups.map((group, gIdx) => {
-              const rowH = getRowHeight(group);
-              return (
+          {/* Body rows */}
+          <div className="flex">
+            {/* Labels */}
+            <div className="sticky left-0 z-20 shrink-0 border-r border-border bg-card" style={{ width: labelWidth }}>
+              {clientGroups.map((group, idx) => (
                 <div
                   key={group.client}
-                  className={cn("border-b border-gantt-grid relative", gIdx % 2 === 0 ? "" : "bg-muted/10")}
-                  style={{ height: rowH }}
+                  className={cn(
+                    "flex items-center gap-3 px-4 border-b border-border",
+                    idx % 2 === 0 ? "bg-card" : "bg-muted/20"
+                  )}
+                  style={{ height: getRowHeight(group) }}
                 >
-                  {group.projects.map((project, pIdx) => {
-                    const { left, width, overflowRight } = getBarPosition(project);
-                    const yOffset = group.projects.length > 1
-                      ? barGap * 2 + pIdx * (barHeight + barGap)
-                      : (rowH - barHeight) / 2;
-                    const assignees = project.assigneeIds.map(id => getInstaller(id)).filter(Boolean) as Installer[];
-                    return (
-                      <DraggableBar
-                        key={project.id}
-                        left={left}
-                        width={width}
-                        top={yOffset}
-                        height={barHeight}
-                        colWidth={colWidth}
-                        projectStartDate={project.startDate}
-                        projectEndDate={project.endDate}
-                        className={cn(
-                          "rounded-md border-l-[3px] flex items-center px-2 cursor-grab active:cursor-grabbing transition-shadow hover:shadow-md z-10",
-                          statusBorderMap[project.status],
-                          statusColorMap[project.status],
-                          project.status === 'cancelled' && "opacity-60"
-                        )}
-                        onClick={() => onSelectProject(project)}
-                        onDragEnd={(newStart, newEnd) => handleBarDragEnd(project.id, newStart, newEnd)}
-                      >
-                        <span className={cn("text-[11px] font-medium truncate flex-1", project.status === 'cancelled' ? "text-muted-foreground" : "text-foreground")} style={{ lineHeight: `${barHeight}px` }}>
-                          {project.name}
-                        </span>
-                        {assignees.length > 1 && (
-                          <span className="ml-1 text-[10px] text-muted-foreground shrink-0">👥{assignees.length}</span>
-                        )}
-                        {assignees.length === 1 && (
-                          <span className="ml-1 text-[10px] text-muted-foreground shrink-0">🔧1</span>
-                        )}
-                        {overflowRight && (
-                          <span className="ml-1 text-xs font-bold text-foreground shrink-0">&raquo;</span>
-                        )}
-                      </DraggableBar>
-                    );
-                  })}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-foreground truncate">{group.client}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {group.projects.length} project{group.projects.length !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                  <div className="shrink-0">
+                    <span className={cn(
+                      "text-sm font-bold tabular-nums",
+                      group.activeCount > 0 ? "text-primary" : "text-muted-foreground"
+                    )}>
+                      {group.activeCount}
+                    </span>
+                  </div>
                 </div>
-              );
-            })}
+              ))}
+            </div>
+
+            {/* Timeline */}
+            <div className="flex-1 relative">
+              <GanttGrid days={days} colWidth={colWidth} totalHeight={totalHeight} todayStr={todayStr} />
+              {clientGroups.map((group, gIdx) => {
+                const rowH = getRowHeight(group);
+                return (
+                  <div
+                    key={group.client}
+                    className={cn("border-b border-gantt-grid relative", gIdx % 2 === 0 ? "" : "bg-muted/10")}
+                    style={{ height: rowH }}
+                  >
+                    {group.projects.map((project, pIdx) => {
+                      const { left, width, overflowRight } = getBarPosition(project);
+                      const yOffset = group.projects.length > 1
+                        ? barGap * 2 + pIdx * (barHeight + barGap)
+                        : (rowH - barHeight) / 2;
+                      const assignees = project.assigneeIds.map(id => getInstaller(id)).filter(Boolean) as Installer[];
+                      return (
+                        <DraggableBar
+                          key={project.id}
+                          left={left}
+                          width={width}
+                          top={yOffset}
+                          height={barHeight}
+                          colWidth={colWidth}
+                          projectStartDate={project.startDate}
+                          projectEndDate={project.endDate}
+                          className={cn(
+                            "rounded-md border-l-[3px] flex items-center px-2 cursor-grab active:cursor-grabbing transition-shadow hover:shadow-md z-10",
+                            statusBorderMap[project.status],
+                            statusColorMap[project.status],
+                            project.status === 'cancelled' && "opacity-60"
+                          )}
+                          onClick={() => onSelectProject(project)}
+                          onDragEnd={(newStart, newEnd) => handleBarDragEnd(project.id, newStart, newEnd)}
+                        >
+                          <span className={cn("text-[11px] font-medium truncate flex-1", project.status === 'cancelled' ? "text-muted-foreground" : "text-foreground")} style={{ lineHeight: `${barHeight}px` }}>
+                            {project.name}
+                          </span>
+                          {assignees.length > 1 && (
+                            <span className="ml-1 text-[10px] text-muted-foreground shrink-0">👥{assignees.length}</span>
+                          )}
+                          {assignees.length === 1 && (
+                            <span className="ml-1 text-[10px] text-muted-foreground shrink-0">🔧1</span>
+                          )}
+                          {overflowRight && (
+                            <span className="ml-1 text-xs font-bold text-foreground shrink-0">&raquo;</span>
+                          )}
+                        </DraggableBar>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
