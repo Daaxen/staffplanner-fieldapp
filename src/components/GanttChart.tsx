@@ -1,14 +1,15 @@
-import { useMemo, useState, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, LayoutList, Users } from 'lucide-react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, LayoutList, Users, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { projects as initialProjects, installers, type Project, type ProjectStatus } from '@/data/mockData';
 import ProjectDetailPanel from './ProjectDetailPanel';
 import ProjectsView from './gantt/ProjectsView';
 import InstallersView from './gantt/InstallersView';
+import ClientsView from './gantt/ClientsView';
 import StatusFilter from './gantt/StatusFilter';
 
 type ViewMode = 'day' | 'week' | 'month';
-type GanttMode = 'projects' | 'installers';
+type GanttMode = 'projects' | 'installers' | 'clients';
 
 const allStatuses: ProjectStatus[] = ['open', 'scheduled', 'in-progress', 'completed', 'on-hold', 'cancelled'];
 
