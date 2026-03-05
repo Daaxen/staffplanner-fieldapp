@@ -228,6 +228,18 @@ const GanttChart = () => {
           activeStatuses={activeStatuses}
           viewMode={viewMode}
         />
+      ) : ganttMode === 'clients' ? (
+        <ClientsView
+          projects={projectsList}
+          days={days}
+          colWidth={colWidth}
+          startDate={startDate}
+          todayStr={todayStr}
+          onSelectProject={setSelectedProject}
+          onUpdateProject={handleUpdateProject}
+          activeStatuses={activeStatuses}
+          viewMode={viewMode}
+        />
       ) : (
         <InstallersView
           projects={projectsList}
