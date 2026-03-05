@@ -29,6 +29,13 @@ export interface Project {
   description?: string;
 }
 
+const today = new Date();
+function d(offset: number) {
+  const date = new Date(today);
+  date.setDate(date.getDate() + offset);
+  return date.toISOString().split('T')[0];
+}
+
 export const installers: Installer[] = [
   { id: 'inst-1', name: 'Erik Lindberg', color: 1, type: 'own', absences: [
     { id: 'abs-1', type: 'vacation', startDate: d(8), endDate: d(12), label: 'Summer vacation' },
@@ -43,13 +50,6 @@ export const installers: Installer[] = [
     { id: 'abs-3', type: 'vacation', startDate: d(15), endDate: d(22), label: 'Vacation' },
   ] },
 ];
-
-const today = new Date();
-function d(offset: number) {
-  const date = new Date(today);
-  date.setDate(date.getDate() + offset);
-  return date.toISOString().split('T')[0];
-}
 
 export const projects: Project[] = [
   { id: 'proj-1', name: 'IKEA Barkarby Kitchen', client: 'IKEA', location: 'Barkarby', status: 'in-progress', assigneeId: 'inst-1', startDate: d(-2), endDate: d(3) },
