@@ -1,13 +1,12 @@
 import { X, MapPin, User, Calendar, Tag } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { type Project, type Installer, statusLabels, type ProjectStatus } from '@/data/mockData';
+import { type Project, type Installer, statusLabels, type ProjectStatus, installers } from '@/data/mockData';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const statusColorMap: Record<ProjectStatus, string> = {
   'open': 'bg-status-open/15 text-status-open',
   'scheduled': 'bg-status-scheduled/15 text-status-scheduled',
   'in-progress': 'bg-status-in-progress/15 text-status-in-progress',
-  'confirmed': 'bg-status-confirmed/15 text-status-confirmed',
   'completed': 'bg-status-completed/15 text-status-completed',
   'on-hold': 'bg-status-on-hold/15 text-status-on-hold',
   'cancelled': 'bg-status-cancelled/15 text-status-cancelled',
