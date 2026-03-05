@@ -33,10 +33,12 @@ const AppSidebar = ({ activeView, onViewChange, collapsed = false, onToggleColla
       collapsed ? "w-16" : "w-64"
     )}>
       {/* Logo */}
-      <div className="p-4 border-b border-sidebar-border flex items-center gap-3">
-        <div className="w-9 h-9 rounded-lg bg-sidebar-ring flex items-center justify-center shrink-0">
-          <Calendar className="w-5 h-5 text-sidebar-primary" />
-        </div>
+      <div className={cn("border-b border-sidebar-border flex items-center", collapsed ? "p-2 justify-center" : "p-4 gap-3")}>
+        {!collapsed && (
+          <div className="w-9 h-9 rounded-lg bg-sidebar-ring flex items-center justify-center shrink-0">
+            <Calendar className="w-5 h-5 text-sidebar-primary" />
+          </div>
+        )}
         {!collapsed && (
           <div className="min-w-0 flex-1">
             <h1 className="text-base font-semibold text-sidebar-primary">StaffPlanner</h1>
@@ -44,8 +46,8 @@ const AppSidebar = ({ activeView, onViewChange, collapsed = false, onToggleColla
           </div>
         )}
         {onToggleCollapse && (
-          <button onClick={onToggleCollapse} className="p-1.5 rounded-lg hover:bg-sidebar-accent transition-colors shrink-0">
-            {collapsed ? <PanelLeft className="w-4 h-4 text-sidebar-foreground/60" /> : <PanelLeftClose className="w-4 h-4 text-sidebar-foreground/60" />}
+          <button onClick={onToggleCollapse} className="p-2 rounded-lg hover:bg-sidebar-accent transition-colors shrink-0">
+            {collapsed ? <PanelLeft className="w-5 h-5 text-sidebar-foreground/60" /> : <PanelLeftClose className="w-4 h-4 text-sidebar-foreground/60" />}
           </button>
         )}
       </div>
