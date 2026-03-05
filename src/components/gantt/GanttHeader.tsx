@@ -77,7 +77,7 @@ const GanttHeader = ({ days, colWidth, headerHeight, todayStr, viewMode = 'week'
   }
 
   return (
-    <div className="sticky top-0 z-20 bg-gantt-header">
+    <div>
       {/* Week number row */}
       <div className="flex border-b border-border bg-gantt-header" style={{ height: 24 }}>
         {weekGroups.map((wg, i) => (
