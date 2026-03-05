@@ -93,15 +93,15 @@ const InstallersView = ({ projects, installers: allInstallers, days, colWidth, s
   };
 
   const getOccupancy = (inst: Installer, instProjects: Project[]) => {
-    let busyDays = 0;
+    let busySlots = 0;
     const totalDays = days.length;
     days.forEach(day => {
       const dayStr = day.toISOString().split('T')[0];
-      const hasProjOnDay = instProjects.some(p => dayStr >= p.startDate && dayStr <= p.endDate);
+      const projCount = instProjects.filter(p => dayStr >= p.startDate && dayStr <= p.endDate).length;
       const hasAbsenceOnDay = inst.absences.some(a => dayStr >= a.startDate && dayStr <= a.endDate);
-      if (hasProjOnDay || hasAbsenceOnDay) busyDays++;
+      busySlots += projCount + (hasAbsenceOnDay ? 1 : 0);
     });
-    return Math.round((busyDays / totalDays) * 100);
+    return Math.round((busySlots / totalDays) * 100);
   };
 
   const totalHeight = groups.length * rowHeight;
