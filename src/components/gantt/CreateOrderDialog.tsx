@@ -26,25 +26,6 @@ const generateProjectId = () => {
 const generateStopId = () => `ts-${Math.random().toString(36).slice(2, 8)}`;
 const generateGoodsId = () => `gi-${Math.random().toString(36).slice(2, 8)}`;
 
-interface GoodsItem {
-  id: string;
-  description?: string;
-  quantity?: number;
-  lengthCm?: number;
-  widthCm?: number;
-  heightCm?: number;
-  weightKg?: number;
-}
-
-interface TransportStop {
-  id: string;
-  type: 'pickup' | 'delivery';
-  address: string;
-  contactName?: string;
-  contactPhone?: string;
-  notes?: string;
-  requiresSignature?: boolean;
-}
 
 const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDialogProps) => {
   const projectId = useMemo(() => generateProjectId(), [open]);
