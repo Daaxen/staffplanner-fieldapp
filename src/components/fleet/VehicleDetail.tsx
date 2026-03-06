@@ -118,7 +118,10 @@ const VehicleDetail = ({
 
   const handleCompleteInspection = () => {
     if (!activeInspection) return;
-    const allChecked = activeInspection.checklist.every(c => c.checked);
+    const activeItemIds = new Set(activeChecklist.map(i => i.id));
+    const allChecked = activeInspection.checklist
+      .filter(c => activeItemIds.has(c.itemId))
+      .every(c => c.checked);
     if (!allChecked) {
       toast.error('All checklist items must be checked before completing the inspection.');
       return;
