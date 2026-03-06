@@ -36,6 +36,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
   const [client, setClient] = useState('');
   const [clientSuggestions, setClientSuggestions] = useState<string[]>([]);
   const [showClientSuggestions, setShowClientSuggestions] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
