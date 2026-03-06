@@ -63,6 +63,7 @@ export interface Project {
   estimatedHours?: number;
   isFlexOrder?: boolean;
   description?: string;
+  attachments?: Attachment[];
   installerDateOverrides?: Record<string, { startDate: string; endDate: string }>;
   // Transport-specific
   transportStops?: TransportStop[];
