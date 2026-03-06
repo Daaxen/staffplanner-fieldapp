@@ -26,6 +26,7 @@ const generateProjectId = () => {
 const generateStopId = () => `ts-${Math.random().toString(36).slice(2, 8)}`;
 const generateGoodsId = () => `gi-${Math.random().toString(36).slice(2, 8)}`;
 
+
 const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDialogProps) => {
   const projectId = useMemo(() => generateProjectId(), [open]);
   const [projectType, setProjectType] = useState<ProjectType>('installation');
@@ -155,7 +156,6 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
     setTransportStops(prev => {
       const lastDeliveryIdx = prev.length - 1;
       const newStop: TransportStop = { id: generateStopId(), type: 'delivery', address: '' };
-      // Insert before last delivery
       const copy = [...prev];
       copy.splice(lastDeliveryIdx, 0, { ...newStop, type: 'pickup' });
       return copy;
@@ -300,6 +300,108 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
             </div>
           )}
 
+          {/* Dates & Times */}
+          {projectType === 'transport' && (
+            <div className="grid grid-cols-1 gap-3">
+              <div className="grid gap-1.5">
+                <Label>Date and Time *</Label>
+                <div className="grid grid-cols-4 gap-3">
+                  <div className="grid gap-1.5">
+                    <Popover open={startOpen} onOpenChange={setStartOpen}>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className={cn("justify-start text-left font-normal text-xs px-2", !startDate && "text-muted-foreground")}>
+                          <CalendarIcon className="mr-1 h-3 w-3" />
+                          {startDate ? format(startDate, 'MMM d') : 'Pick'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar mode="single" selected={startDate} onSelect={(date) => { setStartDate(date); setStartOpen(false); }} initialFocus className="p-3 pointer-events-auto" />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className="text-xs px-2" />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Popover open={endOpen} onOpenChange={setEndOpen}>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className={cn("justify-start text-left font-normal text-xs px-2", !endDate && "text-muted-foreground")}>
+                          <CalendarIcon className="mr-1 h-3 w-3" />
+                          {endDate ? format(endDate, 'MMM d') : 'Pick'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar mode="single" selected={endDate} onSelect={(date) => { setEndDate(date); setEndOpen(false); }} disabled={(date) => startDate ? date < startDate : false} initialFocus className="p-3 pointer-events-auto" />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} className="text-xs px-2" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {projectType !== 'transport' && (
+            <div className="grid grid-cols-4 gap-3">
+              <div className="grid gap-1.5">
+                <Label>Earliest Start *</Label>
+                <Popover open={startOpen} onOpenChange={setStartOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("justify-start text-left font-normal text-xs px-2", !startDate && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-1 h-3 w-3" />
+                      {startDate ? format(startDate, 'MMM d') : 'Pick'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={startDate} onSelect={(date) => { setStartDate(date); setStartOpen(false); }} initialFocus className="p-3 pointer-events-auto" />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="grid gap-1.5">
+                <Label>Start Time</Label>
+                <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className="text-xs px-2" />
+              </div>
+              <div className="grid gap-1.5">
+                <Label>Deadline *</Label>
+                <Popover open={endOpen} onOpenChange={setEndOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("justify-start text-left font-normal text-xs px-2", !endDate && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-1 h-3 w-3" />
+                      {endDate ? format(endDate, 'MMM d') : 'Pick'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={endDate} onSelect={(date) => { setEndDate(date); setEndOpen(false); }} disabled={(date) => startDate ? date < startDate : false} initialFocus className="p-3 pointer-events-auto" />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="grid gap-1.5">
+                <Label>End Time</Label>
+                <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} className="text-xs px-2" />
+              </div>
+            </div>
+          )}
+
+          {/* Estimated hours & Flex order */}
+          <div className={cn("grid gap-3", projectType !== 'transport' ? "grid-cols-2" : "grid-cols-1")}>
+            {projectType !== 'transport' && (
+              <div className="grid gap-1.5">
+                <Label htmlFor="est-hours">Estimated Hours</Label>
+                <Input id="est-hours" type="number" min="0" step="0.5" placeholder="e.g. 8" value={estimatedHours} onChange={(e) => setEstimatedHours(e.target.value)} />
+              </div>
+            )}
+            <div className="grid gap-1.5">
+              <Label>&nbsp;</Label>
+              <label className="flex items-center gap-2 h-10 cursor-pointer">
+                <Checkbox checked={isFlexOrder} onCheckedChange={(checked) => setIsFlexOrder(!!checked)} />
+                <span className="text-sm">Flex Order</span>
+                <span className="text-xs text-muted-foreground">↔ Flexible within period</span>
+              </label>
+            </div>
+          </div>
+
           {/* Transport Stops */}
           {projectType === 'transport' && (
             <div className="grid gap-2">
@@ -317,13 +419,12 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
 
                   return (
                     <div key={stop.id} className="flex items-start gap-2 p-2.5">
-                      {/* Route indicator */}
                       <div className="flex flex-col items-center pt-1.5 shrink-0 w-5">
                         <div className={cn(
                           "w-3 h-3 rounded-full border-2 shrink-0",
                           isFirst ? "border-green-500 bg-green-500/20" :
-                          isLast ? "border-red-500 bg-red-500/20" :
-                          "border-amber-500 bg-amber-500/20"
+                            isLast ? "border-red-500 bg-red-500/20" :
+                              "border-amber-500 bg-amber-500/20"
                         )} />
                         {!isLast && <div className="w-0.5 h-6 bg-border mt-0.5" />}
                       </div>
@@ -342,41 +443,36 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
                             <option value="delivery">Delivery</option>
                           </select>
                         </div>
-                        <div className="relative">
-                          <MapPin className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
-                          <Input
-                            placeholder="Address..."
-                            className="h-8 text-xs pl-7"
-                            value={stop.address}
-                            onChange={(e) => updateStop(stop.id, { address: e.target.value })}
-                          />
+                        <div className="flex gap-1">
+                          <div className="relative flex-1">
+                            <MapPin className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
+                            <Input
+                              placeholder="Address..."
+                              className="h-8 text-xs pl-7"
+                              value={stop.address}
+                              onChange={(e) => updateStop(stop.id, { address: e.target.value })}
+                            />
+                          </div>
+                          {stop.address.trim() && (
+                            <a
+                              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(stop.address)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="shrink-0 h-8 w-8 flex items-center justify-center rounded border border-input bg-background hover:bg-accent transition-colors"
+                              title="Open in Google Maps"
+                            >
+                              <MapPin className="h-3.5 w-3.5 text-primary" />
+                            </a>
+                          )}
                         </div>
                         <div className="grid grid-cols-2 gap-2">
-                          <Input
-                            placeholder="Contact name"
-                            className="h-7 text-xs"
-                            value={stop.contactName || ''}
-                            onChange={(e) => updateStop(stop.id, { contactName: e.target.value })}
-                          />
-                          <Input
-                            placeholder="Phone"
-                            className="h-7 text-xs"
-                            value={stop.contactPhone || ''}
-                            onChange={(e) => updateStop(stop.id, { contactPhone: e.target.value })}
-                          />
+                          <Input placeholder="Contact name" className="h-7 text-xs" value={stop.contactName || ''} onChange={(e) => updateStop(stop.id, { contactName: e.target.value })} />
+                          <Input placeholder="Phone" className="h-7 text-xs" value={stop.contactPhone || ''} onChange={(e) => updateStop(stop.id, { contactPhone: e.target.value })} />
                         </div>
-                        <Input
-                          placeholder="Notes for this stop..."
-                          className="h-7 text-xs"
-                          value={stop.notes || ''}
-                          onChange={(e) => updateStop(stop.id, { notes: e.target.value })}
-                        />
+                        <Input placeholder="Notes for this stop..." className="h-7 text-xs" value={stop.notes || ''} onChange={(e) => updateStop(stop.id, { notes: e.target.value })} />
                         {stop.type === 'delivery' && (
                           <label className="flex items-center gap-2 cursor-pointer mt-0.5">
-                            <Checkbox
-                              checked={stop.requiresSignature ?? true}
-                              onCheckedChange={(checked) => updateStop(stop.id, { requiresSignature: !!checked })}
-                            />
+                            <Checkbox checked={stop.requiresSignature ?? true} onCheckedChange={(checked) => updateStop(stop.id, { requiresSignature: !!checked })} />
                             <PenTool className="h-3 w-3 text-muted-foreground" />
                             <span className="text-[10px] text-muted-foreground">Require digital signature on delivery</span>
                           </label>
@@ -414,131 +510,60 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
                 {goodsItems.map((item, idx) => (
                   <div key={item.id} className="p-2.5 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                        Colli {idx + 1}
-                      </span>
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Colli {idx + 1}</span>
                       {goodsItems.length > 1 && (
                         <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive" onClick={() => removeGoodsItem(item.id)}>
                           <Trash2 className="h-3 w-3" />
                         </Button>
                       )}
                     </div>
-                    <Input
-                      placeholder="Description of goods..."
-                      className="h-7 text-xs"
-                      value={item.description || ''}
-                      onChange={(e) => updateGoodsItem(item.id, { description: e.target.value })}
-                    />
+                    <Input placeholder="Description of goods..." className="h-7 text-xs" value={item.description || ''} onChange={(e) => updateGoodsItem(item.id, { description: e.target.value })} />
                     <div className="grid grid-cols-5 gap-2">
                       <div className="grid gap-0.5">
                         <span className="text-[9px] text-muted-foreground">Pcs</span>
-                        <Input
-                          type="number" min="0" placeholder="0"
-                          className="h-7 text-xs"
-                          value={item.quantity ?? ''}
-                          onChange={(e) => updateGoodsItem(item.id, { quantity: e.target.value ? parseInt(e.target.value) : undefined })}
-                        />
+                        <Input type="number" min="0" placeholder="0" className="h-7 text-xs" value={item.quantity ?? ''} onChange={(e) => updateGoodsItem(item.id, { quantity: e.target.value ? parseInt(e.target.value) : undefined })} />
                       </div>
                       <div className="grid gap-0.5">
                         <span className="text-[9px] text-muted-foreground">L (cm)</span>
-                        <Input
-                          type="number" min="0" placeholder="0"
-                          className="h-7 text-xs"
-                          value={item.lengthCm ?? ''}
-                          onChange={(e) => updateGoodsItem(item.id, { lengthCm: e.target.value ? parseInt(e.target.value) : undefined })}
-                        />
+                        <Input type="number" min="0" placeholder="0" className="h-7 text-xs" value={item.lengthCm ?? ''} onChange={(e) => updateGoodsItem(item.id, { lengthCm: e.target.value ? parseInt(e.target.value) : undefined })} />
                       </div>
                       <div className="grid gap-0.5">
                         <span className="text-[9px] text-muted-foreground">W (cm)</span>
-                        <Input
-                          type="number" min="0" placeholder="0"
-                          className="h-7 text-xs"
-                          value={item.widthCm ?? ''}
-                          onChange={(e) => updateGoodsItem(item.id, { widthCm: e.target.value ? parseInt(e.target.value) : undefined })}
-                        />
+                        <Input type="number" min="0" placeholder="0" className="h-7 text-xs" value={item.widthCm ?? ''} onChange={(e) => updateGoodsItem(item.id, { widthCm: e.target.value ? parseInt(e.target.value) : undefined })} />
                       </div>
                       <div className="grid gap-0.5">
                         <span className="text-[9px] text-muted-foreground">H (cm)</span>
-                        <Input
-                          type="number" min="0" placeholder="0"
-                          className="h-7 text-xs"
-                          value={item.heightCm ?? ''}
-                          onChange={(e) => updateGoodsItem(item.id, { heightCm: e.target.value ? parseInt(e.target.value) : undefined })}
-                        />
+                        <Input type="number" min="0" placeholder="0" className="h-7 text-xs" value={item.heightCm ?? ''} onChange={(e) => updateGoodsItem(item.id, { heightCm: e.target.value ? parseInt(e.target.value) : undefined })} />
                       </div>
                       <div className="grid gap-0.5">
                         <span className="text-[9px] text-muted-foreground">Kg</span>
-                        <Input
-                          type="number" min="0" step="0.1" placeholder="0"
-                          className="h-7 text-xs"
-                          value={item.weightKg ?? ''}
-                          onChange={(e) => updateGoodsItem(item.id, { weightKg: e.target.value ? parseFloat(e.target.value) : undefined })}
-                        />
+                        <Input type="number" min="0" step="0.1" placeholder="0" className="h-7 text-xs" value={item.weightKg ?? ''} onChange={(e) => updateGoodsItem(item.id, { weightKg: e.target.value ? parseFloat(e.target.value) : undefined })} />
                       </div>
                     </div>
                   </div>
-                ))}
+                ))
+                /* Totals row */
+                }
+                {(() => {
+                  const totalPcs = goodsItems.reduce((sum, g) => sum + (g.quantity || 0), 0);
+                  const totalWeight = goodsItems.reduce((sum, g) => sum + (g.weightKg || 0), 0);
+                  const totalVolume = goodsItems.reduce((sum, g) => {
+                    const l = g.lengthCm || 0; const w = g.widthCm || 0; const h = g.heightCm || 0;
+                    return sum + (l * w * h) / 1000000;
+                  }, 0);
+                  if (totalPcs === 0 && totalWeight === 0 && totalVolume === 0) return null;
+                  return (
+                    <div className="px-2.5 py-2 bg-muted/40 flex items-center gap-4 text-xs">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Totals</span>
+                      {totalPcs > 0 && <span className="text-foreground font-medium">{totalPcs} pcs</span>}
+                      {totalWeight > 0 && <span className="text-foreground font-medium">{totalWeight.toFixed(1)} kg</span>}
+                      {totalVolume > 0 && <span className="text-foreground font-medium">{totalVolume.toFixed(3)} m³</span>}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           )}
-
-          {/* Dates & Times */}
-          <div className="grid grid-cols-4 gap-3">
-            <div className="grid gap-1.5">
-              <Label>Earliest Start *</Label>
-              <Popover open={startOpen} onOpenChange={setStartOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn("justify-start text-left font-normal text-xs px-2", !startDate && "text-muted-foreground")}>
-                    <CalendarIcon className="mr-1 h-3 w-3" />
-                    {startDate ? format(startDate, 'MMM d') : 'Pick'}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={startDate} onSelect={(date) => { setStartDate(date); setStartOpen(false); }} initialFocus className="p-3 pointer-events-auto" />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="grid gap-1.5">
-              <Label>Start Time</Label>
-              <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className="text-xs px-2" />
-            </div>
-            <div className="grid gap-1.5">
-              <Label>Deadline *</Label>
-              <Popover open={endOpen} onOpenChange={setEndOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn("justify-start text-left font-normal text-xs px-2", !endDate && "text-muted-foreground")}>
-                    <CalendarIcon className="mr-1 h-3 w-3" />
-                    {endDate ? format(endDate, 'MMM d') : 'Pick'}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={endDate} onSelect={(date) => { setEndDate(date); setEndOpen(false); }} disabled={(date) => startDate ? date < startDate : false} initialFocus className="p-3 pointer-events-auto" />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="grid gap-1.5">
-              <Label>End Time</Label>
-              <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} className="text-xs px-2" />
-            </div>
-          </div>
-
-          {/* Estimated hours & Flex order */}
-          <div className={cn("grid gap-3", projectType !== 'transport' ? "grid-cols-2" : "grid-cols-1")}>
-            {projectType !== 'transport' && (
-              <div className="grid gap-1.5">
-                <Label htmlFor="est-hours">Estimated Hours</Label>
-                <Input id="est-hours" type="number" min="0" step="0.5" placeholder="e.g. 8" value={estimatedHours} onChange={(e) => setEstimatedHours(e.target.value)} />
-              </div>
-            )}
-            <div className="grid gap-1.5">
-              <Label>&nbsp;</Label>
-              <label className="flex items-center gap-2 h-10 cursor-pointer">
-                <Checkbox checked={isFlexOrder} onCheckedChange={(checked) => setIsFlexOrder(!!checked)} />
-                <span className="text-sm">Flex Order</span>
-                <span className="text-xs text-muted-foreground">↔ Flexible within period</span>
-              </label>
-            </div>
-          </div>
 
           {/* Assign Installers */}
           <div className="grid gap-1.5">
