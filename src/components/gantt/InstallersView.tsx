@@ -83,10 +83,9 @@ const InstallersView = ({
       });
     });
 
+    // Always show unassigned row as drop target
     const unassigned = projects.filter(p => p.assigneeIds.length === 0 && activeStatuses.has(p.status));
-    if (unassigned.length > 0) {
-      map.push({ installer: null, projects: unassigned });
-    }
+    map.push({ installer: null, projects: unassigned });
 
     return map;
   }, [projects, allInstallers, activeStatuses]);
