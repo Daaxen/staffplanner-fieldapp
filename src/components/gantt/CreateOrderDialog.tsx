@@ -1,10 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
@@ -20,19 +19,19 @@ interface CreateOrderDialogProps {
 }
 
 const generateProjectId = () => {
-  const now = new Date();
-  const year = now.getFullYear().toString().slice(-2);
-  const seq = Math.floor(Math.random() * 9000) + 1000;
-  return `P${year}-${seq}`;
+  const seq = Math.floor(Math.random() * 90000) + 10000;
+  return `P-${seq}`;
 };
 
 const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDialogProps) => {
+  const projectId = useMemo(() => generateProjectId(), [open]);
   const [name, setName] = useState('');
   const [projectNumber, setProjectNumber] = useState('');
   const [client, setClient] = useState('');
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [startTime, setStartTime] = useState('08:00');
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [selectedInstallers, setSelectedInstallers] = useState<string[]>([]);
   const [startOpen, setStartOpen] = useState(false);
@@ -45,6 +44,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
     setLocation('');
     setDescription('');
     setStartDate(undefined);
+    setStartTime('08:00');
     setEndDate(undefined);
     setSelectedInstallers([]);
   };
@@ -54,11 +54,10 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
 
     const status: ProjectStatus = selectedInstallers.length > 0 ? 'scheduled' : 'open';
 
-    const generatedId = generateProjectId();
     const project: Project = {
-      id: generatedId,
+      id: projectId,
       name,
-      projectNumber: projectNumber || generatedId,
+      projectNumber: projectNumber || undefined,
       client,
       location,
       status,
@@ -85,11 +84,14 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">New Project</DialogTitle>
+          <div className="flex items-center gap-3">
+            <DialogTitle className="text-lg font-semibold">New Project</DialogTitle>
+            <span className="text-xs font-mono px-2 py-0.5 rounded bg-muted text-muted-foreground">{projectId}</span>
+          </div>
         </DialogHeader>
 
         <div className="grid gap-4 py-2">
-          {/* Project Name & Number */}
+          {/* Project Name & PO Number */}
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
               <Label htmlFor="order-name">Project Name *</Label>
@@ -104,7 +106,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
               <Label htmlFor="order-number">Project Number</Label>
               <Input
                 id="order-number"
-                placeholder="Auto-generated"
+                placeholder="e.g. Client PO number"
                 value={projectNumber}
                 onChange={(e) => setProjectNumber(e.target.value)}
               />
@@ -133,10 +135,10 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
             </div>
           </div>
 
-          {/* Date Range */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Dates: Earliest Start + Start Time + Deadline */}
+          <div className="grid grid-cols-3 gap-3">
             <div className="grid gap-1.5">
-              <Label>Start Date *</Label>
+              <Label>Earliest Start *</Label>
               <Popover open={startOpen} onOpenChange={setStartOpen}>
                 <PopoverTrigger asChild>
                   <Button
@@ -156,12 +158,21 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
                     selected={startDate}
                     onSelect={(date) => { setStartDate(date); setStartOpen(false); }}
                     initialFocus
+                    className={cn("p-3 pointer-events-auto")}
                   />
                 </PopoverContent>
               </Popover>
             </div>
             <div className="grid gap-1.5">
-              <Label>End Date *</Label>
+              <Label>Start Time</Label>
+              <Input
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Deadline *</Label>
               <Popover open={endOpen} onOpenChange={setEndOpen}>
                 <PopoverTrigger asChild>
                   <Button
@@ -182,6 +193,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
                     onSelect={(date) => { setEndDate(date); setEndOpen(false); }}
                     disabled={(date) => startDate ? date < startDate : false}
                     initialFocus
+                    className={cn("p-3 pointer-events-auto")}
                   />
                 </PopoverContent>
               </Popover>
@@ -228,7 +240,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={!isValid}>
-            Create Order
+            Create Project
           </Button>
         </DialogFooter>
       </DialogContent>
