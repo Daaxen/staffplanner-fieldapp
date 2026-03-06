@@ -80,6 +80,8 @@ export default {
           header: "hsl(var(--gantt-header))",
           grid: "hsl(var(--gantt-grid))",
           today: "hsl(var(--gantt-today))",
+          holiday: "hsl(var(--gantt-holiday))",
+          "week-border": "hsl(var(--gantt-week-border))",
         },
       },
       borderRadius: {
