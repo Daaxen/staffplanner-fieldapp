@@ -184,7 +184,9 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
       );
       const project = updated.find(p => p.id === projectId);
       if (project && project.assigneeIds.length > 0) {
-        trackChange(projectId, project.name, 'changed', project.assigneeIds);
+        const newStatus = updates.status;
+        const isCancelled = newStatus === 'cancelled' || newStatus === 'on-hold';
+        trackChange(projectId, project.name, isCancelled ? 'cancelled' : 'changed', project.assigneeIds);
       }
       return updated;
     });
