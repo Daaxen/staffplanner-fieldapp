@@ -85,7 +85,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">Create New Order</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">New Project</DialogTitle>
         </DialogHeader>
 
         <div className="grid gap-4 py-2">
