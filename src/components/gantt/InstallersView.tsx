@@ -229,7 +229,14 @@ const InstallersView = ({
     if (dropClientY != null && timelineRef.current) {
       const timelineRect = timelineRef.current.getBoundingClientRect();
       const relativeY = dropClientY - timelineRect.top;
-      const targetRowIdx = Math.floor(relativeY / rowHeight);
+      // Accumulate row heights to find target
+      let accH = 0;
+      let targetRowIdx = -1;
+      for (let i = 0; i < groups.length; i++) {
+        accH += getRowHeight(groupLayouts[i]?.laneCount ?? 1);
+        if (relativeY < accH) { targetRowIdx = i; break; }
+      }
+      if (targetRowIdx === -1) targetRowIdx = groups.length - 1;
       
       if (targetRowIdx >= 0 && targetRowIdx < groups.length) {
         const targetGroup = groups[targetRowIdx];
