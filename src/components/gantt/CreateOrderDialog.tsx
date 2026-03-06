@@ -523,11 +523,13 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
           </div>
 
           {/* Estimated hours & Flex order */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-1.5">
-              <Label htmlFor="est-hours">Estimated Hours</Label>
-              <Input id="est-hours" type="number" min="0" step="0.5" placeholder="e.g. 8" value={estimatedHours} onChange={(e) => setEstimatedHours(e.target.value)} />
-            </div>
+          <div className={cn("grid gap-3", projectType !== 'transport' ? "grid-cols-2" : "grid-cols-1")}>
+            {projectType !== 'transport' && (
+              <div className="grid gap-1.5">
+                <Label htmlFor="est-hours">Estimated Hours</Label>
+                <Input id="est-hours" type="number" min="0" step="0.5" placeholder="e.g. 8" value={estimatedHours} onChange={(e) => setEstimatedHours(e.target.value)} />
+              </div>
+            )}
             <div className="grid gap-1.5">
               <Label>&nbsp;</Label>
               <label className="flex items-center gap-2 h-10 cursor-pointer">
