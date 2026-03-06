@@ -29,6 +29,7 @@ const GanttChart = () => {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [projectsList, setProjectsList] = useState<Project[]>(initialProjects);
   const [activeStatuses, setActiveStatuses] = useState<Set<ProjectStatus>>(new Set(allStatuses));
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const { days, startDate } = useMemo(() => {
     const today = new Date();
