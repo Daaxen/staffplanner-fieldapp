@@ -344,7 +344,7 @@ const InstallersView = ({
                       "flex items-center gap-3 px-4 border-b border-border",
                       idx % 2 === 0 ? "bg-card" : "bg-muted/20"
                     )}
-                    style={{ height: rowHeight }}
+                    style={{ height: getRowHeight(groupLayouts[idx]?.laneCount ?? 1) }}
                     onDragOver={inst ? handleDragOver : undefined}
                     onDrop={inst ? (e) => handleDrop(e, inst.id) : undefined}
                   >
