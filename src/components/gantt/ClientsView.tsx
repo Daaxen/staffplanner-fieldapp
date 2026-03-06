@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
-import { type Project, type Installer, type ProjectStatus, installers } from '@/data/mockData';
+import { type Project, type Installer, type ProjectStatus, installers, projectTypeIcons } from '@/data/mockData';
 import GanttHeader from './GanttHeader';
 import GanttGrid from './GanttGrid';
 import DraggableBar from './DraggableBar';

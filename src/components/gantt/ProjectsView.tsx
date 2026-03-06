@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
-import { type Project, type Installer, type ProjectStatus, installers } from '@/data/mockData';
+import { type Project, type Installer, type ProjectStatus, installers, projectTypeIcons } from '@/data/mockData';
 import { ArrowUpDown, Filter } from 'lucide-react';
 import GanttHeader from './GanttHeader';
 import GanttGrid from './GanttGrid';

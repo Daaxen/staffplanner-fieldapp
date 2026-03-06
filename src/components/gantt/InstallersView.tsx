@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { type Project, type Installer, type ProjectStatus } from '@/data/mockData';
+import { type Project, type Installer, type ProjectStatus, projectTypeIcons } from '@/data/mockData';
 import GanttHeader from './GanttHeader';
 import GanttGrid from './GanttGrid';
 import OrderBox from './OrderBox';
