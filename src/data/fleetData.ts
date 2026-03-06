@@ -107,8 +107,8 @@ export const inspectionChecklist: InspectionChecklistItem[] = [
   // Mechanical
   { id: 'mech-1', label: 'Brakes responsive (no unusual sounds)', category: 'mechanical' },
   { id: 'mech-2', label: 'Steering smooth (no play)', category: 'mechanical' },
-  { id: 'mech-3', label: 'No unusual engine noises', category: 'mechanical' },
-  { id: 'mech-4', label: 'Exhaust — no excessive smoke', category: 'mechanical' },
+  { id: 'mech-3', label: 'No unusual engine noises', category: 'mechanical', excludeFuelTypes: ['electric'] },
+  { id: 'mech-4', label: 'Exhaust — no excessive smoke', category: 'mechanical', excludeFuelTypes: ['electric'] },
   // Safety
   { id: 'safe-1', label: 'First aid kit present', category: 'safety' },
   { id: 'safe-2', label: 'Warning triangle present', category: 'safety' },
