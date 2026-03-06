@@ -332,12 +332,22 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
                 value={client}
                 onChange={(e) => handleClientChange(e.target.value)}
                 onFocus={() => { if (client.trim()) handleClientChange(client); }}
+                onKeyDown={handleClientKeyDown}
                 autoComplete="off"
               />
               {showClientSuggestions && clientSuggestions.length > 0 && (
                 <div className="absolute top-full left-0 right-0 z-50 mt-1 border border-border rounded-md bg-popover shadow-md max-h-[140px] overflow-y-auto">
-                  {clientSuggestions.map(c => (
-                    <button key={c} type="button" className="w-full text-left px-3 py-1.5 text-sm hover:bg-accent transition-colors" onClick={() => selectClient(c)}>
+                  {clientSuggestions.map((c, idx) => (
+                    <button
+                      key={c}
+                      type="button"
+                      className={cn(
+                        "w-full text-left px-3 py-1.5 text-sm transition-colors",
+                        idx === highlightedIndex ? "bg-accent text-accent-foreground" : "hover:bg-accent"
+                      )}
+                      onClick={() => selectClient(c)}
+                      onMouseEnter={() => setHighlightedIndex(idx)}
+                    >
                       {c}
                     </button>
                   ))}
