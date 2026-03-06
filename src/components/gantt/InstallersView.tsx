@@ -58,7 +58,10 @@ interface InstallersViewProps {
   viewMode?: 'day' | 'week' | 'month';
 }
 
-const rowHeight = 72;
+const baseRowHeight = 72;
+const barH = 28;
+const barGap = 4;
+const barPadding = 6;
 const headerHeight = 60;
 const labelWidth = 280;
 
