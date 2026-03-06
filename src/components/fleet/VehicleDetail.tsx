@@ -490,7 +490,7 @@ const VehicleDetail = ({
                 <span>Due: {activeInspection.dueDate}</span>
               </div>
               {Object.entries(inspectionCategoryLabels).map(([catKey, catLabel]) => {
-                const items = inspectionChecklist.filter(i => i.category === catKey);
+                const items = activeChecklist.filter(i => i.category === catKey);
                 if (items.length === 0) return null;
                 return (
                   <div key={catKey} className="mb-4">
