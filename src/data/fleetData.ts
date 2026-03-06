@@ -134,6 +134,7 @@ export const inspectionCategoryLabels: Record<string, string> = {
   mechanical: 'Mechanical',
   safety: 'Safety Equipment',
   fluids: 'Fluids & Levels',
+  cargo: 'Cargo Equipment',
 };
 
 /** Returns the checklist items applicable to a given fuel type */
