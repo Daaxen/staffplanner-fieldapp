@@ -36,6 +36,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
   const [client, setClient] = useState('');
   const [clientSuggestions, setClientSuggestions] = useState<string[]>([]);
   const [showClientSuggestions, setShowClientSuggestions] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
@@ -137,6 +138,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
 
   const handleClientChange = (value: string) => {
     setClient(value);
+    setHighlightedIndex(-1);
     if (value.trim()) {
       const filtered = clients.filter(c => c.toLowerCase().includes(value.toLowerCase()));
       setClientSuggestions(filtered);
@@ -149,6 +151,24 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
   const selectClient = (c: string) => {
     setClient(c);
     setShowClientSuggestions(false);
+    setHighlightedIndex(-1);
+  };
+
+  const handleClientKeyDown = (e: React.KeyboardEvent) => {
+    if (!showClientSuggestions || clientSuggestions.length === 0) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlightedIndex(prev => (prev + 1) % clientSuggestions.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightedIndex(prev => (prev <= 0 ? clientSuggestions.length - 1 : prev - 1));
+    } else if (e.key === 'Enter' && highlightedIndex >= 0) {
+      e.preventDefault();
+      selectClient(clientSuggestions[highlightedIndex]);
+    } else if (e.key === 'Escape') {
+      setShowClientSuggestions(false);
+      setHighlightedIndex(-1);
+    }
   };
 
   const handleSubmit = () => {
@@ -312,12 +332,22 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
                 value={client}
                 onChange={(e) => handleClientChange(e.target.value)}
                 onFocus={() => { if (client.trim()) handleClientChange(client); }}
+                onKeyDown={handleClientKeyDown}
                 autoComplete="off"
               />
               {showClientSuggestions && clientSuggestions.length > 0 && (
                 <div className="absolute top-full left-0 right-0 z-50 mt-1 border border-border rounded-md bg-popover shadow-md max-h-[140px] overflow-y-auto">
-                  {clientSuggestions.map(c => (
-                    <button key={c} type="button" className="w-full text-left px-3 py-1.5 text-sm hover:bg-accent transition-colors" onClick={() => selectClient(c)}>
+                  {clientSuggestions.map((c, idx) => (
+                    <button
+                      key={c}
+                      type="button"
+                      className={cn(
+                        "w-full text-left px-3 py-1.5 text-sm transition-colors",
+                        idx === highlightedIndex ? "bg-accent text-accent-foreground" : "hover:bg-accent"
+                      )}
+                      onClick={() => selectClient(c)}
+                      onMouseEnter={() => setHighlightedIndex(idx)}
+                    >
                       {c}
                     </button>
                   ))}
