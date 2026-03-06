@@ -632,17 +632,49 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
             </div>
           )}
 
-          {/* Assign Installers */}
+          {/* Assign Installers with suitability */}
           <div className="grid gap-1.5">
             <Label>{projectType === 'transport' ? 'Assign Drivers' : 'Assign Installers'}</Label>
-            <div className="border border-input rounded-md p-3 grid gap-2 max-h-[140px] overflow-y-auto">
-              {installers.map((inst) => (
-                <label key={inst.id} className="flex items-center gap-2 cursor-pointer text-sm hover:bg-accent rounded px-1 py-0.5 transition-colors">
-                  <Checkbox checked={selectedInstallers.includes(inst.id)} onCheckedChange={() => toggleInstaller(inst.id)} />
-                  <span>{inst.name}</span>
-                  <span className="text-xs text-muted-foreground ml-auto">{inst.type === 'sub-vendor' ? 'Sub-vendor' : 'Own'}</span>
-                </label>
-              ))}
+            <div className="border border-input rounded-md p-3 grid gap-2 max-h-[180px] overflow-y-auto">
+              <TooltipProvider>
+                {installers
+                  .map(inst => ({ inst, suit: getInstallerSuitability(inst) }))
+                  .sort((a, b) => (b.suit?.score ?? 50) - (a.suit?.score ?? 50))
+                  .map(({ inst, suit }) => (
+                  <label key={inst.id} className="flex items-center gap-2 cursor-pointer text-sm hover:bg-accent rounded px-1 py-0.5 transition-colors">
+                    <Checkbox checked={selectedInstallers.includes(inst.id)} onCheckedChange={() => toggleInstaller(inst.id)} disabled={suit?.score === 0} />
+                    <span className={cn(suit?.score === 0 && "line-through text-muted-foreground")}>{inst.name}</span>
+                    {suit && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className={cn("text-[10px] font-medium ml-1", suit.color)}>
+                            {suit.score === 0 ? (
+                              <XCircle className="h-3.5 w-3.5 inline" />
+                            ) : suit.score >= 70 ? (
+                              <CheckCircle2 className="h-3.5 w-3.5 inline" />
+                            ) : (
+                              <AlertTriangle className="h-3.5 w-3.5 inline" />
+                            )}
+                            {' '}{suit.label}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="left" className="text-xs">
+                          {suit.score === 0 ? (
+                            <span>Absent during project period</span>
+                          ) : (
+                            <div className="space-y-0.5">
+                              <div>Score: {suit.score}%</div>
+                              <div>Projects in period: {suit.occupancy}</div>
+                              {suit.proximity !== undefined && <div>Distance: ~{suit.proximity} km</div>}
+                            </div>
+                          )}
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                    <span className="text-xs text-muted-foreground ml-auto">{inst.type === 'sub-vendor' ? 'Sub' : 'Own'}</span>
+                  </label>
+                ))}
+              </TooltipProvider>
             </div>
           </div>
 
@@ -650,6 +682,56 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
           <div className="grid gap-1.5">
             <Label htmlFor="order-desc">Description</Label>
             <Textarea id="order-desc" placeholder="Optional notes..." value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
+          </div>
+
+          {/* Attachments */}
+          <div className="grid gap-1.5">
+            <div className="flex items-center justify-between">
+              <Label className="flex items-center gap-1.5">
+                <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
+                Attachments
+              </Label>
+              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => fileInputRef.current?.click()}>
+                <Plus className="h-3 w-3" /> Add Files
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+                className="hidden"
+                onChange={handleFileSelect}
+              />
+            </div>
+            {attachments.length > 0 && (
+              <div className="border border-input rounded-md divide-y divide-border">
+                {attachments.map(att => (
+                  <div key={att.id} className="flex items-center gap-2 px-2.5 py-1.5">
+                    {att.type.startsWith('image/') ? (
+                      <Image className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    ) : (
+                      <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    )}
+                    <span className="text-xs text-foreground truncate flex-1">{att.name}</span>
+                    <span className="text-[10px] text-muted-foreground shrink-0">{formatFileSize(att.size)}</span>
+                    <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive shrink-0" onClick={() => removeAttachment(att.id)}>
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {attachments.length === 0 && (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-border rounded-md py-4 flex flex-col items-center gap-1 text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors cursor-pointer"
+              >
+                <Paperclip className="h-5 w-5" />
+                <span className="text-xs">Drop files or click to attach</span>
+                <span className="text-[10px]">Images, PDFs, documents</span>
+              </button>
+            )}
           </div>
         </div>
 
