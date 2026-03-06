@@ -46,7 +46,10 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
   const [pendingChanges, setPendingChanges] = useState<DispatchChange[]>([]);
   const lastDispatchedState = useRef<string>(JSON.stringify(initialProjects));
 
-  // Track changes by comparing current state to last dispatched state
+  useEffect(() => {
+    onPendingChangesCount?.(pendingChanges.length);
+  }, [pendingChanges.length, onPendingChangesCount]);
+
   const trackChange = useCallback((projectId: string, projectName: string, type: 'new' | 'changed', affectedInstallerIds: string[]) => {
     setPendingChanges(prev => {
       const existing = prev.find(c => c.projectId === projectId);
