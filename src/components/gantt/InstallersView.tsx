@@ -451,8 +451,7 @@ const InstallersView = ({
         </div>
       </div>
 
-      {/* OrderBox - only shows for installers view with internal installers */}
-      <OrderBox projects={projects} onSelectProject={onSelectProject} onUnassignProject={onUnassignProject} />
+      {/* Unassigned row is now part of the gantt grid above */}
 
       <DateChangeDialog
         open={!!pendingChange}
