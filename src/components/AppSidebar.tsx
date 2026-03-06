@@ -14,7 +14,6 @@ const navItems = [
   { id: 'planner', label: 'Planner', icon: Calendar },
   { id: 'orders', label: 'Orders', icon: ClipboardList },
   { id: 'fleet', label: 'Fleet', icon: Car },
-  { id: 'dispatch', label: 'Dispatch', icon: Send },
   { id: 'reports', label: 'Reports', icon: FileText },
 ];
 
