@@ -329,6 +329,7 @@ const InstallersView = ({
                           colWidth={colWidth}
                           projectStartDate={dates.startDate}
                           projectEndDate={dates.endDate}
+                          allowVerticalDrag
                           className={cn(
                             "rounded-md border-l-[3px] flex items-center px-2 cursor-grab active:cursor-grabbing transition-shadow hover:shadow-md z-10",
                             statusBorderMap[project.status],
@@ -336,7 +337,7 @@ const InstallersView = ({
                             project.status === 'cancelled' && "opacity-60"
                           )}
                           onClick={() => onSelectProject(project)}
-                          onDragEnd={(newStart, newEnd) => handleBarDragEnd(project.id, newStart, newEnd, inst?.id)}
+                          onDragEnd={(newStart, newEnd, dropClientY) => handleBarDragEnd(project.id, newStart, newEnd, inst?.id, dropClientY)}
                         >
                           <span className={cn("text-[11px] font-medium truncate flex-1", project.status === 'cancelled' ? "text-muted-foreground" : "text-foreground")} style={{ lineHeight: `${barHeight}px` }}>{project.name}</span>
                           {project.assigneeIds.length > 1 && (
