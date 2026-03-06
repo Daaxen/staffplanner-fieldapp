@@ -220,7 +220,7 @@ const InstallersView = ({
 
     // Same-row drag: check current installer
     if (installerId) {
-      const inst = installers.find(i => i.id === installerId);
+      const inst = allInstallers.find(i => i.id === installerId);
       if (inst && checkAndWarn(inst)) return;
     }
     
