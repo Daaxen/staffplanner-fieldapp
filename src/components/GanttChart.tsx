@@ -200,7 +200,7 @@ const GanttChart = () => {
   const handleCreateOrder = useCallback((project: Project) => {
     setProjectsList(prev => [...prev, project]);
     if (project.assigneeIds.length > 0) {
-      trackChange(project.id, project.projectName, 'new', project.assigneeIds);
+      trackChange(project.id, project.name, 'new', project.assigneeIds);
     }
   }, [trackChange]);
 
