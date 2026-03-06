@@ -177,7 +177,7 @@ const InstallersView = ({
     return Math.round((busySlots / totalDays) * 100);
   };
 
-  const totalHeight = groups.length * rowHeight;
+  const totalHeight = groups.reduce((sum, _, i) => sum + getRowHeight(groupLayouts[i]?.laneCount ?? 1), 0);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
