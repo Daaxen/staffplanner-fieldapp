@@ -385,8 +385,8 @@ const InstallersView = ({
                     key={inst?.id ?? 'unassigned'}
                     className={cn("border-b border-gantt-grid relative", gIdx % 2 === 0 ? "" : "bg-muted/10")}
                     style={{ height: getRowHeight(groupLayouts[gIdx]?.laneCount ?? 1) }}
-                    onDragOver={inst ? handleDragOver : undefined}
-                    onDrop={inst ? (e) => handleDrop(e, inst.id) : undefined}
+                    onDragOver={handleDragOver}
+                    onDrop={inst ? (e) => handleDrop(e, inst.id) : (e) => { e.preventDefault(); const projectId = e.dataTransfer.getData('projectId'); if (projectId) onUnassignProject(projectId); }}
                   >
                     {/* Absence bars */}
                     {inst?.absences.map(absence => {
