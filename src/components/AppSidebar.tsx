@@ -1,4 +1,4 @@
-import { Calendar, Users, LayoutDashboard, ClipboardList, Send, FileText, Settings, PanelLeftClose, PanelLeft } from 'lucide-react';
+import { Calendar, Users, LayoutDashboard, ClipboardList, Send, FileText, Settings, PanelLeftClose, PanelLeft, Car } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { installers } from '@/data/mockData';
 
