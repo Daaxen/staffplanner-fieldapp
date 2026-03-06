@@ -54,9 +54,11 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
 
     const status: ProjectStatus = selectedInstallers.length > 0 ? 'scheduled' : 'open';
 
+    const generatedId = generateProjectId();
     const project: Project = {
-      id: `proj-${Date.now()}`,
+      id: generatedId,
       name,
+      projectNumber: projectNumber || generatedId,
       client,
       location,
       status,
