@@ -19,8 +19,16 @@ interface CreateOrderDialogProps {
   onCreateOrder: (project: Project) => void;
 }
 
+const generateProjectId = () => {
+  const now = new Date();
+  const year = now.getFullYear().toString().slice(-2);
+  const seq = Math.floor(Math.random() * 9000) + 1000;
+  return `P${year}-${seq}`;
+};
+
 const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDialogProps) => {
   const [name, setName] = useState('');
+  const [projectNumber, setProjectNumber] = useState('');
   const [client, setClient] = useState('');
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
@@ -32,6 +40,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
 
   const resetForm = () => {
     setName('');
+    setProjectNumber('');
     setClient('');
     setLocation('');
     setDescription('');
@@ -45,9 +54,11 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
 
     const status: ProjectStatus = selectedInstallers.length > 0 ? 'scheduled' : 'open';
 
+    const generatedId = generateProjectId();
     const project: Project = {
-      id: `proj-${Date.now()}`,
+      id: generatedId,
       name,
+      projectNumber: projectNumber || generatedId,
       client,
       location,
       status,
@@ -74,19 +85,30 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">Create New Order</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">New Project</DialogTitle>
         </DialogHeader>
 
         <div className="grid gap-4 py-2">
-          {/* Project Name */}
-          <div className="grid gap-1.5">
-            <Label htmlFor="order-name">Project Name *</Label>
-            <Input
-              id="order-name"
-              placeholder="e.g. IKEA Kitchen Install"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
+          {/* Project Name & Number */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label htmlFor="order-name">Project Name *</Label>
+              <Input
+                id="order-name"
+                placeholder="e.g. IKEA Kitchen Install"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="order-number">Project Number</Label>
+              <Input
+                id="order-number"
+                placeholder="Auto-generated"
+                value={projectNumber}
+                onChange={(e) => setProjectNumber(e.target.value)}
+              />
+            </div>
           </div>
 
           {/* Client & Location */}
