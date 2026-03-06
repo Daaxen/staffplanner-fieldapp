@@ -160,7 +160,7 @@ const GanttChart = () => {
     setProjectsList(prev => {
       const project = prev.find(p => p.id === projectId);
       if (project && project.assigneeIds.length > 0) {
-        trackChange(projectId, project.projectName, 'changed', []);
+        trackChange(projectId, project.name, 'changed', []);
       }
       return prev.map(p =>
         p.id === projectId
