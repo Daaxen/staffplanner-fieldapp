@@ -59,6 +59,7 @@ export interface Project {
   // Transport-specific
   transportStops?: TransportStop[];
   vehicleType?: string;
+  goodsItems?: GoodsItem[];
 }
 
 export const projectTypeLabels: Record<ProjectType, string> = {
