@@ -7,6 +7,7 @@ import ProjectsView from './gantt/ProjectsView';
 import InstallersView from './gantt/InstallersView';
 import ClientsView from './gantt/ClientsView';
 import StatusFilter from './gantt/StatusFilter';
+import CreateOrderDialog from './gantt/CreateOrderDialog';
 
 type ViewMode = 'day' | 'week' | 'month';
 type GanttMode = 'projects' | 'installers' | 'clients';
