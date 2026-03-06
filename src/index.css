@@ -67,6 +67,8 @@
     --gantt-header: 220 20% 95%;
     --gantt-grid: 220 13% 93%;
     --gantt-today: 213 94% 56%;
+    --gantt-holiday: 0 72% 51%;
+    --gantt-week-border: 220 13% 82%;
   }
 
   .dark {

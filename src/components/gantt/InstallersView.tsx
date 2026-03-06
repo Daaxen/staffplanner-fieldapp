@@ -58,7 +58,10 @@ interface InstallersViewProps {
   viewMode?: 'day' | 'week' | 'month';
 }
 
-const rowHeight = 72;
+const baseRowHeight = 72;
+const barH = 28;
+const barGap = 4;
+const barPadding = 6;
 const headerHeight = 60;
 const labelWidth = 280;
 
@@ -97,6 +100,49 @@ const InstallersView = ({
     return { startDate: project.startDate, endDate: project.endDate };
   };
 
+  // Stack projects so they don't overlap
+  const getProjectLanes = useCallback((groupProjects: Project[], installerId?: string) => {
+    const lanes: { endDay: number }[] = [];
+    const assignments: number[] = [];
+    
+    // Sort by start date
+    const sorted = [...groupProjects].sort((a, b) => {
+      const aDates = getBarDates(a, installerId);
+      const bDates = getBarDates(b, installerId);
+      return aDates.startDate.localeCompare(bDates.startDate);
+    });
+
+    sorted.forEach((project) => {
+      const dates = getBarDates(project, installerId);
+      const pStart = new Date(dates.startDate);
+      const startDay = Math.floor((pStart.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      let lane = lanes.findIndex(l => l.endDay <= startDay);
+      if (lane === -1) {
+        lane = lanes.length;
+        lanes.push({ endDay: 0 });
+      }
+      
+      const pEnd = new Date(dates.endDate);
+      const endDay = Math.floor((pEnd.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      lanes[lane].endDay = endDay;
+      assignments.push(lane);
+    });
+
+    const map = new Map<string, number>();
+    sorted.forEach((p, i) => map.set(p.id, assignments[i]));
+    return { laneCount: lanes.length, laneMap: map };
+  }, [startDate]);
+
+  const groupLayouts = useMemo(() => {
+    return groups.map(g => getProjectLanes(g.projects, g.installer?.id));
+  }, [groups, getProjectLanes]);
+
+  const getRowHeight = (laneCount: number) => {
+    if (laneCount <= 1) return baseRowHeight;
+    return Math.max(baseRowHeight, laneCount * (barH + barGap) + barPadding * 2);
+  };
+
   const getBarPosition = (project: Project, installerId?: string) => {
     const dates = getBarDates(project, installerId);
     const pStart = new Date(dates.startDate);
@@ -131,7 +177,7 @@ const InstallersView = ({
     return Math.round((busySlots / totalDays) * 100);
   };
 
-  const totalHeight = groups.length * rowHeight;
+  const totalHeight = groups.reduce((sum, _, i) => sum + getRowHeight(groupLayouts[i]?.laneCount ?? 1), 0);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -183,7 +229,14 @@ const InstallersView = ({
     if (dropClientY != null && timelineRef.current) {
       const timelineRect = timelineRef.current.getBoundingClientRect();
       const relativeY = dropClientY - timelineRect.top;
-      const targetRowIdx = Math.floor(relativeY / rowHeight);
+      // Accumulate row heights to find target
+      let accH = 0;
+      let targetRowIdx = -1;
+      for (let i = 0; i < groups.length; i++) {
+        accH += getRowHeight(groupLayouts[i]?.laneCount ?? 1);
+        if (relativeY < accH) { targetRowIdx = i; break; }
+      }
+      if (targetRowIdx === -1) targetRowIdx = groups.length - 1;
       
       if (targetRowIdx >= 0 && targetRowIdx < groups.length) {
         const targetGroup = groups[targetRowIdx];
@@ -291,7 +344,7 @@ const InstallersView = ({
                       "flex items-center gap-3 px-4 border-b border-border",
                       idx % 2 === 0 ? "bg-card" : "bg-muted/20"
                     )}
-                    style={{ height: rowHeight }}
+                    style={{ height: getRowHeight(groupLayouts[idx]?.laneCount ?? 1) }}
                     onDragOver={inst ? handleDragOver : undefined}
                     onDrop={inst ? (e) => handleDrop(e, inst.id) : undefined}
                   >
@@ -332,7 +385,7 @@ const InstallersView = ({
                   <div
                     key={inst?.id ?? 'unassigned'}
                     className={cn("border-b border-gantt-grid relative", gIdx % 2 === 0 ? "" : "bg-muted/10")}
-                    style={{ height: rowHeight }}
+                    style={{ height: getRowHeight(groupLayouts[gIdx]?.laneCount ?? 1) }}
                     onDragOver={inst ? handleDragOver : undefined}
                     onDrop={inst ? (e) => handleDrop(e, inst.id) : undefined}
                   >
@@ -353,18 +406,20 @@ const InstallersView = ({
                     })}
 
                     {/* Project bars */}
-                    {group.projects.map((project, pIdx) => {
+                    {group.projects.map((project) => {
                       const dates = getBarDates(project, inst?.id);
                       const { left, width, overflowRight } = getBarPosition(project, inst?.id);
-                      const yOffset = group.projects.length > 1 ? (pIdx % 2 === 0 ? 6 : 34) : 18;
-                      const barHeight = group.projects.length > 1 ? 28 : 34;
+                      const layout = groupLayouts[gIdx];
+                      const lane = layout?.laneMap.get(project.id) ?? 0;
+                      const laneCount = layout?.laneCount ?? 1;
+                      const yOffset = laneCount <= 1 ? (baseRowHeight - barH) / 2 : barPadding + lane * (barH + barGap);
                       return (
                         <DraggableBar
                           key={project.id}
                           left={left}
                           width={width}
                           top={yOffset}
-                          height={barHeight}
+                          height={barH}
                           colWidth={colWidth}
                           projectStartDate={dates.startDate}
                           projectEndDate={dates.endDate}
@@ -378,7 +433,7 @@ const InstallersView = ({
                           onClick={() => onSelectProject(project)}
                           onDragEnd={(newStart, newEnd, dropClientY) => handleBarDragEnd(project.id, newStart, newEnd, inst?.id, dropClientY)}
                         >
-                          <span className={cn("text-[11px] font-medium truncate flex-1", project.status === 'cancelled' ? "text-muted-foreground" : "text-foreground")} style={{ lineHeight: `${barHeight}px` }}>{projectTypeIcons[project.projectType]} {project.isFlexOrder && <span title="Flex Order">↔ </span>}{project.name}</span>
+                          <span className={cn("text-[11px] font-medium truncate flex-1", project.status === 'cancelled' ? "text-muted-foreground" : "text-foreground")} style={{ lineHeight: `${barH}px` }}>{projectTypeIcons[project.projectType]} {project.isFlexOrder && <span title="Flex Order">↔ </span>}{project.name}</span>
                           {project.assigneeIds.length > 1 && (
                             <span className="ml-1 text-[10px] text-muted-foreground shrink-0">👥{project.assigneeIds.length}</span>
                           )}
