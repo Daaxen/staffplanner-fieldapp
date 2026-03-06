@@ -3,20 +3,20 @@ import { cn } from '@/lib/utils';
 import {
   vehicles as initialVehicles, mileageEntries as initialMileage,
   serviceRecords as initialService, tireRecords as initialTires,
-  type Vehicle, type MileageEntry, type ServiceRecord, type TireRecord,
+  inspectionRecords as initialInspections,
+  type Vehicle, type MileageEntry, type ServiceRecord, type TireRecord, type InspectionRecord,
   serviceTypeLabels, tireTypeLabels, fuelTypeLabels,
 } from '@/data/fleetData';
 import { type Project } from '@/data/mockData';
 import {
   Car, Fuel, Gauge, Wrench, Plus, X, ChevronRight, Calendar,
-  Ruler, Weight, Package, MapPin, CircleDot, AlertTriangle,
+  Ruler, Weight, Package, MapPin, CircleDot, AlertTriangle, ClipboardCheck,
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import VehicleDetail from './VehicleDetail';
 
@@ -44,6 +44,7 @@ const FleetManager = ({ projects, onAssignVehicle }: FleetManagerProps) => {
   const [mileageList, setMileageList] = useState<MileageEntry[]>(initialMileage);
   const [serviceList, setServiceList] = useState<ServiceRecord[]>(initialService);
   const [tireList, setTireList] = useState<TireRecord[]>(initialTires);
+  const [inspectionList, setInspectionList] = useState<InspectionRecord[]>(initialInspections);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -65,6 +66,13 @@ const FleetManager = ({ projects, onAssignVehicle }: FleetManagerProps) => {
     return projects.find(p => p.id === v.assignedProjectId) || null;
   };
 
+  const getVehicleInspectionStatus = (vehicleId: string) => {
+    const vehicleInspections = inspectionList.filter(i => i.vehicleId === vehicleId);
+    const overdue = vehicleInspections.some(i => i.status === 'overdue');
+    const escalated = vehicleInspections.some(i => i.status === 'escalated');
+    return { overdue, escalated, hasIssue: overdue || escalated };
+  };
+
   const handleAddVehicle = (vehicle: Vehicle) => {
     setVehiclesList(prev => [...prev, vehicle]);
     setAddDialogOpen(false);
@@ -77,7 +85,6 @@ const FleetManager = ({ projects, onAssignVehicle }: FleetManagerProps) => {
 
   const handleAddMileage = (entry: MileageEntry) => {
     setMileageList(prev => [...prev, entry]);
-    // Update vehicle mileage
     handleUpdateVehicle(entry.vehicleId, { currentMileageKm: entry.odometerKm });
   };
 
@@ -88,6 +95,10 @@ const FleetManager = ({ projects, onAssignVehicle }: FleetManagerProps) => {
   const handleAddTire = (record: TireRecord) => {
     setTireList(prev => [...prev, record]);
     handleUpdateVehicle(record.vehicleId, { currentTires: record.toType });
+  };
+
+  const handleUpdateInspection = (id: string, updates: Partial<InspectionRecord>) => {
+    setInspectionList(prev => prev.map(i => i.id === id ? { ...i, ...updates } : i));
   };
 
   const handleAssignProject = (vehicleId: string, projectId: string | undefined) => {
@@ -109,12 +120,14 @@ const FleetManager = ({ projects, onAssignVehicle }: FleetManagerProps) => {
         mileageEntries={mileageList.filter(m => m.vehicleId === selectedVehicle.id)}
         serviceRecords={serviceList.filter(s => s.vehicleId === selectedVehicle.id)}
         tireRecords={tireList.filter(t => t.vehicleId === selectedVehicle.id)}
+        inspectionRecords={inspectionList.filter(i => i.vehicleId === selectedVehicle.id)}
         onBack={() => setSelectedVehicle(null)}
         onUpdateVehicle={handleUpdateVehicle}
         onAddMileage={handleAddMileage}
         onAddService={handleAddService}
         onAddTire={handleAddTire}
         onAssignProject={handleAssignProject}
+        onUpdateInspection={handleUpdateInspection}
       />
     );
   }
@@ -175,6 +188,7 @@ const FleetManager = ({ projects, onAssignVehicle }: FleetManagerProps) => {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filteredVehicles.map(vehicle => {
             const assignedProject = getAssignedProject(vehicle);
+            const inspStatus = getVehicleInspectionStatus(vehicle.id);
             const needsService = serviceList
               .filter(s => s.vehicleId === vehicle.id && s.nextServiceKm)
               .some(s => vehicle.currentMileageKm >= (s.nextServiceKm! - 1000));
@@ -182,7 +196,12 @@ const FleetManager = ({ projects, onAssignVehicle }: FleetManagerProps) => {
               <div
                 key={vehicle.id}
                 onClick={() => setSelectedVehicle(vehicle)}
-                className="bg-card border border-border rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow group"
+                className={cn(
+                  "bg-card border rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow group",
+                  inspStatus.escalated ? "border-destructive/50" :
+                  inspStatus.overdue ? "border-status-on-hold/50" :
+                  "border-border"
+                )}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div>
@@ -192,6 +211,16 @@ const FleetManager = ({ projects, onAssignVehicle }: FleetManagerProps) => {
                     <p className="text-xs text-muted-foreground">{vehicle.year} · {vehicle.licensePlate}</p>
                   </div>
                   <div className="flex items-center gap-1.5">
+                    {inspStatus.escalated && (
+                      <span title="Inspection escalated to manager">
+                        <ClipboardCheck className="w-4 h-4 text-destructive animate-pulse" />
+                      </span>
+                    )}
+                    {inspStatus.overdue && !inspStatus.escalated && (
+                      <span title="Inspection overdue">
+                        <ClipboardCheck className="w-4 h-4 text-status-on-hold" />
+                      </span>
+                    )}
                     {needsService && (
                       <span title="Service due soon"><AlertTriangle className="w-4 h-4 text-status-on-hold" /></span>
                     )}
