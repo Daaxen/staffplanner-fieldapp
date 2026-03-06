@@ -225,7 +225,7 @@ const InstallersView = ({
     }
     
     setPendingChange({ projectId, newStart, newEnd, installerId });
-  }, [groups, projects, installers, onUpdateProject, onDropProject, onUnassignProject, checkVacationConflict]);
+  }, [groups, projects, allInstallers, onUpdateProject, onDropProject, onUnassignProject, checkVacationConflict]);
 
   const pendingProject = pendingChange ? projects.find(p => p.id === pendingChange.projectId) : null;
   const isMultiInstaller = (pendingProject?.assigneeIds.length ?? 0) > 1;
