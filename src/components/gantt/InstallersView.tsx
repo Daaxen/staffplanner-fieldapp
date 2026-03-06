@@ -150,7 +150,7 @@ const InstallersView = ({
     const projectId = e.dataTransfer.getData('projectId');
     if (!projectId) return;
     const project = projects.find(p => p.id === projectId);
-    const installer = installers.find(i => i.id === installerId);
+    const installer = allInstallers.find(i => i.id === installerId);
     if (project && installer) {
       const conflict = checkVacationConflict(installer, project.startDate, project.endDate);
       if (conflict) {
