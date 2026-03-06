@@ -13,7 +13,8 @@ interface DraggableBarProps {
   style?: React.CSSProperties;
   children: ReactNode;
   onClick?: () => void;
-  onDragEnd: (newStartDate: string, newEndDate: string) => void;
+  allowVerticalDrag?: boolean;
+  onDragEnd: (newStartDate: string, newEndDate: string, dropClientY?: number) => void;
 }
 
 const DraggableBar = ({
