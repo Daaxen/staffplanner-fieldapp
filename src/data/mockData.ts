@@ -20,6 +20,7 @@ export interface Absence {
 export interface Project {
   id: string;
   name: string;
+  projectNumber?: string;
   client: string;
   location: string;
   status: ProjectStatus;
