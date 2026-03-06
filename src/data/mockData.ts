@@ -27,9 +27,16 @@ export interface Project {
   assigneeIds: string[]; // multiple assignees
   startDate: string; // ISO date
   endDate: string;   // ISO date
+  startTime?: string;
+  endTime?: string;
+  estimatedHours?: number;
+  isFlexOrder?: boolean;
   description?: string;
   installerDateOverrides?: Record<string, { startDate: string; endDate: string }>;
 }
+
+// Unique clients extracted from projects for autocomplete
+export const clients = ['IKEA', 'Elgiganten', 'H&M', 'Clas Ohlson', 'Stadium', 'Systembolaget', 'Jula', 'Bauhaus', 'Granit', 'Kjell & Company', 'Åhléns'];
 
 const today = new Date();
 function d(offset: number) {
