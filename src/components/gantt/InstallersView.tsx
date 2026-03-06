@@ -385,7 +385,7 @@ const InstallersView = ({
                   <div
                     key={inst?.id ?? 'unassigned'}
                     className={cn("border-b border-gantt-grid relative", gIdx % 2 === 0 ? "" : "bg-muted/10")}
-                    style={{ height: rowHeight }}
+                    style={{ height: getRowHeight(groupLayouts[gIdx]?.laneCount ?? 1) }}
                     onDragOver={inst ? handleDragOver : undefined}
                     onDrop={inst ? (e) => handleDrop(e, inst.id) : undefined}
                   >
