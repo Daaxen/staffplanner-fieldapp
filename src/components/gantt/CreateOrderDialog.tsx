@@ -40,6 +40,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
 
   const resetForm = () => {
     setName('');
+    setProjectNumber('');
     setClient('');
     setLocation('');
     setDescription('');
