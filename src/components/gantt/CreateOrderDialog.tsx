@@ -79,6 +79,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
     ]);
     setVehicleType('');
     setGoodsItems([{ id: generateGoodsId() }]);
+  };
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
