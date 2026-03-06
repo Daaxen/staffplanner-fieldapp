@@ -371,6 +371,16 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
                           value={stop.notes || ''}
                           onChange={(e) => updateStop(stop.id, { notes: e.target.value })}
                         />
+                        {stop.type === 'delivery' && (
+                          <label className="flex items-center gap-2 cursor-pointer mt-0.5">
+                            <Checkbox
+                              checked={stop.requiresSignature ?? true}
+                              onCheckedChange={(checked) => updateStop(stop.id, { requiresSignature: !!checked })}
+                            />
+                            <PenTool className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-[10px] text-muted-foreground">Require digital signature on delivery</span>
+                          </label>
+                        )}
                       </div>
 
                       {canRemove ? (
