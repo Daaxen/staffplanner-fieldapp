@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { type Project, type Installer, type ProjectStatus } from '@/data/mockData';
 import GanttHeader from './GanttHeader';
@@ -142,9 +142,51 @@ const InstallersView = ({
     e.dataTransfer.effectAllowed = 'move';
   };
 
-  const handleBarDragEnd = useCallback((projectId: string, newStart: string, newEnd: string, installerId?: string) => {
+  const timelineRef = useRef<HTMLDivElement>(null);
+
+  const handleBarDragEnd = useCallback((projectId: string, newStart: string, newEnd: string, installerId?: string, dropClientY?: number) => {
+    // Check if dropped on a different installer row
+    if (dropClientY != null && timelineRef.current) {
+      const timelineRect = timelineRef.current.getBoundingClientRect();
+      const relativeY = dropClientY - timelineRect.top;
+      const targetRowIdx = Math.floor(relativeY / rowHeight);
+      
+      if (targetRowIdx >= 0 && targetRowIdx < groups.length) {
+        const targetGroup = groups[targetRowIdx];
+        const targetInstaller = targetGroup.installer;
+        const sourceInstaller = installerId;
+        
+        if (targetInstaller && targetInstaller.id !== sourceInstaller) {
+          // Moving to a different installer
+          const project = projects.find(p => p.id === projectId);
+          if (project) {
+            const newAssigneeIds = project.assigneeIds.filter(id => id !== sourceInstaller);
+            if (!newAssigneeIds.includes(targetInstaller.id)) {
+              newAssigneeIds.push(targetInstaller.id);
+            }
+            onUpdateProject(projectId, {
+              startDate: newStart,
+              endDate: newEnd,
+              assigneeIds: newAssigneeIds,
+              status: project.status === 'open' ? 'scheduled' as ProjectStatus : project.status,
+            });
+            return;
+          }
+        } else if (!targetInstaller && sourceInstaller) {
+          // Dropping to unassigned
+          onUnassignProject(projectId);
+          return;
+        } else if (targetInstaller && !sourceInstaller) {
+          // From unassigned to installer
+          onDropProject(projectId, targetInstaller.id);
+          onUpdateProject(projectId, { startDate: newStart, endDate: newEnd });
+          return;
+        }
+      }
+    }
+    
     setPendingChange({ projectId, newStart, newEnd, installerId });
-  }, []);
+  }, [groups, projects, onUpdateProject, onDropProject, onUnassignProject]);
 
   const pendingProject = pendingChange ? projects.find(p => p.id === pendingChange.projectId) : null;
   const isMultiInstaller = (pendingProject?.assigneeIds.length ?? 0) > 1;
@@ -243,7 +285,7 @@ const InstallersView = ({
             </div>
 
             {/* Timeline */}
-            <div className="flex-1 relative">
+            <div className="flex-1 relative" ref={timelineRef}>
               <GanttGrid days={days} colWidth={colWidth} totalHeight={totalHeight} todayStr={todayStr} />
               {groups.map((group, gIdx) => {
                 const inst = group.installer;
@@ -287,6 +329,7 @@ const InstallersView = ({
                           colWidth={colWidth}
                           projectStartDate={dates.startDate}
                           projectEndDate={dates.endDate}
+                          allowVerticalDrag
                           className={cn(
                             "rounded-md border-l-[3px] flex items-center px-2 cursor-grab active:cursor-grabbing transition-shadow hover:shadow-md z-10",
                             statusBorderMap[project.status],
@@ -294,7 +337,7 @@ const InstallersView = ({
                             project.status === 'cancelled' && "opacity-60"
                           )}
                           onClick={() => onSelectProject(project)}
-                          onDragEnd={(newStart, newEnd) => handleBarDragEnd(project.id, newStart, newEnd, inst?.id)}
+                          onDragEnd={(newStart, newEnd, dropClientY) => handleBarDragEnd(project.id, newStart, newEnd, inst?.id, dropClientY)}
                         >
                           <span className={cn("text-[11px] font-medium truncate flex-1", project.status === 'cancelled' ? "text-muted-foreground" : "text-foreground")} style={{ lineHeight: `${barHeight}px` }}>{project.name}</span>
                           {project.assigneeIds.length > 1 && (
