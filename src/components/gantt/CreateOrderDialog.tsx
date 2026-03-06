@@ -49,6 +49,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
   const [endOpen, setEndOpen] = useState(false);
   const [mapExpanded, setMapExpanded] = useState(false);
   const clientInputRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Transport-specific
   const [transportStops, setTransportStops] = useState<TransportStop[]>([
@@ -59,6 +60,9 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
   const [goodsItems, setGoodsItems] = useState<GoodsItem[]>([
     { id: generateGoodsId() },
   ]);
+
+  // Attachments
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
 
   const resetForm = () => {
     setProjectType('installation');
