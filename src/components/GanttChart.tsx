@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, LayoutList, Users, Building2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LayoutList, Users, Building2, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { projects as initialProjects, installers, type Project, type ProjectStatus } from '@/data/mockData';
 import ProjectDetailPanel from './ProjectDetailPanel';
@@ -7,6 +7,7 @@ import ProjectsView from './gantt/ProjectsView';
 import InstallersView from './gantt/InstallersView';
 import ClientsView from './gantt/ClientsView';
 import StatusFilter from './gantt/StatusFilter';
+import CreateOrderDialog from './gantt/CreateOrderDialog';
 
 type ViewMode = 'day' | 'week' | 'month';
 type GanttMode = 'projects' | 'installers' | 'clients';
@@ -28,6 +29,7 @@ const GanttChart = () => {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [projectsList, setProjectsList] = useState<Project[]>(initialProjects);
   const [activeStatuses, setActiveStatuses] = useState<Set<ProjectStatus>>(new Set(allStatuses));
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const { days, startDate } = useMemo(() => {
     const today = new Date();
@@ -130,6 +132,10 @@ const GanttChart = () => {
     setActiveStatuses(new Set(allStatuses));
   }, []);
 
+  const handleCreateOrder = useCallback((project: Project) => {
+    setProjectsList(prev => [...prev, project]);
+  }, []);
+
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
       {/* Toolbar */}
@@ -205,6 +211,16 @@ const GanttChart = () => {
               <ChevronRight className="w-4 h-4 text-muted-foreground" />
             </button>
           </div>
+
+          <div className="w-px h-6 bg-border" />
+
+          <button
+            onClick={() => setCreateDialogOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            New Order
+          </button>
         </div>
       </div>
 
@@ -265,6 +281,11 @@ const GanttChart = () => {
           onClose={() => setSelectedProject(null)}
         />
       )}
+      <CreateOrderDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onCreateOrder={handleCreateOrder}
+      />
     </div>
   );
 };
