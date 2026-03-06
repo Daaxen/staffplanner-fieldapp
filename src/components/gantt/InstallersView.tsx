@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { type Project, type Installer, type ProjectStatus } from '@/data/mockData';
+import { type Project, type Installer, type ProjectStatus, projectTypeIcons } from '@/data/mockData';
 import GanttHeader from './GanttHeader';
 import GanttGrid from './GanttGrid';
 import OrderBox from './OrderBox';
@@ -339,7 +339,7 @@ const InstallersView = ({
                           onClick={() => onSelectProject(project)}
                           onDragEnd={(newStart, newEnd, dropClientY) => handleBarDragEnd(project.id, newStart, newEnd, inst?.id, dropClientY)}
                         >
-                          <span className={cn("text-[11px] font-medium truncate flex-1", project.status === 'cancelled' ? "text-muted-foreground" : "text-foreground")} style={{ lineHeight: `${barHeight}px` }}>{project.isFlexOrder && <span title="Flex Order">↔ </span>}{project.name}</span>
+                          <span className={cn("text-[11px] font-medium truncate flex-1", project.status === 'cancelled' ? "text-muted-foreground" : "text-foreground")} style={{ lineHeight: `${barHeight}px` }}>{projectTypeIcons[project.projectType]} {project.isFlexOrder && <span title="Flex Order">↔ </span>}{project.name}</span>
                           {project.assigneeIds.length > 1 && (
                             <span className="ml-1 text-[10px] text-muted-foreground shrink-0">👥{project.assigneeIds.length}</span>
                           )}

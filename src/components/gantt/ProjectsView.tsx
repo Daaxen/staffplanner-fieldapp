@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
-import { type Project, type Installer, type ProjectStatus, installers } from '@/data/mockData';
+import { type Project, type Installer, type ProjectStatus, installers, projectTypeIcons } from '@/data/mockData';
 import { ArrowUpDown, Filter } from 'lucide-react';
 import GanttHeader from './GanttHeader';
 import GanttGrid from './GanttGrid';
@@ -234,7 +234,7 @@ const ProjectsView = ({ projects, days, colWidth, startDate, todayStr, onSelectP
                       onClick={() => onSelectProject(project)}
                       onDragEnd={(newStart, newEnd) => handleBarDragEnd(project.id, newStart, newEnd)}
                     >
-                      <span className={cn("text-xs font-medium truncate flex-1", project.status === 'cancelled' ? "text-muted-foreground" : "text-foreground")}>{project.isFlexOrder && <span title="Flex Order">↔ </span>}{project.name}</span>
+                      <span className={cn("text-xs font-medium truncate flex-1", project.status === 'cancelled' ? "text-muted-foreground" : "text-foreground")}>{projectTypeIcons[project.projectType]} {project.isFlexOrder && <span title="Flex Order">↔ </span>}{project.name}</span>
                       {assignees.length > 1 && (
                         <span className="ml-1 text-[10px] text-muted-foreground shrink-0">👥{assignees.length}</span>
                       )}

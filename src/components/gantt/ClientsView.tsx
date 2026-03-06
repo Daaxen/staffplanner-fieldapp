@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
-import { type Project, type Installer, type ProjectStatus, installers } from '@/data/mockData';
+import { type Project, type Installer, type ProjectStatus, installers, projectTypeIcons } from '@/data/mockData';
 import GanttHeader from './GanttHeader';
 import GanttGrid from './GanttGrid';
 import DraggableBar from './DraggableBar';
@@ -233,7 +233,7 @@ const ClientsView = ({ projects, days, colWidth, startDate, todayStr, onSelectPr
                           onDragEnd={(newStart, newEnd) => handleBarDragEnd(project.id, newStart, newEnd)}
                         >
                           <span className={cn("text-[11px] font-medium truncate flex-1", project.status === 'cancelled' ? "text-muted-foreground" : "text-foreground")} style={{ lineHeight: `${barHeight}px` }}>
-                            {project.isFlexOrder && <span title="Flex Order">↔ </span>}{project.name}
+                            {projectTypeIcons[project.projectType]} {project.isFlexOrder && <span title="Flex Order">↔ </span>}{project.name}
                           </span>
                           {assignees.length > 1 && (
                             <span className="ml-1 text-[10px] text-muted-foreground shrink-0">👥{assignees.length}</span>
