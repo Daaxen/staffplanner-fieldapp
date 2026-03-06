@@ -142,9 +142,51 @@ const InstallersView = ({
     e.dataTransfer.effectAllowed = 'move';
   };
 
-  const handleBarDragEnd = useCallback((projectId: string, newStart: string, newEnd: string, installerId?: string) => {
+  const timelineRef = useRef<HTMLDivElement>(null);
+
+  const handleBarDragEnd = useCallback((projectId: string, newStart: string, newEnd: string, installerId?: string, dropClientY?: number) => {
+    // Check if dropped on a different installer row
+    if (dropClientY != null && timelineRef.current) {
+      const timelineRect = timelineRef.current.getBoundingClientRect();
+      const relativeY = dropClientY - timelineRect.top;
+      const targetRowIdx = Math.floor(relativeY / rowHeight);
+      
+      if (targetRowIdx >= 0 && targetRowIdx < groups.length) {
+        const targetGroup = groups[targetRowIdx];
+        const targetInstaller = targetGroup.installer;
+        const sourceInstaller = installerId;
+        
+        if (targetInstaller && targetInstaller.id !== sourceInstaller) {
+          // Moving to a different installer
+          const project = projects.find(p => p.id === projectId);
+          if (project) {
+            const newAssigneeIds = project.assigneeIds.filter(id => id !== sourceInstaller);
+            if (!newAssigneeIds.includes(targetInstaller.id)) {
+              newAssigneeIds.push(targetInstaller.id);
+            }
+            onUpdateProject(projectId, {
+              startDate: newStart,
+              endDate: newEnd,
+              assigneeIds: newAssigneeIds,
+              status: project.status === 'open' ? 'scheduled' as ProjectStatus : project.status,
+            });
+            return;
+          }
+        } else if (!targetInstaller && sourceInstaller) {
+          // Dropping to unassigned
+          onUnassignProject(projectId);
+          return;
+        } else if (targetInstaller && !sourceInstaller) {
+          // From unassigned to installer
+          onDropProject(projectId, targetInstaller.id);
+          onUpdateProject(projectId, { startDate: newStart, endDate: newEnd });
+          return;
+        }
+      }
+    }
+    
     setPendingChange({ projectId, newStart, newEnd, installerId });
-  }, []);
+  }, [groups, projects, onUpdateProject, onDropProject, onUnassignProject]);
 
   const pendingProject = pendingChange ? projects.find(p => p.id === pendingChange.projectId) : null;
   const isMultiInstaller = (pendingProject?.assigneeIds.length ?? 0) > 1;
