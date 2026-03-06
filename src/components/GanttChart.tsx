@@ -38,6 +38,43 @@ const GanttChart = () => {
   const [projectsList, setProjectsList] = useState<Project[]>(initialProjects);
   const [activeStatuses, setActiveStatuses] = useState<Set<ProjectStatus>>(new Set(allStatuses));
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [pendingChanges, setPendingChanges] = useState<DispatchChange[]>([]);
+  const lastDispatchedState = useRef<string>(JSON.stringify(initialProjects));
+
+  // Track changes by comparing current state to last dispatched state
+  const trackChange = useCallback((projectId: string, projectName: string, type: 'new' | 'changed', affectedInstallerIds: string[]) => {
+    setPendingChanges(prev => {
+      const existing = prev.find(c => c.projectId === projectId);
+      if (existing) {
+        return prev.map(c => c.projectId === projectId ? { ...c, type: type === 'new' ? 'new' : c.type, affectedInstallerIds } : c);
+      }
+      return [...prev, { projectId, projectName, type, affectedInstallerIds }];
+    });
+  }, []);
+
+  const handleDispatch = useCallback(() => {
+    if (pendingChanges.length === 0) return;
+
+    pendingChanges.forEach(change => {
+      const installerNames = change.affectedInstallerIds
+        .map(id => installers.find(i => i.id === id)?.name)
+        .filter(Boolean);
+
+      if (installerNames.length > 0) {
+        const label = change.type === 'new' ? 'NEW PROJECT' : 'CHANGES to';
+        installerNames.forEach(name => {
+          toast.success(`📩 ${name}`, {
+            description: `${label} ${change.projectName}`,
+            duration: 5000,
+          });
+        });
+      }
+    });
+
+    toast.info(`Dispatched ${pendingChanges.length} change${pendingChanges.length > 1 ? 's' : ''} to installers`);
+    lastDispatchedState.current = JSON.stringify(projectsList);
+    setPendingChanges([]);
+  }, [pendingChanges, projectsList]);
 
   const { days, startDate } = useMemo(() => {
     const today = new Date();
