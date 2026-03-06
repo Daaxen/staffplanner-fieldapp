@@ -2,9 +2,9 @@ import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import {
   type Vehicle, type MileageEntry, type ServiceRecord, type TireRecord,
-  type ServiceType, type TireType, type InspectionRecord,
+  type ServiceType, type TireType, type InspectionRecord, type InspectionChecklistItem,
   serviceTypeLabels, tireTypeLabels, fuelTypeLabels,
-  inspectionChecklist, inspectionCategoryLabels,
+  inspectionChecklist, inspectionCategoryLabels, getChecklistForVehicle,
   INSPECTION_INTERVAL_DAYS, ESCALATION_AFTER_REMINDERS,
 } from '@/data/fleetData';
 import { type Project } from '@/data/mockData';
