@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 interface DispatchChange {
   projectId: string;
   projectName: string;
-  type: 'new' | 'changed';
+  type: 'new' | 'changed' | 'cancelled';
   affectedInstallerIds: string[];
 }
 
@@ -49,11 +49,11 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
     onPendingChangesCount?.(pendingChanges.length);
   }, [pendingChanges.length, onPendingChangesCount]);
 
-  const trackChange = useCallback((projectId: string, projectName: string, type: 'new' | 'changed', affectedInstallerIds: string[]) => {
+  const trackChange = useCallback((projectId: string, projectName: string, type: 'new' | 'changed' | 'cancelled', affectedInstallerIds: string[]) => {
     setPendingChanges(prev => {
       const existing = prev.find(c => c.projectId === projectId);
       if (existing) {
-        return prev.map(c => c.projectId === projectId ? { ...c, type: type === 'new' ? 'new' : c.type, affectedInstallerIds } : c);
+        return prev.map(c => c.projectId === projectId ? { ...c, type, affectedInstallerIds } : c);
       }
       return [...prev, { projectId, projectName, type, affectedInstallerIds }];
     });
@@ -68,7 +68,7 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
         .filter(Boolean);
 
       if (installerNames.length > 0) {
-        const label = change.type === 'new' ? 'NEW PROJECT' : 'CHANGES to';
+        const label = change.type === 'new' ? 'NEW PROJECT' : change.type === 'cancelled' ? 'CANCELLED/ON-HOLD' : 'CHANGES to';
         installerNames.forEach(name => {
           toast.success(`📩 ${name}`, {
             description: `${label} ${change.projectName}`,
@@ -184,7 +184,9 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
       );
       const project = updated.find(p => p.id === projectId);
       if (project && project.assigneeIds.length > 0) {
-        trackChange(projectId, project.name, 'changed', project.assigneeIds);
+        const newStatus = updates.status;
+        const isCancelled = newStatus === 'cancelled' || newStatus === 'on-hold';
+        trackChange(projectId, project.name, isCancelled ? 'cancelled' : 'changed', project.assigneeIds);
       }
       return updated;
     });
@@ -287,36 +289,48 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
             </button>
           </div>
 
-          <div className="w-px h-6 bg-border" />
+          <div className="flex flex-col gap-1">
+            <button
+              onClick={() => setCreateDialogOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              New Project
+            </button>
 
-          <button
-            onClick={() => setCreateDialogOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            New Project
-          </button>
-
-          <button
-            onClick={handleDispatch}
-            disabled={pendingChanges.length === 0}
-            className={cn(
-              "relative flex flex-col items-center gap-0.5 px-4 py-1.5 text-xs font-medium rounded-lg transition-all",
-              pendingChanges.length > 0
-                ? "bg-green-600 text-white hover:bg-green-700 shadow-sm ring-1 ring-green-500"
-                : "bg-muted text-muted-foreground cursor-not-allowed"
-            )}
-          >
-            <div className="flex items-center gap-1.5">
-              <Send className="w-4 h-4" />
+            <button
+              onClick={handleDispatch}
+              disabled={pendingChanges.length === 0}
+              className={cn(
+                "flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg transition-all",
+                pendingChanges.length > 0
+                  ? "bg-green-600 text-white hover:bg-green-700 shadow-sm ring-1 ring-green-500"
+                  : "bg-muted text-muted-foreground cursor-not-allowed"
+              )}
+            >
+              <Send className="w-3.5 h-3.5" />
               Dispatch
-            </div>
-            {pendingChanges.length > 0 && (
-              <span className="text-[10px] leading-none font-semibold">
-                {pendingChanges.length} change{pendingChanges.length > 1 ? 's' : ''}
-              </span>
-            )}
-          </button>
+              {pendingChanges.length > 0 && (
+                <div className="flex items-center gap-1.5 ml-1">
+                  {pendingChanges.filter(c => c.type === 'new').length > 0 && (
+                    <span className="bg-white/20 rounded px-1.5 py-0.5 text-[10px] font-semibold leading-none">
+                      {pendingChanges.filter(c => c.type === 'new').length} new
+                    </span>
+                  )}
+                  {pendingChanges.filter(c => c.type === 'cancelled').length > 0 && (
+                    <span className="bg-white/20 rounded px-1.5 py-0.5 text-[10px] font-semibold leading-none">
+                      {pendingChanges.filter(c => c.type === 'cancelled').length} cancelled
+                    </span>
+                  )}
+                  {pendingChanges.filter(c => c.type === 'changed').length > 0 && (
+                    <span className="bg-white/20 rounded px-1.5 py-0.5 text-[10px] font-semibold leading-none">
+                      {pendingChanges.filter(c => c.type === 'changed').length} changed
+                    </span>
+                  )}
+                </div>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
