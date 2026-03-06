@@ -11,7 +11,7 @@ import { type Project } from '@/data/mockData';
 import {
   ArrowLeft, Gauge, Fuel, Weight, Package, CircleDot, Plus,
   Calendar, Wrench, Car, MapPin, Ruler, ClipboardCheck, AlertTriangle,
-  Bell, ShieldAlert, CheckCircle2, Clock, Send,
+  Bell, ShieldAlert, CheckCircle2, Clock, Send, Settings2, Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
