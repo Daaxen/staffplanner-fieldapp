@@ -19,6 +19,16 @@ export interface Absence {
   label?: string;
 }
 
+export interface GoodsItem {
+  id: string;
+  description?: string;
+  quantity?: number;
+  lengthCm?: number;
+  widthCm?: number;
+  heightCm?: number;
+  weightKg?: number;
+}
+
 export interface TransportStop {
   id: string;
   type: 'pickup' | 'delivery';
@@ -26,6 +36,7 @@ export interface TransportStop {
   contactName?: string;
   contactPhone?: string;
   notes?: string;
+  requiresSignature?: boolean;
 }
 
 export interface Project {
