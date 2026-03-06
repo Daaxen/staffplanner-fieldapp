@@ -171,11 +171,18 @@ const GanttChart = () => {
   }, [trackChange]);
 
   const handleUpdateProject = useCallback((projectId: string, updates: Partial<Project>) => {
-    setProjectsList(prev => prev.map(p =>
-      p.id === projectId ? { ...p, ...updates } : p
-    ));
+    setProjectsList(prev => {
+      const updated = prev.map(p =>
+        p.id === projectId ? { ...p, ...updates } : p
+      );
+      const project = updated.find(p => p.id === projectId);
+      if (project && project.assigneeIds.length > 0) {
+        trackChange(projectId, project.projectName, 'changed', project.assigneeIds);
+      }
+      return updated;
+    });
     setSelectedProject(prev => prev?.id === projectId ? { ...prev, ...updates } : prev);
-  }, []);
+  }, [trackChange]);
 
   const handleToggleStatus = useCallback((status: ProjectStatus) => {
     setActiveStatuses(prev => {
