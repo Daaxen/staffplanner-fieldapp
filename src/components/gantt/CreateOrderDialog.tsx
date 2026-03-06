@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, MapPin, Maximize2, Minimize2, Plus, Trash2, GripVertical, PenTool, Package } from 'lucide-react';
+import { CalendarIcon, MapPin, Maximize2, Minimize2, Plus, Trash2, GripVertical, PenTool, Package, Paperclip, X, FileText, Image, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { installers, clients, type Project, type ProjectStatus, type ProjectType, type TransportStop, type GoodsItem, projectTypeLabels } from '@/data/mockData';
