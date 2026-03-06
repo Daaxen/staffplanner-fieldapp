@@ -31,7 +31,11 @@ function getISOWeekNumber(date: Date): number {
   return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
 }
 
-const GanttChart = () => {
+interface GanttChartProps {
+  onPendingChangesCount?: (count: number) => void;
+}
+
+const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
   const [viewMode, setViewMode] = useState<ViewMode>('week');
   const [ganttMode, setGanttMode] = useState<GanttMode>('projects');
   const [dateOffset, setDateOffset] = useState(0);
