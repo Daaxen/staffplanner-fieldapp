@@ -30,7 +30,11 @@ function getISOWeekNumber(date: Date): number {
   return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
 }
 
-const GanttChart = () => {
+interface GanttChartProps {
+  onPendingChangesCount?: (count: number) => void;
+}
+
+const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
   const [viewMode, setViewMode] = useState<ViewMode>('week');
   const [ganttMode, setGanttMode] = useState<GanttMode>('projects');
   const [dateOffset, setDateOffset] = useState(0);
@@ -41,7 +45,10 @@ const GanttChart = () => {
   const [pendingChanges, setPendingChanges] = useState<DispatchChange[]>([]);
   const lastDispatchedState = useRef<string>(JSON.stringify(initialProjects));
 
-  // Track changes by comparing current state to last dispatched state
+  useEffect(() => {
+    onPendingChangesCount?.(pendingChanges.length);
+  }, [pendingChanges.length, onPendingChangesCount]);
+
   const trackChange = useCallback((projectId: string, projectName: string, type: 'new' | 'changed', affectedInstallerIds: string[]) => {
     setPendingChanges(prev => {
       const existing = prev.find(c => c.projectId === projectId);
@@ -290,15 +297,13 @@ const GanttChart = () => {
             New Project
           </button>
 
-          <div className="w-px h-6 bg-border" />
-
           <button
             onClick={handleDispatch}
             disabled={pendingChanges.length === 0}
             className={cn(
               "relative flex flex-col items-center gap-0.5 px-4 py-1.5 text-xs font-medium rounded-lg transition-all",
               pendingChanges.length > 0
-                ? "bg-accent text-accent-foreground hover:bg-accent/80 shadow-sm ring-1 ring-accent"
+                ? "bg-green-600 text-white hover:bg-green-700 shadow-sm ring-1 ring-green-500"
                 : "bg-muted text-muted-foreground cursor-not-allowed"
             )}
           >

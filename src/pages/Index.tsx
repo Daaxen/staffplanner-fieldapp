@@ -1,19 +1,46 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import AppSidebar from '@/components/AppSidebar';
 import GanttChart from '@/components/GanttChart';
 import StatsBar from '@/components/StatsBar';
 import FleetManager from '@/components/fleet/FleetManager';
 import { projects } from '@/data/mockData';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const Index = () => {
   const [activeView, setActiveView] = useState('planner');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [pendingNavTarget, setPendingNavTarget] = useState<string | null>(null);
+
+  const handleViewChange = useCallback((view: string) => {
+    if (activeView === 'planner' && view !== 'planner' && pendingCount > 0) {
+      setPendingNavTarget(view);
+      return;
+    }
+    setActiveView(view);
+  }, [activeView, pendingCount]);
+
+  const confirmNavigation = useCallback(() => {
+    if (pendingNavTarget) {
+      setActiveView(pendingNavTarget);
+      setPendingNavTarget(null);
+    }
+  }, [pendingNavTarget]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <AppSidebar
         activeView={activeView}
-        onViewChange={setActiveView}
+        onViewChange={handleViewChange}
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(c => !c)}
       />
@@ -21,7 +48,7 @@ const Index = () => {
         {activeView === 'planner' && (
           <>
             <StatsBar />
-            <GanttChart />
+            <GanttChart onPendingChangesCount={setPendingCount} />
           </>
         )}
         {activeView === 'fleet' && (
@@ -33,6 +60,21 @@ const Index = () => {
           </div>
         )}
       </main>
+
+      <AlertDialog open={!!pendingNavTarget} onOpenChange={(open) => !open && setPendingNavTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Undispatched changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              You still have {pendingCount} project{pendingCount > 1 ? 's' : ''} to dispatch. Are you sure you want to leave?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Stay</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmNavigation}>Leave anyway</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
