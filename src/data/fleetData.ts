@@ -1,5 +1,6 @@
 export type TireType = 'summer' | 'winter' | 'all-season';
 export type ServiceType = 'oil-change' | 'inspection' | 'tire-change' | 'brake-service' | 'battery' | 'repair' | 'other';
+export type InspectionStatus = 'pending' | 'overdue' | 'completed' | 'escalated';
 
 export interface Vehicle {
   id: string;
