@@ -285,7 +285,7 @@ const InstallersView = ({
             </div>
 
             {/* Timeline */}
-            <div className="flex-1 relative">
+            <div className="flex-1 relative" ref={timelineRef}>
               <GanttGrid days={days} colWidth={colWidth} totalHeight={totalHeight} todayStr={todayStr} />
               {groups.map((group, gIdx) => {
                 const inst = group.installer;
