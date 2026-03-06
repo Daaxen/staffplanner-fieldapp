@@ -166,6 +166,20 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
     setTransportStops(prev => prev.filter(s => s.id !== id));
   };
 
+  // Goods helpers
+  const updateGoodsItem = (id: string, updates: Partial<GoodsItem>) => {
+    setGoodsItems(prev => prev.map(g => g.id === id ? { ...g, ...updates } : g));
+  };
+
+  const addGoodsItem = () => {
+    setGoodsItems(prev => [...prev, { id: generateGoodsId() }]);
+  };
+
+  const removeGoodsItem = (id: string) => {
+    if (goodsItems.length <= 1) return;
+    setGoodsItems(prev => prev.filter(g => g.id !== id));
+  };
+
   const isValid = name.trim() && client.trim() && startDate && endDate && startDate <= endDate;
 
   const typeButtons: { value: ProjectType; icon: string }[] = [
