@@ -183,3 +183,30 @@ export const tireRecords: TireRecord[] = [
   { id: 'tr-1', vehicleId: 'v-3', date: '2026-02-20', fromType: 'winter', toType: 'all-season', mileageKm: 12000, treadDepthMm: 5.2 },
   { id: 'tr-2', vehicleId: 'v-1', date: '2025-11-01', fromType: 'summer', toType: 'winter', mileageKm: 40000, treadDepthMm: 7.1 },
 ];
+
+// Monthly inspection interval in days
+export const INSPECTION_INTERVAL_DAYS = 30;
+export const ESCALATION_AFTER_REMINDERS = 3;
+
+export const inspectionRecords: InspectionRecord[] = [
+  {
+    id: 'insp-1', vehicleId: 'v-1', dueDate: '2026-03-01', completedDate: '2026-03-01', status: 'completed',
+    driver: 'Erik Lindberg', reminderCount: 0, escalatedToManager: false,
+    checklist: inspectionChecklist.map(item => ({ itemId: item.id, checked: true })),
+  },
+  {
+    id: 'insp-2', vehicleId: 'v-2', dueDate: '2026-02-15', status: 'overdue',
+    driver: 'Karl Johansson', reminderCount: 2, escalatedToManager: false,
+    checklist: inspectionChecklist.map(item => ({ itemId: item.id, checked: false })),
+  },
+  {
+    id: 'insp-3', vehicleId: 'v-3', dueDate: '2026-03-10', status: 'pending',
+    driver: 'Anna Svensson', reminderCount: 0, escalatedToManager: false,
+    checklist: inspectionChecklist.map(item => ({ itemId: item.id, checked: false })),
+  },
+  {
+    id: 'insp-4', vehicleId: 'v-4', dueDate: '2026-01-20', status: 'escalated',
+    driver: 'Lisa Andersson', reminderCount: 4, escalatedToManager: true, escalatedDate: '2026-02-05',
+    checklist: inspectionChecklist.map(item => ({ itemId: item.id, checked: false })),
+  },
+];
