@@ -54,6 +54,9 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
     { id: generateStopId(), type: 'delivery', address: '' },
   ]);
   const [vehicleType, setVehicleType] = useState('');
+  const [goodsItems, setGoodsItems] = useState<GoodsItem[]>([
+    { id: generateGoodsId() },
+  ]);
 
   const resetForm = () => {
     setProjectType('installation');
