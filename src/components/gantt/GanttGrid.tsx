@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { isSwedishHoliday } from '@/utils/swedishHolidays';
 
 interface GanttGridProps {
   days: Date[];
@@ -11,15 +12,19 @@ const GanttGrid = ({ days, colWidth, totalHeight, todayStr }: GanttGridProps) =>
   return (
     <>
       {days.map((day, i) => {
-        const isToday = day.toISOString().split('T')[0] === todayStr;
+        const dateStr = day.toISOString().split('T')[0];
+        const isToday = dateStr === todayStr;
         const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+        const holiday = isSwedishHoliday(dateStr);
+        const isMonday = day.getDay() === 1 && i > 0;
         return (
           <div
             key={i}
             className={cn(
-              "absolute top-0 border-r border-gantt-grid",
+              "absolute top-0",
+              isMonday ? "border-l-2 border-l-gantt-week-border border-r border-r-gantt-grid" : "border-r border-gantt-grid",
               isToday && "bg-gantt-today/5",
-              isWeekend && "bg-muted/30"
+              holiday ? "bg-gantt-holiday/6" : isWeekend && "bg-muted/30"
             )}
             style={{ left: i * colWidth, width: colWidth, height: totalHeight }}
           />
