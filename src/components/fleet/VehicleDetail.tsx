@@ -2,16 +2,16 @@ import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import {
   type Vehicle, type MileageEntry, type ServiceRecord, type TireRecord,
-  type ServiceType, type TireType, type InspectionRecord,
+  type ServiceType, type TireType, type InspectionRecord, type InspectionChecklistItem,
   serviceTypeLabels, tireTypeLabels, fuelTypeLabels,
-  inspectionChecklist, inspectionCategoryLabels,
+  inspectionChecklist, inspectionCategoryLabels, getChecklistForVehicle,
   INSPECTION_INTERVAL_DAYS, ESCALATION_AFTER_REMINDERS,
 } from '@/data/fleetData';
 import { type Project } from '@/data/mockData';
 import {
   ArrowLeft, Gauge, Fuel, Weight, Package, CircleDot, Plus,
   Calendar, Wrench, Car, MapPin, Ruler, ClipboardCheck, AlertTriangle,
-  Bell, ShieldAlert, CheckCircle2, Clock, Send,
+  Bell, ShieldAlert, CheckCircle2, Clock, Send, Settings2, Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -70,10 +70,16 @@ const VehicleDetail = ({
   const [assignOpen, setAssignOpen] = useState(false);
   const [inspectionDialogOpen, setInspectionDialogOpen] = useState(false);
   const [activeInspection, setActiveInspection] = useState<InspectionRecord | null>(null);
+  const [showChecklistConfig, setShowChecklistConfig] = useState(false);
+  const [customExclusions, setCustomExclusions] = useState<string[]>([]);
 
   const cargoVolume = ((vehicle.cargoLengthCm * vehicle.cargoWidthCm * vehicle.cargoHeightCm) / 1_000_000).toFixed(1);
   const assignedProject = vehicle.assignedProjectId ? projects.find(p => p.id === vehicle.assignedProjectId) : null;
   const availableProjects = projects.filter(p => ['open', 'scheduled', 'in-progress'].includes(p.status));
+
+  // Get checklist filtered by fuel type, then also remove custom exclusions
+  const fuelFilteredChecklist = getChecklistForVehicle(vehicle.fuelType);
+  const activeChecklist = fuelFilteredChecklist.filter(item => !customExclusions.includes(item.id));
 
   const overdueInspections = inspectionRecords.filter(i => i.status === 'overdue' || i.status === 'escalated');
 
@@ -112,7 +118,10 @@ const VehicleDetail = ({
 
   const handleCompleteInspection = () => {
     if (!activeInspection) return;
-    const allChecked = activeInspection.checklist.every(c => c.checked);
+    const activeItemIds = new Set(activeChecklist.map(i => i.id));
+    const allChecked = activeInspection.checklist
+      .filter(c => activeItemIds.has(c.itemId))
+      .every(c => c.checked);
     if (!allChecked) {
       toast.error('All checklist items must be checked before completing the inspection.');
       return;
@@ -211,9 +220,74 @@ const VehicleDetail = ({
           <div className="flex justify-between items-center mb-3 mt-2">
             <div>
               <h3 className="text-sm font-semibold text-foreground">Vehicle Inspections</h3>
-              <p className="text-xs text-muted-foreground">Monthly check · {INSPECTION_INTERVAL_DAYS}-day interval · Escalates after {ESCALATION_AFTER_REMINDERS} ignored reminders</p>
+              <p className="text-xs text-muted-foreground">
+                Monthly check · {INSPECTION_INTERVAL_DAYS}-day interval · Escalates after {ESCALATION_AFTER_REMINDERS} ignored reminders
+                {vehicle.fuelType === 'electric' && <span className="ml-1 text-primary">· ⚡ Electric vehicle (oil/exhaust checks skipped)</span>}
+                {customExclusions.length > 0 && <span className="ml-1 text-muted-foreground/80">· {customExclusions.length} custom exclusion{customExclusions.length > 1 ? 's' : ''}</span>}
+              </p>
             </div>
+            <Button size="sm" variant="outline" onClick={() => setShowChecklistConfig(!showChecklistConfig)}>
+              <Settings2 className="w-3 h-3 mr-1" /> Customize Checklist
+            </Button>
           </div>
+
+          {/* Checklist customization panel */}
+          {showChecklistConfig && (
+            <div className="mb-4 p-4 bg-muted/30 rounded-lg border border-border">
+              <h4 className="text-sm font-semibold text-foreground mb-1 flex items-center gap-2">
+                <Settings2 className="w-4 h-4" /> Checklist Configuration
+                <Badge variant="secondary" className="text-[10px]">
+                  {fuelTypeLabels[vehicle.fuelType]}
+                  {vehicle.fuelType === 'electric' && <Zap className="w-3 h-3 ml-0.5 inline" />}
+                </Badge>
+              </h4>
+              <p className="text-xs text-muted-foreground mb-3">
+                Active: {activeChecklist.length} items · Excluded by fuel type: {inspectionChecklist.length - fuelFilteredChecklist.length} · Custom excluded: {customExclusions.length}
+              </p>
+              {Object.entries(inspectionCategoryLabels).map(([catKey, catLabel]) => {
+                const allItems = inspectionChecklist.filter(i => i.category === catKey);
+                if (allItems.length === 0) return null;
+                return (
+                  <div key={catKey} className="mb-3">
+                    <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">{catLabel}</h5>
+                    <div className="space-y-1">
+                      {allItems.map(item => {
+                        const excludedByFuel = item.excludeFuelTypes?.includes(vehicle.fuelType);
+                        const excludedCustom = customExclusions.includes(item.id);
+                        const isActive = !excludedByFuel && !excludedCustom;
+                        return (
+                          <label
+                            key={item.id}
+                            className={cn(
+                              "flex items-center gap-3 p-1.5 rounded text-sm cursor-pointer transition-colors",
+                              excludedByFuel ? "opacity-40 cursor-not-allowed" : "hover:bg-muted/40"
+                            )}
+                          >
+                            <Checkbox
+                              checked={isActive}
+                              disabled={excludedByFuel}
+                              onCheckedChange={(checked) => {
+                                if (excludedByFuel) return;
+                                setCustomExclusions(prev =>
+                                  checked
+                                    ? prev.filter(id => id !== item.id)
+                                    : [...prev, item.id]
+                                );
+                              }}
+                            />
+                            <span className={cn(!isActive && "line-through text-muted-foreground")}>{item.label}</span>
+                            {excludedByFuel && (
+                              <Badge variant="outline" className="text-[9px] ml-auto">N/A for {fuelTypeLabels[vehicle.fuelType]}</Badge>
+                            )}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           <div className="space-y-3">
             {[...inspectionRecords].sort((a, b) => b.dueDate.localeCompare(a.dueDate)).map(inspection => {
@@ -419,7 +493,7 @@ const VehicleDetail = ({
                 <span>Due: {activeInspection.dueDate}</span>
               </div>
               {Object.entries(inspectionCategoryLabels).map(([catKey, catLabel]) => {
-                const items = inspectionChecklist.filter(i => i.category === catKey);
+                const items = activeChecklist.filter(i => i.category === catKey);
                 if (items.length === 0) return null;
                 return (
                   <div key={catKey} className="mb-4">

@@ -73,6 +73,8 @@ export interface InspectionChecklistItem {
   id: string;
   label: string;
   category: 'exterior' | 'interior' | 'mechanical' | 'safety' | 'fluids';
+  /** Fuel types this item does NOT apply to */
+  excludeFuelTypes?: Vehicle['fuelType'][];
 }
 
 export interface InspectionRecord {
@@ -105,15 +107,15 @@ export const inspectionChecklist: InspectionChecklistItem[] = [
   // Mechanical
   { id: 'mech-1', label: 'Brakes responsive (no unusual sounds)', category: 'mechanical' },
   { id: 'mech-2', label: 'Steering smooth (no play)', category: 'mechanical' },
-  { id: 'mech-3', label: 'No unusual engine noises', category: 'mechanical' },
-  { id: 'mech-4', label: 'Exhaust — no excessive smoke', category: 'mechanical' },
+  { id: 'mech-3', label: 'No unusual engine noises', category: 'mechanical', excludeFuelTypes: ['electric'] },
+  { id: 'mech-4', label: 'Exhaust — no excessive smoke', category: 'mechanical', excludeFuelTypes: ['electric'] },
   // Safety
   { id: 'safe-1', label: 'First aid kit present', category: 'safety' },
   { id: 'safe-2', label: 'Warning triangle present', category: 'safety' },
   { id: 'safe-3', label: 'Fire extinguisher present & valid', category: 'safety' },
   { id: 'safe-4', label: 'Reflective vest in cabin', category: 'safety' },
   // Fluids
-  { id: 'flu-1', label: 'Engine oil level OK', category: 'fluids' },
+  { id: 'flu-1', label: 'Engine oil level OK', category: 'fluids', excludeFuelTypes: ['electric'] },
   { id: 'flu-2', label: 'Coolant level OK', category: 'fluids' },
   { id: 'flu-3', label: 'Washer fluid level OK', category: 'fluids' },
   { id: 'flu-4', label: 'Fuel / charge level sufficient', category: 'fluids' },
@@ -126,6 +128,13 @@ export const inspectionCategoryLabels: Record<string, string> = {
   safety: 'Safety Equipment',
   fluids: 'Fluids & Levels',
 };
+
+/** Returns the checklist items applicable to a given fuel type */
+export function getChecklistForVehicle(fuelType: Vehicle['fuelType']): InspectionChecklistItem[] {
+  return inspectionChecklist.filter(
+    item => !item.excludeFuelTypes?.includes(fuelType)
+  );
+}
 
 export const tireTypeLabels: Record<TireType, string> = {
   'summer': 'Summer',
