@@ -129,6 +129,13 @@ export const inspectionCategoryLabels: Record<string, string> = {
   fluids: 'Fluids & Levels',
 };
 
+/** Returns the checklist items applicable to a given fuel type */
+export function getChecklistForVehicle(fuelType: Vehicle['fuelType']): InspectionChecklistItem[] {
+  return inspectionChecklist.filter(
+    item => !item.excludeFuelTypes?.includes(fuelType)
+  );
+}
+
 export const tireTypeLabels: Record<TireType, string> = {
   'summer': 'Summer',
   'winter': 'Winter',
