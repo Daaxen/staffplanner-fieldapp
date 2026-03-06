@@ -73,6 +73,8 @@ export interface InspectionChecklistItem {
   id: string;
   label: string;
   category: 'exterior' | 'interior' | 'mechanical' | 'safety' | 'fluids';
+  /** Fuel types this item does NOT apply to */
+  excludeFuelTypes?: Vehicle['fuelType'][];
 }
 
 export interface InspectionRecord {
