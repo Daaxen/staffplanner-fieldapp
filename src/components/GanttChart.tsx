@@ -138,24 +138,37 @@ const GanttChart = () => {
   const getInstaller = (id: string | null) => id ? installers.find(i => i.id === id) ?? null : null;
 
   const handleDropProject = useCallback((projectId: string, installerId: string) => {
-    setProjectsList(prev => prev.map(p =>
-      p.id === projectId
-        ? {
-            ...p,
-            assigneeIds: p.assigneeIds.includes(installerId) ? p.assigneeIds : [...p.assigneeIds, installerId],
-            status: p.status === 'open' ? 'scheduled' as ProjectStatus : p.status,
-          }
-        : p
-    ));
-  }, []);
+    setProjectsList(prev => {
+      const updated = prev.map(p =>
+        p.id === projectId
+          ? {
+              ...p,
+              assigneeIds: p.assigneeIds.includes(installerId) ? p.assigneeIds : [...p.assigneeIds, installerId],
+              status: p.status === 'open' ? 'scheduled' as ProjectStatus : p.status,
+            }
+          : p
+      );
+      const project = updated.find(p => p.id === projectId);
+      if (project) {
+        trackChange(projectId, project.projectName, 'changed', project.assigneeIds);
+      }
+      return updated;
+    });
+  }, [trackChange]);
 
   const handleUnassignProject = useCallback((projectId: string) => {
-    setProjectsList(prev => prev.map(p =>
-      p.id === projectId
-        ? { ...p, assigneeIds: [], status: 'open' as ProjectStatus }
-        : p
-    ));
-  }, []);
+    setProjectsList(prev => {
+      const project = prev.find(p => p.id === projectId);
+      if (project && project.assigneeIds.length > 0) {
+        trackChange(projectId, project.projectName, 'changed', []);
+      }
+      return prev.map(p =>
+        p.id === projectId
+          ? { ...p, assigneeIds: [], status: 'open' as ProjectStatus }
+          : p
+      );
+    });
+  }, [trackChange]);
 
   const handleUpdateProject = useCallback((projectId: string, updates: Partial<Project>) => {
     setProjectsList(prev => prev.map(p =>
