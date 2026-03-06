@@ -70,10 +70,16 @@ const VehicleDetail = ({
   const [assignOpen, setAssignOpen] = useState(false);
   const [inspectionDialogOpen, setInspectionDialogOpen] = useState(false);
   const [activeInspection, setActiveInspection] = useState<InspectionRecord | null>(null);
+  const [showChecklistConfig, setShowChecklistConfig] = useState(false);
+  const [customExclusions, setCustomExclusions] = useState<string[]>([]);
 
   const cargoVolume = ((vehicle.cargoLengthCm * vehicle.cargoWidthCm * vehicle.cargoHeightCm) / 1_000_000).toFixed(1);
   const assignedProject = vehicle.assignedProjectId ? projects.find(p => p.id === vehicle.assignedProjectId) : null;
   const availableProjects = projects.filter(p => ['open', 'scheduled', 'in-progress'].includes(p.status));
+
+  // Get checklist filtered by fuel type, then also remove custom exclusions
+  const fuelFilteredChecklist = getChecklistForVehicle(vehicle.fuelType);
+  const activeChecklist = fuelFilteredChecklist.filter(item => !customExclusions.includes(item.id));
 
   const overdueInspections = inspectionRecords.filter(i => i.status === 'overdue' || i.status === 'escalated');
 
