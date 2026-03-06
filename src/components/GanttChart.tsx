@@ -291,15 +291,13 @@ const GanttChart = () => {
             New Project
           </button>
 
-          <div className="w-px h-6 bg-border" />
-
           <button
             onClick={handleDispatch}
             disabled={pendingChanges.length === 0}
             className={cn(
               "relative flex flex-col items-center gap-0.5 px-4 py-1.5 text-xs font-medium rounded-lg transition-all",
               pendingChanges.length > 0
-                ? "bg-accent text-accent-foreground hover:bg-accent/80 shadow-sm ring-1 ring-accent"
+                ? "bg-green-600 text-white hover:bg-green-700 shadow-sm ring-1 ring-green-500"
                 : "bg-muted text-muted-foreground cursor-not-allowed"
             )}
           >
