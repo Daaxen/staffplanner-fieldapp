@@ -49,11 +49,11 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
     onPendingChangesCount?.(pendingChanges.length);
   }, [pendingChanges.length, onPendingChangesCount]);
 
-  const trackChange = useCallback((projectId: string, projectName: string, type: 'new' | 'changed', affectedInstallerIds: string[]) => {
+  const trackChange = useCallback((projectId: string, projectName: string, type: 'new' | 'changed' | 'cancelled', affectedInstallerIds: string[]) => {
     setPendingChanges(prev => {
       const existing = prev.find(c => c.projectId === projectId);
       if (existing) {
-        return prev.map(c => c.projectId === projectId ? { ...c, type: type === 'new' ? 'new' : c.type, affectedInstallerIds } : c);
+        return prev.map(c => c.projectId === projectId ? { ...c, type, affectedInstallerIds } : c);
       }
       return [...prev, { projectId, projectName, type, affectedInstallerIds }];
     });
