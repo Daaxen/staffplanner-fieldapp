@@ -19,8 +19,16 @@ interface CreateOrderDialogProps {
   onCreateOrder: (project: Project) => void;
 }
 
+const generateProjectId = () => {
+  const now = new Date();
+  const year = now.getFullYear().toString().slice(-2);
+  const seq = Math.floor(Math.random() * 9000) + 1000;
+  return `P${year}-${seq}`;
+};
+
 const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDialogProps) => {
   const [name, setName] = useState('');
+  const [projectNumber, setProjectNumber] = useState('');
   const [client, setClient] = useState('');
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
