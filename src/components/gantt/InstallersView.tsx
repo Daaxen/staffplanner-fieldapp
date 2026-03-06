@@ -406,11 +406,13 @@ const InstallersView = ({
                     })}
 
                     {/* Project bars */}
-                    {group.projects.map((project, pIdx) => {
+                    {group.projects.map((project) => {
                       const dates = getBarDates(project, inst?.id);
                       const { left, width, overflowRight } = getBarPosition(project, inst?.id);
-                      const yOffset = group.projects.length > 1 ? (pIdx % 2 === 0 ? 6 : 34) : 18;
-                      const barHeight = group.projects.length > 1 ? 28 : 34;
+                      const layout = groupLayouts[gIdx];
+                      const lane = layout?.laneMap.get(project.id) ?? 0;
+                      const laneCount = layout?.laneCount ?? 1;
+                      const yOffset = laneCount <= 1 ? (baseRowHeight - barH) / 2 : barPadding + lane * (barH + barGap);
                       return (
                         <DraggableBar
                           key={project.id}
