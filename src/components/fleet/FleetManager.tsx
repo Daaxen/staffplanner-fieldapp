@@ -193,7 +193,7 @@ const FleetManager = ({ projects, onAssignVehicle }: FleetManagerProps) => {
                   </div>
                   <div className="flex items-center gap-1.5">
                     {needsService && (
-                      <AlertTriangle className="w-4 h-4 text-status-on-hold" title="Service due soon" />
+                      <span title="Service due soon"><AlertTriangle className="w-4 h-4 text-status-on-hold" /></span>
                     )}
                     <Badge variant="secondary" className={cn("text-[10px]", statusColors[vehicle.status])}>
                       {statusLabels[vehicle.status]}
