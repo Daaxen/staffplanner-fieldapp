@@ -6,11 +6,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, MapPin, Maximize2, Minimize2, Plus, Trash2, GripVertical, PenTool, Package } from 'lucide-react';
+import { CalendarIcon, MapPin, Maximize2, Minimize2, Plus, Trash2, GripVertical, PenTool, Package, Paperclip, X, FileText, Image, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { installers, clients, type Project, type ProjectStatus, type ProjectType, type TransportStop, type GoodsItem, projectTypeLabels } from '@/data/mockData';
+import { installers, clients, projects, locationDistances, type Project, type ProjectStatus, type ProjectType, type TransportStop, type GoodsItem, type Attachment, projectTypeLabels } from '@/data/mockData';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface CreateOrderDialogProps {
   open: boolean;
@@ -48,6 +49,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
   const [endOpen, setEndOpen] = useState(false);
   const [mapExpanded, setMapExpanded] = useState(false);
   const clientInputRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Transport-specific
   const [transportStops, setTransportStops] = useState<TransportStop[]>([
@@ -58,6 +60,9 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
   const [goodsItems, setGoodsItems] = useState<GoodsItem[]>([
     { id: generateGoodsId() },
   ]);
+
+  // Attachments
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
 
   const resetForm = () => {
     setProjectType('installation');
@@ -80,6 +85,44 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
     ]);
     setVehicleType('');
     setGoodsItems([{ id: generateGoodsId() }]);
+    setAttachments([]);
+  };
+
+  // Suitability scoring
+  const getInstallerSuitability = (inst: typeof installers[0]) => {
+    if (!startDate || !endDate) return null;
+    const projStart = format(startDate, 'yyyy-MM-dd');
+    const projEnd = format(endDate, 'yyyy-MM-dd');
+    const projLocation = projectType === 'transport' ? transportStops[0]?.address || '' : location;
+
+    // Occupancy: count overlapping projects in the period
+    const overlapping = projects.filter(p =>
+      p.assigneeIds.includes(inst.id) &&
+      p.startDate <= projEnd &&
+      p.endDate >= projStart &&
+      !['completed', 'cancelled'].includes(p.status)
+    );
+    const occupancyScore = Math.max(0, 100 - overlapping.length * 40); // 0 projects = 100, 1 = 60, 2 = 20, 3+ = 0
+
+    // Absence check
+    const hasAbsence = inst.absences.some(a => a.startDate <= projEnd && a.endDate >= projStart);
+    if (hasAbsence) return { score: 0, label: 'Absent', color: 'text-destructive' as const };
+
+    // Proximity
+    let proximityScore = 50; // default if no match
+    const distances = locationDistances[inst.baseLocation];
+    if (distances && projLocation) {
+      const dist = distances[projLocation];
+      if (dist !== undefined) {
+        proximityScore = dist <= 5 ? 100 : dist <= 10 ? 75 : dist <= 15 ? 50 : dist <= 25 ? 25 : 10;
+      }
+    }
+
+    const totalScore = Math.round(occupancyScore * 0.6 + proximityScore * 0.4);
+    const label = totalScore >= 70 ? 'Good fit' : totalScore >= 40 ? 'Fair' : 'Poor fit';
+    const color = totalScore >= 70 ? 'text-green-600' : totalScore >= 40 ? 'text-amber-500' : 'text-destructive';
+
+    return { score: totalScore, label, color, occupancy: overlapping.length, proximity: distances?.[projLocation] };
   };
 
   useEffect(() => {
@@ -179,6 +222,30 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
   const removeGoodsItem = (id: string) => {
     if (goodsItems.length <= 1) return;
     setGoodsItems(prev => prev.filter(g => g.id !== id));
+  };
+
+  // Attachment helpers
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    const newAttachments: Attachment[] = Array.from(files).map(f => ({
+      id: `att-${Math.random().toString(36).slice(2, 8)}`,
+      name: f.name,
+      size: f.size,
+      type: f.type,
+    }));
+    setAttachments(prev => [...prev, ...newAttachments]);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const removeAttachment = (id: string) => {
+    setAttachments(prev => prev.filter(a => a.id !== id));
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   const isValid = name.trim() && client.trim() && startDate && endDate && startDate <= endDate;
@@ -565,17 +632,49 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
             </div>
           )}
 
-          {/* Assign Installers */}
+          {/* Assign Installers with suitability */}
           <div className="grid gap-1.5">
             <Label>{projectType === 'transport' ? 'Assign Drivers' : 'Assign Installers'}</Label>
-            <div className="border border-input rounded-md p-3 grid gap-2 max-h-[140px] overflow-y-auto">
-              {installers.map((inst) => (
-                <label key={inst.id} className="flex items-center gap-2 cursor-pointer text-sm hover:bg-accent rounded px-1 py-0.5 transition-colors">
-                  <Checkbox checked={selectedInstallers.includes(inst.id)} onCheckedChange={() => toggleInstaller(inst.id)} />
-                  <span>{inst.name}</span>
-                  <span className="text-xs text-muted-foreground ml-auto">{inst.type === 'sub-vendor' ? 'Sub-vendor' : 'Own'}</span>
-                </label>
-              ))}
+            <div className="border border-input rounded-md p-3 grid gap-2 max-h-[180px] overflow-y-auto">
+              <TooltipProvider>
+                {installers
+                  .map(inst => ({ inst, suit: getInstallerSuitability(inst) }))
+                  .sort((a, b) => (b.suit?.score ?? 50) - (a.suit?.score ?? 50))
+                  .map(({ inst, suit }) => (
+                  <label key={inst.id} className="flex items-center gap-2 cursor-pointer text-sm hover:bg-accent rounded px-1 py-0.5 transition-colors">
+                    <Checkbox checked={selectedInstallers.includes(inst.id)} onCheckedChange={() => toggleInstaller(inst.id)} disabled={suit?.score === 0} />
+                    <span className={cn(suit?.score === 0 && "line-through text-muted-foreground")}>{inst.name}</span>
+                    {suit && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className={cn("text-[10px] font-medium ml-1", suit.color)}>
+                            {suit.score === 0 ? (
+                              <XCircle className="h-3.5 w-3.5 inline" />
+                            ) : suit.score >= 70 ? (
+                              <CheckCircle2 className="h-3.5 w-3.5 inline" />
+                            ) : (
+                              <AlertTriangle className="h-3.5 w-3.5 inline" />
+                            )}
+                            {' '}{suit.label}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="left" className="text-xs">
+                          {suit.score === 0 ? (
+                            <span>Absent during project period</span>
+                          ) : (
+                            <div className="space-y-0.5">
+                              <div>Score: {suit.score}%</div>
+                              <div>Projects in period: {suit.occupancy}</div>
+                              {suit.proximity !== undefined && <div>Distance: ~{suit.proximity} km</div>}
+                            </div>
+                          )}
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                    <span className="text-xs text-muted-foreground ml-auto">{inst.type === 'sub-vendor' ? 'Sub' : 'Own'}</span>
+                  </label>
+                ))}
+              </TooltipProvider>
             </div>
           </div>
 
@@ -583,6 +682,56 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
           <div className="grid gap-1.5">
             <Label htmlFor="order-desc">Description</Label>
             <Textarea id="order-desc" placeholder="Optional notes..." value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
+          </div>
+
+          {/* Attachments */}
+          <div className="grid gap-1.5">
+            <div className="flex items-center justify-between">
+              <Label className="flex items-center gap-1.5">
+                <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
+                Attachments
+              </Label>
+              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => fileInputRef.current?.click()}>
+                <Plus className="h-3 w-3" /> Add Files
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+                className="hidden"
+                onChange={handleFileSelect}
+              />
+            </div>
+            {attachments.length > 0 && (
+              <div className="border border-input rounded-md divide-y divide-border">
+                {attachments.map(att => (
+                  <div key={att.id} className="flex items-center gap-2 px-2.5 py-1.5">
+                    {att.type.startsWith('image/') ? (
+                      <Image className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    ) : (
+                      <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    )}
+                    <span className="text-xs text-foreground truncate flex-1">{att.name}</span>
+                    <span className="text-[10px] text-muted-foreground shrink-0">{formatFileSize(att.size)}</span>
+                    <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive shrink-0" onClick={() => removeAttachment(att.id)}>
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {attachments.length === 0 && (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-border rounded-md py-4 flex flex-col items-center gap-1 text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors cursor-pointer"
+              >
+                <Paperclip className="h-5 w-5" />
+                <span className="text-xs">Drop files or click to attach</span>
+                <span className="text-[10px]">Images, PDFs, documents</span>
+              </button>
+            )}
           </div>
         </div>
 
