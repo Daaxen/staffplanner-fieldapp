@@ -115,7 +115,7 @@ export const inspectionChecklist: InspectionChecklistItem[] = [
   { id: 'safe-3', label: 'Fire extinguisher present & valid', category: 'safety' },
   { id: 'safe-4', label: 'Reflective vest in cabin', category: 'safety' },
   // Fluids
-  { id: 'flu-1', label: 'Engine oil level OK', category: 'fluids' },
+  { id: 'flu-1', label: 'Engine oil level OK', category: 'fluids', excludeFuelTypes: ['electric'] },
   { id: 'flu-2', label: 'Coolant level OK', category: 'fluids' },
   { id: 'flu-3', label: 'Washer fluid level OK', category: 'fluids' },
   { id: 'flu-4', label: 'Fuel / charge level sufficient', category: 'fluids' },
