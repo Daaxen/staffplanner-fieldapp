@@ -1,5 +1,4 @@
 import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
-import { useBlocker } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, LayoutList, Users, Building2, Plus, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { projects as initialProjects, installers, type Project, type ProjectStatus } from '@/data/mockData';
