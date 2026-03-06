@@ -91,6 +91,49 @@ const InstallersView = ({
     return map;
   }, [projects, allInstallers, activeStatuses]);
 
+  // Stack projects so they don't overlap
+  const getProjectLanes = useCallback((groupProjects: Project[], installerId?: string) => {
+    const lanes: { endDay: number }[] = [];
+    const assignments: number[] = [];
+    
+    // Sort by start date
+    const sorted = [...groupProjects].sort((a, b) => {
+      const aDates = getBarDates(a, installerId);
+      const bDates = getBarDates(b, installerId);
+      return aDates.startDate.localeCompare(bDates.startDate);
+    });
+
+    sorted.forEach((project) => {
+      const dates = getBarDates(project, installerId);
+      const pStart = new Date(dates.startDate);
+      const startDay = Math.floor((pStart.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      let lane = lanes.findIndex(l => l.endDay <= startDay);
+      if (lane === -1) {
+        lane = lanes.length;
+        lanes.push({ endDay: 0 });
+      }
+      
+      const pEnd = new Date(dates.endDate);
+      const endDay = Math.floor((pEnd.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      lanes[lane].endDay = endDay;
+      assignments.push(lane);
+    });
+
+    const map = new Map<string, number>();
+    sorted.forEach((p, i) => map.set(p.id, assignments[i]));
+    return { laneCount: lanes.length, laneMap: map };
+  }, [startDate]);
+
+  const groupLayouts = useMemo(() => {
+    return groups.map(g => getProjectLanes(g.projects, g.installer?.id));
+  }, [groups, getProjectLanes]);
+
+  const getRowHeight = (laneCount: number) => {
+    if (laneCount <= 1) return baseRowHeight;
+    return Math.max(baseRowHeight, laneCount * (barH + barGap) + barPadding * 2);
+  };
+
   const totalGridWidth = days.length * colWidth;
 
   const getBarDates = (project: Project, installerId?: string) => {
