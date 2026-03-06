@@ -1,3 +1,5 @@
+export type ProjectType = 'installation' | 'site-survey' | 'transport';
+
 export type ProjectStatus = 'open' | 'scheduled' | 'in-progress' | 'completed' | 'on-hold' | 'cancelled';
 
 export interface Installer {
