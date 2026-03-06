@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 import { type Project, type Installer, type ProjectStatus, projectTypeIcons } from '@/data/mockData';
 import GanttHeader from './GanttHeader';
 import GanttGrid from './GanttGrid';
-import OrderBox from './OrderBox';
+import { Package } from 'lucide-react';
 import DraggableBar from './DraggableBar';
 import DateChangeDialog from './DateChangeDialog';
 import {
