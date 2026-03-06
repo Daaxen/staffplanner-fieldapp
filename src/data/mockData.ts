@@ -8,7 +8,15 @@ export interface Installer {
   color: number; // 1-6 maps to installer-1 through installer-6
   type: 'own' | 'sub-vendor';
   avatar?: string;
+  baseLocation: string; // area/city for proximity scoring
   absences: Absence[];
+}
+
+export interface Attachment {
+  id: string;
+  name: string;
+  size: number; // bytes
+  type: string; // MIME type
 }
 
 export interface Absence {
