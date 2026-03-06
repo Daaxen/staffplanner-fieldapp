@@ -6,10 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, MapPin, Maximize2, Minimize2, Plus, Trash2, GripVertical } from 'lucide-react';
+import { CalendarIcon, MapPin, Maximize2, Minimize2, Plus, Trash2, GripVertical, PenTool, Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { installers, clients, type Project, type ProjectStatus, type ProjectType, type TransportStop, projectTypeLabels } from '@/data/mockData';
+import { installers, clients, type Project, type ProjectStatus, type ProjectType, type TransportStop, type GoodsItem, projectTypeLabels } from '@/data/mockData';
 import { Checkbox } from '@/components/ui/checkbox';
 
 interface CreateOrderDialogProps {
@@ -24,6 +24,7 @@ const generateProjectId = () => {
 };
 
 const generateStopId = () => `ts-${Math.random().toString(36).slice(2, 8)}`;
+const generateGoodsId = () => `gi-${Math.random().toString(36).slice(2, 8)}`;
 
 const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDialogProps) => {
   const projectId = useMemo(() => generateProjectId(), [open]);
@@ -53,6 +54,9 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
     { id: generateStopId(), type: 'delivery', address: '' },
   ]);
   const [vehicleType, setVehicleType] = useState('');
+  const [goodsItems, setGoodsItems] = useState<GoodsItem[]>([
+    { id: generateGoodsId() },
+  ]);
 
   const resetForm = () => {
     setProjectType('installation');
@@ -74,6 +78,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
       { id: generateStopId(), type: 'delivery', address: '' },
     ]);
     setVehicleType('');
+    setGoodsItems([{ id: generateGoodsId() }]);
   };
 
   useEffect(() => {
@@ -120,12 +125,13 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
       endDate: format(endDate, 'yyyy-MM-dd'),
       startTime: startTime || undefined,
       endTime: endTime || undefined,
-      estimatedHours: estimatedHours ? parseFloat(estimatedHours) : undefined,
+      estimatedHours: projectType !== 'transport' && estimatedHours ? parseFloat(estimatedHours) : undefined,
       isFlexOrder,
       description: description || undefined,
       ...(projectType === 'transport' && {
         transportStops: transportStops.filter(s => s.address.trim()),
         vehicleType: vehicleType || undefined,
+        goodsItems: goodsItems.filter(g => g.description || g.quantity || g.lengthCm || g.weightKg),
       }),
     };
 
@@ -159,6 +165,20 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
   const removeStop = (id: string) => {
     if (transportStops.length <= 2) return;
     setTransportStops(prev => prev.filter(s => s.id !== id));
+  };
+
+  // Goods helpers
+  const updateGoodsItem = (id: string, updates: Partial<GoodsItem>) => {
+    setGoodsItems(prev => prev.map(g => g.id === id ? { ...g, ...updates } : g));
+  };
+
+  const addGoodsItem = () => {
+    setGoodsItems(prev => [...prev, { id: generateGoodsId() }]);
+  };
+
+  const removeGoodsItem = (id: string) => {
+    if (goodsItems.length <= 1) return;
+    setGoodsItems(prev => prev.filter(g => g.id !== id));
   };
 
   const isValid = name.trim() && client.trim() && startDate && endDate && startDate <= endDate;
@@ -351,6 +371,16 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
                           value={stop.notes || ''}
                           onChange={(e) => updateStop(stop.id, { notes: e.target.value })}
                         />
+                        {stop.type === 'delivery' && (
+                          <label className="flex items-center gap-2 cursor-pointer mt-0.5">
+                            <Checkbox
+                              checked={stop.requiresSignature ?? true}
+                              onCheckedChange={(checked) => updateStop(stop.id, { requiresSignature: !!checked })}
+                            />
+                            <PenTool className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-[10px] text-muted-foreground">Require digital signature on delivery</span>
+                          </label>
+                        )}
                       </div>
 
                       {canRemove ? (
@@ -363,6 +393,91 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          )}
+
+          {/* Goods Details — Transport only */}
+          {projectType === 'transport' && (
+            <div className="grid gap-2">
+              <div className="flex items-center justify-between">
+                <Label className="flex items-center gap-1.5">
+                  <Package className="h-3.5 w-3.5 text-muted-foreground" />
+                  Goods Details
+                  <span className="text-[10px] text-muted-foreground font-normal">(optional)</span>
+                </Label>
+                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={addGoodsItem}>
+                  <Plus className="h-3 w-3" /> Add Another
+                </Button>
+              </div>
+              <div className="border border-input rounded-md divide-y divide-border">
+                {goodsItems.map((item, idx) => (
+                  <div key={item.id} className="p-2.5 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        Colli {idx + 1}
+                      </span>
+                      {goodsItems.length > 1 && (
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive" onClick={() => removeGoodsItem(item.id)}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                    <Input
+                      placeholder="Description of goods..."
+                      className="h-7 text-xs"
+                      value={item.description || ''}
+                      onChange={(e) => updateGoodsItem(item.id, { description: e.target.value })}
+                    />
+                    <div className="grid grid-cols-5 gap-2">
+                      <div className="grid gap-0.5">
+                        <span className="text-[9px] text-muted-foreground">Pcs</span>
+                        <Input
+                          type="number" min="0" placeholder="0"
+                          className="h-7 text-xs"
+                          value={item.quantity ?? ''}
+                          onChange={(e) => updateGoodsItem(item.id, { quantity: e.target.value ? parseInt(e.target.value) : undefined })}
+                        />
+                      </div>
+                      <div className="grid gap-0.5">
+                        <span className="text-[9px] text-muted-foreground">L (cm)</span>
+                        <Input
+                          type="number" min="0" placeholder="0"
+                          className="h-7 text-xs"
+                          value={item.lengthCm ?? ''}
+                          onChange={(e) => updateGoodsItem(item.id, { lengthCm: e.target.value ? parseInt(e.target.value) : undefined })}
+                        />
+                      </div>
+                      <div className="grid gap-0.5">
+                        <span className="text-[9px] text-muted-foreground">W (cm)</span>
+                        <Input
+                          type="number" min="0" placeholder="0"
+                          className="h-7 text-xs"
+                          value={item.widthCm ?? ''}
+                          onChange={(e) => updateGoodsItem(item.id, { widthCm: e.target.value ? parseInt(e.target.value) : undefined })}
+                        />
+                      </div>
+                      <div className="grid gap-0.5">
+                        <span className="text-[9px] text-muted-foreground">H (cm)</span>
+                        <Input
+                          type="number" min="0" placeholder="0"
+                          className="h-7 text-xs"
+                          value={item.heightCm ?? ''}
+                          onChange={(e) => updateGoodsItem(item.id, { heightCm: e.target.value ? parseInt(e.target.value) : undefined })}
+                        />
+                      </div>
+                      <div className="grid gap-0.5">
+                        <span className="text-[9px] text-muted-foreground">Kg</span>
+                        <Input
+                          type="number" min="0" step="0.1" placeholder="0"
+                          className="h-7 text-xs"
+                          value={item.weightKg ?? ''}
+                          onChange={(e) => updateGoodsItem(item.id, { weightKg: e.target.value ? parseFloat(e.target.value) : undefined })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -408,11 +523,13 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
           </div>
 
           {/* Estimated hours & Flex order */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-1.5">
-              <Label htmlFor="est-hours">Estimated Hours</Label>
-              <Input id="est-hours" type="number" min="0" step="0.5" placeholder="e.g. 8" value={estimatedHours} onChange={(e) => setEstimatedHours(e.target.value)} />
-            </div>
+          <div className={cn("grid gap-3", projectType !== 'transport' ? "grid-cols-2" : "grid-cols-1")}>
+            {projectType !== 'transport' && (
+              <div className="grid gap-1.5">
+                <Label htmlFor="est-hours">Estimated Hours</Label>
+                <Input id="est-hours" type="number" min="0" step="0.5" placeholder="e.g. 8" value={estimatedHours} onChange={(e) => setEstimatedHours(e.target.value)} />
+              </div>
+            )}
             <div className="grid gap-1.5">
               <Label>&nbsp;</Label>
               <label className="flex items-center gap-2 h-10 cursor-pointer">
