@@ -91,6 +91,15 @@ const InstallersView = ({
     return map;
   }, [projects, allInstallers, activeStatuses]);
 
+  const totalGridWidth = days.length * colWidth;
+
+  const getBarDates = (project: Project, installerId?: string) => {
+    if (installerId && project.installerDateOverrides?.[installerId]) {
+      return project.installerDateOverrides[installerId];
+    }
+    return { startDate: project.startDate, endDate: project.endDate };
+  };
+
   // Stack projects so they don't overlap
   const getProjectLanes = useCallback((groupProjects: Project[], installerId?: string) => {
     const lanes: { endDay: number }[] = [];
@@ -132,15 +141,6 @@ const InstallersView = ({
   const getRowHeight = (laneCount: number) => {
     if (laneCount <= 1) return baseRowHeight;
     return Math.max(baseRowHeight, laneCount * (barH + barGap) + barPadding * 2);
-  };
-
-  const totalGridWidth = days.length * colWidth;
-
-  const getBarDates = (project: Project, installerId?: string) => {
-    if (installerId && project.installerDateOverrides?.[installerId]) {
-      return project.installerDateOverrides[installerId];
-    }
-    return { startDate: project.startDate, endDate: project.endDate };
   };
 
   const getBarPosition = (project: Project, installerId?: string) => {
