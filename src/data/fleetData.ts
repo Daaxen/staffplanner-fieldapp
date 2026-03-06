@@ -69,6 +69,64 @@ export const serviceTypeLabels: Record<ServiceType, string> = {
   'other': 'Other',
 };
 
+export interface InspectionChecklistItem {
+  id: string;
+  label: string;
+  category: 'exterior' | 'interior' | 'mechanical' | 'safety' | 'fluids';
+}
+
+export interface InspectionRecord {
+  id: string;
+  vehicleId: string;
+  dueDate: string;
+  completedDate?: string;
+  status: InspectionStatus;
+  driver: string;
+  checklist: { itemId: string; checked: boolean; note?: string }[];
+  reminderCount: number;
+  escalatedToManager: boolean;
+  escalatedDate?: string;
+}
+
+export const inspectionChecklist: InspectionChecklistItem[] = [
+  // Exterior
+  { id: 'ext-1', label: 'Body damage / new scratches', category: 'exterior' },
+  { id: 'ext-2', label: 'Lights working (headlights, brake, indicators)', category: 'exterior' },
+  { id: 'ext-3', label: 'Windshield condition (chips/cracks)', category: 'exterior' },
+  { id: 'ext-4', label: 'Wipers functional', category: 'exterior' },
+  { id: 'ext-5', label: 'Tire condition & pressure', category: 'exterior' },
+  { id: 'ext-6', label: 'License plates visible & clean', category: 'exterior' },
+  // Interior
+  { id: 'int-1', label: 'Cabin cleanliness', category: 'interior' },
+  { id: 'int-2', label: 'Seatbelts working', category: 'interior' },
+  { id: 'int-3', label: 'Dashboard warning lights (none active)', category: 'interior' },
+  { id: 'int-4', label: 'Horn working', category: 'interior' },
+  { id: 'int-5', label: 'Mirrors adjusted & intact', category: 'interior' },
+  // Mechanical
+  { id: 'mech-1', label: 'Brakes responsive (no unusual sounds)', category: 'mechanical' },
+  { id: 'mech-2', label: 'Steering smooth (no play)', category: 'mechanical' },
+  { id: 'mech-3', label: 'No unusual engine noises', category: 'mechanical' },
+  { id: 'mech-4', label: 'Exhaust — no excessive smoke', category: 'mechanical' },
+  // Safety
+  { id: 'safe-1', label: 'First aid kit present', category: 'safety' },
+  { id: 'safe-2', label: 'Warning triangle present', category: 'safety' },
+  { id: 'safe-3', label: 'Fire extinguisher present & valid', category: 'safety' },
+  { id: 'safe-4', label: 'Reflective vest in cabin', category: 'safety' },
+  // Fluids
+  { id: 'flu-1', label: 'Engine oil level OK', category: 'fluids' },
+  { id: 'flu-2', label: 'Coolant level OK', category: 'fluids' },
+  { id: 'flu-3', label: 'Washer fluid level OK', category: 'fluids' },
+  { id: 'flu-4', label: 'Fuel / charge level sufficient', category: 'fluids' },
+];
+
+export const inspectionCategoryLabels: Record<string, string> = {
+  exterior: 'Exterior',
+  interior: 'Interior',
+  mechanical: 'Mechanical',
+  safety: 'Safety Equipment',
+  fluids: 'Fluids & Levels',
+};
+
 export const tireTypeLabels: Record<TireType, string> = {
   'summer': 'Summer',
   'winter': 'Winter',
