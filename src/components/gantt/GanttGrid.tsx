@@ -16,7 +16,7 @@ const GanttGrid = ({ days, colWidth, totalHeight, todayStr }: GanttGridProps) =>
         const isToday = dateStr === todayStr;
         const isWeekend = day.getDay() === 0 || day.getDay() === 6;
         const holiday = isSwedishHoliday(dateStr);
-        const _isMonday = day.getDay() === 1 && i > 0;
+        // Week borders only in header, not grid
         return (
           <div
             key={i}
