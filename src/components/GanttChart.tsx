@@ -150,7 +150,7 @@ const GanttChart = () => {
       );
       const project = updated.find(p => p.id === projectId);
       if (project) {
-        trackChange(projectId, project.projectName, 'changed', project.assigneeIds);
+        trackChange(projectId, project.name, 'changed', project.assigneeIds);
       }
       return updated;
     });
