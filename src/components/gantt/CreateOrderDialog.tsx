@@ -24,6 +24,7 @@ const generateProjectId = () => {
 };
 
 const generateStopId = () => `ts-${Math.random().toString(36).slice(2, 8)}`;
+const generateGoodsId = () => `gi-${Math.random().toString(36).slice(2, 8)}`;
 
 const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDialogProps) => {
   const projectId = useMemo(() => generateProjectId(), [open]);
