@@ -1,5 +1,5 @@
-import { useMemo, useState, useCallback, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, LayoutList, Users, Building2, Plus } from 'lucide-react';
+import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
+import { ChevronLeft, ChevronRight, LayoutList, Users, Building2, Plus, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { projects as initialProjects, installers, type Project, type ProjectStatus } from '@/data/mockData';
 import ProjectDetailPanel from './ProjectDetailPanel';
@@ -8,6 +8,14 @@ import InstallersView from './gantt/InstallersView';
 import ClientsView from './gantt/ClientsView';
 import StatusFilter from './gantt/StatusFilter';
 import CreateOrderDialog from './gantt/CreateOrderDialog';
+import { toast } from 'sonner';
+
+interface DispatchChange {
+  projectId: string;
+  projectName: string;
+  type: 'new' | 'changed';
+  affectedInstallerIds: string[];
+}
 
 type ViewMode = 'day' | 'week' | 'month';
 type GanttMode = 'projects' | 'installers' | 'clients';
@@ -30,6 +38,43 @@ const GanttChart = () => {
   const [projectsList, setProjectsList] = useState<Project[]>(initialProjects);
   const [activeStatuses, setActiveStatuses] = useState<Set<ProjectStatus>>(new Set(allStatuses));
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [pendingChanges, setPendingChanges] = useState<DispatchChange[]>([]);
+  const lastDispatchedState = useRef<string>(JSON.stringify(initialProjects));
+
+  // Track changes by comparing current state to last dispatched state
+  const trackChange = useCallback((projectId: string, projectName: string, type: 'new' | 'changed', affectedInstallerIds: string[]) => {
+    setPendingChanges(prev => {
+      const existing = prev.find(c => c.projectId === projectId);
+      if (existing) {
+        return prev.map(c => c.projectId === projectId ? { ...c, type: type === 'new' ? 'new' : c.type, affectedInstallerIds } : c);
+      }
+      return [...prev, { projectId, projectName, type, affectedInstallerIds }];
+    });
+  }, []);
+
+  const handleDispatch = useCallback(() => {
+    if (pendingChanges.length === 0) return;
+
+    pendingChanges.forEach(change => {
+      const installerNames = change.affectedInstallerIds
+        .map(id => installers.find(i => i.id === id)?.name)
+        .filter(Boolean);
+
+      if (installerNames.length > 0) {
+        const label = change.type === 'new' ? 'NEW PROJECT' : 'CHANGES to';
+        installerNames.forEach(name => {
+          toast.success(`📩 ${name}`, {
+            description: `${label} ${change.projectName}`,
+            duration: 5000,
+          });
+        });
+      }
+    });
+
+    toast.info(`Dispatched ${pendingChanges.length} change${pendingChanges.length > 1 ? 's' : ''} to installers`);
+    lastDispatchedState.current = JSON.stringify(projectsList);
+    setPendingChanges([]);
+  }, [pendingChanges, projectsList]);
 
   const { days, startDate } = useMemo(() => {
     const today = new Date();
@@ -93,31 +138,51 @@ const GanttChart = () => {
   const getInstaller = (id: string | null) => id ? installers.find(i => i.id === id) ?? null : null;
 
   const handleDropProject = useCallback((projectId: string, installerId: string) => {
-    setProjectsList(prev => prev.map(p =>
-      p.id === projectId
-        ? {
-            ...p,
-            assigneeIds: p.assigneeIds.includes(installerId) ? p.assigneeIds : [...p.assigneeIds, installerId],
-            status: p.status === 'open' ? 'scheduled' as ProjectStatus : p.status,
-          }
-        : p
-    ));
-  }, []);
+    setProjectsList(prev => {
+      const updated = prev.map(p =>
+        p.id === projectId
+          ? {
+              ...p,
+              assigneeIds: p.assigneeIds.includes(installerId) ? p.assigneeIds : [...p.assigneeIds, installerId],
+              status: p.status === 'open' ? 'scheduled' as ProjectStatus : p.status,
+            }
+          : p
+      );
+      const project = updated.find(p => p.id === projectId);
+      if (project) {
+        trackChange(projectId, project.name, 'changed', project.assigneeIds);
+      }
+      return updated;
+    });
+  }, [trackChange]);
 
   const handleUnassignProject = useCallback((projectId: string) => {
-    setProjectsList(prev => prev.map(p =>
-      p.id === projectId
-        ? { ...p, assigneeIds: [], status: 'open' as ProjectStatus }
-        : p
-    ));
-  }, []);
+    setProjectsList(prev => {
+      const project = prev.find(p => p.id === projectId);
+      if (project && project.assigneeIds.length > 0) {
+        trackChange(projectId, project.name, 'changed', []);
+      }
+      return prev.map(p =>
+        p.id === projectId
+          ? { ...p, assigneeIds: [], status: 'open' as ProjectStatus }
+          : p
+      );
+    });
+  }, [trackChange]);
 
   const handleUpdateProject = useCallback((projectId: string, updates: Partial<Project>) => {
-    setProjectsList(prev => prev.map(p =>
-      p.id === projectId ? { ...p, ...updates } : p
-    ));
+    setProjectsList(prev => {
+      const updated = prev.map(p =>
+        p.id === projectId ? { ...p, ...updates } : p
+      );
+      const project = updated.find(p => p.id === projectId);
+      if (project && project.assigneeIds.length > 0) {
+        trackChange(projectId, project.name, 'changed', project.assigneeIds);
+      }
+      return updated;
+    });
     setSelectedProject(prev => prev?.id === projectId ? { ...prev, ...updates } : prev);
-  }, []);
+  }, [trackChange]);
 
   const handleToggleStatus = useCallback((status: ProjectStatus) => {
     setActiveStatuses(prev => {
@@ -134,7 +199,10 @@ const GanttChart = () => {
 
   const handleCreateOrder = useCallback((project: Project) => {
     setProjectsList(prev => [...prev, project]);
-  }, []);
+    if (project.assigneeIds.length > 0) {
+      trackChange(project.id, project.name, 'new', project.assigneeIds);
+    }
+  }, [trackChange]);
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
@@ -220,6 +288,29 @@ const GanttChart = () => {
           >
             <Plus className="w-4 h-4" />
             New Project
+          </button>
+
+          <div className="w-px h-6 bg-border" />
+
+          <button
+            onClick={handleDispatch}
+            disabled={pendingChanges.length === 0}
+            className={cn(
+              "relative flex flex-col items-center gap-0.5 px-4 py-1.5 text-xs font-medium rounded-lg transition-all",
+              pendingChanges.length > 0
+                ? "bg-accent text-accent-foreground hover:bg-accent/80 shadow-sm ring-1 ring-accent"
+                : "bg-muted text-muted-foreground cursor-not-allowed"
+            )}
+          >
+            <div className="flex items-center gap-1.5">
+              <Send className="w-4 h-4" />
+              Dispatch
+            </div>
+            {pendingChanges.length > 0 && (
+              <span className="text-[10px] leading-none font-semibold">
+                {pendingChanges.length} change{pendingChanges.length > 1 ? 's' : ''}
+              </span>
+            )}
           </button>
         </div>
       </div>
