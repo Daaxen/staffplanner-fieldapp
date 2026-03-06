@@ -89,15 +89,26 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
         </DialogHeader>
 
         <div className="grid gap-4 py-2">
-          {/* Project Name */}
-          <div className="grid gap-1.5">
-            <Label htmlFor="order-name">Project Name *</Label>
-            <Input
-              id="order-name"
-              placeholder="e.g. IKEA Kitchen Install"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
+          {/* Project Name & Number */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label htmlFor="order-name">Project Name *</Label>
+              <Input
+                id="order-name"
+                placeholder="e.g. IKEA Kitchen Install"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="order-number">Project Number</Label>
+              <Input
+                id="order-number"
+                placeholder="Auto-generated"
+                value={projectNumber}
+                onChange={(e) => setProjectNumber(e.target.value)}
+              />
+            </div>
           </div>
 
           {/* Client & Location */}
