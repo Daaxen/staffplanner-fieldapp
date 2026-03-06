@@ -6,6 +6,15 @@ import GanttGrid from './GanttGrid';
 import OrderBox from './OrderBox';
 import DraggableBar from './DraggableBar';
 import DateChangeDialog from './DateChangeDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const statusBorderMap: Record<ProjectStatus, string> = {
   'open': 'border-status-open',
