@@ -85,6 +85,44 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
     ]);
     setVehicleType('');
     setGoodsItems([{ id: generateGoodsId() }]);
+    setAttachments([]);
+  };
+
+  // Suitability scoring
+  const getInstallerSuitability = (inst: typeof installers[0]) => {
+    if (!startDate || !endDate) return null;
+    const projStart = format(startDate, 'yyyy-MM-dd');
+    const projEnd = format(endDate, 'yyyy-MM-dd');
+    const projLocation = projectType === 'transport' ? transportStops[0]?.address || '' : location;
+
+    // Occupancy: count overlapping projects in the period
+    const overlapping = projects.filter(p =>
+      p.assigneeIds.includes(inst.id) &&
+      p.startDate <= projEnd &&
+      p.endDate >= projStart &&
+      !['completed', 'cancelled'].includes(p.status)
+    );
+    const occupancyScore = Math.max(0, 100 - overlapping.length * 40); // 0 projects = 100, 1 = 60, 2 = 20, 3+ = 0
+
+    // Absence check
+    const hasAbsence = inst.absences.some(a => a.startDate <= projEnd && a.endDate >= projStart);
+    if (hasAbsence) return { score: 0, label: 'Absent', color: 'text-destructive' as const };
+
+    // Proximity
+    let proximityScore = 50; // default if no match
+    const distances = locationDistances[inst.baseLocation];
+    if (distances && projLocation) {
+      const dist = distances[projLocation];
+      if (dist !== undefined) {
+        proximityScore = dist <= 5 ? 100 : dist <= 10 ? 75 : dist <= 15 ? 50 : dist <= 25 ? 25 : 10;
+      }
+    }
+
+    const totalScore = Math.round(occupancyScore * 0.6 + proximityScore * 0.4);
+    const label = totalScore >= 70 ? 'Good fit' : totalScore >= 40 ? 'Fair' : 'Poor fit';
+    const color = totalScore >= 70 ? 'text-green-600' : totalScore >= 40 ? 'text-amber-500' : 'text-destructive';
+
+    return { score: totalScore, label, color, occupancy: overlapping.length, proximity: distances?.[projLocation] };
   };
 
   useEffect(() => {
