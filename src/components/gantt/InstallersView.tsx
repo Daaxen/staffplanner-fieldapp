@@ -344,8 +344,8 @@ const InstallersView = ({
                       idx % 2 === 0 ? "bg-card" : "bg-muted/20"
                     )}
                     style={{ height: getRowHeight(groupLayouts[idx]?.laneCount ?? 1) }}
-                    onDragOver={inst ? handleDragOver : undefined}
-                    onDrop={inst ? (e) => handleDrop(e, inst.id) : undefined}
+                    onDragOver={handleDragOver}
+                    onDrop={inst ? (e) => handleDrop(e, inst.id) : (e) => { e.preventDefault(); const projectId = e.dataTransfer.getData('projectId'); if (projectId) onUnassignProject(projectId); }}
                   >
                     {inst ? (
                       <>
@@ -363,10 +363,10 @@ const InstallersView = ({
                       </>
                     ) : (
                       <>
-                        <div className="w-3 h-3 rounded-full shrink-0 bg-muted-foreground/30 border border-dashed border-muted-foreground/50" />
+                        <Package className="w-4 h-4 shrink-0 text-status-open" />
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-muted-foreground truncate">Unassigned</p>
-                          <p className="text-xs text-muted-foreground">{group.projects.length} projects</p>
+                          <p className="text-sm font-medium text-muted-foreground truncate">Order Box — {group.projects.length} unassigned</p>
+                          <p className="text-xs text-muted-foreground/60">Drop here to unassign</p>
                         </div>
                       </>
                     )}
