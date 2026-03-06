@@ -281,6 +281,11 @@ const GanttChart = () => {
           onClose={() => setSelectedProject(null)}
         />
       )}
+      <CreateOrderDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onCreateOrder={handleCreateOrder}
+      />
     </div>
   );
 };
