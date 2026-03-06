@@ -406,6 +406,20 @@ const InstallersView = ({
         onConfirmOne={handleConfirmOne}
         onCancel={() => setPendingChange(null)}
       />
+
+      <AlertDialog open={!!vacationWarning} onOpenChange={() => setVacationWarning(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>⚠️ Vacation Conflict</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cannot place this project on <span className="font-semibold">{vacationWarning?.installerName}</span> — they have a planned absence (<span className="font-semibold">{vacationWarning?.absenceLabel}</span>) during this period.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setVacationWarning(null)}>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
