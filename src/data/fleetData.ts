@@ -72,7 +72,7 @@ export const serviceTypeLabels: Record<ServiceType, string> = {
 export interface InspectionChecklistItem {
   id: string;
   label: string;
-  category: 'exterior' | 'interior' | 'mechanical' | 'safety' | 'fluids';
+  category: 'exterior' | 'interior' | 'mechanical' | 'safety' | 'fluids' | 'cargo';
   /** Fuel types this item does NOT apply to */
   excludeFuelTypes?: Vehicle['fuelType'][];
 }
@@ -119,6 +119,13 @@ export const inspectionChecklist: InspectionChecklistItem[] = [
   { id: 'flu-2', label: 'Coolant level OK', category: 'fluids' },
   { id: 'flu-3', label: 'Washer fluid level OK', category: 'fluids' },
   { id: 'flu-4', label: 'Fuel / charge level sufficient', category: 'fluids' },
+  // Cargo Equipment
+  { id: 'cargo-1', label: 'Cargo straps / tie-downs present & intact', category: 'cargo' },
+  { id: 'cargo-2', label: 'Loading ramp / lift functional', category: 'cargo' },
+  { id: 'cargo-3', label: 'Cargo area clean & free of debris', category: 'cargo' },
+  { id: 'cargo-4', label: 'Cargo doors / locks working properly', category: 'cargo' },
+  { id: 'cargo-5', label: 'Protective blankets / padding available', category: 'cargo' },
+  { id: 'cargo-6', label: 'Toolbox / mounting hardware stocked', category: 'cargo' },
 ];
 
 export const inspectionCategoryLabels: Record<string, string> = {
@@ -127,6 +134,7 @@ export const inspectionCategoryLabels: Record<string, string> = {
   mechanical: 'Mechanical',
   safety: 'Safety Equipment',
   fluids: 'Fluids & Levels',
+  cargo: 'Cargo Equipment',
 };
 
 /** Returns the checklist items applicable to a given fuel type */
