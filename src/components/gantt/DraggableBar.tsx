@@ -21,12 +21,15 @@ const DraggableBar = ({
   left, width, top, height, colWidth,
   projectStartDate, projectEndDate,
   className, style, children, onClick, onDragEnd,
+  allowVerticalDrag = false,
 }: DraggableBarProps) => {
   const barRef = useRef<HTMLDivElement>(null);
   const dragInfo = useRef<{
     type: 'move' | 'left' | 'right';
     startX: number;
+    startY: number;
     origLeft: number;
+    origTop: number;
     origWidth: number;
     moved: boolean;
   } | null>(null);
