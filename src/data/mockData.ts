@@ -19,10 +19,20 @@ export interface Absence {
   label?: string;
 }
 
+export interface TransportStop {
+  id: string;
+  type: 'pickup' | 'delivery';
+  address: string;
+  contactName?: string;
+  contactPhone?: string;
+  notes?: string;
+}
+
 export interface Project {
   id: string;
   name: string;
   projectNumber?: string;
+  projectType: ProjectType;
   client: string;
   location: string;
   status: ProjectStatus;
@@ -35,7 +45,22 @@ export interface Project {
   isFlexOrder?: boolean;
   description?: string;
   installerDateOverrides?: Record<string, { startDate: string; endDate: string }>;
+  // Transport-specific
+  transportStops?: TransportStop[];
+  vehicleType?: string;
 }
+
+export const projectTypeLabels: Record<ProjectType, string> = {
+  'installation': 'Installation',
+  'site-survey': 'Site Survey',
+  'transport': 'Transport',
+};
+
+export const projectTypeIcons: Record<ProjectType, string> = {
+  'installation': '🔧',
+  'site-survey': '📋',
+  'transport': '🚛',
+};
 
 // Unique clients extracted from projects for autocomplete
 export const clients = ['IKEA', 'Elgiganten', 'H&M', 'Clas Ohlson', 'Stadium', 'Systembolaget', 'Jula', 'Bauhaus', 'Granit', 'Kjell & Company', 'Åhléns'];
