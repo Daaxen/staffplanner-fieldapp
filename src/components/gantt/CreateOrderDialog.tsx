@@ -124,12 +124,13 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
       endDate: format(endDate, 'yyyy-MM-dd'),
       startTime: startTime || undefined,
       endTime: endTime || undefined,
-      estimatedHours: estimatedHours ? parseFloat(estimatedHours) : undefined,
+      estimatedHours: projectType !== 'transport' && estimatedHours ? parseFloat(estimatedHours) : undefined,
       isFlexOrder,
       description: description || undefined,
       ...(projectType === 'transport' && {
         transportStops: transportStops.filter(s => s.address.trim()),
         vehicleType: vehicleType || undefined,
+        goodsItems: goodsItems.filter(g => g.description || g.quantity || g.lengthCm || g.weightKg),
       }),
     };
 
