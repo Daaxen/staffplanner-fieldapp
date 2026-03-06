@@ -6,10 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, MapPin, Maximize2, Minimize2 } from 'lucide-react';
+import { CalendarIcon, MapPin, Maximize2, Minimize2, Plus, Trash2, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { installers, clients, type Project, type ProjectStatus } from '@/data/mockData';
+import { installers, clients, type Project, type ProjectStatus, type ProjectType, type TransportStop, projectTypeLabels } from '@/data/mockData';
 import { Checkbox } from '@/components/ui/checkbox';
 
 interface CreateOrderDialogProps {
@@ -23,8 +23,11 @@ const generateProjectId = () => {
   return `P-${seq}`;
 };
 
+const generateStopId = () => `ts-${Math.random().toString(36).slice(2, 8)}`;
+
 const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDialogProps) => {
   const projectId = useMemo(() => generateProjectId(), [open]);
+  const [projectType, setProjectType] = useState<ProjectType>('installation');
   const [name, setName] = useState('');
   const [projectNumber, setProjectNumber] = useState('');
   const [client, setClient] = useState('');
@@ -44,7 +47,15 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
   const [mapExpanded, setMapExpanded] = useState(false);
   const clientInputRef = useRef<HTMLDivElement>(null);
 
+  // Transport-specific
+  const [transportStops, setTransportStops] = useState<TransportStop[]>([
+    { id: generateStopId(), type: 'pickup', address: '' },
+    { id: generateStopId(), type: 'delivery', address: '' },
+  ]);
+  const [vehicleType, setVehicleType] = useState('');
+
   const resetForm = () => {
+    setProjectType('installation');
     setName('');
     setProjectNumber('');
     setClient('');
@@ -58,9 +69,13 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
     setIsFlexOrder(false);
     setSelectedInstallers([]);
     setShowClientSuggestions(false);
+    setTransportStops([
+      { id: generateStopId(), type: 'pickup', address: '' },
+      { id: generateStopId(), type: 'delivery', address: '' },
+    ]);
+    setVehicleType('');
   };
 
-  // Close client suggestions on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (clientInputRef.current && !clientInputRef.current.contains(e.target as Node)) {
@@ -96,8 +111,9 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
       id: projectId,
       name,
       projectNumber: projectNumber || undefined,
+      projectType,
       client,
-      location,
+      location: projectType === 'transport' ? transportStops[0]?.address || '' : location,
       status,
       assigneeIds: selectedInstallers,
       startDate: format(startDate, 'yyyy-MM-dd'),
@@ -107,6 +123,10 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
       estimatedHours: estimatedHours ? parseFloat(estimatedHours) : undefined,
       isFlexOrder,
       description: description || undefined,
+      ...(projectType === 'transport' && {
+        transportStops: transportStops.filter(s => s.address.trim()),
+        vehicleType: vehicleType || undefined,
+      }),
     };
 
     onCreateOrder(project);
@@ -120,13 +140,38 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
     );
   };
 
+  // Transport stop helpers
+  const updateStop = (id: string, updates: Partial<TransportStop>) => {
+    setTransportStops(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+  };
+
+  const addStop = () => {
+    setTransportStops(prev => {
+      const lastDeliveryIdx = prev.length - 1;
+      const newStop: TransportStop = { id: generateStopId(), type: 'delivery', address: '' };
+      // Insert before last delivery
+      const copy = [...prev];
+      copy.splice(lastDeliveryIdx, 0, { ...newStop, type: 'pickup' });
+      return copy;
+    });
+  };
+
+  const removeStop = (id: string) => {
+    if (transportStops.length <= 2) return;
+    setTransportStops(prev => prev.filter(s => s.id !== id));
+  };
+
   const isValid = name.trim() && client.trim() && startDate && endDate && startDate <= endDate;
 
-  const mapQuery = location.trim() ? encodeURIComponent(location) : '';
+  const typeButtons: { value: ProjectType; icon: string }[] = [
+    { value: 'installation', icon: '🔧' },
+    { value: 'site-survey', icon: '📋' },
+    { value: 'transport', icon: '🚛' },
+  ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[540px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-3">
             <DialogTitle className="text-lg font-semibold">New Project</DialogTitle>
@@ -135,6 +180,29 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
         </DialogHeader>
 
         <div className="grid gap-4 py-2">
+          {/* Project Type */}
+          <div className="grid gap-1.5">
+            <Label>Project Type</Label>
+            <div className="flex gap-2">
+              {typeButtons.map(({ value, icon }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setProjectType(value)}
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md border text-sm font-medium transition-colors",
+                    projectType === value
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-input bg-background text-muted-foreground hover:bg-accent"
+                  )}
+                >
+                  <span>{icon}</span>
+                  <span>{projectTypeLabels[value]}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Project Name & PO Number */}
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
@@ -147,7 +215,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
             </div>
           </div>
 
-          {/* Client (autocomplete) & Location */}
+          {/* Client (autocomplete) */}
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5 relative" ref={clientInputRef}>
               <Label htmlFor="order-client">Client *</Label>
@@ -162,35 +230,36 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
               {showClientSuggestions && clientSuggestions.length > 0 && (
                 <div className="absolute top-full left-0 right-0 z-50 mt-1 border border-border rounded-md bg-popover shadow-md max-h-[140px] overflow-y-auto">
                   {clientSuggestions.map(c => (
-                    <button
-                      key={c}
-                      type="button"
-                      className="w-full text-left px-3 py-1.5 text-sm hover:bg-accent transition-colors"
-                      onClick={() => selectClient(c)}
-                    >
+                    <button key={c} type="button" className="w-full text-left px-3 py-1.5 text-sm hover:bg-accent transition-colors" onClick={() => selectClient(c)}>
                       {c}
                     </button>
                   ))}
                 </div>
               )}
             </div>
-            <div className="grid gap-1.5">
-              <Label htmlFor="order-location">Location</Label>
-              <div className="relative">
-                <MapPin className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="order-location"
-                  placeholder="Search address..."
-                  className="pl-8"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                />
+
+            {/* Location — only for non-transport */}
+            {projectType !== 'transport' && (
+              <div className="grid gap-1.5">
+                <Label htmlFor="order-location">Location</Label>
+                <div className="relative">
+                  <MapPin className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input id="order-location" placeholder="Search address..." className="pl-8" value={location} onChange={(e) => setLocation(e.target.value)} />
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Vehicle type — transport only */}
+            {projectType === 'transport' && (
+              <div className="grid gap-1.5">
+                <Label htmlFor="vehicle-type">Vehicle Type</Label>
+                <Input id="vehicle-type" placeholder="e.g. Van, Truck" value={vehicleType} onChange={(e) => setVehicleType(e.target.value)} />
+              </div>
+            )}
           </div>
 
-          {/* Mini Map */}
-          {location.trim() && (
+          {/* Mini Map for non-transport */}
+          {projectType !== 'transport' && location.trim() && (
             <div className="grid gap-1.5">
               <div className="flex items-center justify-between">
                 <Label className="text-xs text-muted-foreground">Map Preview</Label>
@@ -207,6 +276,93 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
                   <span className="text-xs">{location}</span>
                   <span className="text-[10px] text-muted-foreground/60">Map integration pending — Google Maps API</span>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Transport Stops */}
+          {projectType === 'transport' && (
+            <div className="grid gap-2">
+              <div className="flex items-center justify-between">
+                <Label>Route Stops</Label>
+                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={addStop}>
+                  <Plus className="h-3 w-3" /> Add Stop
+                </Button>
+              </div>
+              <div className="border border-input rounded-md divide-y divide-border">
+                {transportStops.map((stop, idx) => {
+                  const isFirst = idx === 0;
+                  const isLast = idx === transportStops.length - 1;
+                  const canRemove = transportStops.length > 2 && !isFirst && !isLast;
+
+                  return (
+                    <div key={stop.id} className="flex items-start gap-2 p-2.5">
+                      {/* Route indicator */}
+                      <div className="flex flex-col items-center pt-1.5 shrink-0 w-5">
+                        <div className={cn(
+                          "w-3 h-3 rounded-full border-2 shrink-0",
+                          isFirst ? "border-green-500 bg-green-500/20" :
+                          isLast ? "border-red-500 bg-red-500/20" :
+                          "border-amber-500 bg-amber-500/20"
+                        )} />
+                        {!isLast && <div className="w-0.5 h-6 bg-border mt-0.5" />}
+                      </div>
+
+                      <div className="flex-1 grid gap-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                            {isFirst ? 'Pickup' : isLast ? 'Final Delivery' : `Stop ${idx}`}
+                          </span>
+                          <select
+                            value={stop.type}
+                            onChange={(e) => updateStop(stop.id, { type: e.target.value as 'pickup' | 'delivery' })}
+                            className="text-[10px] bg-transparent border border-input rounded px-1 py-0.5 text-muted-foreground"
+                          >
+                            <option value="pickup">Pickup</option>
+                            <option value="delivery">Delivery</option>
+                          </select>
+                        </div>
+                        <div className="relative">
+                          <MapPin className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
+                          <Input
+                            placeholder="Address..."
+                            className="h-8 text-xs pl-7"
+                            value={stop.address}
+                            onChange={(e) => updateStop(stop.id, { address: e.target.value })}
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Input
+                            placeholder="Contact name"
+                            className="h-7 text-xs"
+                            value={stop.contactName || ''}
+                            onChange={(e) => updateStop(stop.id, { contactName: e.target.value })}
+                          />
+                          <Input
+                            placeholder="Phone"
+                            className="h-7 text-xs"
+                            value={stop.contactPhone || ''}
+                            onChange={(e) => updateStop(stop.id, { contactPhone: e.target.value })}
+                          />
+                        </div>
+                        <Input
+                          placeholder="Notes for this stop..."
+                          className="h-7 text-xs"
+                          value={stop.notes || ''}
+                          onChange={(e) => updateStop(stop.id, { notes: e.target.value })}
+                        />
+                      </div>
+
+                      {canRemove ? (
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0 text-muted-foreground hover:text-destructive" onClick={() => removeStop(stop.id)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      ) : (
+                        <div className="w-7 shrink-0" />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -255,15 +411,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
               <Label htmlFor="est-hours">Estimated Hours</Label>
-              <Input
-                id="est-hours"
-                type="number"
-                min="0"
-                step="0.5"
-                placeholder="e.g. 8"
-                value={estimatedHours}
-                onChange={(e) => setEstimatedHours(e.target.value)}
-              />
+              <Input id="est-hours" type="number" min="0" step="0.5" placeholder="e.g. 8" value={estimatedHours} onChange={(e) => setEstimatedHours(e.target.value)} />
             </div>
             <div className="grid gap-1.5">
               <Label>&nbsp;</Label>
@@ -277,7 +425,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
 
           {/* Assign Installers */}
           <div className="grid gap-1.5">
-            <Label>Assign Installers</Label>
+            <Label>{projectType === 'transport' ? 'Assign Drivers' : 'Assign Installers'}</Label>
             <div className="border border-input rounded-md p-3 grid gap-2 max-h-[140px] overflow-y-auto">
               {installers.map((inst) => (
                 <label key={inst.id} className="flex items-center gap-2 cursor-pointer text-sm hover:bg-accent rounded px-1 py-0.5 transition-colors">
