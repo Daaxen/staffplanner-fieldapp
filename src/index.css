@@ -49,10 +49,10 @@
     /* Status colors */
     --status-open: 260 60% 55%;
     --status-scheduled: 213 94% 56%;
-    --status-in-progress: 161 94% 30%;
+    --status-in-progress: 45 93% 47%;
     --status-confirmed: 200 80% 44%;
     --status-completed: 142 71% 45%;
-    --status-on-hold: 38 92% 50%;
+    --status-on-hold: 25 95% 53%;
     --status-cancelled: 220 10% 60%;
 
     /* Installer colors */
