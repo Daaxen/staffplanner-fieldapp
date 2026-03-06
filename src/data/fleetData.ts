@@ -72,7 +72,7 @@ export const serviceTypeLabels: Record<ServiceType, string> = {
 export interface InspectionChecklistItem {
   id: string;
   label: string;
-  category: 'exterior' | 'interior' | 'mechanical' | 'safety' | 'fluids';
+  category: 'exterior' | 'interior' | 'mechanical' | 'safety' | 'fluids' | 'cargo';
   /** Fuel types this item does NOT apply to */
   excludeFuelTypes?: Vehicle['fuelType'][];
 }
