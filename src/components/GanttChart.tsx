@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, LayoutList, Users, Building2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LayoutList, Users, Building2, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { projects as initialProjects, installers, type Project, type ProjectStatus } from '@/data/mockData';
 import ProjectDetailPanel from './ProjectDetailPanel';
