@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 interface DispatchChange {
   projectId: string;
   projectName: string;
-  type: 'new' | 'changed';
+  type: 'new' | 'changed' | 'cancelled';
   affectedInstallerIds: string[];
 }
 
