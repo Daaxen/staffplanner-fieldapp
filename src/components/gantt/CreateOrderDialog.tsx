@@ -138,6 +138,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
 
   const handleClientChange = (value: string) => {
     setClient(value);
+    setHighlightedIndex(-1);
     if (value.trim()) {
       const filtered = clients.filter(c => c.toLowerCase().includes(value.toLowerCase()));
       setClientSuggestions(filtered);
@@ -150,6 +151,24 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
   const selectClient = (c: string) => {
     setClient(c);
     setShowClientSuggestions(false);
+    setHighlightedIndex(-1);
+  };
+
+  const handleClientKeyDown = (e: React.KeyboardEvent) => {
+    if (!showClientSuggestions || clientSuggestions.length === 0) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlightedIndex(prev => (prev + 1) % clientSuggestions.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightedIndex(prev => (prev <= 0 ? clientSuggestions.length - 1 : prev - 1));
+    } else if (e.key === 'Enter' && highlightedIndex >= 0) {
+      e.preventDefault();
+      selectClient(clientSuggestions[highlightedIndex]);
+    } else if (e.key === 'Escape') {
+      setShowClientSuggestions(false);
+      setHighlightedIndex(-1);
+    }
   };
 
   const handleSubmit = () => {
