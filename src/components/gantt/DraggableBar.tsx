@@ -37,17 +37,24 @@ const DraggableBar = ({
   const handleMouseDown = (e: React.MouseEvent, type: 'move' | 'left' | 'right') => {
     e.preventDefault();
     e.stopPropagation();
-    dragInfo.current = { type, startX: e.clientX, origLeft: left, origWidth: width, moved: false };
+    dragInfo.current = { type, startX: e.clientX, startY: e.clientY, origLeft: left, origTop: top, origWidth: width, moved: false };
 
     const onMouseMove = (ev: MouseEvent) => {
       if (!dragInfo.current || !barRef.current) return;
       const dx = ev.clientX - dragInfo.current.startX;
-      if (Math.abs(dx) > 3) dragInfo.current.moved = true;
+      const dy = ev.clientY - dragInfo.current.startY;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragInfo.current.moved = true;
       if (!dragInfo.current.moved) return;
 
-      const { type: t, origLeft: ol, origWidth: ow } = dragInfo.current;
+      const { type: t, origLeft: ol, origWidth: ow, origTop: ot } = dragInfo.current;
       if (t === 'move') {
         barRef.current.style.left = `${ol + dx}px`;
+        if (allowVerticalDrag) {
+          barRef.current.style.top = `${ot + dy}px`;
+          barRef.current.style.zIndex = '50';
+          barRef.current.style.opacity = '0.85';
+          barRef.current.style.boxShadow = '0 8px 24px rgba(0,0,0,0.2)';
+        }
       } else if (t === 'left') {
         const nw = ow - dx;
         if (nw > 20) {
@@ -71,7 +78,11 @@ const DraggableBar = ({
       // Reset visual position
       if (barRef.current) {
         barRef.current.style.left = `${left}px`;
+        barRef.current.style.top = `${top}px`;
         barRef.current.style.width = `${width}px`;
+        barRef.current.style.zIndex = '';
+        barRef.current.style.opacity = '';
+        barRef.current.style.boxShadow = '';
       }
 
       if (!moved) {
@@ -86,7 +97,7 @@ const DraggableBar = ({
       const pEnd = new Date(projectEndDate);
 
       if (t === 'move') {
-        if (daysDelta === 0) return;
+        if (daysDelta === 0 && !allowVerticalDrag) return;
         pStart.setDate(pStart.getDate() + daysDelta);
         pEnd.setDate(pEnd.getDate() + daysDelta);
       } else if (t === 'left') {
@@ -100,6 +111,7 @@ const DraggableBar = ({
       onDragEnd(
         pStart.toISOString().split('T')[0],
         pEnd.toISOString().split('T')[0],
+        allowVerticalDrag && t === 'move' ? ev.clientY : undefined,
       );
     };
 
