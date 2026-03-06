@@ -68,7 +68,7 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
         .filter(Boolean);
 
       if (installerNames.length > 0) {
-        const label = change.type === 'new' ? 'NEW PROJECT' : 'CHANGES to';
+        const label = change.type === 'new' ? 'NEW PROJECT' : change.type === 'cancelled' ? 'CANCELLED/ON-HOLD' : 'CHANGES to';
         installerNames.forEach(name => {
           toast.success(`📩 ${name}`, {
             description: `${label} ${change.projectName}`,
