@@ -224,6 +224,30 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
     setGoodsItems(prev => prev.filter(g => g.id !== id));
   };
 
+  // Attachment helpers
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    const newAttachments: Attachment[] = Array.from(files).map(f => ({
+      id: `att-${Math.random().toString(36).slice(2, 8)}`,
+      name: f.name,
+      size: f.size,
+      type: f.type,
+    }));
+    setAttachments(prev => [...prev, ...newAttachments]);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const removeAttachment = (id: string) => {
+    setAttachments(prev => prev.filter(a => a.id !== id));
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
   const isValid = name.trim() && client.trim() && startDate && endDate && startDate <= endDate;
 
   const typeButtons: { value: ProjectType; icon: string }[] = [
