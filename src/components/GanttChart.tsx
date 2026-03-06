@@ -289,6 +289,29 @@ const GanttChart = () => {
             <Plus className="w-4 h-4" />
             New Project
           </button>
+
+          <div className="w-px h-6 bg-border" />
+
+          <button
+            onClick={handleDispatch}
+            disabled={pendingChanges.length === 0}
+            className={cn(
+              "relative flex flex-col items-center gap-0.5 px-4 py-1.5 text-xs font-medium rounded-lg transition-all",
+              pendingChanges.length > 0
+                ? "bg-accent text-accent-foreground hover:bg-accent/80 shadow-sm ring-1 ring-accent"
+                : "bg-muted text-muted-foreground cursor-not-allowed"
+            )}
+          >
+            <div className="flex items-center gap-1.5">
+              <Send className="w-4 h-4" />
+              Dispatch
+            </div>
+            {pendingChanges.length > 0 && (
+              <span className="text-[10px] leading-none font-semibold">
+                {pendingChanges.length} change{pendingChanges.length > 1 ? 's' : ''}
+              </span>
+            )}
+          </button>
         </div>
       </div>
 
