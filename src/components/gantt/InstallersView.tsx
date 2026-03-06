@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 import { type Project, type Installer, type ProjectStatus, projectTypeIcons } from '@/data/mockData';
 import GanttHeader from './GanttHeader';
 import GanttGrid from './GanttGrid';
-import OrderBox from './OrderBox';
+import { Package } from 'lucide-react';
 import DraggableBar from './DraggableBar';
 import DateChangeDialog from './DateChangeDialog';
 import {
@@ -83,10 +83,9 @@ const InstallersView = ({
       });
     });
 
+    // Always show unassigned row as drop target
     const unassigned = projects.filter(p => p.assigneeIds.length === 0 && activeStatuses.has(p.status));
-    if (unassigned.length > 0) {
-      map.push({ installer: null, projects: unassigned });
-    }
+    map.push({ installer: null, projects: unassigned });
 
     return map;
   }, [projects, allInstallers, activeStatuses]);
@@ -345,8 +344,8 @@ const InstallersView = ({
                       idx % 2 === 0 ? "bg-card" : "bg-muted/20"
                     )}
                     style={{ height: getRowHeight(groupLayouts[idx]?.laneCount ?? 1) }}
-                    onDragOver={inst ? handleDragOver : undefined}
-                    onDrop={inst ? (e) => handleDrop(e, inst.id) : undefined}
+                    onDragOver={handleDragOver}
+                    onDrop={inst ? (e) => handleDrop(e, inst.id) : (e) => { e.preventDefault(); const projectId = e.dataTransfer.getData('projectId'); if (projectId) onUnassignProject(projectId); }}
                   >
                     {inst ? (
                       <>
@@ -364,10 +363,10 @@ const InstallersView = ({
                       </>
                     ) : (
                       <>
-                        <div className="w-3 h-3 rounded-full shrink-0 bg-muted-foreground/30 border border-dashed border-muted-foreground/50" />
+                        <Package className="w-4 h-4 shrink-0 text-status-open" />
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-muted-foreground truncate">Unassigned</p>
-                          <p className="text-xs text-muted-foreground">{group.projects.length} projects</p>
+                          <p className="text-sm font-medium text-muted-foreground truncate">Order Box — {group.projects.length} unassigned</p>
+                          <p className="text-xs text-muted-foreground/60">Drop here to unassign</p>
                         </div>
                       </>
                     )}
@@ -386,8 +385,8 @@ const InstallersView = ({
                     key={inst?.id ?? 'unassigned'}
                     className={cn("border-b border-gantt-grid relative", gIdx % 2 === 0 ? "" : "bg-muted/10")}
                     style={{ height: getRowHeight(groupLayouts[gIdx]?.laneCount ?? 1) }}
-                    onDragOver={inst ? handleDragOver : undefined}
-                    onDrop={inst ? (e) => handleDrop(e, inst.id) : undefined}
+                    onDragOver={handleDragOver}
+                    onDrop={inst ? (e) => handleDrop(e, inst.id) : (e) => { e.preventDefault(); const projectId = e.dataTransfer.getData('projectId'); if (projectId) onUnassignProject(projectId); }}
                   >
                     {/* Absence bars */}
                     {inst?.absences.map(absence => {
@@ -451,8 +450,7 @@ const InstallersView = ({
         </div>
       </div>
 
-      {/* OrderBox - only shows for installers view with internal installers */}
-      <OrderBox projects={projects} onSelectProject={onSelectProject} onUnassignProject={onUnassignProject} />
+      {/* Unassigned row is now part of the gantt grid above */}
 
       <DateChangeDialog
         open={!!pendingChange}
