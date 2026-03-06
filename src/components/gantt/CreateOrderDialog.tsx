@@ -397,6 +397,91 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
             </div>
           )}
 
+          {/* Goods Details — Transport only */}
+          {projectType === 'transport' && (
+            <div className="grid gap-2">
+              <div className="flex items-center justify-between">
+                <Label className="flex items-center gap-1.5">
+                  <Package className="h-3.5 w-3.5 text-muted-foreground" />
+                  Goods Details
+                  <span className="text-[10px] text-muted-foreground font-normal">(optional)</span>
+                </Label>
+                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={addGoodsItem}>
+                  <Plus className="h-3 w-3" /> Add Another
+                </Button>
+              </div>
+              <div className="border border-input rounded-md divide-y divide-border">
+                {goodsItems.map((item, idx) => (
+                  <div key={item.id} className="p-2.5 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        Colli {idx + 1}
+                      </span>
+                      {goodsItems.length > 1 && (
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive" onClick={() => removeGoodsItem(item.id)}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                    <Input
+                      placeholder="Description of goods..."
+                      className="h-7 text-xs"
+                      value={item.description || ''}
+                      onChange={(e) => updateGoodsItem(item.id, { description: e.target.value })}
+                    />
+                    <div className="grid grid-cols-5 gap-2">
+                      <div className="grid gap-0.5">
+                        <span className="text-[9px] text-muted-foreground">Pcs</span>
+                        <Input
+                          type="number" min="0" placeholder="0"
+                          className="h-7 text-xs"
+                          value={item.quantity ?? ''}
+                          onChange={(e) => updateGoodsItem(item.id, { quantity: e.target.value ? parseInt(e.target.value) : undefined })}
+                        />
+                      </div>
+                      <div className="grid gap-0.5">
+                        <span className="text-[9px] text-muted-foreground">L (cm)</span>
+                        <Input
+                          type="number" min="0" placeholder="0"
+                          className="h-7 text-xs"
+                          value={item.lengthCm ?? ''}
+                          onChange={(e) => updateGoodsItem(item.id, { lengthCm: e.target.value ? parseInt(e.target.value) : undefined })}
+                        />
+                      </div>
+                      <div className="grid gap-0.5">
+                        <span className="text-[9px] text-muted-foreground">W (cm)</span>
+                        <Input
+                          type="number" min="0" placeholder="0"
+                          className="h-7 text-xs"
+                          value={item.widthCm ?? ''}
+                          onChange={(e) => updateGoodsItem(item.id, { widthCm: e.target.value ? parseInt(e.target.value) : undefined })}
+                        />
+                      </div>
+                      <div className="grid gap-0.5">
+                        <span className="text-[9px] text-muted-foreground">H (cm)</span>
+                        <Input
+                          type="number" min="0" placeholder="0"
+                          className="h-7 text-xs"
+                          value={item.heightCm ?? ''}
+                          onChange={(e) => updateGoodsItem(item.id, { heightCm: e.target.value ? parseInt(e.target.value) : undefined })}
+                        />
+                      </div>
+                      <div className="grid gap-0.5">
+                        <span className="text-[9px] text-muted-foreground">Kg</span>
+                        <Input
+                          type="number" min="0" step="0.1" placeholder="0"
+                          className="h-7 text-xs"
+                          value={item.weightKg ?? ''}
+                          onChange={(e) => updateGoodsItem(item.id, { weightKg: e.target.value ? parseFloat(e.target.value) : undefined })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Dates & Times */}
           <div className="grid grid-cols-4 gap-3">
             <div className="grid gap-1.5">
