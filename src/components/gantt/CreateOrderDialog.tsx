@@ -78,7 +78,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
       { id: generateStopId(), type: 'delivery', address: '' },
     ]);
     setVehicleType('');
-  };
+    setGoodsItems([{ id: generateGoodsId() }]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
