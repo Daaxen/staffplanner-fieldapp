@@ -1,5 +1,5 @@
-import { useMemo, useState, useCallback, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, LayoutList, Users, Building2, Plus } from 'lucide-react';
+import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
+import { ChevronLeft, ChevronRight, LayoutList, Users, Building2, Plus, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { projects as initialProjects, installers, type Project, type ProjectStatus } from '@/data/mockData';
 import ProjectDetailPanel from './ProjectDetailPanel';
@@ -8,6 +8,14 @@ import InstallersView from './gantt/InstallersView';
 import ClientsView from './gantt/ClientsView';
 import StatusFilter from './gantt/StatusFilter';
 import CreateOrderDialog from './gantt/CreateOrderDialog';
+import { toast } from 'sonner';
+
+interface DispatchChange {
+  projectId: string;
+  projectName: string;
+  type: 'new' | 'changed';
+  affectedInstallerIds: string[];
+}
 
 type ViewMode = 'day' | 'week' | 'month';
 type GanttMode = 'projects' | 'installers' | 'clients';
