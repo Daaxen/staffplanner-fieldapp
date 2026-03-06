@@ -138,12 +138,27 @@ const InstallersView = ({
     e.dataTransfer.dropEffect = 'move';
   };
 
+  const [vacationWarning, setVacationWarning] = useState<{ installerName: string; absenceLabel: string } | null>(null);
+
+  const checkVacationConflict = useCallback((installer: Installer, projStart: string, projEnd: string): string | null => {
+    const conflict = installer.absences.find(a => a.startDate <= projEnd && a.endDate >= projStart);
+    return conflict ? (conflict.label || conflict.type) : null;
+  }, []);
+
   const handleDrop = (e: React.DragEvent, installerId: string) => {
     e.preventDefault();
     const projectId = e.dataTransfer.getData('projectId');
-    if (projectId) {
-      onDropProject(projectId, installerId);
+    if (!projectId) return;
+    const project = projects.find(p => p.id === projectId);
+    const installer = installers.find(i => i.id === installerId);
+    if (project && installer) {
+      const conflict = checkVacationConflict(installer, project.startDate, project.endDate);
+      if (conflict) {
+        setVacationWarning({ installerName: installer.name, absenceLabel: conflict });
+        return;
+      }
     }
+    onDropProject(projectId, installerId);
   };
 
   const handleDragStart = (e: React.DragEvent, projectId: string) => {
@@ -154,6 +169,16 @@ const InstallersView = ({
   const timelineRef = useRef<HTMLDivElement>(null);
 
   const handleBarDragEnd = useCallback((projectId: string, newStart: string, newEnd: string, installerId?: string, dropClientY?: number) => {
+    // Helper to check vacation for a target installer
+    const checkAndWarn = (inst: Installer): boolean => {
+      const conflict = checkVacationConflict(inst, newStart, newEnd);
+      if (conflict) {
+        setVacationWarning({ installerName: inst.name, absenceLabel: conflict });
+        return true;
+      }
+      return false;
+    };
+
     // Check if dropped on a different installer row
     if (dropClientY != null && timelineRef.current) {
       const timelineRect = timelineRef.current.getBoundingClientRect();
@@ -166,7 +191,7 @@ const InstallersView = ({
         const sourceInstaller = installerId;
         
         if (targetInstaller && targetInstaller.id !== sourceInstaller) {
-          // Moving to a different installer
+          if (checkAndWarn(targetInstaller)) return;
           const project = projects.find(p => p.id === projectId);
           if (project) {
             const newAssigneeIds = project.assigneeIds.filter(id => id !== sourceInstaller);
@@ -182,20 +207,25 @@ const InstallersView = ({
             return;
           }
         } else if (!targetInstaller && sourceInstaller) {
-          // Dropping to unassigned
           onUnassignProject(projectId);
           return;
         } else if (targetInstaller && !sourceInstaller) {
-          // From unassigned to installer
+          if (checkAndWarn(targetInstaller)) return;
           onDropProject(projectId, targetInstaller.id);
           onUpdateProject(projectId, { startDate: newStart, endDate: newEnd });
           return;
         }
       }
     }
+
+    // Same-row drag: check current installer
+    if (installerId) {
+      const inst = installers.find(i => i.id === installerId);
+      if (inst && checkAndWarn(inst)) return;
+    }
     
     setPendingChange({ projectId, newStart, newEnd, installerId });
-  }, [groups, projects, onUpdateProject, onDropProject, onUnassignProject]);
+  }, [groups, projects, installers, onUpdateProject, onDropProject, onUnassignProject, checkVacationConflict]);
 
   const pendingProject = pendingChange ? projects.find(p => p.id === pendingChange.projectId) : null;
   const isMultiInstaller = (pendingProject?.assigneeIds.length ?? 0) > 1;
