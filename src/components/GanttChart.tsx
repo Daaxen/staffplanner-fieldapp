@@ -132,6 +132,10 @@ const GanttChart = () => {
     setActiveStatuses(new Set(allStatuses));
   }, []);
 
+  const handleCreateOrder = useCallback((project: Project) => {
+    setProjectsList(prev => [...prev, project]);
+  }, []);
+
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
       {/* Toolbar */}
