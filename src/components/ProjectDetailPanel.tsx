@@ -113,6 +113,40 @@ const ProjectDetailPanel = ({ project, installer, onClose }: Props) => {
             </div>
           </div>
 
+          {/* Contact */}
+          {(project.contactName || project.contactPhone || project.contactEmail) && (
+            <div className="space-y-4">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Contact</p>
+              {project.contactName && (
+                <div className="flex items-start gap-3">
+                  <User className="w-4 h-4 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Name</p>
+                    <p className="text-sm font-medium text-foreground">{project.contactName}</p>
+                  </div>
+                </div>
+              )}
+              {project.contactPhone && (
+                <div className="flex items-start gap-3">
+                  <Phone className="w-4 h-4 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Phone</p>
+                    <a href={`tel:${project.contactPhone}`} className="text-sm font-medium text-primary hover:underline">{project.contactPhone}</a>
+                  </div>
+                </div>
+              )}
+              {project.contactEmail && (
+                <div className="flex items-start gap-3">
+                  <Mail className="w-4 h-4 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Email</p>
+                    <a href={`mailto:${project.contactEmail}`} className="text-sm font-medium text-primary hover:underline">{project.contactEmail}</a>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Action buttons */}
           <div className="space-y-2 pt-4 border-t border-border">
             <button className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">
