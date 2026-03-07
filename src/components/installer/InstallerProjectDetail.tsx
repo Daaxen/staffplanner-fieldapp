@@ -7,6 +7,7 @@ interface InstallerProjectDetailProps {
   project: Project;
   installer: Installer;
   onBack: () => void;
+  onStatusChange?: (projectId: string, newStatus: Project['status']) => void;
 }
 
 const statusDotMap: Record<string, string> = {
@@ -18,10 +19,9 @@ const statusDotMap: Record<string, string> = {
   'open': 'bg-status-open',
 };
 
-const InstallerProjectDetail = ({ project, installer, onBack }: InstallerProjectDetailProps) => {
+const InstallerProjectDetail = ({ project, installer, onBack, onStatusChange }: InstallerProjectDetailProps) => {
   return (
     <div className="h-screen flex flex-col bg-background">
-      {/* Header */}
       <header className="shrink-0 bg-primary text-primary-foreground px-4 py-3 flex items-center gap-3">
         <button onClick={onBack} className="p-1 rounded-lg hover:bg-primary-foreground/10">
           <ArrowLeft className="w-5 h-5" />
@@ -32,9 +32,7 @@ const InstallerProjectDetail = ({ project, installer, onBack }: InstallerProject
         </div>
       </header>
 
-      {/* Content */}
       <main className="flex-1 overflow-auto">
-        {/* Status Banner */}
         <div className="px-4 py-3 bg-card border-b border-border flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className={cn("w-3 h-3 rounded-full", statusDotMap[project.status])} />
@@ -45,9 +43,7 @@ const InstallerProjectDetail = ({ project, installer, onBack }: InstallerProject
           </span>
         </div>
 
-        {/* Details */}
         <div className="p-4 space-y-4">
-          {/* Client & Location */}
           <Section title="Client & Location">
             <InfoRow icon={<FileText className="w-4 h-4" />} label="Client" value={project.client} />
             <InfoRow icon={<MapPin className="w-4 h-4" />} label="Location" value={project.location} />
@@ -56,7 +52,6 @@ const InstallerProjectDetail = ({ project, installer, onBack }: InstallerProject
             )}
           </Section>
 
-          {/* Schedule */}
           <Section title="Schedule">
             <InfoRow icon={<Clock className="w-4 h-4" />} label="Start" value={`${project.startDate}${project.startTime ? ` at ${project.startTime}` : ''}`} />
             <InfoRow icon={<Clock className="w-4 h-4" />} label="End" value={`${project.endDate}${project.endTime ? ` at ${project.endTime}` : ''}`} />
@@ -65,7 +60,6 @@ const InstallerProjectDetail = ({ project, installer, onBack }: InstallerProject
             )}
           </Section>
 
-          {/* Team */}
           {project.assigneeIds.length > 0 && (
             <Section title="Team">
               {project.assigneeIds.map(id => {
@@ -86,14 +80,12 @@ const InstallerProjectDetail = ({ project, installer, onBack }: InstallerProject
             </Section>
           )}
 
-          {/* Description */}
           {project.description && (
             <Section title="Description">
               <p className="text-sm text-foreground leading-relaxed">{project.description}</p>
             </Section>
           )}
 
-          {/* Transport Stops */}
           {project.transportStops && project.transportStops.length > 0 && (
             <Section title="Route">
               {project.transportStops.map((stop, i) => (
@@ -115,7 +107,6 @@ const InstallerProjectDetail = ({ project, installer, onBack }: InstallerProject
             </Section>
           )}
 
-          {/* Attachments */}
           {project.attachments && project.attachments.length > 0 && (
             <Section title="Attachments">
               {project.attachments.map(att => (
@@ -128,15 +119,23 @@ const InstallerProjectDetail = ({ project, installer, onBack }: InstallerProject
             </Section>
           )}
 
-          {/* Actions placeholder */}
+          {/* Action Buttons */}
           <div className="pt-4 space-y-2">
-            {project.status === 'scheduled' && (
-              <Button className="w-full bg-status-in-progress hover:bg-status-in-progress/90 text-foreground" size="lg">
+            {project.status === 'scheduled' && onStatusChange && (
+              <Button
+                className="w-full bg-status-in-progress hover:bg-status-in-progress/90 text-foreground"
+                size="lg"
+                onClick={() => onStatusChange(project.id, 'in-progress')}
+              >
                 ▶ Start Project
               </Button>
             )}
-            {project.status === 'in-progress' && (
-              <Button className="w-full bg-status-completed hover:bg-status-completed/90 text-foreground" size="lg">
+            {project.status === 'in-progress' && onStatusChange && (
+              <Button
+                className="w-full bg-status-completed hover:bg-status-completed/90 text-foreground"
+                size="lg"
+                onClick={() => onStatusChange(project.id, 'completed')}
+              >
                 ✅ Mark Complete
               </Button>
             )}

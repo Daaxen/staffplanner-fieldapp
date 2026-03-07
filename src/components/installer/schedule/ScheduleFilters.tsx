@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { Filter, SortAsc, X } from 'lucide-react';
+import { Filter, X } from 'lucide-react';
 import { type ProjectStatus, type ProjectType, statusLabels, projectTypeLabels } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 
 export interface FilterState {
   statuses: ProjectStatus[];
   types: ProjectType[];
-  sortBy: 'date' | 'client' | 'status';
 }
 
 interface ScheduleFiltersProps {
@@ -29,7 +28,7 @@ const statusDotMap: Record<string, string> = {
 const ScheduleFilters = ({ filters, onChange }: ScheduleFiltersProps) => {
   const [open, setOpen] = useState(false);
 
-  const activeCount = filters.statuses.length + filters.types.length + (filters.sortBy !== 'date' ? 1 : 0);
+  const activeCount = filters.statuses.length + filters.types.length;
 
   const toggleStatus = (s: ProjectStatus) => {
     const next = filters.statuses.includes(s)
@@ -45,7 +44,7 @@ const ScheduleFilters = ({ filters, onChange }: ScheduleFiltersProps) => {
     onChange({ ...filters, types: next });
   };
 
-  const clearAll = () => onChange({ statuses: [], types: [], sortBy: 'date' });
+  const clearAll = () => onChange({ statuses: [], types: [] });
 
   return (
     <div className="px-4 py-2 bg-card border-b border-border">
@@ -60,22 +59,6 @@ const ScheduleFilters = ({ filters, onChange }: ScheduleFiltersProps) => {
           <Filter className="w-3.5 h-3.5" />
           Filter{activeCount > 0 && ` (${activeCount})`}
         </button>
-
-        <div className="flex items-center gap-1.5 ml-auto">
-          <SortAsc className="w-3.5 h-3.5 text-muted-foreground" />
-          {(['date', 'client', 'status'] as const).map(s => (
-            <button
-              key={s}
-              onClick={() => onChange({ ...filters, sortBy: s })}
-              className={cn(
-                "text-[10px] font-medium px-2 py-1 rounded-md transition-colors capitalize",
-                filters.sortBy === s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-              )}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
       </div>
 
       {open && (
