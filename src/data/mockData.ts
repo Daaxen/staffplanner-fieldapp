@@ -63,6 +63,9 @@ export interface Project {
   estimatedHours?: number;
   isFlexOrder?: boolean;
   description?: string;
+  contactName?: string;
+  contactPhone?: string;
+  contactEmail?: string;
   attachments?: Attachment[];
   installerDateOverrides?: Record<string, { startDate: string; endDate: string }>;
   // Transport-specific
@@ -119,10 +122,10 @@ export const locationDistances: Record<string, Record<string, number>> = {
 };
 
 export const projects: Project[] = [
-  { id: 'proj-1', name: 'IKEA Barkarby Kitchen', projectType: 'installation', client: 'IKEA', location: 'Barkarby', status: 'in-progress', assigneeIds: ['inst-1'], startDate: d(-2), endDate: d(3) },
-  { id: 'proj-12', name: 'IKEA Kallax Assembly Line', projectType: 'installation', client: 'IKEA', location: 'Kungens Kurva', status: 'scheduled', assigneeIds: ['inst-2', 'inst-5'], startDate: d(4), endDate: d(9) },
-  { id: 'proj-13', name: 'IKEA Showroom Lighting', projectType: 'site-survey', client: 'IKEA', location: 'Barkarby', status: 'open', assigneeIds: [], startDate: d(7), endDate: d(11) },
-  { id: 'proj-2', name: 'Elgiganten Display Wall', projectType: 'installation', client: 'Elgiganten', location: 'Kista', status: 'scheduled', assigneeIds: ['inst-2'], startDate: d(1), endDate: d(4) },
+  { id: 'proj-1', name: 'IKEA Barkarby Kitchen', projectType: 'installation', client: 'IKEA', location: 'Barkarby', status: 'in-progress', assigneeIds: ['inst-1'], startDate: d(-2), endDate: d(3), contactName: 'Lars Eriksson', contactPhone: '+46 70 123 4567', contactEmail: 'lars.eriksson@ikea.se' },
+  { id: 'proj-12', name: 'IKEA Kallax Assembly Line', projectType: 'installation', client: 'IKEA', location: 'Kungens Kurva', status: 'scheduled', assigneeIds: ['inst-2', 'inst-5'], startDate: d(4), endDate: d(9), contactName: 'Maria Holm', contactPhone: '+46 73 456 7890' },
+  { id: 'proj-13', name: 'IKEA Showroom Lighting', projectType: 'site-survey', client: 'IKEA', location: 'Barkarby', status: 'open', assigneeIds: [], startDate: d(7), endDate: d(11), contactName: 'Per Nilsson', contactPhone: '+46 70 987 6543' },
+  { id: 'proj-2', name: 'Elgiganten Display Wall', projectType: 'installation', client: 'Elgiganten', location: 'Kista', status: 'scheduled', assigneeIds: ['inst-2'], startDate: d(1), endDate: d(4), contactName: 'Johan Berg', contactPhone: '+46 72 111 2233', contactEmail: 'johan.berg@elgiganten.se' },
   { id: 'proj-14', name: 'Elgiganten Checkout Refit', projectType: 'installation', client: 'Elgiganten', location: 'Solna', status: 'in-progress', assigneeIds: ['inst-4', 'inst-6'], startDate: d(-1), endDate: d(2) },
   { id: 'proj-3', name: 'H&M Flagship Refit', projectType: 'installation', client: 'H&M', location: 'Drottninggatan', status: 'in-progress', assigneeIds: ['inst-3', 'inst-1'], startDate: d(-5), endDate: d(1) },
   { id: 'proj-15', name: 'H&M Storage Expansion', projectType: 'installation', client: 'H&M', location: 'Hammarby', status: 'scheduled', assigneeIds: ['inst-5'], startDate: d(3), endDate: d(8) },

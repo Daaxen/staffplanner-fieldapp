@@ -1,4 +1,4 @@
-import { ArrowLeft, MapPin, Clock, Users, FileText, Phone, Camera, CheckSquare, ExternalLink, Info, Paperclip, ClipboardCheck } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Users, FileText, Phone, Camera, CheckSquare, ExternalLink, Info, Paperclip, ClipboardCheck, Mail } from 'lucide-react';
 import { type Project, type Installer, projectTypeIcons, projectTypeLabels, statusLabels, installers } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -28,6 +28,10 @@ const InstallerProjectDetail = ({ project, installer, onBack, onStatusChange, on
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(project.location)}`;
 
   const isUnassigned = project.assigneeIds.length === 0;
+
+  // Determine which bottom action to show
+  const showStartButton = project.status === 'scheduled' && onStatusChange;
+  const showCompleteButton = project.status === 'in-progress' && onStatusChange;
 
   return (
     <div className="h-screen flex flex-col bg-background">
@@ -70,7 +74,7 @@ const InstallerProjectDetail = ({ project, installer, onBack, onStatusChange, on
           </TabsTrigger>
           <TabsTrigger value="docs" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-[11px] h-full gap-1">
             <Paperclip className="w-3 h-3" />
-            Docs
+            Docs & Pics
           </TabsTrigger>
           <TabsTrigger value="report" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-[11px] h-full gap-1">
             <Camera className="w-3 h-3" />
@@ -111,6 +115,29 @@ const InstallerProjectDetail = ({ project, installer, onBack, onStatusChange, on
                 <InfoRow icon={<FileText className="w-4 h-4" />} label="Project #" value={project.projectNumber} />
               )}
             </Section>
+
+            {/* Contact */}
+            {(project.contactName || project.contactPhone || project.contactEmail) && (
+              <Section title="Contact">
+                {project.contactName && (
+                  <InfoRow icon={<Users className="w-4 h-4" />} label="Name" value={project.contactName} />
+                )}
+                {project.contactPhone && (
+                  <div className="flex items-center gap-2 py-0.5">
+                    <span className="text-muted-foreground"><Phone className="w-4 h-4" /></span>
+                    <span className="text-xs text-muted-foreground w-20 shrink-0">Phone</span>
+                    <a href={`tel:${project.contactPhone}`} className="text-sm text-primary hover:underline">{project.contactPhone}</a>
+                  </div>
+                )}
+                {project.contactEmail && (
+                  <div className="flex items-center gap-2 py-0.5">
+                    <span className="text-muted-foreground"><Mail className="w-4 h-4" /></span>
+                    <span className="text-xs text-muted-foreground w-20 shrink-0">Email</span>
+                    <a href={`mailto:${project.contactEmail}`} className="text-sm text-primary hover:underline">{project.contactEmail}</a>
+                  </div>
+                )}
+              </Section>
+            )}
 
             {/* Team */}
             {project.assigneeIds.length > 0 && (
@@ -161,32 +188,10 @@ const InstallerProjectDetail = ({ project, installer, onBack, onStatusChange, on
                 ))}
               </Section>
             )}
-
-            {/* Action Buttons */}
-            <div className="pt-2 space-y-2">
-              {project.status === 'scheduled' && onStatusChange && (
-                <Button
-                  className="w-full bg-status-in-progress hover:bg-status-in-progress/90 text-foreground"
-                  size="lg"
-                  onClick={() => onStatusChange(project.id, 'in-progress')}
-                >
-                  ▶ Start Project
-                </Button>
-              )}
-              {project.status === 'in-progress' && onStatusChange && (
-                <Button
-                  className="w-full bg-status-completed hover:bg-status-completed/90 text-foreground"
-                  size="lg"
-                  onClick={() => onStatusChange(project.id, 'completed')}
-                >
-                  ✅ Mark Complete
-                </Button>
-              )}
-            </div>
           </div>
         </TabsContent>
 
-        {/* DOCS TAB */}
+        {/* DOCS & PICS TAB */}
         <TabsContent value="docs" className="flex-1 overflow-auto mt-0">
           <div className="p-4 space-y-4">
             <Section title="Pictures & Documentation">
@@ -213,7 +218,6 @@ const InstallerProjectDetail = ({ project, installer, onBack, onStatusChange, on
               <button
                 className="w-full border-2 border-dashed border-border rounded-xl py-8 flex flex-col items-center gap-2 hover:bg-muted/50 transition-colors"
                 onClick={() => {
-                  // Placeholder: in real app would open camera/file picker
                   const id = `photo-${Date.now()}`;
                   setReportPhotos(prev => [...prev, id]);
                 }}
@@ -271,20 +275,34 @@ const InstallerProjectDetail = ({ project, installer, onBack, onStatusChange, on
                 </div>
               </div>
             </Section>
-
-            {project.status !== 'completed' && onStatusChange && (
-              <Button
-                className="w-full bg-status-completed hover:bg-status-completed/90 text-foreground"
-                size="lg"
-                onClick={() => onStatusChange(project.id, 'completed')}
-              >
-                <CheckSquare className="w-4 h-4 mr-2" />
-                Complete & Sign Off
-              </Button>
-            )}
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Sticky bottom action button */}
+      {(showStartButton || showCompleteButton) && (
+        <div className="shrink-0 border-t border-border bg-card px-4 py-3">
+          {showStartButton && (
+            <Button
+              className="w-full bg-status-in-progress hover:bg-status-in-progress/90 text-foreground"
+              size="lg"
+              onClick={() => onStatusChange!(project.id, 'in-progress')}
+            >
+              ▶ Start Project
+            </Button>
+          )}
+          {showCompleteButton && (
+            <Button
+              className="w-full bg-status-completed hover:bg-status-completed/90 text-foreground"
+              size="lg"
+              onClick={() => onStatusChange!(project.id, 'completed')}
+            >
+              <CheckSquare className="w-4 h-4 mr-2" />
+              Mark Complete
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 };

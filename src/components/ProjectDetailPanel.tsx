@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { X, MapPin, User, Calendar, Tag } from 'lucide-react';
+import { X, MapPin, User, Calendar, Tag, Phone, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { type Project, type Installer, statusLabels, type ProjectStatus, installers } from '@/data/mockData';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -112,6 +112,40 @@ const ProjectDetailPanel = ({ project, installer, onClose }: Props) => {
               </div>
             </div>
           </div>
+
+          {/* Contact */}
+          {(project.contactName || project.contactPhone || project.contactEmail) && (
+            <div className="space-y-4">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Contact</p>
+              {project.contactName && (
+                <div className="flex items-start gap-3">
+                  <User className="w-4 h-4 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Name</p>
+                    <p className="text-sm font-medium text-foreground">{project.contactName}</p>
+                  </div>
+                </div>
+              )}
+              {project.contactPhone && (
+                <div className="flex items-start gap-3">
+                  <Phone className="w-4 h-4 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Phone</p>
+                    <a href={`tel:${project.contactPhone}`} className="text-sm font-medium text-primary hover:underline">{project.contactPhone}</a>
+                  </div>
+                </div>
+              )}
+              {project.contactEmail && (
+                <div className="flex items-start gap-3">
+                  <Mail className="w-4 h-4 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Email</p>
+                    <a href={`mailto:${project.contactEmail}`} className="text-sm font-medium text-primary hover:underline">{project.contactEmail}</a>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Action buttons */}
           <div className="space-y-2 pt-4 border-t border-border">
