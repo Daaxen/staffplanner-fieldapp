@@ -3,19 +3,32 @@ import { Calendar, ClipboardList, User } from 'lucide-react';
 import InstallerSchedule from '@/components/installer/InstallerSchedule';
 import InstallerProjectDetail from '@/components/installer/InstallerProjectDetail';
 import InstallerProfile from '@/components/installer/InstallerProfile';
+import QuickCreateProject from '@/components/installer/schedule/QuickCreateProject';
 import { installers, projects as mockProjects, type Project } from '@/data/mockData';
+import { toast } from 'sonner';
 
 type Tab = 'schedule' | 'projects' | 'profile';
 
-// For now, simulate being logged in as inst-1 (Erik Lindberg)
 const CURRENT_INSTALLER_ID = 'inst-1';
 
 const InstallerApp = () => {
   const [activeTab, setActiveTab] = useState<Tab>('schedule');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [localProjects, setLocalProjects] = useState<Project[]>(mockProjects);
 
   const installer = installers.find(i => i.id === CURRENT_INSTALLER_ID)!;
-  const myProjects = mockProjects.filter(p => p.assigneeIds.includes(CURRENT_INSTALLER_ID));
+  const myProjects = localProjects.filter(p => p.assigneeIds.includes(CURRENT_INSTALLER_ID));
+
+  const handlePickUp = (project: Project) => {
+    setLocalProjects(prev => prev.map(p =>
+      p.id === project.id ? { ...p, assigneeIds: [...p.assigneeIds, CURRENT_INSTALLER_ID], status: 'scheduled' as const } : p
+    ));
+    toast.success(`Picked up: ${project.name}`);
+  };
+
+  const handleCreateProject = (project: Project) => {
+    setLocalProjects(prev => [...prev, project]);
+  };
 
   if (selectedProject) {
     return (
@@ -35,7 +48,6 @@ const InstallerApp = () => {
 
   return (
     <div className="h-screen flex flex-col bg-background">
-      {/* Header */}
       <header className="shrink-0 bg-primary text-primary-foreground px-4 py-3 flex items-center justify-between">
         <div>
           <h1 className="text-lg font-bold">Installer</h1>
@@ -46,20 +58,23 @@ const InstallerApp = () => {
         </div>
       </header>
 
-      {/* Content */}
       <main className="flex-1 overflow-auto">
         {activeTab === 'schedule' && (
           <InstallerSchedule
             projects={myProjects}
+            allProjects={localProjects}
             installer={installer}
             onSelectProject={setSelectedProject}
+            onPickUpProject={handlePickUp}
           />
         )}
         {activeTab === 'projects' && (
           <InstallerSchedule
             projects={myProjects}
+            allProjects={localProjects}
             installer={installer}
             onSelectProject={setSelectedProject}
+            onPickUpProject={handlePickUp}
             listMode
           />
         )}
@@ -68,16 +83,17 @@ const InstallerApp = () => {
         )}
       </main>
 
-      {/* Bottom Navigation */}
+      {activeTab !== 'profile' && (
+        <QuickCreateProject onCreateProject={handleCreateProject} installerId={CURRENT_INSTALLER_ID} />
+      )}
+
       <nav className="shrink-0 bg-card border-t border-border flex">
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`flex-1 flex flex-col items-center gap-1 py-2 text-xs font-medium transition-colors ${
-              activeTab === tab.id
-                ? 'text-primary'
-                : 'text-muted-foreground'
+              activeTab === tab.id ? 'text-primary' : 'text-muted-foreground'
             }`}
           >
             {tab.icon}

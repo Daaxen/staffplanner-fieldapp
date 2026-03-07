@@ -1,5 +1,5 @@
 import { ArrowLeft, MapPin, Clock, Users, FileText, Phone } from 'lucide-react';
-import { type Project, type Installer, projectTypeIcons, projectTypeLabels, statusLabels } from '@/data/mockData';
+import { type Project, type Installer, projectTypeIcons, projectTypeLabels, statusLabels, installers } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
@@ -66,12 +66,23 @@ const InstallerProjectDetail = ({ project, installer, onBack }: InstallerProject
           </Section>
 
           {/* Team */}
-          {project.assigneeIds.length > 1 && (
+          {project.assigneeIds.length > 0 && (
             <Section title="Team">
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm text-foreground">{project.assigneeIds.length} installers assigned</span>
-              </div>
+              {project.assigneeIds.map(id => {
+                const inst = installers.find(i => i.id === id);
+                if (!inst) return null;
+                const isMe = inst.id === installer.id;
+                return (
+                  <div key={id} className="flex items-center gap-2 py-1">
+                    <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-foreground">
+                      {inst.name.split(' ').map(n => n[0]).join('')}
+                    </div>
+                    <span className="text-sm text-foreground">{inst.name}</span>
+                    {isMe && <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium">You</span>}
+                    {inst.type === 'sub-vendor' && <span className="text-[10px] text-muted-foreground">(SUB)</span>}
+                  </div>
+                );
+              })}
             </Section>
           )}
 

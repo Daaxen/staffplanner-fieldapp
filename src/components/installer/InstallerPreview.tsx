@@ -6,6 +6,7 @@ import InstallerSchedule from '@/components/installer/InstallerSchedule';
 import InstallerProjectDetail from '@/components/installer/InstallerProjectDetail';
 import InstallerProfile from '@/components/installer/InstallerProfile';
 import { Calendar, ClipboardList, User, Smartphone } from 'lucide-react';
+import { toast } from 'sonner';
 
 type Tab = 'schedule' | 'projects' | 'profile';
 
@@ -29,6 +30,10 @@ const InstallerPreview = ({ projects }: InstallerPreviewProps) => {
 
   const installer = installers.find(i => i.id === selectedInstallerId)!;
   const myProjects = projects.filter(p => p.assigneeIds.includes(selectedInstallerId));
+
+  const handlePickUp = (project: Project) => {
+    toast.info(`Pick-up action for "${project.name}" — would assign to ${installer.name} in production`);
+  };
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: 'schedule', label: 'Schedule', icon: <Calendar className="w-4 h-4" /> },
@@ -87,10 +92,10 @@ const InstallerPreview = ({ projects }: InstallerPreviewProps) => {
             {/* Content */}
             <main className="flex-1 overflow-auto">
               {activeTab === 'schedule' && (
-                <InstallerSchedule projects={myProjects} installer={installer} onSelectProject={setSelectedProject} />
+                <InstallerSchedule projects={myProjects} allProjects={projects} installer={installer} onSelectProject={setSelectedProject} onPickUpProject={handlePickUp} />
               )}
               {activeTab === 'projects' && (
-                <InstallerSchedule projects={myProjects} installer={installer} onSelectProject={setSelectedProject} listMode />
+                <InstallerSchedule projects={myProjects} allProjects={projects} installer={installer} onSelectProject={setSelectedProject} onPickUpProject={handlePickUp} listMode />
               )}
               {activeTab === 'profile' && (
                 <InstallerProfile installer={installer} projectCount={myProjects.length} />
