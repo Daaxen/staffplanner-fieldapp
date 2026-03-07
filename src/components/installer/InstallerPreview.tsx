@@ -31,6 +31,10 @@ const InstallerPreview = ({ projects }: InstallerPreviewProps) => {
   const installer = installers.find(i => i.id === selectedInstallerId)!;
   const myProjects = projects.filter(p => p.assigneeIds.includes(selectedInstallerId));
 
+  const handlePickUp = (project: Project) => {
+    toast.info(`Pick-up action for "${project.name}" — would assign to ${installer.name} in production`);
+  };
+
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: 'schedule', label: 'Schedule', icon: <Calendar className="w-4 h-4" /> },
     { id: 'projects', label: 'Projects', icon: <ClipboardList className="w-4 h-4" /> },
