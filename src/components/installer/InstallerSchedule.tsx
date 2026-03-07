@@ -5,15 +5,11 @@ import { type Project, type Installer, projectTypeIcons, statusLabels } from '@/
 import { cn } from '@/lib/utils';
 import ProjectCard from '@/components/installer/schedule/ProjectCard';
 import ScheduleFilters, { type FilterState } from '@/components/installer/schedule/ScheduleFilters';
-import InstallerOrderBox from '@/components/installer/schedule/InstallerOrderBox';
 
 interface InstallerScheduleProps {
   projects: Project[];
-  allProjects?: Project[];
   installer: Installer;
   onSelectProject: (project: Project) => void;
-  onPickUpProject?: (project: Project) => void;
-  listMode?: boolean;
 }
 
 const statusColorMap: Record<string, string> = {
@@ -42,18 +38,13 @@ function applyFilters(projects: Project[], filters: FilterState): Project[] {
   if (filters.types.length > 0) {
     result = result.filter(p => filters.types.includes(p.projectType));
   }
-  result = [...result].sort((a, b) => {
-    if (filters.sortBy === 'client') return a.client.localeCompare(b.client);
-    if (filters.sortBy === 'status') return a.status.localeCompare(b.status);
-    return a.startDate.localeCompare(b.startDate);
-  });
-  return result;
+  return result.sort((a, b) => a.startDate.localeCompare(b.startDate));
 }
 
-const InstallerSchedule = ({ projects, allProjects, installer, onSelectProject, onPickUpProject, listMode }: InstallerScheduleProps) => {
+const InstallerSchedule = ({ projects, installer, onSelectProject }: InstallerScheduleProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'day' | 'week' | 'month'>('week');
-  const [filters, setFilters] = useState<FilterState>({ statuses: [], types: [], sortBy: 'date' });
+  const [filters, setFilters] = useState<FilterState>({ statuses: [], types: [] });
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -74,37 +65,6 @@ const InstallerSchedule = ({ projects, allProjects, installer, onSelectProject, 
     return installer.absences.find(a => dayStr >= a.startDate && dayStr <= a.endDate);
   };
 
-  const filteredProjects = useMemo(() => applyFilters(projects, filters), [projects, filters]);
-
-  // List mode
-  if (listMode) {
-    const activeProjects = filteredProjects.filter(p => p.status !== 'cancelled' && p.status !== 'completed');
-    const completedProjects = filteredProjects.filter(p => p.status === 'completed');
-
-    return (
-      <div className="flex flex-col h-full">
-        <ScheduleFilters filters={filters} onChange={setFilters} />
-        <div className="flex-1 overflow-auto p-4 space-y-3">
-          {allProjects && onPickUpProject && (
-            <InstallerOrderBox projects={allProjects} onPickUp={onPickUpProject} />
-          )}
-          <h2 className="text-base font-semibold text-foreground">Active ({activeProjects.length})</h2>
-          {activeProjects.map(project => (
-            <ProjectCard key={project.id} project={project} onSelect={onSelectProject} currentInstallerId={installer.id} />
-          ))}
-          {completedProjects.length > 0 && (
-            <>
-              <h2 className="text-base font-semibold text-muted-foreground mt-4">Completed ({completedProjects.length})</h2>
-              {completedProjects.map(project => (
-                <ProjectCard key={project.id} project={project} onSelect={onSelectProject} currentInstallerId={installer.id} />
-              ))}
-            </>
-          )}
-        </div>
-      </div>
-    );
-  }
-
   const navLabel = view === 'day'
     ? format(currentDate, 'EEEE, MMMM d, yyyy')
     : view === 'week'
@@ -118,7 +78,6 @@ const InstallerSchedule = ({ projects, allProjects, installer, onSelectProject, 
     const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
     const calendarEnd = addDays(startOfWeek(addDays(monthEnd, 6), { weekStartsOn: 1 }), -1);
     const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd > monthEnd ? addDays(startOfWeek(monthEnd, { weekStartsOn: 1 }), 6) : monthEnd });
-    // Ensure full weeks
     const allDays = eachDayOfInterval({ start: calendarStart, end: addDays(calendarStart, Math.ceil(days.length / 7) * 7 - 1) });
 
     return (
@@ -174,9 +133,6 @@ const InstallerSchedule = ({ projects, allProjects, installer, onSelectProject, 
 
     return (
       <div className="flex-1 overflow-auto p-4 space-y-3">
-        {allProjects && onPickUpProject && (
-          <InstallerOrderBox projects={allProjects} onPickUp={onPickUpProject} />
-        )}
         {absence && (
           <div className="rounded-lg border border-dashed border-destructive/40 bg-destructive/5 p-3">
             <p className="text-sm font-medium text-destructive">
@@ -199,11 +155,6 @@ const InstallerSchedule = ({ projects, allProjects, installer, onSelectProject, 
   // Week view content
   const renderWeekView = () => (
     <div className="flex-1 overflow-auto">
-      {allProjects && onPickUpProject && (
-        <div className="pt-3">
-          <InstallerOrderBox projects={allProjects} onPickUp={onPickUpProject} />
-        </div>
-      )}
       {weekDays.map(day => {
         const dayProjects = getProjectsForDay(day);
         const absence = getAbsenceForDay(day);
@@ -276,6 +227,14 @@ const InstallerSchedule = ({ projects, allProjects, installer, onSelectProject, 
           </button>
           <div className="text-center">
             <p className="text-sm font-semibold text-foreground">{navLabel}</p>
+            {view === 'day' && (
+              <button
+                onClick={() => setView('week')}
+                className="text-[10px] text-primary font-medium mt-0.5"
+              >
+                ← Back to week
+              </button>
+            )}
           </div>
           <button onClick={() => navigateDate(1)} className="p-2 rounded-lg hover:bg-muted">
             <ChevronRight className="w-5 h-5" />
