@@ -3,6 +3,7 @@ import AppSidebar from '@/components/AppSidebar';
 import GanttChart from '@/components/GanttChart';
 import StatsBar from '@/components/StatsBar';
 import FleetManager from '@/components/fleet/FleetManager';
+import InstallerPreview from '@/components/installer/InstallerPreview';
 import { projects } from '@/data/mockData';
 import {
   AlertDialog,
@@ -54,7 +55,10 @@ const Index = () => {
         {activeView === 'fleet' && (
           <FleetManager projects={projects} />
         )}
-        {activeView !== 'planner' && activeView !== 'fleet' && (
+        {activeView === 'installer-preview' && (
+          <InstallerPreview projects={projects} />
+        )}
+        {activeView !== 'planner' && activeView !== 'fleet' && activeView !== 'installer-preview' && (
           <div className="flex-1 flex items-center justify-center">
             <p className="text-muted-foreground">Module coming soon</p>
           </div>
