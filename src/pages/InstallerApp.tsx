@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Package } from 'lucide-react';
+import { CalendarDays, Package, FolderKanban, User } from 'lucide-react';
 import { addDays, startOfWeek, format } from 'date-fns';
 import InstallerSchedule from '@/components/installer/InstallerSchedule';
 import InstallerProjectDetail from '@/components/installer/InstallerProjectDetail';
@@ -22,7 +22,6 @@ const InstallerApp = () => {
   const installer = installers.find(i => i.id === CURRENT_INSTALLER_ID)!;
   const myProjects = localProjects.filter(p => p.assigneeIds.includes(CURRENT_INSTALLER_ID));
 
-  // Count available orders in current + next week
   const availableOrderCount = useMemo(() => {
     const now = new Date();
     const weekStart = startOfWeek(now, { weekStartsOn: 1 });
@@ -56,7 +55,10 @@ const InstallerApp = () => {
     setLocalProjects(prev => [...prev, project]);
   };
 
-  // Filter projects for Projects tab
+  const handleViewOrderDetail = (project: Project) => {
+    setSelectedProject(project);
+  };
+
   const filteredMyProjects = useMemo(() => {
     let result = myProjects;
     if (projectFilters.statuses.length > 0) {
@@ -75,6 +77,7 @@ const InstallerApp = () => {
         installer={installer}
         onBack={() => setSelectedProject(null)}
         onStatusChange={handleStatusChange}
+        onPickUp={selectedProject.assigneeIds.length === 0 ? () => handlePickUp(selectedProject) : undefined}
       />
     );
   }
@@ -96,22 +99,25 @@ const InstallerApp = () => {
 
       <Tabs defaultValue="schedule" className="flex-1 flex flex-col overflow-hidden">
         <TabsList className="shrink-0 w-full rounded-none border-b border-border bg-card h-11 p-0 justify-start gap-0">
-          <TabsTrigger value="schedule" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs h-full">
+          <TabsTrigger value="schedule" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs h-full gap-1.5">
+            <CalendarDays className="w-3.5 h-3.5" />
             Schedule
           </TabsTrigger>
-          <TabsTrigger value="orders" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs h-full gap-1.5">
+          <TabsTrigger value="orderbox" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs h-full gap-1.5">
             <Package className="w-3.5 h-3.5" />
-            Orders
+            OrderBox
             {availableOrderCount > 0 && (
               <span className="ml-0.5 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
                 {availableOrderCount}
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="projects" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs h-full">
+          <TabsTrigger value="projects" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs h-full gap-1.5">
+            <FolderKanban className="w-3.5 h-3.5" />
             Projects
           </TabsTrigger>
-          <TabsTrigger value="profile" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs h-full">
+          <TabsTrigger value="profile" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs h-full gap-1.5">
+            <User className="w-3.5 h-3.5" />
             Profile
           </TabsTrigger>
         </TabsList>
@@ -124,9 +130,9 @@ const InstallerApp = () => {
           />
         </TabsContent>
 
-        <TabsContent value="orders" className="flex-1 overflow-auto mt-0">
+        <TabsContent value="orderbox" className="flex-1 overflow-auto mt-0">
           <div className="p-4">
-            <InstallerOrderBox projects={localProjects} onPickUp={handlePickUp} />
+            <InstallerOrderBox projects={localProjects} onPickUp={handlePickUp} onViewDetail={handleViewOrderDetail} />
           </div>
         </TabsContent>
 
