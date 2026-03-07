@@ -3,6 +3,7 @@ import AppSidebar from '@/components/AppSidebar';
 import GanttChart from '@/components/GanttChart';
 import StatsBar from '@/components/StatsBar';
 import FleetManager from '@/components/fleet/FleetManager';
+import InstallerPreview from '@/components/installer/InstallerPreview';
 import { projects } from '@/data/mockData';
 import {
   AlertDialog,
