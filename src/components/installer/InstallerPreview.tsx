@@ -6,6 +6,7 @@ import InstallerSchedule from '@/components/installer/InstallerSchedule';
 import InstallerProjectDetail from '@/components/installer/InstallerProjectDetail';
 import InstallerProfile from '@/components/installer/InstallerProfile';
 import { Calendar, ClipboardList, User, Smartphone } from 'lucide-react';
+import { toast } from 'sonner';
 
 type Tab = 'schedule' | 'projects' | 'profile';
 

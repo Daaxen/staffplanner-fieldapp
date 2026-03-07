@@ -1,5 +1,5 @@
 import { ArrowLeft, MapPin, Clock, Users, FileText, Phone } from 'lucide-react';
-import { type Project, type Installer, projectTypeIcons, projectTypeLabels, statusLabels } from '@/data/mockData';
+import { type Project, type Installer, projectTypeIcons, projectTypeLabels, statusLabels, installers } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
