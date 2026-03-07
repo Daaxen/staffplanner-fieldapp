@@ -92,10 +92,10 @@ const InstallerPreview = ({ projects }: InstallerPreviewProps) => {
             {/* Content */}
             <main className="flex-1 overflow-auto">
               {activeTab === 'schedule' && (
-                <InstallerSchedule projects={myProjects} installer={installer} onSelectProject={setSelectedProject} />
+                <InstallerSchedule projects={myProjects} allProjects={projects} installer={installer} onSelectProject={setSelectedProject} onPickUpProject={handlePickUp} />
               )}
               {activeTab === 'projects' && (
-                <InstallerSchedule projects={myProjects} installer={installer} onSelectProject={setSelectedProject} listMode />
+                <InstallerSchedule projects={myProjects} allProjects={projects} installer={installer} onSelectProject={setSelectedProject} onPickUpProject={handlePickUp} listMode />
               )}
               {activeTab === 'profile' && (
                 <InstallerProfile installer={installer} projectCount={myProjects.length} />
