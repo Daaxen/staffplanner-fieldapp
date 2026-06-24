@@ -117,6 +117,10 @@ const InstallerApp = () => {
             <FolderKanban className="w-3.5 h-3.5" />
             Projects
           </TabsTrigger>
+          <TabsTrigger value="docs" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs h-full gap-1.5">
+            <BookOpen className="w-3.5 h-3.5" />
+            Docs
+          </TabsTrigger>
           <TabsTrigger value="profile" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs h-full gap-1.5">
             <User className="w-3.5 h-3.5" />
             Profile
