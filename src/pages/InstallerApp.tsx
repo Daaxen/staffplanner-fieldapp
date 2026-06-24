@@ -5,6 +5,7 @@ import InstallerSchedule from '@/components/installer/InstallerSchedule';
 import InstallerProjectDetail from '@/components/installer/InstallerProjectDetail';
 import InstallerProfile from '@/components/installer/InstallerProfile';
 import InstallerOrderBox from '@/components/installer/schedule/InstallerOrderBox';
+import InstallerDocuments from '@/components/installer/InstallerDocuments';
 import QuickCreateProject from '@/components/installer/schedule/QuickCreateProject';
 import ProjectCard from '@/components/installer/schedule/ProjectCard';
 import ScheduleFilters, { type FilterState } from '@/components/installer/schedule/ScheduleFilters';
