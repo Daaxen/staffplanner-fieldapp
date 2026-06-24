@@ -159,6 +159,10 @@ const InstallerApp = () => {
           </div>
         </TabsContent>
 
+        <TabsContent value="docs" className="flex-1 overflow-auto mt-0">
+          <InstallerDocuments />
+        </TabsContent>
+
         <TabsContent value="profile" className="flex-1 overflow-auto mt-0">
           <InstallerProfile installer={installer} projectCount={myProjects.length} />
         </TabsContent>
