@@ -4,6 +4,7 @@ import GanttChart from '@/components/GanttChart';
 import StatsBar from '@/components/StatsBar';
 import FleetManager from '@/components/fleet/FleetManager';
 import InstallerPreview from '@/components/installer/InstallerPreview';
+import DocumentsManager from '@/components/documents/DocumentsManager';
 import { projects } from '@/data/mockData';
 import {
   AlertDialog,
