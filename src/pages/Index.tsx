@@ -4,6 +4,7 @@ import GanttChart from '@/components/GanttChart';
 import StatsBar from '@/components/StatsBar';
 import FleetManager from '@/components/fleet/FleetManager';
 import InstallerPreview from '@/components/installer/InstallerPreview';
+import DocumentsManager from '@/components/documents/DocumentsManager';
 import { projects } from '@/data/mockData';
 import {
   AlertDialog,
@@ -58,7 +59,10 @@ const Index = () => {
         {activeView === 'installer-preview' && (
           <InstallerPreview projects={projects} />
         )}
-        {activeView !== 'planner' && activeView !== 'fleet' && activeView !== 'installer-preview' && (
+        {activeView === 'documents' && (
+          <DocumentsManager />
+        )}
+        {activeView !== 'planner' && activeView !== 'fleet' && activeView !== 'installer-preview' && activeView !== 'documents' && (
           <div className="flex-1 flex items-center justify-center">
             <p className="text-muted-foreground">Module coming soon</p>
           </div>
