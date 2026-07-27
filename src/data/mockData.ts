@@ -47,12 +47,36 @@ export interface TransportStop {
   requiresSignature?: boolean;
 }
 
+export interface ClientContact {
+  name?: string;
+  role?: string;
+  phone?: string;
+  email?: string;
+}
+
+export interface ClientInvoicing {
+  billingName?: string;
+  billingStreet?: string;
+  billingPostalCode?: string;
+  billingCity?: string;
+  billingCountry?: string;
+  vatNumber?: string;
+  orgNumber?: string;
+  invoiceEmail?: string;
+  paymentTermsDays?: number;
+  reference?: string;
+}
+
 export interface Client {
-  id: string;
+  id: string;              // numeric string, auto-generated
+  customerNumber?: string; // free-text customer number
   name: string;
+  // Office address (not tied to project locations)
   street?: string;
   postalCode?: string;
   region?: string;
+  mainContact?: ClientContact;
+  invoicing?: ClientInvoicing;
 }
 
 export interface Project {
