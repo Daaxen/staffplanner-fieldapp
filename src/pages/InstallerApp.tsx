@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { CalendarDays, Package, FolderKanban, User, BookOpen } from 'lucide-react';
+import { CalendarDays, Package, FolderKanban, User, BookOpen, Clock } from 'lucide-react';
 import { addDays, startOfWeek, format } from 'date-fns';
 import InstallerSchedule from '@/components/installer/InstallerSchedule';
 import InstallerProjectDetail from '@/components/installer/InstallerProjectDetail';
@@ -9,8 +9,10 @@ import InstallerDocuments from '@/components/installer/InstallerDocuments';
 import QuickCreateProject from '@/components/installer/schedule/QuickCreateProject';
 import ProjectCard from '@/components/installer/schedule/ProjectCard';
 import ScheduleFilters, { type FilterState } from '@/components/installer/schedule/ScheduleFilters';
+import LogsOverview from '@/components/installer/logs/LogsOverview';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { installers, projects as mockProjects, type Project } from '@/data/mockData';
+import { useInstallerLogs } from '@/hooks/useInstallerLogs';
 import { toast } from 'sonner';
 
 const CURRENT_INSTALLER_ID = 'inst-1';
@@ -22,6 +24,7 @@ const InstallerApp = () => {
 
   const installer = installers.find(i => i.id === CURRENT_INSTALLER_ID)!;
   const myProjects = localProjects.filter(p => p.assigneeIds.includes(CURRENT_INSTALLER_ID));
+  const logs = useInstallerLogs(CURRENT_INSTALLER_ID);
 
   const availableOrderCount = useMemo(() => {
     const now = new Date();
@@ -76,6 +79,7 @@ const InstallerApp = () => {
       <InstallerProjectDetail
         project={selectedProject}
         installer={installer}
+        logs={logs}
         onBack={() => setSelectedProject(null)}
         onStatusChange={handleStatusChange}
         onPickUp={selectedProject.assigneeIds.length === 0 ? () => handlePickUp(selectedProject) : undefined}
