@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
-import { type Project, type Installer, type ProjectStatus, installers, projectTypeIcons } from '@/data/mockData';
+import { type Project, type Installer, type ProjectStatus, installers, projectTypeIcons, clientRegister } from '@/data/mockData';
 import GanttHeader from './GanttHeader';
 import GanttGrid from './GanttGrid';
 import DraggableBar from './DraggableBar';
@@ -180,9 +180,14 @@ const ClientsView = ({ projects, days, colWidth, startDate, todayStr, onSelectPr
                 >
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-foreground truncate">{group.client}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {group.projects.length} project{group.projects.length !== 1 ? 's' : ''}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <code className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                        {clientRegister.find(c => c.name === group.client)?.id ?? '— no ID —'}
+                      </code>
+                      <p className="text-xs text-muted-foreground">
+                        {group.projects.length} project{group.projects.length !== 1 ? 's' : ''}
+                      </p>
+                    </div>
                   </div>
                   <div className="shrink-0">
                     <span className={cn(
