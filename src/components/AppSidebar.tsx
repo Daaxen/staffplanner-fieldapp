@@ -1,7 +1,8 @@
-import { Calendar, Users, LayoutDashboard, ClipboardList, FileText, Settings, PanelLeftClose, PanelLeft, Car, Smartphone, BookOpen, UserCog, LogOut, User as UserIcon } from 'lucide-react';
+import { Calendar, Users, LayoutDashboard, ClipboardList, FileText, Settings, PanelLeftClose, PanelLeft, Car, Smartphone, BookOpen, UserCog, LogOut, User as UserIcon, Flame } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { installers } from '@/data/mockData';
 import { useAuth } from '@/hooks/useAuth';
+import { useReminders } from '@/hooks/useReminders';
 
 interface AppSidebarProps {
   activeView: string;
@@ -19,6 +20,7 @@ const baseNavItems = [
   { id: 'installer-preview', label: 'Installer View', icon: Smartphone },
   { id: 'reports', label: 'Reports', icon: FileText },
 ];
+
 
 const installerColorMap: Record<number, string> = {
   1: 'bg-installer-1',
