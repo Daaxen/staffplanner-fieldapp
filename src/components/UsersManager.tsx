@@ -115,6 +115,12 @@ const UsersManager = () => {
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate">{r.full_name || '(no name)'}</p>
                 <p className="text-xs text-muted-foreground truncate">{r.email} {r.phone && `· ${r.phone}`}</p>
+                <div className="flex items-center gap-1 mt-1">
+                  <code className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded truncate max-w-[280px]" title={r.id}>{r.id}</code>
+                  <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => { navigator.clipboard.writeText(r.id); toast.success('User ID copied'); }}>
+                    <Copy className="w-3 h-3" />
+                  </Button>
+                </div>
               </div>
               <div className="flex gap-1">
                 <Button size="sm" variant={r.roles.includes('admin') ? 'default' : 'outline'} onClick={() => toggleRole(r.id, 'admin', r.roles.includes('admin'))}>
