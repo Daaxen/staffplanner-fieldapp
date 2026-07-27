@@ -121,6 +121,10 @@ const InstallerApp = () => {
             <FolderKanban className="w-3.5 h-3.5" />
             Projects
           </TabsTrigger>
+          <TabsTrigger value="logs" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs h-full gap-1.5">
+            <Clock className="w-3.5 h-3.5" />
+            Time
+          </TabsTrigger>
           <TabsTrigger value="docs" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs h-full gap-1.5">
             <BookOpen className="w-3.5 h-3.5" />
             Docs
@@ -161,6 +165,10 @@ const InstallerApp = () => {
               </>
             )}
           </div>
+        </TabsContent>
+
+        <TabsContent value="logs" className="flex-1 overflow-auto mt-0">
+          <LogsOverview logs={logs} projects={myProjects} />
         </TabsContent>
 
         <TabsContent value="docs" className="flex-1 overflow-auto mt-0">
