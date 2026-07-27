@@ -1,0 +1,131 @@
+{
+  "version": 1,
+  "sdk_version": "0.24.0",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "none"
+  },
+  "mcp": {
+    "server": {
+      "name": "staffplanner-mcp",
+      "version": "0.1.0",
+      "title": "StaffPlanner MCP"
+    },
+    "tools": [
+      {
+        "name": "list_projects",
+        "title": "List projects",
+        "description": "List installation/site-survey/transport projects tracked in StaffPlanner. Optional filters by status, project type, client, and assigned installer id.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "open",
+                "scheduled",
+                "in-progress",
+                "completed",
+                "on-hold",
+                "cancelled"
+              ],
+              "description": "Filter by project status."
+            },
+            "projectType": {
+              "type": "string",
+              "enum": [
+                "installation",
+                "site-survey",
+                "transport"
+              ],
+              "description": "Filter by project type."
+            },
+            "client": {
+              "type": "string",
+              "description": "Filter by client name (case-insensitive substring)."
+            },
+            "assigneeId": {
+              "type": "string",
+              "description": "Return only projects assigned to this installer id."
+            },
+            "unassignedOnly": {
+              "type": "boolean",
+              "description": "If true, return only projects with no assignees."
+            },
+            "limit": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "Max results (default 50)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_project",
+        "title": "Get project",
+        "description": "Fetch a single project by its id, including schedule, contact, and assigned installer ids.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Project id, e.g. 'proj-1'."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_installers",
+        "title": "List installers",
+        "description": "List all installers (staff and sub-vendors) available in StaffPlanner.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_clients",
+        "title": "List clients",
+        "description": "List all retail clients StaffPlanner works with.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
