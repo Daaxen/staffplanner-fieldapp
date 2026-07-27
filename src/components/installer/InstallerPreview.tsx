@@ -34,6 +34,7 @@ const InstallerPreview = ({ projects }: InstallerPreviewProps) => {
 
   const installer = installers.find(i => i.id === selectedInstallerId)!;
   const myProjects = projects.filter(p => p.assigneeIds.includes(selectedInstallerId));
+  const logs = useInstallerLogs(selectedInstallerId);
 
   const availableOrderCount = useMemo(() => {
     const now = new Date();
@@ -95,9 +96,10 @@ const InstallerPreview = ({ projects }: InstallerPreviewProps) => {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-foreground/80 rounded-b-2xl z-50" />
 
         {selectedProject ? (
-          <InstallerPreviewProjectDetail
-            selectedProject={selectedProject}
+          <InstallerProjectDetail
+            project={selectedProject}
             installer={installer}
+            logs={logs}
             onBack={() => setSelectedProject(null)}
           />
         ) : (
