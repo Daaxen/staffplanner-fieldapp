@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Trash2, UserPlus, Shield, User as UserIcon } from 'lucide-react';
+import { Trash2, UserPlus, Shield, User as UserIcon, Copy } from 'lucide-react';
 
 type Role = 'admin' | 'installer';
 
