@@ -1,85 +1,40 @@
-## Goal
-Nag installers who haven't closed an order + logged time/mileage/cost by the morning after the project's end date. Escalate fast (same day) to admin if still nothing.
+## Connect your custom domain
 
-## Trigger & escalation ladder
-An order is "delinquent" when, after its end date, any of these are still missing:
-- Status not `completed`
-- Zero time entries for this project by this installer
-- Zero expense entries (any category, incl. mileage) for this project by this installer
+You can point a domain you already own at this app. No code changes needed — it's all done in Project Settings.
 
-Ladder (all times local, from the project's end date at 08:00 next day = T0):
-- **T+0h** – silent push + in-app banner + Reminders inbox row (gentle)
-- **T+4h** – push + banner (urgent tone, red)
-- **T+8h** – admin alert (email-style in-app + push to admins) + installer still sees banner
+### Steps
 
-Once the installer completes the order and logs at least one time + one expense entry (or explicitly marks "no cost / no mileage"), the reminder resolves and escalation stops.
+1. **Publish the app first** (required before a custom domain can be attached).
+   - Click **Publish** (top right). This creates your `*.lovable.app` URL.
 
-## Data model (Lovable Cloud, new tables)
+2. **Open domain settings**
+   - **Project Settings → Project → Domains** (or in the Publish dialog → *Add custom domain*).
 
-```text
-reminders
-  id, project_id, installer_id
-  triggered_at (timestamptz, = end_date + 1 day 08:00)
-  level: 'gentle' | 'urgent' | 'escalated'
-  status: 'open' | 'resolved' | 'dismissed'
-  resolved_at, last_notified_at
-  missing: jsonb { completion:bool, time:bool, expense:bool }
+3. **Choose one of two paths**
 
-reminder_events           -- audit trail of every push/banner/admin alert
-  id, reminder_id, kind: 'push'|'banner'|'admin_alert', sent_at, channel
+   **A. Buy a domain through Lovable** (simplest — DNS is auto-configured)
+   - Click **Buy new domain**, search, purchase. It's connected automatically.
 
-push_subscriptions        -- FCM tokens per user + device
-  id, user_id, fcm_token, platform, user_agent, created_at, last_seen_at
-```
+   **B. Connect a domain you own at another registrar**
+   - Click **Connect Domain**, enter `yourdomain.com`.
+   - Add the DNS records Lovable shows you at your registrar:
+     - **A record** — Name `@`, Value `185.158.133.1`
+     - **A record** — Name `www`, Value `185.158.133.1`
+     - **TXT record** — Name `_lovable`, Value `lovable_verify=...` (shown in the UI)
+   - Add both `yourdomain.com` and `www.yourdomain.com` as separate entries, then pick one as **Primary** (the other redirects to it).
+   - If you use Cloudflare or a similar proxy, expand **Advanced** and tick *"Domain uses Cloudflare or a similar proxy"* — this switches to CNAME-based verification.
 
-RLS: installer sees own reminders/subscriptions; admin sees all; service_role full. GRANTs per platform rules.
+4. **Wait for propagation & SSL**
+   - DNS can take up to 72h (usually minutes). SSL is provisioned automatically once verified.
+   - Status will move: *Verifying → Setting up → Active*.
 
-## Backend
+### About the build error
 
-Edge functions:
-- `reminders-scan` — cron every 15 min. For each active project past end date, computes `missing`, upserts a `reminders` row at T0, bumps level at T+4h → urgent, T+8h → escalated (creates admin alerts, notifies admins).
-- `reminders-notify` — sends FCM push via the messaging integration for each pending notification, writes `reminder_events`.
-- `push-subscribe` — stores FCM token from installer's browser.
+The stderr trace you pasted is the same transient "stale missing file" error we've seen before — Vite tried to read a file that was mid-write. No code fix is needed for the domain question. If you'd like, I can re-run the build to confirm it's green before you publish.
 
-Cron: `pg_cron` + `pg_net` calling `reminders-scan` every 15 min.
+### What I need from you
 
-Escalation to admin = insert admin `reminder_events` rows + FCM push to users with `admin` role.
+- Confirm you want to **connect an existing domain** (path B) or **buy one through Lovable** (path A).
+- If path B: share the domain name so I can walk you through the exact records after you kick off the connect flow.
 
-## Frontend
-
-Installer app:
-- Service worker `firebase-messaging-sw.js` for background push (kept outside the app-shell PWA guard per pwa skill).
-- On first load of `/installer`, prompt for notification permission; store FCM token via `push-subscribe`.
-- New **Reminders** inbox tab (bell icon + unread badge) listing open reminders → tap opens the project's Log tab pre-focused on the missing pieces.
-- Persistent top banner on Schedule / Projects tabs while any reminder is open; color intensifies with level.
-- Inside `InstallerProjectDetail`, show a highlighted "Report needed" strip on delinquent projects.
-
-Admin app:
-- New **Escalations** section in the sidebar (badge count) listing escalated reminders with installer, project, hours overdue, and quick "Contact installer" action.
-
-## Files to add
-```text
-supabase/functions/reminders-scan/index.ts
-supabase/functions/reminders-notify/index.ts
-supabase/functions/push-subscribe/index.ts
-public/firebase-messaging-sw.js
-src/hooks/useReminders.ts
-src/hooks/usePushRegistration.ts
-src/components/installer/reminders/RemindersInbox.tsx
-src/components/installer/reminders/ReminderBanner.tsx
-src/components/admin/EscalationsView.tsx
-src/lib/firebase.ts
-```
-
-## Files to change
-- `src/pages/InstallerApp.tsx` — add Reminders tab, mount banner, register push.
-- `src/components/installer/InstallerProjectDetail.tsx` — surface "Report needed" strip and resolve reminder when logs are added / order completed.
-- `src/components/AppSidebar.tsx` — add Escalations entry with badge.
-- `src/App.tsx` — route for Escalations.
-
-## Secrets to request
-- `FCM_SERVER_KEY` (or Firebase service account JSON) — needed to send push from `reminders-notify`.
-- `VITE_FIREBASE_CONFIG` (public) — added to `.env` for the web push client SDK.
-
-## Out of scope
-- SMS/email fallback, snooze rules, admin-configurable thresholds, per-project grace overrides — can layer on later.
+Nothing to implement in code — this is all configuration in the Lovable UI.
