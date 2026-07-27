@@ -24,6 +24,7 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const nextTarget = safeNext(new URLSearchParams(window.location.search).get('next'));
@@ -112,6 +113,7 @@ const Auth = () => {
         {mode === 'signup' && (
           <form onSubmit={async (e) => {
             e.preventDefault();
+            if (!consent) return toast.error('You must accept the Terms and Privacy Policy to create an account.');
             setBusy(true);
             const { error } = await supabase.auth.signUp({
               email, password,
@@ -128,6 +130,16 @@ const Auth = () => {
             <div className="space-y-2"><Label>Full name</Label><Input value={fullName} onChange={e => setFullName(e.target.value)} required /></div>
             <div className="space-y-2"><Label>Email</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></div>
             <div className="space-y-2"><Label>Password</Label><Input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} /></div>
+            <label className="flex items-start gap-2 text-xs text-muted-foreground">
+              <input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} className="mt-0.5" />
+              <span>
+                I agree to the{' '}
+                <a href="/terms" target="_blank" rel="noreferrer" className="underline hover:text-foreground">Terms of Service</a>{' '}
+                and{' '}
+                <a href="/privacy" target="_blank" rel="noreferrer" className="underline hover:text-foreground">Privacy Policy</a>{' '}
+                of Dynamic Places AB, and consent to the processing of my personal data as described.
+              </span>
+            </label>
             <Button type="submit" className="w-full" disabled={busy}>{busy ? 'Creating…' : 'Create account'}</Button>
             <button type="button" onClick={() => setMode('login')} className="text-xs text-muted-foreground hover:text-foreground w-full text-center">Back to sign in</button>
           </form>
@@ -155,6 +167,12 @@ const Auth = () => {
             </button>
           </form>
         )}
+
+        <div className="pt-2 text-center text-[11px] text-muted-foreground space-x-3">
+          <a href="/privacy" className="hover:text-foreground underline">Privacy</a>
+          <a href="/terms" className="hover:text-foreground underline">Terms</a>
+          <span>© Dynamic Places AB</span>
+        </div>
       </div>
     </div>
   );
