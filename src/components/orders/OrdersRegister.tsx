@@ -12,6 +12,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import OrdersImport from './OrdersImport';
 
 type SortKey = 'name' | 'client' | 'startDate' | 'endDate' | 'status' | 'projectType';
 type SortDir = 'asc' | 'desc';
@@ -268,6 +269,7 @@ const OrdersRegister = () => {
           <Button variant="outline" size="sm" onClick={exportCsv}>
             <Download className="w-4 h-4 mr-1.5" /> Export CSV
           </Button>
+          <OrdersImport orders={orders} onApply={setOrders} />
         </div>
 
         {showFilters && (
