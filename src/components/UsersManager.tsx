@@ -35,7 +35,7 @@ const UsersManager = () => {
     (roles ?? []).forEach((r: { user_id: string; role: Role }) => {
       byUser[r.user_id] = [...(byUser[r.user_id] ?? []), r.role];
     });
-    setRows((profiles ?? []).map((p: Record<string, unknown>) => ({ ...(p as Row), roles: byUser[p.id as string] ?? [] })));
+    setRows((profiles ?? []).map((p) => ({ ...(p as unknown as Omit<Row, 'roles'>), roles: byUser[(p as { id: string }).id] ?? [] })));
     setLoading(false);
   };
 
