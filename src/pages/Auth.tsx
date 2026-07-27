@@ -11,9 +11,10 @@ import { Calendar } from 'lucide-react';
 const Auth = () => {
   const nav = useNavigate();
   const { user, loading, signIn } = useAuth();
-  const [mode, setMode] = useState<'login' | 'setPassword' | 'reset'>('login');
+  const [mode, setMode] = useState<'login' | 'setPassword' | 'reset' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
