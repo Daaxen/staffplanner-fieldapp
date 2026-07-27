@@ -1,6 +1,7 @@
-import { Calendar, Users, LayoutDashboard, ClipboardList, FileText, Settings, PanelLeftClose, PanelLeft, Car, Smartphone, BookOpen } from 'lucide-react';
+import { Calendar, Users, LayoutDashboard, ClipboardList, FileText, Settings, PanelLeftClose, PanelLeft, Car, Smartphone, BookOpen, UserCog, LogOut, User as UserIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { installers } from '@/data/mockData';
+import { useAuth } from '@/hooks/useAuth';
 
 interface AppSidebarProps {
   activeView: string;
@@ -9,7 +10,7 @@ interface AppSidebarProps {
   onToggleCollapse?: () => void;
 }
 
-const navItems = [
+const baseNavItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'planner', label: 'Planner', icon: Calendar },
   { id: 'orders', label: 'Orders', icon: ClipboardList },
