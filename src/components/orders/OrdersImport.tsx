@@ -8,7 +8,7 @@ import {
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import {
-  installers, statusLabels, projectTypeLabels,
+  installers, clientRegister, statusLabels, projectTypeLabels,
   type Project, type ProjectStatus, type ProjectType,
 } from '@/data/mockData';
 
@@ -18,8 +18,12 @@ const COLUMNS = [
   'Order Name',
   'Project Number',
   'Type',            // installation | site-survey | transport
-  'Client',
-  'Location',
+  'Client ID',       // must exist in client register
+  'Client',          // display name (informational; Client ID is authoritative)
+  'Location',        // area / city
+  'Street',
+  'Postal Code',
+  'Region',
   'Status',          // open | scheduled | in-progress | completed | on-hold | cancelled
   'Start Date',      // YYYY-MM-DD
   'End Date',        // YYYY-MM-DD
