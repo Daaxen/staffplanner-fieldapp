@@ -1,5 +1,5 @@
 import { defineTool } from "@lovable.dev/mcp-js";
-import { installers } from "../../data/mockData";
+import { installers } from "../../data/mockData.ts";
 
 export default defineTool({
   name: "list_installers",

@@ -1,6 +1,6 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
-import { projects, type ProjectStatus, type ProjectType } from "../../data/mockData";
+import { projects, type ProjectStatus, type ProjectType } from "../../data/mockData.ts";
 
 export default defineTool({
   name: "list_projects",
