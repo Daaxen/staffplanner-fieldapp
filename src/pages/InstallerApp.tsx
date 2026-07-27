@@ -111,7 +111,13 @@ const InstallerApp = () => {
         </div>
       </header>
 
-      <Tabs defaultValue="schedule" className="flex-1 flex flex-col overflow-hidden">
+      <ReminderBanner
+        level={reminders.highestLevel}
+        count={reminders.reminders.length}
+        onClick={() => setTab('reminders')}
+      />
+
+      <Tabs value={tab} onValueChange={setTab} className="flex-1 flex flex-col overflow-hidden">
         <TabsList className="shrink-0 w-full rounded-none border-b border-border bg-card h-11 p-0 justify-start gap-0">
           <TabsTrigger value="schedule" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs h-full gap-1.5">
             <CalendarDays className="w-3.5 h-3.5" />
@@ -130,6 +136,15 @@ const InstallerApp = () => {
             <FolderKanban className="w-3.5 h-3.5" />
             Projects
           </TabsTrigger>
+          <TabsTrigger value="reminders" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs h-full gap-1.5">
+            <Bell className="w-3.5 h-3.5" />
+            Inbox
+            {reminders.reminders.length > 0 && (
+              <span className="ml-0.5 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                {reminders.reminders.length}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="logs" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs h-full gap-1.5">
             <Clock className="w-3.5 h-3.5" />
             Time
@@ -143,6 +158,7 @@ const InstallerApp = () => {
             Profile
           </TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="schedule" className="flex-1 overflow-auto mt-0">
           <InstallerSchedule
