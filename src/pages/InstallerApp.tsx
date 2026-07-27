@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { CalendarDays, Package, FolderKanban, User, BookOpen, Clock } from 'lucide-react';
+import { CalendarDays, Package, FolderKanban, User, BookOpen, Clock, Bell } from 'lucide-react';
 import { addDays, startOfWeek, format } from 'date-fns';
 import InstallerSchedule from '@/components/installer/InstallerSchedule';
 import InstallerProjectDetail from '@/components/installer/InstallerProjectDetail';
@@ -10,10 +10,15 @@ import QuickCreateProject from '@/components/installer/schedule/QuickCreateProje
 import ProjectCard from '@/components/installer/schedule/ProjectCard';
 import ScheduleFilters, { type FilterState } from '@/components/installer/schedule/ScheduleFilters';
 import LogsOverview from '@/components/installer/logs/LogsOverview';
+import RemindersInbox from '@/components/installer/reminders/RemindersInbox';
+import ReminderBanner from '@/components/installer/reminders/ReminderBanner';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { installers, projects as mockProjects, type Project } from '@/data/mockData';
 import { useInstallerLogs } from '@/hooks/useInstallerLogs';
+import { useReminders } from '@/hooks/useReminders';
+import { usePushRegistration } from '@/hooks/usePushRegistration';
 import { toast } from 'sonner';
+
 
 const CURRENT_INSTALLER_ID = 'inst-1';
 
