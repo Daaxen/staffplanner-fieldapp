@@ -90,6 +90,33 @@ const Auth = () => {
             <p className="text-xs text-center text-muted-foreground">
               New users are added by an administrator via invitation email.
             </p>
+            <button type="button" onClick={() => setMode('signup')} className="text-xs text-muted-foreground hover:text-foreground w-full text-center underline">
+              First-time setup: create initial admin account
+            </button>
+          </form>
+        )}
+
+        {mode === 'signup' && (
+          <form onSubmit={async (e) => {
+            e.preventDefault();
+            setBusy(true);
+            const { error } = await supabase.auth.signUp({
+              email, password,
+              options: { data: { full_name: fullName }, emailRedirectTo: `${window.location.origin}/auth` },
+            });
+            setBusy(false);
+            if (error) return toast.error(error.message);
+            toast.success('Account created — check your email to confirm, then sign in.');
+            setMode('login');
+          }} className="space-y-4">
+            <p className="text-xs text-muted-foreground bg-muted p-3 rounded">
+              The very first account created becomes admin automatically. After that, all users must be invited by an admin.
+            </p>
+            <div className="space-y-2"><Label>Full name</Label><Input value={fullName} onChange={e => setFullName(e.target.value)} required /></div>
+            <div className="space-y-2"><Label>Email</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></div>
+            <div className="space-y-2"><Label>Password</Label><Input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} /></div>
+            <Button type="submit" className="w-full" disabled={busy}>{busy ? 'Creating…' : 'Create account'}</Button>
+            <button type="button" onClick={() => setMode('login')} className="text-xs text-muted-foreground hover:text-foreground w-full text-center">Back to sign in</button>
           </form>
         )}
 
