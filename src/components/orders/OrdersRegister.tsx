@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Search, Filter, X, CheckSquare, Square, Download, History, Users as UsersIcon, Trash2 } from 'lucide-react';
+import { Search, Filter, X, CheckSquare, Square, Download, History, Users as UsersIcon, Trash2, ArrowRight, AlertTriangle, Check } from 'lucide-react';
 import { projects as mockProjects, installers, type Project, type ProjectStatus, type ProjectType, statusLabels, projectTypeLabels, projectTypeIcons } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
