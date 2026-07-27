@@ -8,7 +8,7 @@ import {
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import {
-  installers, statusLabels, projectTypeLabels,
+  installers, clientRegister, statusLabels, projectTypeLabels,
   type Project, type ProjectStatus, type ProjectType,
 } from '@/data/mockData';
 
@@ -18,8 +18,12 @@ const COLUMNS = [
   'Order Name',
   'Project Number',
   'Type',            // installation | site-survey | transport
-  'Client',
-  'Location',
+  'Client ID',       // must exist in client register
+  'Client',          // display name (informational; Client ID is authoritative)
+  'Location',        // area / city
+  'Street',
+  'Postal Code',
+  'Region',
   'Status',          // open | scheduled | in-progress | completed | on-hold | cancelled
   'Start Date',      // YYYY-MM-DD
   'End Date',        // YYYY-MM-DD
@@ -128,8 +132,12 @@ const OrdersImport = ({ orders, onApply }: OrdersImportProps) => {
       const id = norm(raw['Order ID']);
       const name = norm(raw['Order Name']);
       const type = norm(raw['Type']).toLowerCase();
-      const client = norm(raw['Client']);
+      const clientId = norm(raw['Client ID']);
+      const clientName = norm(raw['Client']);
       const location = norm(raw['Location']);
+      const street = norm(raw['Street']);
+      const postalCode = norm(raw['Postal Code']);
+      const region = norm(raw['Region']);
       const status = norm(raw['Status']).toLowerCase();
       const startDate = toDateStr(raw['Start Date']);
       const endDate = toDateStr(raw['End Date']);
@@ -144,6 +152,20 @@ const OrdersImport = ({ orders, onApply }: OrdersImportProps) => {
         return { rowNumber, action: 'skip', errors: [], warnings: [], patch: {}, raw };
       }
 
+      // Client validation — must exist in register; import cannot create clients
+      const matchedClient = clientId ? clientRegister.find(c => c.id.toLowerCase() === clientId.toLowerCase()) : undefined;
+      const matched = id ? byId.get(id) : undefined;
+
+      if (clientId && !matchedClient) {
+        errors.push(`Client ID "${clientId}" not found in client register — add the client first`);
+      }
+      if (!clientId && !matched) {
+        errors.push('Client ID is required to create a new order');
+      }
+      if (matchedClient && clientName && clientName.toLowerCase() !== matchedClient.name.toLowerCase()) {
+        warnings.push(`Client name "${clientName}" doesn't match register ("${matchedClient.name}") — register name will be used`);
+      }
+
       // Validation — only on cells the user filled in
       if (type && !TYPE_VALUES.includes(type as ProjectType)) errors.push(`Type "${type}" not one of ${TYPE_VALUES.join(', ')}`);
       if (status && !STATUS_VALUES.includes(status as ProjectStatus)) errors.push(`Status "${status}" not one of ${STATUS_VALUES.join(', ')}`);
@@ -153,7 +175,6 @@ const OrdersImport = ({ orders, onApply }: OrdersImportProps) => {
       if (estRaw !== '' && (Number.isNaN(estHours) || (estHours as number) < 0)) errors.push(`Estimated Hours "${estRaw}" is not a positive number`);
       if (unknownAssignees.length) warnings.push(`Unknown assignee(s): ${unknownAssignees.join(', ')} — ignored`);
 
-      const matched = id ? byId.get(id) : undefined;
       let action: RowAction;
       if (id && !matched) {
         errors.push(`Order ID "${id}" not found — cannot update`);
@@ -171,8 +192,14 @@ const OrdersImport = ({ orders, onApply }: OrdersImportProps) => {
       if (name) patch.name = name;
       if (norm(raw['Project Number'])) patch.projectNumber = norm(raw['Project Number']);
       if (type) patch.projectType = type as ProjectType;
-      if (client) patch.client = client;
+      if (matchedClient) {
+        patch.clientId = matchedClient.id;
+        patch.client = matchedClient.name;
+      }
       if (location) patch.location = location;
+      if (street) patch.street = street;
+      if (postalCode) patch.postalCode = postalCode;
+      if (region) patch.region = region;
       if (status) patch.status = status as ProjectStatus;
       if (startDate) patch.startDate = startDate;
       if (endDate) patch.endDate = endDate;

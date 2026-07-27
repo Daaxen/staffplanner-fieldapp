@@ -47,13 +47,25 @@ export interface TransportStop {
   requiresSignature?: boolean;
 }
 
+export interface Client {
+  id: string;
+  name: string;
+  street?: string;
+  postalCode?: string;
+  region?: string;
+}
+
 export interface Project {
   id: string;
   name: string;
   projectNumber?: string;
   projectType: ProjectType;
+  clientId?: string;
   client: string;
   location: string;
+  street?: string;
+  postalCode?: string;
+  region?: string;
   status: ProjectStatus;
   assigneeIds: string[]; // multiple assignees
   startDate: string; // ISO date
@@ -86,8 +98,23 @@ export const projectTypeIcons: Record<ProjectType, string> = {
   'transport': '🚛',
 };
 
-// Unique clients extracted from projects for autocomplete
-export const clients = ['IKEA', 'Elgiganten', 'H&M', 'Clas Ohlson', 'Stadium', 'Systembolaget', 'Jula', 'Bauhaus', 'Granit', 'Kjell & Company', 'Åhléns'];
+// Client register — clients must exist here before orders can reference them
+export const clientRegister: Client[] = [
+  { id: 'cli-ikea', name: 'IKEA', street: 'Modulvägen 1', postalCode: '177 42', region: 'Stockholm' },
+  { id: 'cli-elgiganten', name: 'Elgiganten', street: 'Kistagången 6', postalCode: '164 40', region: 'Stockholm' },
+  { id: 'cli-hm', name: 'H&M', street: 'Drottninggatan 50', postalCode: '111 21', region: 'Stockholm' },
+  { id: 'cli-clas', name: 'Clas Ohlson', street: 'Kungens Kurva Handelsplats', postalCode: '141 75', region: 'Stockholm' },
+  { id: 'cli-stadium', name: 'Stadium', street: 'Stjärntorget 2', postalCode: '169 79', region: 'Stockholm' },
+  { id: 'cli-systemet', name: 'Systembolaget', street: 'Götgatan 78', postalCode: '118 30', region: 'Stockholm' },
+  { id: 'cli-jula', name: 'Jula', street: 'Bromma Center', postalCode: '168 67', region: 'Stockholm' },
+  { id: 'cli-bauhaus', name: 'Bauhaus', street: 'Arningevägen 10', postalCode: '187 44', region: 'Stockholm' },
+  { id: 'cli-granit', name: 'Granit', street: 'Götgatan 31', postalCode: '116 21', region: 'Stockholm' },
+  { id: 'cli-kjell', name: 'Kjell & Company', street: 'Täby Centrum', postalCode: '183 34', region: 'Stockholm' },
+  { id: 'cli-ahlens', name: 'Åhléns', street: 'Klarabergsgatan 50', postalCode: '111 21', region: 'Stockholm' },
+];
+
+// Backwards-compatible name list for autocomplete/datalists
+export const clients = clientRegister.map(c => c.name);
 
 const today = new Date();
 function d(offset: number) {
