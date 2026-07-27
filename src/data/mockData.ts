@@ -47,12 +47,36 @@ export interface TransportStop {
   requiresSignature?: boolean;
 }
 
+export interface ClientContact {
+  name?: string;
+  role?: string;
+  phone?: string;
+  email?: string;
+}
+
+export interface ClientInvoicing {
+  billingName?: string;
+  billingStreet?: string;
+  billingPostalCode?: string;
+  billingCity?: string;
+  billingCountry?: string;
+  vatNumber?: string;
+  orgNumber?: string;
+  invoiceEmail?: string;
+  paymentTermsDays?: number;
+  reference?: string;
+}
+
 export interface Client {
-  id: string;
+  id: string;              // numeric string, auto-generated
+  customerNumber?: string; // free-text customer number
   name: string;
+  // Office address (not tied to project locations)
   street?: string;
   postalCode?: string;
   region?: string;
+  mainContact?: ClientContact;
+  invoicing?: ClientInvoicing;
 }
 
 export interface Project {
@@ -100,17 +124,19 @@ export const projectTypeIcons: Record<ProjectType, string> = {
 
 // Client register — clients must exist here before orders can reference them
 export const clientRegister: Client[] = [
-  { id: 'cli-ikea', name: 'IKEA', street: 'Modulvägen 1', postalCode: '177 42', region: 'Stockholm' },
-  { id: 'cli-elgiganten', name: 'Elgiganten', street: 'Kistagången 6', postalCode: '164 40', region: 'Stockholm' },
-  { id: 'cli-hm', name: 'H&M', street: 'Drottninggatan 50', postalCode: '111 21', region: 'Stockholm' },
-  { id: 'cli-clas', name: 'Clas Ohlson', street: 'Kungens Kurva Handelsplats', postalCode: '141 75', region: 'Stockholm' },
-  { id: 'cli-stadium', name: 'Stadium', street: 'Stjärntorget 2', postalCode: '169 79', region: 'Stockholm' },
-  { id: 'cli-systemet', name: 'Systembolaget', street: 'Götgatan 78', postalCode: '118 30', region: 'Stockholm' },
-  { id: 'cli-jula', name: 'Jula', street: 'Bromma Center', postalCode: '168 67', region: 'Stockholm' },
-  { id: 'cli-bauhaus', name: 'Bauhaus', street: 'Arningevägen 10', postalCode: '187 44', region: 'Stockholm' },
-  { id: 'cli-granit', name: 'Granit', street: 'Götgatan 31', postalCode: '116 21', region: 'Stockholm' },
-  { id: 'cli-kjell', name: 'Kjell & Company', street: 'Täby Centrum', postalCode: '183 34', region: 'Stockholm' },
-  { id: 'cli-ahlens', name: 'Åhléns', street: 'Klarabergsgatan 50', postalCode: '111 21', region: 'Stockholm' },
+  { id: '1001', customerNumber: 'IKEA-SE', name: 'IKEA', street: 'Modulvägen 1', postalCode: '177 42', region: 'Stockholm',
+    mainContact: { name: 'Sara Berg', role: 'Facility Manager', phone: '+46 70 111 2233', email: 'sara.berg@ikea.se' },
+    invoicing: { billingName: 'IKEA Svenska Försäljnings AB', billingStreet: 'Modulvägen 1', billingPostalCode: '177 42', billingCity: 'Järfälla', billingCountry: 'SE', vatNumber: 'SE556074707001', orgNumber: '556074-7070', invoiceEmail: 'invoices@ikea.se', paymentTermsDays: 30 } },
+  { id: '1002', customerNumber: 'ELG-001', name: 'Elgiganten', street: 'Kistagången 6', postalCode: '164 40', region: 'Stockholm' },
+  { id: '1003', customerNumber: 'HM-SE', name: 'H&M', street: 'Drottninggatan 50', postalCode: '111 21', region: 'Stockholm' },
+  { id: '1004', customerNumber: 'CLAS-01', name: 'Clas Ohlson', street: 'Kungens Kurva Handelsplats', postalCode: '141 75', region: 'Stockholm' },
+  { id: '1005', customerNumber: 'STAD-01', name: 'Stadium', street: 'Stjärntorget 2', postalCode: '169 79', region: 'Stockholm' },
+  { id: '1006', customerNumber: 'SYS-01', name: 'Systembolaget', street: 'Götgatan 78', postalCode: '118 30', region: 'Stockholm' },
+  { id: '1007', customerNumber: 'JULA-01', name: 'Jula', street: 'Bromma Center', postalCode: '168 67', region: 'Stockholm' },
+  { id: '1008', customerNumber: 'BAU-01', name: 'Bauhaus', street: 'Arningevägen 10', postalCode: '187 44', region: 'Stockholm' },
+  { id: '1009', customerNumber: 'GRA-01', name: 'Granit', street: 'Götgatan 31', postalCode: '116 21', region: 'Stockholm' },
+  { id: '1010', customerNumber: 'KJC-01', name: 'Kjell & Company', street: 'Täby Centrum', postalCode: '183 34', region: 'Stockholm' },
+  { id: '1011', customerNumber: 'AHL-01', name: 'Åhléns', street: 'Klarabergsgatan 50', postalCode: '111 21', region: 'Stockholm' },
 ];
 
 // Backwards-compatible name list for autocomplete/datalists
