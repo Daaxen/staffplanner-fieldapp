@@ -192,6 +192,10 @@ const InstallerApp = () => {
           </div>
         </TabsContent>
 
+        <TabsContent value="reminders" className="flex-1 overflow-auto mt-0">
+          <RemindersInbox state={reminders} />
+        </TabsContent>
+
         <TabsContent value="logs" className="flex-1 overflow-auto mt-0">
           <LogsOverview logs={logs} projects={myProjects} />
         </TabsContent>
@@ -204,6 +208,7 @@ const InstallerApp = () => {
           <InstallerProfile installer={installer} projectCount={myProjects.length} />
         </TabsContent>
       </Tabs>
+
 
       <QuickCreateProject onCreateProject={handleCreateProject} installerId={CURRENT_INSTALLER_ID} />
     </div>
