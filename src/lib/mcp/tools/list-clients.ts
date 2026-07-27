@@ -1,5 +1,5 @@
 import { defineTool } from "@lovable.dev/mcp-js";
-import { clients } from "../../data/mockData.ts";
+import { clients } from "../../../data/mockData";
 
 export default defineTool({
   name: "list_clients",

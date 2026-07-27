@@ -8,7 +8,52 @@ import { defineMcp } from "npm:@lovable.dev/mcp-js@0.24.0";
 // src/lib/mcp/tools/list-projects.ts
 import { defineTool } from "npm:@lovable.dev/mcp-js@0.24.0";
 import { z } from "npm:zod@^3.25.76";
-import { projects } from "npm:@/data/mockData";
+
+// src/data/mockData.ts
+var clients = ["IKEA", "Elgiganten", "H&M", "Clas Ohlson", "Stadium", "Systembolaget", "Jula", "Bauhaus", "Granit", "Kjell & Company", "\xC5hl\xE9ns"];
+var today = /* @__PURE__ */ new Date();
+function d(offset) {
+  const date = new Date(today);
+  date.setDate(date.getDate() + offset);
+  return date.toISOString().split("T")[0];
+}
+var installers = [
+  { id: "inst-1", name: "Erik Lindberg", color: 1, type: "own", baseLocation: "Bromma", absences: [
+    { id: "abs-1", type: "vacation", startDate: d(8), endDate: d(12), label: "Summer vacation" }
+  ] },
+  { id: "inst-2", name: "Anna Svensson", color: 2, type: "own", baseLocation: "Kista", absences: [] },
+  { id: "inst-3", name: "MontageTeam AB", color: 3, type: "sub-vendor", baseLocation: "Solna", absences: [] },
+  { id: "inst-4", name: "Karl Johansson", color: 4, type: "own", baseLocation: "T\xE4by", absences: [
+    { id: "abs-2", type: "sick", startDate: d(4), endDate: d(5), label: "Sick leave" }
+  ] },
+  { id: "inst-5", name: "Nordic Install Co", color: 5, type: "sub-vendor", baseLocation: "Kungens Kurva", absences: [] },
+  { id: "inst-6", name: "Sofia Bergstr\xF6m", color: 6, type: "own", baseLocation: "S\xF6dermalm", absences: [
+    { id: "abs-3", type: "vacation", startDate: d(15), endDate: d(22), label: "Vacation" }
+  ] }
+];
+var projects = [
+  { id: "proj-1", name: "IKEA Barkarby Kitchen", projectType: "installation", client: "IKEA", location: "Barkarby", status: "in-progress", assigneeIds: ["inst-1"], startDate: d(-2), endDate: d(3), contactName: "Lars Eriksson", contactPhone: "+46 70 123 4567", contactEmail: "lars.eriksson@ikea.se" },
+  { id: "proj-12", name: "IKEA Kallax Assembly Line", projectType: "installation", client: "IKEA", location: "Kungens Kurva", status: "scheduled", assigneeIds: ["inst-2", "inst-5"], startDate: d(4), endDate: d(9), contactName: "Maria Holm", contactPhone: "+46 73 456 7890" },
+  { id: "proj-13", name: "IKEA Showroom Lighting", projectType: "site-survey", client: "IKEA", location: "Barkarby", status: "open", assigneeIds: [], startDate: d(7), endDate: d(11), contactName: "Per Nilsson", contactPhone: "+46 70 987 6543" },
+  { id: "proj-2", name: "Elgiganten Display Wall", projectType: "installation", client: "Elgiganten", location: "Kista", status: "scheduled", assigneeIds: ["inst-2"], startDate: d(1), endDate: d(4), contactName: "Johan Berg", contactPhone: "+46 72 111 2233", contactEmail: "johan.berg@elgiganten.se" },
+  { id: "proj-14", name: "Elgiganten Checkout Refit", projectType: "installation", client: "Elgiganten", location: "Solna", status: "in-progress", assigneeIds: ["inst-4", "inst-6"], startDate: d(-1), endDate: d(2) },
+  { id: "proj-3", name: "H&M Flagship Refit", projectType: "installation", client: "H&M", location: "Drottninggatan", status: "in-progress", assigneeIds: ["inst-3", "inst-1"], startDate: d(-5), endDate: d(1) },
+  { id: "proj-15", name: "H&M Storage Expansion", projectType: "installation", client: "H&M", location: "Hammarby", status: "scheduled", assigneeIds: ["inst-5"], startDate: d(3), endDate: d(8) },
+  { id: "proj-4", name: "Clas Ohlson Shelf System", projectType: "installation", client: "Clas Ohlson", location: "Kungens Kurva", status: "on-hold", assigneeIds: ["inst-4"], startDate: d(2), endDate: d(8) },
+  { id: "proj-5", name: "Stadium Sports Corner", projectType: "installation", client: "Stadium", location: "Mall of Scandinavia", status: "scheduled", assigneeIds: ["inst-5"], startDate: d(5), endDate: d(10) },
+  { id: "proj-6", name: "Systembolaget Renovation", projectType: "installation", client: "Systembolaget", location: "S\xF6dermalm", status: "completed", assigneeIds: ["inst-6"], startDate: d(-10), endDate: d(-3) },
+  { id: "proj-16", name: "Systembolaget Counter Install", projectType: "installation", client: "Systembolaget", location: "Vasastan", status: "scheduled", assigneeIds: ["inst-3"], startDate: d(2), endDate: d(6) },
+  { id: "proj-7", name: "Jula Workshop Install", projectType: "installation", client: "Jula", location: "Bromma", status: "in-progress", assigneeIds: ["inst-1"], startDate: d(0), endDate: d(6) },
+  { id: "proj-8", name: "Bauhaus Garden Center", projectType: "site-survey", client: "Bauhaus", location: "Arninge", status: "open", assigneeIds: [], startDate: d(6), endDate: d(12) },
+  { id: "proj-9", name: "Granit Store Concept", projectType: "installation", client: "Granit", location: "G\xF6tgatan", status: "cancelled", assigneeIds: ["inst-3"], startDate: d(3), endDate: d(7) },
+  { id: "proj-10", name: "Kjell & Co Tech Wall", projectType: "installation", client: "Kjell & Company", location: "T\xE4by", status: "scheduled", assigneeIds: ["inst-4", "inst-2"], startDate: d(-1), endDate: d(5) },
+  { id: "proj-11", name: "\xC5hl\xE9ns Window Display", projectType: "transport", client: "\xC5hl\xE9ns", location: "City", status: "open", assigneeIds: [], startDate: d(3), endDate: d(6), transportStops: [
+    { id: "ts-1", type: "pickup", address: "Warehouse Jordbro" },
+    { id: "ts-2", type: "delivery", address: "\xC5hl\xE9ns City, Klarabergsgatan 50" }
+  ] }
+];
+
+// src/lib/mcp/tools/list-projects.ts
 var list_projects_default = defineTool({
   name: "list_projects",
   title: "List projects",
@@ -43,7 +88,6 @@ var list_projects_default = defineTool({
 // src/lib/mcp/tools/get-project.ts
 import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.24.0";
 import { z as z2 } from "npm:zod@^3.25.76";
-import { projects as projects2 } from "npm:@/data/mockData";
 var get_project_default = defineTool2({
   name: "get_project",
   title: "Get project",
@@ -53,7 +97,7 @@ var get_project_default = defineTool2({
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: ({ id }) => {
-    const project = projects2.find((p) => p.id === id);
+    const project = projects.find((p) => p.id === id);
     if (!project) {
       return { content: [{ type: "text", text: `No project with id ${id}` }], isError: true };
     }
@@ -66,7 +110,6 @@ var get_project_default = defineTool2({
 
 // src/lib/mcp/tools/list-installers.ts
 import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@0.24.0";
-import { installers } from "npm:@/data/mockData";
 var list_installers_default = defineTool3({
   name: "list_installers",
   title: "List installers",
@@ -81,7 +124,6 @@ var list_installers_default = defineTool3({
 
 // src/lib/mcp/tools/list-clients.ts
 import { defineTool as defineTool4 } from "npm:@lovable.dev/mcp-js@0.24.0";
-import { clients } from "npm:@/data/mockData";
 var list_clients_default = defineTool4({
   name: "list_clients",
   title: "List clients",
