@@ -1,4 +1,4 @@
-import { Calendar, Users, LayoutDashboard, ClipboardList, FileText, Settings, PanelLeftClose, PanelLeft, Car, Smartphone, BookOpen, UserCog, LogOut, User as UserIcon, Flame } from 'lucide-react';
+import { Calendar, Users, LayoutDashboard, ClipboardList, FileText, Settings, PanelLeftClose, PanelLeft, Car, Smartphone, BookOpen, UserCog, LogOut, User as UserIcon, Flame, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { installers } from '@/data/mockData';
 import { useAuth } from '@/hooks/useAuth';
