@@ -334,11 +334,11 @@ const OrdersRegister = () => {
         {selected.size > 0 && (
           <div className="px-6 py-2 border-t border-border bg-primary/5 flex items-center gap-2">
             <span className="text-xs font-medium text-foreground mr-2">{selected.size} selected</span>
-            <Button size="sm" variant="outline" onClick={() => setMassDialog('status')}>Change status</Button>
-            <Button size="sm" variant="outline" onClick={() => setMassDialog('assignee')}>
+            <Button size="sm" variant="outline" onClick={() => openMassDialog('status')}>Change status</Button>
+            <Button size="sm" variant="outline" onClick={() => openMassDialog('assignee')}>
               <UsersIcon className="w-3.5 h-3.5 mr-1" /> Assign installer
             </Button>
-            <Button size="sm" variant="outline" onClick={() => setMassDialog('delete')}>
+            <Button size="sm" variant="outline" onClick={() => openMassDialog('delete')}>
               <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete
             </Button>
             <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Clear</Button>
