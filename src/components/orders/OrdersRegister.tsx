@@ -268,6 +268,7 @@ const OrdersRegister = () => {
           <Button variant="outline" size="sm" onClick={exportCsv}>
             <Download className="w-4 h-4 mr-1.5" /> Export CSV
           </Button>
+          <OrdersImport orders={orders} onApply={setOrders} />
         </div>
 
         {showFilters && (
