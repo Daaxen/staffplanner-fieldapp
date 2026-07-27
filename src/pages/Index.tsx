@@ -6,6 +6,7 @@ import FleetManager from '@/components/fleet/FleetManager';
 import InstallerPreview from '@/components/installer/InstallerPreview';
 import DocumentsManager from '@/components/documents/DocumentsManager';
 import UsersManager from '@/components/UsersManager';
+import OrdersRegister from '@/components/orders/OrdersRegister';
 import ProfileEditor from '@/components/ProfileEditor';
 import { projects } from '@/data/mockData';
 import {
