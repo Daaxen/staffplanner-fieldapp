@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { CalendarDays, Package, FolderKanban, User, BookOpen, Clock } from 'lucide-react';
+import { CalendarDays, Package, FolderKanban, User, BookOpen, Clock, Bell } from 'lucide-react';
 import { addDays, startOfWeek, format } from 'date-fns';
 import InstallerSchedule from '@/components/installer/InstallerSchedule';
 import InstallerProjectDetail from '@/components/installer/InstallerProjectDetail';
@@ -10,10 +10,15 @@ import QuickCreateProject from '@/components/installer/schedule/QuickCreateProje
 import ProjectCard from '@/components/installer/schedule/ProjectCard';
 import ScheduleFilters, { type FilterState } from '@/components/installer/schedule/ScheduleFilters';
 import LogsOverview from '@/components/installer/logs/LogsOverview';
+import RemindersInbox from '@/components/installer/reminders/RemindersInbox';
+import ReminderBanner from '@/components/installer/reminders/ReminderBanner';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { installers, projects as mockProjects, type Project } from '@/data/mockData';
 import { useInstallerLogs } from '@/hooks/useInstallerLogs';
+import { useReminders } from '@/hooks/useReminders';
+import { usePushRegistration } from '@/hooks/usePushRegistration';
 import { toast } from 'sonner';
+
 
 const CURRENT_INSTALLER_ID = 'inst-1';
 
@@ -25,6 +30,10 @@ const InstallerApp = () => {
   const installer = installers.find(i => i.id === CURRENT_INSTALLER_ID)!;
   const myProjects = localProjects.filter(p => p.assigneeIds.includes(CURRENT_INSTALLER_ID));
   const logs = useInstallerLogs(CURRENT_INSTALLER_ID);
+  const reminders = useReminders();
+  const [tab, setTab] = useState<string>('schedule');
+  usePushRegistration(true);
+
 
   const availableOrderCount = useMemo(() => {
     const now = new Date();
@@ -102,7 +111,13 @@ const InstallerApp = () => {
         </div>
       </header>
 
-      <Tabs defaultValue="schedule" className="flex-1 flex flex-col overflow-hidden">
+      <ReminderBanner
+        level={reminders.highestLevel}
+        count={reminders.reminders.length}
+        onClick={() => setTab('reminders')}
+      />
+
+      <Tabs value={tab} onValueChange={setTab} className="flex-1 flex flex-col overflow-hidden">
         <TabsList className="shrink-0 w-full rounded-none border-b border-border bg-card h-11 p-0 justify-start gap-0">
           <TabsTrigger value="schedule" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs h-full gap-1.5">
             <CalendarDays className="w-3.5 h-3.5" />
@@ -121,6 +136,15 @@ const InstallerApp = () => {
             <FolderKanban className="w-3.5 h-3.5" />
             Projects
           </TabsTrigger>
+          <TabsTrigger value="reminders" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs h-full gap-1.5">
+            <Bell className="w-3.5 h-3.5" />
+            Inbox
+            {reminders.reminders.length > 0 && (
+              <span className="ml-0.5 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                {reminders.reminders.length}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="logs" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs h-full gap-1.5">
             <Clock className="w-3.5 h-3.5" />
             Time
@@ -134,6 +158,7 @@ const InstallerApp = () => {
             Profile
           </TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="schedule" className="flex-1 overflow-auto mt-0">
           <InstallerSchedule
@@ -167,6 +192,10 @@ const InstallerApp = () => {
           </div>
         </TabsContent>
 
+        <TabsContent value="reminders" className="flex-1 overflow-auto mt-0">
+          <RemindersInbox state={reminders} />
+        </TabsContent>
+
         <TabsContent value="logs" className="flex-1 overflow-auto mt-0">
           <LogsOverview logs={logs} projects={myProjects} />
         </TabsContent>
@@ -179,6 +208,7 @@ const InstallerApp = () => {
           <InstallerProfile installer={installer} projectCount={myProjects.length} />
         </TabsContent>
       </Tabs>
+
 
       <QuickCreateProject onCreateProject={handleCreateProject} installerId={CURRENT_INSTALLER_ID} />
     </div>

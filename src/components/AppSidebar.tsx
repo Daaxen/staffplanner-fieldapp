@@ -1,7 +1,8 @@
-import { Calendar, Users, LayoutDashboard, ClipboardList, FileText, Settings, PanelLeftClose, PanelLeft, Car, Smartphone, BookOpen, UserCog, LogOut, User as UserIcon } from 'lucide-react';
+import { Calendar, Users, LayoutDashboard, ClipboardList, FileText, Settings, PanelLeftClose, PanelLeft, Car, Smartphone, BookOpen, UserCog, LogOut, User as UserIcon, Flame } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { installers } from '@/data/mockData';
 import { useAuth } from '@/hooks/useAuth';
+import { useReminders } from '@/hooks/useReminders';
 
 interface AppSidebarProps {
   activeView: string;
@@ -20,6 +21,7 @@ const baseNavItems = [
   { id: 'reports', label: 'Reports', icon: FileText },
 ];
 
+
 const installerColorMap: Record<number, string> = {
   1: 'bg-installer-1',
   2: 'bg-installer-2',
@@ -31,11 +33,13 @@ const installerColorMap: Record<number, string> = {
 
 const AppSidebar = ({ activeView, onViewChange, collapsed = false, onToggleCollapse }: AppSidebarProps) => {
   const { isAdmin, signOut, user } = useAuth();
+  const { escalated } = useReminders({ adminScope: true });
   const navItems = [
     ...baseNavItems,
+    ...(isAdmin ? [{ id: 'escalations', label: 'Escalations', icon: Flame, badge: escalated.length }] : []),
     ...(isAdmin ? [{ id: 'users', label: 'Users', icon: UserCog }] : []),
     { id: 'profile', label: 'My Profile', icon: UserIcon },
-  ];
+  ] as Array<{ id: string; label: string; icon: typeof Flame; badge?: number }>;
   return (
     <aside className={cn(
       "bg-sidebar text-sidebar-foreground flex flex-col h-screen shrink-0 transition-all duration-200",
@@ -78,7 +82,10 @@ const AppSidebar = ({ activeView, onViewChange, collapsed = false, onToggleColla
             )}
           >
             <item.icon className="w-4 h-4 shrink-0" />
-            {!collapsed && item.label}
+            {!collapsed && <span className="flex-1 text-left">{item.label}</span>}
+            {!collapsed && item.badge ? (
+              <span className="bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full min-w-5 h-5 px-1.5 flex items-center justify-center">{item.badge}</span>
+            ) : null}
           </button>
         ))}
 

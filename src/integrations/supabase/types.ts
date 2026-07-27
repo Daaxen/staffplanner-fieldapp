@@ -299,6 +299,121 @@ export type Database = {
           },
         ]
       }
+      push_subscriptions: {
+        Row: {
+          created_at: string
+          fcm_token: string
+          id: string
+          last_seen_at: string
+          platform: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fcm_token: string
+          id?: string
+          last_seen_at?: string
+          platform?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          fcm_token?: string
+          id?: string
+          last_seen_at?: string
+          platform?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      reminder_events: {
+        Row: {
+          channel: string | null
+          id: string
+          kind: Database["public"]["Enums"]["reminder_event_kind"]
+          meta: Json
+          reminder_id: string
+          sent_at: string
+        }
+        Insert: {
+          channel?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["reminder_event_kind"]
+          meta?: Json
+          reminder_id: string
+          sent_at?: string
+        }
+        Update: {
+          channel?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["reminder_event_kind"]
+          meta?: Json
+          reminder_id?: string
+          sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reminder_events_reminder_id_fkey"
+            columns: ["reminder_id"]
+            isOneToOne: false
+            referencedRelation: "reminders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reminders: {
+        Row: {
+          created_at: string
+          id: string
+          installer_id: string
+          last_notified_at: string | null
+          level: Database["public"]["Enums"]["reminder_level"]
+          missing: Json
+          project_id: string
+          resolved_at: string | null
+          status: Database["public"]["Enums"]["reminder_status"]
+          triggered_at: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          installer_id: string
+          last_notified_at?: string | null
+          level?: Database["public"]["Enums"]["reminder_level"]
+          missing?: Json
+          project_id: string
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["reminder_status"]
+          triggered_at: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          installer_id?: string
+          last_notified_at?: string | null
+          level?: Database["public"]["Enums"]["reminder_level"]
+          missing?: Json
+          project_id?: string
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["reminder_status"]
+          triggered_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reminders_project_fk"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transport_stops: {
         Row: {
           address: string
@@ -370,6 +485,9 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "installer"
+      reminder_event_kind: "push" | "banner" | "admin_alert"
+      reminder_level: "gentle" | "urgent" | "escalated"
+      reminder_status: "open" | "resolved" | "dismissed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -498,6 +616,9 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "installer"],
+      reminder_event_kind: ["push", "banner", "admin_alert"],
+      reminder_level: ["gentle", "urgent", "escalated"],
+      reminder_status: ["open", "resolved", "dismissed"],
     },
   },
 } as const
