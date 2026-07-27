@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Search, Filter, X, CheckSquare, Square, Download, History, Users as UsersIcon, Trash2 } from 'lucide-react';
+import { Search, Filter, X, CheckSquare, Square, Download, History, Users as UsersIcon, Trash2, ArrowRight, AlertTriangle, Check } from 'lucide-react';
 import { projects as mockProjects, installers, type Project, type ProjectStatus, type ProjectType, statusLabels, projectTypeLabels, projectTypeIcons } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -45,8 +45,75 @@ const OrdersRegister = () => {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [showFilters, setShowFilters] = useState(true);
   const [massDialog, setMassDialog] = useState<null | 'status' | 'assignee' | 'delete'>(null);
+  const [massStep, setMassStep] = useState<'configure' | 'preview'>('configure');
   const [massStatus, setMassStatus] = useState<ProjectStatus>('scheduled');
   const [massAssignee, setMassAssignee] = useState<string>('');
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+
+  const openMassDialog = (kind: 'status' | 'assignee' | 'delete') => {
+    setMassStep('configure');
+    setDeleteConfirmText('');
+    setMassDialog(kind);
+  };
+  const closeMassDialog = () => {
+    setMassDialog(null);
+    setMassStep('configure');
+    setMassAssignee('');
+    setDeleteConfirmText('');
+  };
+
+  const selectedOrders = useMemo(
+    () => orders.filter(o => selected.has(o.id)),
+    [orders, selected]
+  );
+
+  const installerName = (id: string) => installers.find(i => i.id === id)?.name ?? id;
+
+  const statusPreview = useMemo(() => {
+    return selectedOrders.map(o => ({
+      id: o.id,
+      name: o.name,
+      client: o.client,
+      from: o.status,
+      to: massStatus,
+      changed: o.status !== massStatus,
+      warning:
+        (o.status === 'completed' && massStatus !== 'completed') ? 'Reopening a completed order' :
+        (o.status === 'cancelled' && massStatus !== 'cancelled') ? 'Reactivating a cancelled order' :
+        (massStatus === 'cancelled' && o.status === 'in-progress') ? 'Cancelling an in-progress order' :
+        undefined,
+    }));
+  }, [selectedOrders, massStatus]);
+
+  const assigneePreview = useMemo(() => {
+    return selectedOrders.map(o => {
+      const already = !!massAssignee && o.assigneeIds.includes(massAssignee);
+      const nextIds = already ? o.assigneeIds : Array.from(new Set([...o.assigneeIds, massAssignee]));
+      const statusChange = !already && o.status === 'open' ? 'scheduled' as ProjectStatus : undefined;
+      return {
+        id: o.id,
+        name: o.name,
+        client: o.client,
+        current: o.assigneeIds,
+        next: nextIds,
+        already,
+        statusChange,
+      };
+    });
+  }, [selectedOrders, massAssignee]);
+
+  const deletePreview = useMemo(() => {
+    return selectedOrders.map(o => ({
+      id: o.id,
+      name: o.name,
+      client: o.client,
+      status: o.status,
+      warning:
+        o.status === 'in-progress' ? 'Currently in progress' :
+        o.status === 'scheduled' ? 'Scheduled with a team' :
+        undefined,
+    }));
+  }, [selectedOrders]);
 
   const clients = useMemo(
     () => Array.from(new Set(orders.map(o => o.client))).sort(),
@@ -110,24 +177,29 @@ const OrdersRegister = () => {
     (dateFrom ? 1 : 0) + (dateTo ? 1 : 0) + (historicalOnly ? 1 : 0);
 
   const applyMassStatus = () => {
-    setOrders(prev => prev.map(p => selected.has(p.id) ? { ...p, status: massStatus } : p));
-    toast.success(`Updated status on ${selected.size} order(s)`);
-    setMassDialog(null); setSelected(new Set());
+    const changedIds = new Set(statusPreview.filter(r => r.changed).map(r => r.id));
+    if (changedIds.size === 0) { toast.error('No orders would change'); return; }
+    setOrders(prev => prev.map(p => changedIds.has(p.id) ? { ...p, status: massStatus } : p));
+    toast.success(`Updated status on ${changedIds.size} order(s)`);
+    closeMassDialog(); setSelected(new Set());
   };
   const applyMassAssignee = () => {
     if (!massAssignee) return;
+    const changedIds = new Set(assigneePreview.filter(r => !r.already).map(r => r.id));
+    if (changedIds.size === 0) { toast.error('All selected orders already have this installer'); return; }
     setOrders(prev => prev.map(p =>
-      selected.has(p.id)
+      changedIds.has(p.id)
         ? { ...p, assigneeIds: Array.from(new Set([...p.assigneeIds, massAssignee])), status: p.status === 'open' ? 'scheduled' : p.status }
         : p
     ));
-    toast.success(`Assigned installer to ${selected.size} order(s)`);
-    setMassDialog(null); setSelected(new Set()); setMassAssignee('');
+    toast.success(`Assigned installer to ${changedIds.size} order(s)`);
+    closeMassDialog(); setSelected(new Set());
   };
   const applyMassDelete = () => {
+    if (deleteConfirmText !== 'DELETE') { toast.error('Type DELETE to confirm'); return; }
     setOrders(prev => prev.filter(p => !selected.has(p.id)));
     toast.success(`Removed ${selected.size} order(s)`);
-    setMassDialog(null); setSelected(new Set());
+    closeMassDialog(); setSelected(new Set());
   };
 
   const exportCsv = () => {
@@ -262,11 +334,11 @@ const OrdersRegister = () => {
         {selected.size > 0 && (
           <div className="px-6 py-2 border-t border-border bg-primary/5 flex items-center gap-2">
             <span className="text-xs font-medium text-foreground mr-2">{selected.size} selected</span>
-            <Button size="sm" variant="outline" onClick={() => setMassDialog('status')}>Change status</Button>
-            <Button size="sm" variant="outline" onClick={() => setMassDialog('assignee')}>
+            <Button size="sm" variant="outline" onClick={() => openMassDialog('status')}>Change status</Button>
+            <Button size="sm" variant="outline" onClick={() => openMassDialog('assignee')}>
               <UsersIcon className="w-3.5 h-3.5 mr-1" /> Assign installer
             </Button>
-            <Button size="sm" variant="outline" onClick={() => setMassDialog('delete')}>
+            <Button size="sm" variant="outline" onClick={() => openMassDialog('delete')}>
               <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete
             </Button>
             <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Clear</Button>
@@ -340,54 +412,180 @@ const OrdersRegister = () => {
         </table>
       </div>
 
-      {/* Mass update dialogs */}
-      <Dialog open={massDialog === 'status'} onOpenChange={o => !o && setMassDialog(null)}>
-        <DialogContent>
+      {/* Mass update dialogs — configure → preview → apply */}
+      <Dialog open={massDialog === 'status'} onOpenChange={o => !o && closeMassDialog()}>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Change status</DialogTitle>
-            <DialogDescription>Apply a new status to {selected.size} selected order(s).</DialogDescription>
+            <DialogTitle>Change status {massStep === 'preview' && '· Preview'}</DialogTitle>
+            <DialogDescription>
+              {massStep === 'configure'
+                ? `Pick the new status to apply to ${selected.size} selected order(s).`
+                : `Review the ${statusPreview.filter(r => r.changed).length} of ${statusPreview.length} order(s) that will change.`}
+            </DialogDescription>
           </DialogHeader>
-          <Select value={massStatus} onValueChange={v => setMassStatus(v as ProjectStatus)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {allStatuses.map(s => <SelectItem key={s} value={s}>{statusLabels[s]}</SelectItem>)}
-            </SelectContent>
-          </Select>
+
+          {massStep === 'configure' ? (
+            <Select value={massStatus} onValueChange={v => setMassStatus(v as ProjectStatus)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {allStatuses.map(s => <SelectItem key={s} value={s}>{statusLabels[s]}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          ) : (
+            <div className="max-h-80 overflow-y-auto border border-border rounded-md divide-y divide-border">
+              {statusPreview.map(r => (
+                <div key={r.id} className={cn("px-3 py-2 text-sm flex items-center gap-3", !r.changed && "opacity-50")}>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">{r.name}</div>
+                    <div className="text-xs text-muted-foreground truncate">{r.client}</div>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="inline-flex items-center gap-1"><span className={cn("w-2 h-2 rounded-full", statusDot[r.from])} />{statusLabels[r.from]}</span>
+                    <ArrowRight className="w-3 h-3 text-muted-foreground" />
+                    <span className="inline-flex items-center gap-1"><span className={cn("w-2 h-2 rounded-full", statusDot[r.to])} />{statusLabels[r.to]}</span>
+                  </div>
+                  <div className="w-40 text-right">
+                    {!r.changed ? (
+                      <span className="text-xs text-muted-foreground">No change</span>
+                    ) : r.warning ? (
+                      <span className="text-xs text-amber-600 inline-flex items-center gap-1"><AlertTriangle className="w-3 h-3" />{r.warning}</span>
+                    ) : (
+                      <span className="text-xs text-emerald-600 inline-flex items-center gap-1"><Check className="w-3 h-3" />Will update</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           <DialogFooter>
-            <Button variant="outline" onClick={() => setMassDialog(null)}>Cancel</Button>
-            <Button onClick={applyMassStatus}>Apply</Button>
+            <Button variant="outline" onClick={closeMassDialog}>Cancel</Button>
+            {massStep === 'configure' ? (
+              <Button onClick={() => setMassStep('preview')}>Preview changes</Button>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => setMassStep('configure')}>Back</Button>
+                <Button onClick={applyMassStatus} disabled={statusPreview.every(r => !r.changed)}>
+                  Confirm & apply ({statusPreview.filter(r => r.changed).length})
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={massDialog === 'assignee'} onOpenChange={o => !o && setMassDialog(null)}>
-        <DialogContent>
+      <Dialog open={massDialog === 'assignee'} onOpenChange={o => !o && closeMassDialog()}>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Assign installer</DialogTitle>
-            <DialogDescription>Add installer to {selected.size} selected order(s).</DialogDescription>
+            <DialogTitle>Assign installer {massStep === 'preview' && '· Preview'}</DialogTitle>
+            <DialogDescription>
+              {massStep === 'configure'
+                ? `Add an installer to ${selected.size} selected order(s).`
+                : `Review the ${assigneePreview.filter(r => !r.already).length} of ${assigneePreview.length} order(s) that will change.`}
+            </DialogDescription>
           </DialogHeader>
-          <Select value={massAssignee} onValueChange={setMassAssignee}>
-            <SelectTrigger><SelectValue placeholder="Pick installer" /></SelectTrigger>
-            <SelectContent>
-              {installers.map(i => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
+
+          {massStep === 'configure' ? (
+            <Select value={massAssignee} onValueChange={setMassAssignee}>
+              <SelectTrigger><SelectValue placeholder="Pick installer" /></SelectTrigger>
+              <SelectContent>
+                {installers.map(i => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          ) : (
+            <div className="max-h-80 overflow-y-auto border border-border rounded-md divide-y divide-border">
+              {assigneePreview.map(r => (
+                <div key={r.id} className={cn("px-3 py-2 text-sm flex items-center gap-3", r.already && "opacity-50")}>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">{r.name}</div>
+                    <div className="text-xs text-muted-foreground truncate">{r.client}</div>
+                  </div>
+                  <div className="text-xs text-muted-foreground max-w-[240px] truncate">
+                    {r.current.length ? r.current.map(installerName).join(', ') : '—'}
+                    <ArrowRight className="w-3 h-3 inline mx-1" />
+                    {r.next.map(installerName).join(', ')}
+                  </div>
+                  <div className="w-36 text-right">
+                    {r.already ? (
+                      <span className="text-xs text-muted-foreground">Already assigned</span>
+                    ) : (
+                      <span className="text-xs text-emerald-600 inline-flex items-center gap-1">
+                        <Check className="w-3 h-3" />Add{r.statusChange ? ' + Scheduled' : ''}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           <DialogFooter>
-            <Button variant="outline" onClick={() => setMassDialog(null)}>Cancel</Button>
-            <Button onClick={applyMassAssignee} disabled={!massAssignee}>Assign</Button>
+            <Button variant="outline" onClick={closeMassDialog}>Cancel</Button>
+            {massStep === 'configure' ? (
+              <Button onClick={() => setMassStep('preview')} disabled={!massAssignee}>Preview changes</Button>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => setMassStep('configure')}>Back</Button>
+                <Button onClick={applyMassAssignee} disabled={assigneePreview.every(r => r.already)}>
+                  Confirm & apply ({assigneePreview.filter(r => !r.already).length})
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={massDialog === 'delete'} onOpenChange={o => !o && setMassDialog(null)}>
-        <DialogContent>
+      <Dialog open={massDialog === 'delete'} onOpenChange={o => !o && closeMassDialog()}>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Delete orders</DialogTitle>
-            <DialogDescription>Permanently remove {selected.size} order(s)? This cannot be undone.</DialogDescription>
+            <DialogTitle>Delete orders {massStep === 'preview' && '· Confirm'}</DialogTitle>
+            <DialogDescription>
+              {massStep === 'configure'
+                ? `You're about to permanently remove ${selected.size} order(s). Continue to preview.`
+                : `These ${deletePreview.length} order(s) will be permanently removed. This cannot be undone.`}
+            </DialogDescription>
           </DialogHeader>
+
+          {massStep === 'preview' && (
+            <>
+              <div className="max-h-72 overflow-y-auto border border-border rounded-md divide-y divide-border">
+                {deletePreview.map(r => (
+                  <div key={r.id} className="px-3 py-2 text-sm flex items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate">{r.name}</div>
+                      <div className="text-xs text-muted-foreground truncate">{r.client}</div>
+                    </div>
+                    <span className="text-xs inline-flex items-center gap-1">
+                      <span className={cn("w-2 h-2 rounded-full", statusDot[r.status])} />
+                      {statusLabels[r.status]}
+                    </span>
+                    {r.warning && (
+                      <span className="text-xs text-amber-600 inline-flex items-center gap-1 w-40 justify-end">
+                        <AlertTriangle className="w-3 h-3" />{r.warning}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">Type <span className="font-mono font-semibold">DELETE</span> to confirm</label>
+                <Input value={deleteConfirmText} onChange={e => setDeleteConfirmText(e.target.value)} placeholder="DELETE" />
+              </div>
+            </>
+          )}
+
           <DialogFooter>
-            <Button variant="outline" onClick={() => setMassDialog(null)}>Cancel</Button>
-            <Button variant="destructive" onClick={applyMassDelete}>Delete</Button>
+            <Button variant="outline" onClick={closeMassDialog}>Cancel</Button>
+            {massStep === 'configure' ? (
+              <Button variant="destructive" onClick={() => setMassStep('preview')}>Preview deletion</Button>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => setMassStep('configure')}>Back</Button>
+                <Button variant="destructive" onClick={applyMassDelete} disabled={deleteConfirmText !== 'DELETE'}>
+                  Confirm & delete ({deletePreview.length})
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
