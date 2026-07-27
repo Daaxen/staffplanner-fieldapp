@@ -1,4 +1,4 @@
-import { Calendar, Users, LayoutDashboard, ClipboardList, FileText, Settings, PanelLeftClose, PanelLeft, Car, Smartphone, BookOpen, UserCog, LogOut, User as UserIcon, Flame } from 'lucide-react';
+import { Calendar, Users, LayoutDashboard, ClipboardList, FileText, Settings, PanelLeftClose, PanelLeft, Car, Smartphone, BookOpen, UserCog, LogOut, User as UserIcon, Flame, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { installers } from '@/data/mockData';
 import { useAuth } from '@/hooks/useAuth';
@@ -15,6 +15,7 @@ const baseNavItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'planner', label: 'Planner', icon: Calendar },
   { id: 'orders', label: 'Orders', icon: ClipboardList },
+  { id: 'clients', label: 'Clients', icon: Building2 },
   { id: 'fleet', label: 'Fleet', icon: Car },
   { id: 'documents', label: 'Documents', icon: BookOpen },
   { id: 'installer-preview', label: 'Installer View', icon: Smartphone },
