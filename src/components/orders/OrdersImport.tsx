@@ -157,8 +157,22 @@ const OrdersImport = ({ orders, onApply }: OrdersImportProps) => {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Orders');
     XLSX.utils.book_append_sheet(wb, refWs, 'Reference');
-    XLSX.writeFile(wb, 'orders-import-template.xlsx');
-    toast.success('Template downloaded');
+    try {
+      const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' }) as ArrayBuffer;
+      const blob = new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'orders-import-template.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast.success('Template downloaded');
+    } catch (err) {
+      console.error('Template download failed', err);
+      toast.error('Could not download template');
+    }
   };
 
   const handleFile = async (file: File) => {
