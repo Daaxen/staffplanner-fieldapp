@@ -241,8 +241,10 @@ const OrdersImport = ({ orders, onApply }: OrdersImportProps) => {
   return (
     <>
       <input ref={inputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={onFileChange} />
-      <Button size="sm" variant="outline" onClick={downloadTemplate}>
-        <Download className="w-3.5 h-3.5 mr-1" /> Template
+      <Button size="sm" variant="outline" asChild>
+        <a href={templateUrl} download="orders-import-template.xlsx" target="_blank" rel="noreferrer">
+          <Download className="w-3.5 h-3.5 mr-1" /> Template
+        </a>
       </Button>
       <Button size="sm" variant="outline" onClick={onPick}>
         <Upload className="w-3.5 h-3.5 mr-1" /> Import
