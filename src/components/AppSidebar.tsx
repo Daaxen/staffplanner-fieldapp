@@ -15,6 +15,7 @@ const baseNavItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'planner', label: 'Planner', icon: Calendar },
   { id: 'orders', label: 'Orders', icon: ClipboardList },
+  { id: 'clients', label: 'Clients', icon: Building2 },
   { id: 'fleet', label: 'Fleet', icon: Car },
   { id: 'documents', label: 'Documents', icon: BookOpen },
   { id: 'installer-preview', label: 'Installer View', icon: Smartphone },
