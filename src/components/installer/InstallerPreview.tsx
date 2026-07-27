@@ -12,6 +12,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Package, Smartphone } from 'lucide-react';
 import { addDays, startOfWeek, format } from 'date-fns';
 import { toast } from 'sonner';
+import { useInstallerLogs } from '@/hooks/useInstallerLogs';
 
 interface InstallerPreviewProps {
   projects: Project[];
@@ -33,6 +34,7 @@ const InstallerPreview = ({ projects }: InstallerPreviewProps) => {
 
   const installer = installers.find(i => i.id === selectedInstallerId)!;
   const myProjects = projects.filter(p => p.assigneeIds.includes(selectedInstallerId));
+  const logs = useInstallerLogs(selectedInstallerId);
 
   const availableOrderCount = useMemo(() => {
     const now = new Date();
@@ -97,6 +99,7 @@ const InstallerPreview = ({ projects }: InstallerPreviewProps) => {
           <InstallerProjectDetail
             project={selectedProject}
             installer={installer}
+            logs={logs}
             onBack={() => setSelectedProject(null)}
           />
         ) : (

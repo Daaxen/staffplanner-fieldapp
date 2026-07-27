@@ -1,13 +1,16 @@
-import { ArrowLeft, MapPin, Clock, Users, FileText, Phone, Camera, CheckSquare, ExternalLink, Info, Paperclip, ClipboardCheck, Mail } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Users, FileText, Phone, Camera, CheckSquare, ExternalLink, Info, Paperclip, ClipboardCheck, Mail, Receipt } from 'lucide-react';
 import { type Project, type Installer, projectTypeIcons, projectTypeLabels, statusLabels, installers } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useState } from 'react';
+import ProjectLogTab from '@/components/installer/logs/ProjectLogTab';
+import type { InstallerLogs } from '@/hooks/useInstallerLogs';
 
 interface InstallerProjectDetailProps {
   project: Project;
   installer: Installer;
+  logs: InstallerLogs;
   onBack: () => void;
   onStatusChange?: (projectId: string, newStatus: Project['status']) => void;
   onPickUp?: () => void;
@@ -22,7 +25,7 @@ const statusDotMap: Record<string, string> = {
   'open': 'bg-status-open',
 };
 
-const InstallerProjectDetail = ({ project, installer, onBack, onStatusChange, onPickUp }: InstallerProjectDetailProps) => {
+const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChange, onPickUp }: InstallerProjectDetailProps) => {
   const [reportPhotos, setReportPhotos] = useState<string[]>([]);
 
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(project.location)}`;
@@ -79,6 +82,10 @@ const InstallerProjectDetail = ({ project, installer, onBack, onStatusChange, on
           <TabsTrigger value="report" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-[11px] h-full gap-1">
             <Camera className="w-3 h-3" />
             Report
+          </TabsTrigger>
+          <TabsTrigger value="log" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-[11px] h-full gap-1">
+            <Receipt className="w-3 h-3" />
+            Log
           </TabsTrigger>
           <TabsTrigger value="summary" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-[11px] h-full gap-1">
             <ClipboardCheck className="w-3 h-3" />
@@ -237,6 +244,13 @@ const InstallerProjectDetail = ({ project, installer, onBack, onStatusChange, on
             </Section>
           </div>
         </TabsContent>
+
+        {/* LOG TAB */}
+        <TabsContent value="log" className="flex-1 overflow-auto mt-0">
+          <ProjectLogTab projectId={project.id} logs={logs} />
+        </TabsContent>
+
+
 
         {/* SUMMARY / SIGN-OFF TAB */}
         <TabsContent value="summary" className="flex-1 overflow-auto mt-0">
