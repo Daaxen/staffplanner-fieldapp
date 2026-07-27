@@ -94,8 +94,8 @@ const InstallerPreview = ({ projects }: InstallerPreviewProps) => {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-foreground/80 rounded-b-2xl z-50" />
 
         {selectedProject ? (
-          <InstallerProjectDetail
-            project={selectedProject}
+          <InstallerPreviewProjectDetail
+            selectedProject={selectedProject}
             installer={installer}
             onBack={() => setSelectedProject(null)}
           />

@@ -245,6 +245,13 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
           </div>
         </TabsContent>
 
+        {/* LOG TAB */}
+        <TabsContent value="log" className="flex-1 overflow-auto mt-0">
+          <ProjectLogTab projectId={project.id} logs={logs} />
+        </TabsContent>
+
+
+
         {/* SUMMARY / SIGN-OFF TAB */}
         <TabsContent value="summary" className="flex-1 overflow-auto mt-0">
           <div className="p-4 space-y-4">
