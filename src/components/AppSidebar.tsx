@@ -30,6 +30,12 @@ const installerColorMap: Record<number, string> = {
 };
 
 const AppSidebar = ({ activeView, onViewChange, collapsed = false, onToggleCollapse }: AppSidebarProps) => {
+  const { isAdmin, signOut, user } = useAuth();
+  const navItems = [
+    ...baseNavItems,
+    ...(isAdmin ? [{ id: 'users', label: 'Users', icon: UserCog }] : []),
+    { id: 'profile', label: 'My Profile', icon: UserIcon },
+  ];
   return (
     <aside className={cn(
       "bg-sidebar text-sidebar-foreground flex flex-col h-screen shrink-0 transition-all duration-200",
@@ -99,13 +105,16 @@ const AppSidebar = ({ activeView, onViewChange, collapsed = false, onToggleColla
       </nav>
 
       {/* Footer */}
-      <div className="p-2 border-t border-sidebar-border">
-        <button className={cn(
+      <div className="p-2 border-t border-sidebar-border space-y-1">
+        {!collapsed && user && (
+          <p className="px-3 py-1 text-xs text-sidebar-foreground/50 truncate">{user.email}</p>
+        )}
+        <button onClick={signOut} className={cn(
           "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 transition-colors",
           collapsed && "justify-center"
         )}>
-          <Settings className="w-4 h-4 shrink-0" />
-          {!collapsed && "Settings"}
+          <LogOut className="w-4 h-4 shrink-0" />
+          {!collapsed && "Sign out"}
         </button>
       </div>
     </aside>
