@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
     // Pull candidate projects: end_date < today and not completed/cancelled.
     const { data: projects, error: pErr } = await supabase
       .from('projects')
-      .select('id, end_date, status, assignee_ids')
+      .select('id, end_date, status, project_assignees(user_id)')
       .lt('end_date', today)
       .not('status', 'in', '(completed,cancelled)');
 
@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
     const bumped: string[] = [];
 
     for (const p of projects ?? []) {
-      const assignees: string[] = p.assignee_ids ?? [];
+      const assignees: string[] = (p.project_assignees ?? []).map((a: { user_id: string }) => a.user_id);
       if (assignees.length === 0) continue;
 
       // T0 = end_date + 1 day at 08:00 UTC (simple, no per-tz handling yet)
