@@ -12,6 +12,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Package, Smartphone } from 'lucide-react';
 import { addDays, startOfWeek, format } from 'date-fns';
 import { toast } from 'sonner';
+import { useInstallerLogs } from '@/hooks/useInstallerLogs';
 
 interface InstallerPreviewProps {
   projects: Project[];
