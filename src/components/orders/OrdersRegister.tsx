@@ -45,8 +45,75 @@ const OrdersRegister = () => {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [showFilters, setShowFilters] = useState(true);
   const [massDialog, setMassDialog] = useState<null | 'status' | 'assignee' | 'delete'>(null);
+  const [massStep, setMassStep] = useState<'configure' | 'preview'>('configure');
   const [massStatus, setMassStatus] = useState<ProjectStatus>('scheduled');
   const [massAssignee, setMassAssignee] = useState<string>('');
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+
+  const openMassDialog = (kind: 'status' | 'assignee' | 'delete') => {
+    setMassStep('configure');
+    setDeleteConfirmText('');
+    setMassDialog(kind);
+  };
+  const closeMassDialog = () => {
+    setMassDialog(null);
+    setMassStep('configure');
+    setMassAssignee('');
+    setDeleteConfirmText('');
+  };
+
+  const selectedOrders = useMemo(
+    () => orders.filter(o => selected.has(o.id)),
+    [orders, selected]
+  );
+
+  const installerName = (id: string) => installers.find(i => i.id === id)?.name ?? id;
+
+  const statusPreview = useMemo(() => {
+    return selectedOrders.map(o => ({
+      id: o.id,
+      name: o.name,
+      client: o.client,
+      from: o.status,
+      to: massStatus,
+      changed: o.status !== massStatus,
+      warning:
+        (o.status === 'completed' && massStatus !== 'completed') ? 'Reopening a completed order' :
+        (o.status === 'cancelled' && massStatus !== 'cancelled') ? 'Reactivating a cancelled order' :
+        (massStatus === 'cancelled' && o.status === 'in-progress') ? 'Cancelling an in-progress order' :
+        undefined,
+    }));
+  }, [selectedOrders, massStatus]);
+
+  const assigneePreview = useMemo(() => {
+    return selectedOrders.map(o => {
+      const already = !!massAssignee && o.assigneeIds.includes(massAssignee);
+      const nextIds = already ? o.assigneeIds : Array.from(new Set([...o.assigneeIds, massAssignee]));
+      const statusChange = !already && o.status === 'open' ? 'scheduled' as ProjectStatus : undefined;
+      return {
+        id: o.id,
+        name: o.name,
+        client: o.client,
+        current: o.assigneeIds,
+        next: nextIds,
+        already,
+        statusChange,
+      };
+    });
+  }, [selectedOrders, massAssignee]);
+
+  const deletePreview = useMemo(() => {
+    return selectedOrders.map(o => ({
+      id: o.id,
+      name: o.name,
+      client: o.client,
+      status: o.status,
+      warning:
+        o.status === 'in-progress' ? 'Currently in progress' :
+        o.status === 'scheduled' ? 'Scheduled with a team' :
+        undefined,
+    }));
+  }, [selectedOrders]);
 
   const clients = useMemo(
     () => Array.from(new Set(orders.map(o => o.client))).sort(),
