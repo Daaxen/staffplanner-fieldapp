@@ -3,84 +3,60 @@
 // supabase function: mcp
 // Bundled from src/lib/mcp/index.ts by @lovable.dev/mcp-js.
 // src/lib/mcp/index.ts
-import { defineMcp } from "npm:@lovable.dev/mcp-js@0.24.0";
+import { auth, defineMcp } from "npm:@lovable.dev/mcp-js@0.24.0";
 
 // src/lib/mcp/tools/list-projects.ts
 import { defineTool } from "npm:@lovable.dev/mcp-js@0.24.0";
 import { z } from "npm:zod@^3.25.76";
 
-// src/data/mockData.ts
-var clients = ["IKEA", "Elgiganten", "H&M", "Clas Ohlson", "Stadium", "Systembolaget", "Jula", "Bauhaus", "Granit", "Kjell & Company", "\xC5hl\xE9ns"];
-var today = /* @__PURE__ */ new Date();
-function d(offset) {
-  const date = new Date(today);
-  date.setDate(date.getDate() + offset);
-  return date.toISOString().split("T")[0];
+// src/lib/mcp/supabase.ts
+import { createClient } from "npm:@supabase/supabase-js@^2.98.0";
+function supabaseForUser(ctx) {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_ANON_KEY;
+  return createClient(url, key, {
+    global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
+    auth: { persistSession: false, autoRefreshToken: false }
+  });
 }
-var installers = [
-  { id: "inst-1", name: "Erik Lindberg", color: 1, type: "own", baseLocation: "Bromma", absences: [
-    { id: "abs-1", type: "vacation", startDate: d(8), endDate: d(12), label: "Summer vacation" }
-  ] },
-  { id: "inst-2", name: "Anna Svensson", color: 2, type: "own", baseLocation: "Kista", absences: [] },
-  { id: "inst-3", name: "MontageTeam AB", color: 3, type: "sub-vendor", baseLocation: "Solna", absences: [] },
-  { id: "inst-4", name: "Karl Johansson", color: 4, type: "own", baseLocation: "T\xE4by", absences: [
-    { id: "abs-2", type: "sick", startDate: d(4), endDate: d(5), label: "Sick leave" }
-  ] },
-  { id: "inst-5", name: "Nordic Install Co", color: 5, type: "sub-vendor", baseLocation: "Kungens Kurva", absences: [] },
-  { id: "inst-6", name: "Sofia Bergstr\xF6m", color: 6, type: "own", baseLocation: "S\xF6dermalm", absences: [
-    { id: "abs-3", type: "vacation", startDate: d(15), endDate: d(22), label: "Vacation" }
-  ] }
-];
-var projects = [
-  { id: "proj-1", name: "IKEA Barkarby Kitchen", projectType: "installation", client: "IKEA", location: "Barkarby", status: "in-progress", assigneeIds: ["inst-1"], startDate: d(-2), endDate: d(3), contactName: "Lars Eriksson", contactPhone: "+46 70 123 4567", contactEmail: "lars.eriksson@ikea.se" },
-  { id: "proj-12", name: "IKEA Kallax Assembly Line", projectType: "installation", client: "IKEA", location: "Kungens Kurva", status: "scheduled", assigneeIds: ["inst-2", "inst-5"], startDate: d(4), endDate: d(9), contactName: "Maria Holm", contactPhone: "+46 73 456 7890" },
-  { id: "proj-13", name: "IKEA Showroom Lighting", projectType: "site-survey", client: "IKEA", location: "Barkarby", status: "open", assigneeIds: [], startDate: d(7), endDate: d(11), contactName: "Per Nilsson", contactPhone: "+46 70 987 6543" },
-  { id: "proj-2", name: "Elgiganten Display Wall", projectType: "installation", client: "Elgiganten", location: "Kista", status: "scheduled", assigneeIds: ["inst-2"], startDate: d(1), endDate: d(4), contactName: "Johan Berg", contactPhone: "+46 72 111 2233", contactEmail: "johan.berg@elgiganten.se" },
-  { id: "proj-14", name: "Elgiganten Checkout Refit", projectType: "installation", client: "Elgiganten", location: "Solna", status: "in-progress", assigneeIds: ["inst-4", "inst-6"], startDate: d(-1), endDate: d(2) },
-  { id: "proj-3", name: "H&M Flagship Refit", projectType: "installation", client: "H&M", location: "Drottninggatan", status: "in-progress", assigneeIds: ["inst-3", "inst-1"], startDate: d(-5), endDate: d(1) },
-  { id: "proj-15", name: "H&M Storage Expansion", projectType: "installation", client: "H&M", location: "Hammarby", status: "scheduled", assigneeIds: ["inst-5"], startDate: d(3), endDate: d(8) },
-  { id: "proj-4", name: "Clas Ohlson Shelf System", projectType: "installation", client: "Clas Ohlson", location: "Kungens Kurva", status: "on-hold", assigneeIds: ["inst-4"], startDate: d(2), endDate: d(8) },
-  { id: "proj-5", name: "Stadium Sports Corner", projectType: "installation", client: "Stadium", location: "Mall of Scandinavia", status: "scheduled", assigneeIds: ["inst-5"], startDate: d(5), endDate: d(10) },
-  { id: "proj-6", name: "Systembolaget Renovation", projectType: "installation", client: "Systembolaget", location: "S\xF6dermalm", status: "completed", assigneeIds: ["inst-6"], startDate: d(-10), endDate: d(-3) },
-  { id: "proj-16", name: "Systembolaget Counter Install", projectType: "installation", client: "Systembolaget", location: "Vasastan", status: "scheduled", assigneeIds: ["inst-3"], startDate: d(2), endDate: d(6) },
-  { id: "proj-7", name: "Jula Workshop Install", projectType: "installation", client: "Jula", location: "Bromma", status: "in-progress", assigneeIds: ["inst-1"], startDate: d(0), endDate: d(6) },
-  { id: "proj-8", name: "Bauhaus Garden Center", projectType: "site-survey", client: "Bauhaus", location: "Arninge", status: "open", assigneeIds: [], startDate: d(6), endDate: d(12) },
-  { id: "proj-9", name: "Granit Store Concept", projectType: "installation", client: "Granit", location: "G\xF6tgatan", status: "cancelled", assigneeIds: ["inst-3"], startDate: d(3), endDate: d(7) },
-  { id: "proj-10", name: "Kjell & Co Tech Wall", projectType: "installation", client: "Kjell & Company", location: "T\xE4by", status: "scheduled", assigneeIds: ["inst-4", "inst-2"], startDate: d(-1), endDate: d(5) },
-  { id: "proj-11", name: "\xC5hl\xE9ns Window Display", projectType: "transport", client: "\xC5hl\xE9ns", location: "City", status: "open", assigneeIds: [], startDate: d(3), endDate: d(6), transportStops: [
-    { id: "ts-1", type: "pickup", address: "Warehouse Jordbro" },
-    { id: "ts-2", type: "delivery", address: "\xC5hl\xE9ns City, Klarabergsgatan 50" }
-  ] }
-];
+function unauth() {
+  return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
+}
 
 // src/lib/mcp/tools/list-projects.ts
 var list_projects_default = defineTool({
   name: "list_projects",
   title: "List projects",
-  description: "List installation/site-survey/transport projects tracked in StaffPlanner. Optional filters by status, project type, client, and assigned installer id.",
+  description: "List installation/site-survey/transport projects from StaffPlanner. Optional filters by status, project type, client name, assigned installer id, and unassigned-only. Reads from live database; RLS applies.",
   inputSchema: {
-    status: z.enum(["open", "scheduled", "in-progress", "completed", "on-hold", "cancelled"]).optional().describe("Filter by project status."),
-    projectType: z.enum(["installation", "site-survey", "transport"]).optional().describe("Filter by project type."),
-    client: z.string().optional().describe("Filter by client name (case-insensitive substring)."),
-    assigneeId: z.string().optional().describe("Return only projects assigned to this installer id."),
-    unassignedOnly: z.boolean().optional().describe("If true, return only projects with no assignees."),
-    limit: z.number().int().positive().optional().describe("Max results (default 50).")
+    status: z.enum(["open", "scheduled", "in-progress", "completed", "on-hold", "cancelled"]).optional(),
+    projectType: z.enum(["installation", "site-survey", "transport"]).optional(),
+    client: z.string().optional().describe("Client name (case-insensitive substring)."),
+    assigneeId: z.string().uuid().optional().describe("Installer id filter."),
+    unassignedOnly: z.boolean().optional(),
+    includeSandbox: z.boolean().optional().describe("Include sandbox rows (default false)."),
+    limit: z.number().int().positive().max(200).optional()
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: ({ status, projectType, client, assigneeId, unassignedOnly, limit }) => {
-    let rows = projects.slice();
-    if (status) rows = rows.filter((p) => p.status === status);
-    if (projectType) rows = rows.filter((p) => p.projectType === projectType);
+  handler: async ({ status, projectType, client, assigneeId, unassignedOnly, includeSandbox, limit }, ctx) => {
+    if (!ctx.isAuthenticated()) return unauth();
+    const sb = supabaseForUser(ctx);
+    let q = sb.from("projects").select("*, clients(name), project_assignees(installer_id)").limit(limit ?? 50);
+    if (status) q = q.eq("status", status);
+    if (projectType) q = q.eq("project_type", projectType);
+    if (!includeSandbox) q = q.eq("sandbox", false);
+    const { data, error } = await q;
+    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
+    let rows = data ?? [];
     if (client) {
       const needle = client.toLowerCase();
-      rows = rows.filter((p) => p.client.toLowerCase().includes(needle));
+      rows = rows.filter((r) => (r.clients?.name ?? "").toLowerCase().includes(needle));
     }
-    if (assigneeId) rows = rows.filter((p) => p.assigneeIds.includes(assigneeId));
-    if (unassignedOnly) rows = rows.filter((p) => p.assigneeIds.length === 0);
-    const capped = rows.slice(0, limit ?? 50);
+    if (assigneeId) rows = rows.filter((r) => r.project_assignees?.some((a) => a.installer_id === assigneeId));
+    if (unassignedOnly) rows = rows.filter((r) => (r.project_assignees ?? []).length === 0);
     return {
-      content: [{ type: "text", text: JSON.stringify(capped, null, 2) }],
-      structuredContent: { count: capped.length, total: rows.length, projects: capped }
+      content: [{ type: "text", text: JSON.stringify(rows, null, 2) }],
+      structuredContent: { count: rows.length, projects: rows }
     };
   }
 });
@@ -91,58 +67,113 @@ import { z as z2 } from "npm:zod@^3.25.76";
 var get_project_default = defineTool2({
   name: "get_project",
   title: "Get project",
-  description: "Fetch a single project by its id, including schedule, contact, and assigned installer ids.",
-  inputSchema: {
-    id: z2.string().min(1).describe("Project id, e.g. 'proj-1'.")
-  },
+  description: "Fetch a single project by id, with client, assignees, and transport stops. RLS applies.",
+  inputSchema: { id: z2.string().uuid().describe("Project id (uuid).") },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: ({ id }) => {
-    const project = projects.find((p) => p.id === id);
-    if (!project) {
-      return { content: [{ type: "text", text: `No project with id ${id}` }], isError: true };
-    }
+  handler: async ({ id }, ctx) => {
+    if (!ctx.isAuthenticated()) return unauth();
+    const sb = supabaseForUser(ctx);
+    const { data, error } = await sb.from("projects").select("*, clients(name), project_assignees(installer_id, installers(name)), transport_stops(*)").eq("id", id).maybeSingle();
+    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
+    if (!data) return { content: [{ type: "text", text: `No project with id ${id}` }], isError: true };
     return {
-      content: [{ type: "text", text: JSON.stringify(project, null, 2) }],
-      structuredContent: { project }
+      content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
+      structuredContent: { project: data }
     };
   }
 });
 
 // src/lib/mcp/tools/list-installers.ts
 import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@0.24.0";
+import { z as z3 } from "npm:zod@^3.25.76";
 var list_installers_default = defineTool3({
   name: "list_installers",
   title: "List installers",
-  description: "List all installers (staff and sub-vendors) available in StaffPlanner.",
-  inputSchema: {},
+  description: "List installers (own staff and sub-vendors) from the live database. RLS applies.",
+  inputSchema: {
+    includeSandbox: z3.boolean().optional().describe("Include sandbox rows (default false).")
+  },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: () => ({
-    content: [{ type: "text", text: JSON.stringify(installers, null, 2) }],
-    structuredContent: { count: installers.length, installers }
-  })
+  handler: async ({ includeSandbox }, ctx) => {
+    if (!ctx.isAuthenticated()) return unauth();
+    const sb = supabaseForUser(ctx);
+    let q = sb.from("installers").select("*");
+    if (!includeSandbox) q = q.eq("sandbox", false);
+    const { data, error } = await q;
+    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
+    return {
+      content: [{ type: "text", text: JSON.stringify(data ?? [], null, 2) }],
+      structuredContent: { count: data?.length ?? 0, installers: data ?? [] }
+    };
+  }
 });
 
 // src/lib/mcp/tools/list-clients.ts
 import { defineTool as defineTool4 } from "npm:@lovable.dev/mcp-js@0.24.0";
+import { z as z4 } from "npm:zod@^3.25.76";
 var list_clients_default = defineTool4({
   name: "list_clients",
   title: "List clients",
-  description: "List all retail clients StaffPlanner works with.",
+  description: "List retail clients from the live database. RLS applies.",
+  inputSchema: {
+    includeSandbox: z4.boolean().optional().describe("Include sandbox rows (default false).")
+  },
+  annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+  handler: async ({ includeSandbox }, ctx) => {
+    if (!ctx.isAuthenticated()) return unauth();
+    const sb = supabaseForUser(ctx);
+    let q = sb.from("clients").select("*").order("name");
+    if (!includeSandbox) q = q.eq("sandbox", false);
+    const { data, error } = await q;
+    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
+    return {
+      content: [{ type: "text", text: JSON.stringify(data ?? [], null, 2) }],
+      structuredContent: { count: data?.length ?? 0, clients: data ?? [] }
+    };
+  }
+});
+
+// src/lib/mcp/tools/whoami.ts
+import { defineTool as defineTool5 } from "npm:@lovable.dev/mcp-js@0.24.0";
+var whoami_default = defineTool5({
+  name: "whoami",
+  title: "Who am I",
+  description: "Return the signed-in user's id, email, roles, and profile.",
   inputSchema: {},
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: () => ({
-    content: [{ type: "text", text: JSON.stringify(clients, null, 2) }],
-    structuredContent: { count: clients.length, clients }
-  })
+  handler: async (_args, ctx) => {
+    if (!ctx.isAuthenticated()) return unauth();
+    const sb = supabaseForUser(ctx);
+    const uid = ctx.getUserId();
+    const [{ data: profile }, { data: roles }] = await Promise.all([
+      sb.from("profiles").select("*").eq("id", uid).maybeSingle(),
+      sb.from("user_roles").select("role").eq("user_id", uid)
+    ]);
+    const payload = {
+      user_id: uid,
+      email: ctx.getUserEmail(),
+      roles: (roles ?? []).map((r) => r.role),
+      profile
+    };
+    return {
+      content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+      structuredContent: payload
+    };
+  }
 });
 
 // src/lib/mcp/index.ts
+var projectRef = "piubkkipultepevxbxuv";
 var mcp_default = defineMcp({
   name: "staffplanner-mcp",
   title: "StaffPlanner MCP",
-  version: "0.1.0",
-  instructions: "Read-only tools for StaffPlanner, a retail installation scheduling app. Use list_projects to browse projects (filter by status, type, client, assignee, or unassigned). Use get_project for a single project by id. Use list_installers and list_clients for reference data.",
-  tools: [list_projects_default, get_project_default, list_installers_default, list_clients_default]
+  version: "0.2.0",
+  instructions: "Signed-in tools for StaffPlanner (retail installation scheduling). All tools act as the connected user and respect Row-Level Security. Use list_projects/get_project to browse work, list_installers/list_clients for reference data, and whoami to see your identity and roles.",
+  auth: auth.oauth.issuer({
+    issuer: `https://${projectRef}.supabase.co/auth/v1`,
+    acceptedAudiences: "authenticated"
+  }),
+  tools: [list_projects_default, get_project_default, list_installers_default, list_clients_default, whoami_default]
 });
 
 // lovable-mcp-supabase-entry.ts

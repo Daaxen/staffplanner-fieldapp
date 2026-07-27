@@ -1,41 +1,41 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
-import { projects, type ProjectStatus, type ProjectType } from "../../../data/mockData";
+import { supabaseForUser, unauth } from "../supabase";
 
 export default defineTool({
   name: "list_projects",
   title: "List projects",
   description:
-    "List installation/site-survey/transport projects tracked in StaffPlanner. Optional filters by status, project type, client, and assigned installer id.",
+    "List installation/site-survey/transport projects from StaffPlanner. Optional filters by status, project type, client name, assigned installer id, and unassigned-only. Reads from live database; RLS applies.",
   inputSchema: {
-    status: z
-      .enum(["open", "scheduled", "in-progress", "completed", "on-hold", "cancelled"])
-      .optional()
-      .describe("Filter by project status."),
-    projectType: z
-      .enum(["installation", "site-survey", "transport"])
-      .optional()
-      .describe("Filter by project type."),
-    client: z.string().optional().describe("Filter by client name (case-insensitive substring)."),
-    assigneeId: z.string().optional().describe("Return only projects assigned to this installer id."),
-    unassignedOnly: z.boolean().optional().describe("If true, return only projects with no assignees."),
-    limit: z.number().int().positive().optional().describe("Max results (default 50)."),
+    status: z.enum(["open", "scheduled", "in-progress", "completed", "on-hold", "cancelled"]).optional(),
+    projectType: z.enum(["installation", "site-survey", "transport"]).optional(),
+    client: z.string().optional().describe("Client name (case-insensitive substring)."),
+    assigneeId: z.string().uuid().optional().describe("Installer id filter."),
+    unassignedOnly: z.boolean().optional(),
+    includeSandbox: z.boolean().optional().describe("Include sandbox rows (default false)."),
+    limit: z.number().int().positive().max(200).optional(),
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: ({ status, projectType, client, assigneeId, unassignedOnly, limit }) => {
-    let rows = projects.slice();
-    if (status) rows = rows.filter((p) => p.status === (status as ProjectStatus));
-    if (projectType) rows = rows.filter((p) => p.projectType === (projectType as ProjectType));
+  handler: async ({ status, projectType, client, assigneeId, unassignedOnly, includeSandbox, limit }, ctx) => {
+    if (!ctx.isAuthenticated()) return unauth();
+    const sb = supabaseForUser(ctx);
+    let q = sb.from("projects").select("*, clients(name), project_assignees(installer_id)").limit(limit ?? 50);
+    if (status) q = q.eq("status", status);
+    if (projectType) q = q.eq("project_type", projectType);
+    if (!includeSandbox) q = q.eq("sandbox", false);
+    const { data, error } = await q;
+    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
+    let rows = data ?? [];
     if (client) {
       const needle = client.toLowerCase();
-      rows = rows.filter((p) => p.client.toLowerCase().includes(needle));
+      rows = rows.filter((r: any) => (r.clients?.name ?? "").toLowerCase().includes(needle));
     }
-    if (assigneeId) rows = rows.filter((p) => p.assigneeIds.includes(assigneeId));
-    if (unassignedOnly) rows = rows.filter((p) => p.assigneeIds.length === 0);
-    const capped = rows.slice(0, limit ?? 50);
+    if (assigneeId) rows = rows.filter((r: any) => r.project_assignees?.some((a: any) => a.installer_id === assigneeId));
+    if (unassignedOnly) rows = rows.filter((r: any) => (r.project_assignees ?? []).length === 0);
     return {
-      content: [{ type: "text", text: JSON.stringify(capped, null, 2) }],
-      structuredContent: { count: capped.length, total: rows.length, projects: capped },
+      content: [{ type: "text", text: JSON.stringify(rows, null, 2) }],
+      structuredContent: { count: rows.length, projects: rows },
     };
   },
 });
