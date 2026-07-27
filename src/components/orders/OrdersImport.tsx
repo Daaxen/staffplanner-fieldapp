@@ -108,72 +108,7 @@ const OrdersImport = ({ orders, onApply }: OrdersImportProps) => {
     warnings: rows.filter(r => r.warnings.length > 0).length,
   }), [rows]);
 
-  const downloadTemplate = () => {
-    const header = [...COLUMNS];
-    const example: Record<string, unknown> = {
-      'Order ID': '',
-      'Order Name': 'IKEA Kungens Kurva – kitchen refit',
-      'Project Number': 'PRJ-2026-001',
-      'Type': 'installation',
-      'Client': 'IKEA',
-      'Location': 'Stockholm',
-      'Status': 'scheduled',
-      'Start Date': '2026-08-01',
-      'End Date': '2026-08-02',
-      'Start Time': '08:00',
-      'End Time': '17:00',
-      'Estimated Hours': 8,
-      'Flex Order': 'no',
-      'Description': 'Optional notes',
-      'Contact Name': 'Anna Svensson',
-      'Contact Phone': '+46 70 000 00 00',
-      'Contact Email': 'anna@example.com',
-      'Assignees': 'Erik Lindberg; inst-3',
-      'Vehicle Type': '',
-    };
-    const emptyRow: Record<string, unknown> = Object.fromEntries(header.map(h => [h, '']));
-
-    const ws = XLSX.utils.json_to_sheet([example, emptyRow, emptyRow], { header });
-    ws['!cols'] = header.map(h => ({ wch: Math.max(14, h.length + 2) }));
-
-    // Reference sheet
-    const ref: (string | number)[][] = [
-      ['Field', 'Notes / allowed values'],
-      ['Order ID', 'Leave EMPTY to create a new order. Provide an existing ID to UPDATE that order.'],
-      ['Type', TYPE_VALUES.join(' | ')],
-      ['Status', STATUS_VALUES.join(' | ')],
-      ['Start Date / End Date', 'YYYY-MM-DD'],
-      ['Start Time / End Time', 'HH:MM (24h)'],
-      ['Flex Order', 'yes | no'],
-      ['Assignees', 'Installer names or IDs, separated by ";"'],
-      [],
-      ['Available installers', ''],
-      ['ID', 'Name'],
-      ...installers.map(i => [i.id, i.name]),
-    ];
-    const refWs = XLSX.utils.aoa_to_sheet(ref);
-    refWs['!cols'] = [{ wch: 26 }, { wch: 60 }];
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Orders');
-    XLSX.utils.book_append_sheet(wb, refWs, 'Reference');
-    try {
-      const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' }) as ArrayBuffer;
-      const blob = new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'orders-import-template.xlsx';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      toast.success('Template downloaded');
-    } catch (err) {
-      console.error('Template download failed', err);
-      toast.error('Could not download template');
-    }
-  };
+  const templateUrl = '/templates/orders-import-template.xlsx';
 
   const handleFile = async (file: File) => {
     setFileName(file.name);
