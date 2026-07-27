@@ -14,6 +14,151 @@ export type Database = {
   }
   public: {
     Tables: {
+      clients: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          sandbox: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          sandbox?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          sandbox?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      documents: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          file_type: string | null
+          id: string
+          sandbox: boolean
+          title: string
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          file_type?: string | null
+          id?: string
+          sandbox?: boolean
+          title: string
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          file_type?: string | null
+          id?: string
+          sandbox?: boolean
+          title?: string
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
+      installer_absences: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          installer_id: string
+          label: string | null
+          sandbox: boolean
+          start_date: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          installer_id: string
+          label?: string | null
+          sandbox?: boolean
+          start_date: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          installer_id?: string
+          label?: string | null
+          sandbox?: boolean
+          start_date?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "installer_absences_installer_id_fkey"
+            columns: ["installer_id"]
+            isOneToOne: false
+            referencedRelation: "installers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      installers: {
+        Row: {
+          base_location: string | null
+          color: number
+          created_at: string
+          id: string
+          name: string
+          profile_id: string | null
+          sandbox: boolean
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          base_location?: string | null
+          color?: number
+          created_at?: string
+          id?: string
+          name: string
+          profile_id?: string | null
+          sandbox?: boolean
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          base_location?: string | null
+          color?: number
+          created_at?: string
+          id?: string
+          name?: string
+          profile_id?: string | null
+          sandbox?: boolean
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "installers_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           address: string | null
@@ -26,6 +171,7 @@ export type Database = {
           id: string
           installer_id: string | null
           phone: string | null
+          sandbox_mode: boolean
           updated_at: string
         }
         Insert: {
@@ -39,6 +185,7 @@ export type Database = {
           id: string
           installer_id?: string | null
           phone?: string | null
+          sandbox_mode?: boolean
           updated_at?: string
         }
         Update: {
@@ -52,9 +199,140 @@ export type Database = {
           id?: string
           installer_id?: string | null
           phone?: string | null
+          sandbox_mode?: boolean
           updated_at?: string
         }
         Relationships: []
+      }
+      project_assignees: {
+        Row: {
+          created_at: string
+          id: string
+          installer_id: string
+          project_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          installer_id: string
+          project_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          installer_id?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_assignees_installer_id_fkey"
+            columns: ["installer_id"]
+            isOneToOne: false
+            referencedRelation: "installers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_assignees_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          client_id: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          end_date: string | null
+          id: string
+          location: string | null
+          name: string
+          project_type: string
+          sandbox: boolean
+          start_date: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          location?: string | null
+          name: string
+          project_type?: string
+          sandbox?: boolean
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          location?: string | null
+          name?: string
+          project_type?: string
+          sandbox?: boolean
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transport_stops: {
+        Row: {
+          address: string
+          created_at: string
+          id: string
+          project_id: string
+          sort_order: number
+          type: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          id?: string
+          project_id: string
+          sort_order?: number
+          type: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          id?: string
+          project_id?: string
+          sort_order?: number
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transport_stops_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

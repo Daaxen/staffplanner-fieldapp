@@ -8,6 +8,15 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Calendar } from 'lucide-react';
 
+const safeNext = (raw: string | null): string => {
+  if (!raw) return '/';
+  try {
+    // Only allow same-origin relative paths starting with a single '/'
+    if (!raw.startsWith('/') || raw.startsWith('//')) return '/';
+    return raw;
+  } catch { return '/'; }
+};
+
 const Auth = () => {
   const nav = useNavigate();
   const { user, loading, signIn } = useAuth();
@@ -17,6 +26,8 @@ const Auth = () => {
   const [fullName, setFullName] = useState('');
   const [busy, setBusy] = useState(false);
 
+  const nextTarget = safeNext(new URLSearchParams(window.location.search).get('next'));
+
   useEffect(() => {
     const hash = window.location.hash;
     if (hash.includes('type=invite') || hash.includes('type=recovery')) {
@@ -25,15 +36,17 @@ const Auth = () => {
   }, []);
 
   useEffect(() => {
-    if (!loading && user && mode === 'login') nav('/');
-  }, [user, loading, mode, nav]);
+    if (!loading && user && mode === 'login') {
+      window.location.href = nextTarget;
+    }
+  }, [user, loading, mode, nextTarget]);
 
   const onLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
     const { error } = await signIn(email, password);
     setBusy(false);
-    if (error) toast.error(error); else nav('/');
+    if (error) toast.error(error); else window.location.href = nextTarget;
   };
 
   const onSetPassword = async (e: React.FormEvent) => {
@@ -43,7 +56,7 @@ const Auth = () => {
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success('Password set. Signed in.');
-    nav('/');
+    window.location.href = nextTarget;
   };
 
   const onReset = async (e: React.FormEvent) => {
