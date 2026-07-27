@@ -177,24 +177,29 @@ const OrdersRegister = () => {
     (dateFrom ? 1 : 0) + (dateTo ? 1 : 0) + (historicalOnly ? 1 : 0);
 
   const applyMassStatus = () => {
-    setOrders(prev => prev.map(p => selected.has(p.id) ? { ...p, status: massStatus } : p));
-    toast.success(`Updated status on ${selected.size} order(s)`);
-    setMassDialog(null); setSelected(new Set());
+    const changedIds = new Set(statusPreview.filter(r => r.changed).map(r => r.id));
+    if (changedIds.size === 0) { toast.error('No orders would change'); return; }
+    setOrders(prev => prev.map(p => changedIds.has(p.id) ? { ...p, status: massStatus } : p));
+    toast.success(`Updated status on ${changedIds.size} order(s)`);
+    closeMassDialog(); setSelected(new Set());
   };
   const applyMassAssignee = () => {
     if (!massAssignee) return;
+    const changedIds = new Set(assigneePreview.filter(r => !r.already).map(r => r.id));
+    if (changedIds.size === 0) { toast.error('All selected orders already have this installer'); return; }
     setOrders(prev => prev.map(p =>
-      selected.has(p.id)
+      changedIds.has(p.id)
         ? { ...p, assigneeIds: Array.from(new Set([...p.assigneeIds, massAssignee])), status: p.status === 'open' ? 'scheduled' : p.status }
         : p
     ));
-    toast.success(`Assigned installer to ${selected.size} order(s)`);
-    setMassDialog(null); setSelected(new Set()); setMassAssignee('');
+    toast.success(`Assigned installer to ${changedIds.size} order(s)`);
+    closeMassDialog(); setSelected(new Set());
   };
   const applyMassDelete = () => {
+    if (deleteConfirmText !== 'DELETE') { toast.error('Type DELETE to confirm'); return; }
     setOrders(prev => prev.filter(p => !selected.has(p.id)));
     toast.success(`Removed ${selected.size} order(s)`);
-    setMassDialog(null); setSelected(new Set());
+    closeMassDialog(); setSelected(new Set());
   };
 
   const exportCsv = () => {
