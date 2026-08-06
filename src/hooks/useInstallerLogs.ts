@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { computeHours, DEFAULT_MILEAGE_RATE, type TimeEntry, type ExpenseEntry, type ExpenseCategory, type ActiveTimer } from '@/data/logsData';
-import type { Project } from '@/data/mockData';
+import { ratesForClient, type Project } from '@/data/mockData';
 
 type Meta = { projectName?: string | null; clientName?: string | null };
 
@@ -22,7 +22,7 @@ export function useInstallerLogs(projects: Project[] = []) {
 
   const rateFor = useCallback((projectId: string) => {
     const p = projects.find(pr => pr.id === projectId);
-    return p?.mileageRate ?? DEFAULT_MILEAGE_RATE;
+    return ratesForClient(p?.client, p?.clientId).mileageRate ?? DEFAULT_MILEAGE_RATE;
   }, [projects]);
 
   const refresh = useCallback(async () => {
@@ -89,7 +89,7 @@ export function useInstallerLogs(projects: Project[] = []) {
       project_id: entry.projectId, project_name: meta.projectName, client_name: meta.clientName,
       installer_id: installerId, entry_date: entry.date, start_time: entry.startTime ?? null,
       end_time: entry.endTime ?? null, hours, note: entry.note ?? null, source: entry.source ?? 'manual',
-      hourly_rate: project?.hourlyRate ?? null,
+      hourly_rate: ratesForClient(project?.client, project?.clientId).hourlyRate ?? null,
     }).select().maybeSingle();
     await refresh();
     return data;
