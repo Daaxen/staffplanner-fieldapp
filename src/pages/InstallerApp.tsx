@@ -29,7 +29,7 @@ const InstallerApp = () => {
 
   const installer = installers.find(i => i.id === CURRENT_INSTALLER_ID)!;
   const myProjects = localProjects.filter(p => p.assigneeIds.includes(CURRENT_INSTALLER_ID));
-  const logs = useInstallerLogs(CURRENT_INSTALLER_ID);
+  const logs = useInstallerLogs(localProjects);
   const reminders = useReminders();
   const [tab, setTab] = useState<string>('schedule');
   usePushRegistration(true);
