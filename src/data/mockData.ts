@@ -67,6 +67,13 @@ export interface ClientInvoicing {
   reference?: string;
 }
 
+export interface ClientRates {
+  hourlyRate?: number;      // SEK / h
+  overtimeRate?: number;    // SEK / h
+  mileageRate?: number;     // SEK / km
+  vatPercent?: number;      // %
+}
+
 export interface Client {
   id: string;              // numeric string, auto-generated
   customerNumber?: string; // free-text customer number
@@ -77,6 +84,7 @@ export interface Client {
   region?: string;
   mainContact?: ClientContact;
   invoicing?: ClientInvoicing;
+  rates?: ClientRates;
 }
 
 export interface Project {
@@ -97,6 +105,8 @@ export interface Project {
   startTime?: string;
   endTime?: string;
   estimatedHours?: number;
+  hourlyRate?: number;   // resolved from client rates
+  mileageRate?: number;  // resolved from client rates
   isFlexOrder?: boolean;
   description?: string;
   contactName?: string;
@@ -138,6 +148,18 @@ export const clientRegister: Client[] = [
   { id: '1010', customerNumber: 'KJC-01', name: 'Kjell & Company', street: 'Täby Centrum', postalCode: '183 34', region: 'Stockholm' },
   { id: '1011', customerNumber: 'AHL-01', name: 'Åhléns', street: 'Klarabergsgatan 50', postalCode: '111 21', region: 'Stockholm' },
 ];
+
+export const DEFAULT_CLIENT_RATES: Required<ClientRates> = {
+  hourlyRate: 650,
+  overtimeRate: 975,
+  mileageRate: 25,
+  vatPercent: 25,
+};
+
+export const ratesForClient = (clientName?: string, clientId?: string): Required<ClientRates> => {
+  const c = clientRegister.find(x => (clientId && x.id === clientId) || (clientName && x.name === clientName));
+  return { ...DEFAULT_CLIENT_RATES, ...(c?.rates ?? {}) };
+};
 
 // Backwards-compatible name list for autocomplete/datalists
 export const clients = clientRegister.map(c => c.name);
