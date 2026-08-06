@@ -34,7 +34,7 @@ const InstallerPreview = ({ projects }: InstallerPreviewProps) => {
 
   const installer = installers.find(i => i.id === selectedInstallerId)!;
   const myProjects = projects.filter(p => p.assigneeIds.includes(selectedInstallerId));
-  const logs = useInstallerLogs(selectedInstallerId);
+  const logs = useInstallerLogs(projects);
 
   const availableOrderCount = useMemo(() => {
     const now = new Date();

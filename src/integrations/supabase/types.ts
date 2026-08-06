@@ -14,27 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
-      clients: {
+      active_timers: {
         Row: {
           created_at: string
-          id: string
-          name: string
-          sandbox: boolean
-          updated_at: string
+          installer_id: string
+          project_id: string
+          project_name: string | null
+          started_at: string
         }
         Insert: {
           created_at?: string
-          id?: string
-          name: string
-          sandbox?: boolean
-          updated_at?: string
+          installer_id: string
+          project_id: string
+          project_name?: string | null
+          started_at?: string
         }
         Update: {
           created_at?: string
+          installer_id?: string
+          project_id?: string
+          project_name?: string | null
+          started_at?: string
+        }
+        Relationships: []
+      }
+      clients: {
+        Row: {
+          created_at: string
+          hourly_rate: number | null
+          id: string
+          mileage_rate: number | null
+          name: string
+          overtime_rate: number | null
+          sandbox: boolean
+          updated_at: string
+          vat_percent: number
+        }
+        Insert: {
+          created_at?: string
+          hourly_rate?: number | null
           id?: string
-          name?: string
+          mileage_rate?: number | null
+          name: string
+          overtime_rate?: number | null
           sandbox?: boolean
           updated_at?: string
+          vat_percent?: number
+        }
+        Update: {
+          created_at?: string
+          hourly_rate?: number | null
+          id?: string
+          mileage_rate?: number | null
+          name?: string
+          overtime_rate?: number | null
+          sandbox?: boolean
+          updated_at?: string
+          vat_percent?: number
         }
         Relationships: []
       }
@@ -71,6 +107,51 @@ export type Database = {
           title?: string
           updated_at?: string
           url?: string | null
+        }
+        Relationships: []
+      }
+      expense_entries: {
+        Row: {
+          amount: number
+          category: string
+          client_name: string | null
+          created_at: string
+          entry_date: string
+          id: string
+          installer_id: string
+          note: string | null
+          project_id: string
+          project_name: string | null
+          receipt_path: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          category?: string
+          client_name?: string | null
+          created_at?: string
+          entry_date: string
+          id?: string
+          installer_id: string
+          note?: string | null
+          project_id: string
+          project_name?: string | null
+          receipt_path?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          client_name?: string | null
+          created_at?: string
+          entry_date?: string
+          id?: string
+          installer_id?: string
+          note?: string | null
+          project_id?: string
+          project_name?: string | null
+          receipt_path?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -158,6 +239,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      mileage_entries: {
+        Row: {
+          amount: number
+          client_name: string | null
+          created_at: string
+          entry_date: string
+          id: string
+          installer_id: string
+          km: number
+          note: string | null
+          project_id: string
+          project_name: string | null
+          rate: number
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          client_name?: string | null
+          created_at?: string
+          entry_date: string
+          id?: string
+          installer_id: string
+          km?: number
+          note?: string | null
+          project_id: string
+          project_name?: string | null
+          rate?: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          client_name?: string | null
+          created_at?: string
+          entry_date?: string
+          id?: string
+          installer_id?: string
+          km?: number
+          note?: string | null
+          project_id?: string
+          project_name?: string | null
+          rate?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -413,6 +539,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      time_entries: {
+        Row: {
+          client_name: string | null
+          created_at: string
+          end_time: string | null
+          entry_date: string
+          hourly_rate: number | null
+          hours: number
+          id: string
+          installer_id: string
+          note: string | null
+          project_id: string
+          project_name: string | null
+          source: string
+          start_time: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_name?: string | null
+          created_at?: string
+          end_time?: string | null
+          entry_date: string
+          hourly_rate?: number | null
+          hours?: number
+          id?: string
+          installer_id: string
+          note?: string | null
+          project_id: string
+          project_name?: string | null
+          source?: string
+          start_time?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_name?: string | null
+          created_at?: string
+          end_time?: string | null
+          entry_date?: string
+          hourly_rate?: number | null
+          hours?: number
+          id?: string
+          installer_id?: string
+          note?: string | null
+          project_id?: string
+          project_name?: string | null
+          source?: string
+          start_time?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       transport_stops: {
         Row: {

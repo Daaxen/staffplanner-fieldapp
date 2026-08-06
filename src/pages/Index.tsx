@@ -10,6 +10,7 @@ import OrdersRegister from '@/components/orders/OrdersRegister';
 import ClientsRegister from '@/components/clients/ClientsRegister';
 import ProfileEditor from '@/components/ProfileEditor';
 import EscalationsView from '@/components/admin/EscalationsView';
+import InvoicingView from '@/components/admin/InvoicingView';
 import { projects } from '@/data/mockData';
 import {
   AlertDialog,
@@ -76,13 +77,16 @@ const Index = () => {
         {activeView === 'users' && (
           <UsersManager />
         )}
+        {activeView === 'invoicing' && (
+          <InvoicingView />
+        )}
         {activeView === 'escalations' && (
           <EscalationsView />
         )}
         {activeView === 'profile' && (
           <ProfileEditor />
         )}
-        {activeView !== 'planner' && activeView !== 'fleet' && activeView !== 'installer-preview' && activeView !== 'documents' && activeView !== 'users' && activeView !== 'escalations' && activeView !== 'profile' && activeView !== 'orders' && activeView !== 'clients' && (
+        {activeView !== 'planner' && activeView !== 'fleet' && activeView !== 'installer-preview' && activeView !== 'documents' && activeView !== 'users' && activeView !== 'escalations' && activeView !== 'invoicing' && activeView !== 'profile' && activeView !== 'orders' && activeView !== 'clients' && (
           <div className="flex-1 flex items-center justify-center">
             <p className="text-muted-foreground">Module coming soon</p>
           </div>

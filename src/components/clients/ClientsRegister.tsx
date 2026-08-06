@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
-import { clientRegister, projects, type Client } from '@/data/mockData';
+import { clientRegister, projects, DEFAULT_CLIENT_RATES, type Client } from '@/data/mockData';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -468,6 +468,51 @@ const ClientsRegister = () => {
                   </div>
                 </div>
               </section>
+
+              <section>
+                <h3 className="text-sm font-semibold flex items-center gap-1.5 mb-2">
+                  <Receipt className="w-4 h-4" /> Rates
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Hourly Rate (SEK/h)</Label>
+                    <Input
+                      type="number"
+                      placeholder={String(DEFAULT_CLIENT_RATES.hourlyRate)}
+                      value={editing.rates?.hourlyRate ?? ''}
+                      onChange={(e) => setEditing({ ...editing, rates: { ...editing.rates, hourlyRate: e.target.value === '' ? undefined : Number(e.target.value) } })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Overtime Rate (SEK/h)</Label>
+                    <Input
+                      type="number"
+                      placeholder={String(DEFAULT_CLIENT_RATES.overtimeRate)}
+                      value={editing.rates?.overtimeRate ?? ''}
+                      onChange={(e) => setEditing({ ...editing, rates: { ...editing.rates, overtimeRate: e.target.value === '' ? undefined : Number(e.target.value) } })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Mileage Rate (SEK/km)</Label>
+                    <Input
+                      type="number"
+                      placeholder={String(DEFAULT_CLIENT_RATES.mileageRate)}
+                      value={editing.rates?.mileageRate ?? ''}
+                      onChange={(e) => setEditing({ ...editing, rates: { ...editing.rates, mileageRate: e.target.value === '' ? undefined : Number(e.target.value) } })}
+                    />
+                  </div>
+                  <div>
+                    <Label>VAT (%)</Label>
+                    <Input
+                      type="number"
+                      placeholder={String(DEFAULT_CLIENT_RATES.vatPercent)}
+                      value={editing.rates?.vatPercent ?? ''}
+                      onChange={(e) => setEditing({ ...editing, rates: { ...editing.rates, vatPercent: e.target.value === '' ? undefined : Number(e.target.value) } })}
+                    />
+                  </div>
+                </div>
+              </section>
+
             </div>
           )}
           <DialogFooter>
