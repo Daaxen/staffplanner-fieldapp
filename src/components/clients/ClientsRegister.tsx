@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
-import { clientRegister, projects, type Client } from '@/data/mockData';
+import { clientRegister, projects, DEFAULT_CLIENT_RATES, type Client } from '@/data/mockData';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
