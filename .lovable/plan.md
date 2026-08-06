@@ -1,40 +1,47 @@
-## Connect your custom domain
+# Time, Cost & Mileage Reporting with Admin Invoicing Summary
 
-You can point a domain you already own at this app. No code changes needed — it's all done in Project Settings.
+Installers log hours, third-party costs and mileage per project in the app. Admins get a follow-up view that summarizes everything per client/project/installer/period and exports it for invoicing. Rates live on the client card.
 
-### Steps
+## Installer app
 
-1. **Publish the app first** (required before a custom domain can be attached).
-   - Click **Publish** (top right). This creates your `*.lovable.app` URL.
+Two missing log screens are re-created (they are currently referenced but absent, which breaks the preview):
 
-2. **Open domain settings**
-   - **Project Settings → Project → Domains** (or in the Publish dialog → *Add custom domain*).
+- **Project > Log tab** — for the open project: start/stop timer, manual time entry (date, start, end, auto-calculated hours, note), add expense (category, amount, note, optional receipt name), add mileage (km x client rate). Lists that project's entries with delete.
+- **Time tab (top level)** — all my entries across projects, grouped by week: total hours, total expenses, total mileage; filter by project and date range.
 
-3. **Choose one of two paths**
+Everything switches from local device storage to the database, scoped so an installer only sees and edits their own entries.
 
-   **A. Buy a domain through Lovable** (simplest — DNS is auto-configured)
-   - Click **Buy new domain**, search, purchase. It's connected automatically.
+## Client rates
 
-   **B. Connect a domain you own at another registrar**
-   - Click **Connect Domain**, enter `yourdomain.com`.
-   - Add the DNS records Lovable shows you at your registrar:
-     - **A record** — Name `@`, Value `185.158.133.1`
-     - **A record** — Name `www`, Value `185.158.133.1`
-     - **TXT record** — Name `_lovable`, Value `lovable_verify=...` (shown in the UI)
-   - Add both `yourdomain.com` and `www.yourdomain.com` as separate entries, then pick one as **Primary** (the other redirects to it).
-   - If you use Cloudflare or a similar proxy, expand **Advanced** and tick *"Domain uses Cloudflare or a similar proxy"* — this switches to CNAME-based verification.
+Client card gets a Rates section:
+- Hourly rate (SEK/h)
+- Mileage rate (SEK/km) — used to price mileage entries
+- Optional overtime/weekend rate
+- VAT % applied in summaries
 
-4. **Wait for propagation & SSL**
-   - DNS can take up to 72h (usually minutes). SSL is provisioned automatically once verified.
-   - Status will move: *Verifying → Setting up → Active*.
+Rates are captured on each entry when logged, so later rate changes don't rewrite historical amounts.
 
-### About the build error
+## Admin: Invoicing & Follow-up
 
-The stderr trace you pasted is the same transient "stale missing file" error we've seen before — Vite tried to read a file that was mid-write. No code fix is needed for the domain question. If you'd like, I can re-run the build to confirm it's green before you publish.
+New sidebar section "Invoicing":
+- Filters: date range, client, project, installer, entry type
+- Summary cards: total hours, labour cost, expenses, mileage cost, VAT, grand total
+- Grouped table: by client > project > installer, with drill-down to individual entries
+- Follow-up flags: projects marked complete with no time reported, entries missing notes/receipts
+- Export: XLSX and CSV of the current selection (both a summary sheet and a line-item sheet)
 
-### What I need from you
+## Technical notes
 
-- Confirm you want to **connect an existing domain** (path B) or **buy one through Lovable** (path A).
-- If path B: share the domain name so I can walk you through the exact records after you kick off the connect flow.
+Database (all with row-level access rules; installers read/write own rows, admins read all):
+- `time_entries` — project_id, installer_id, date, start_time, end_time, hours, note, source (timer/manual), hourly_rate_snapshot
+- `expense_entries` — project_id, installer_id, date, category (materials/travel/parking/meal/other), amount, note, receipt_url
+- `mileage_entries` — project_id, installer_id, date, km, rate_snapshot, amount, from/to note
+- `active_timers` — installer_id (unique), project_id, started_at
+- `clients` gains `hourly_rate`, `mileage_rate`, `overtime_rate`, `vat_percent`
+- Storage bucket for receipt photos, private, installer-scoped paths
 
-Nothing to implement in code — this is all configuration in the Lovable UI.
+Frontend:
+- Rewrite `src/hooks/useInstallerLogs.ts` against the database (react-query style fetch + mutations) keeping the existing API shape
+- New `src/components/installer/logs/ProjectLogTab.tsx` and `LogsOverview.tsx`
+- New `src/components/admin/InvoicingView.tsx` + registration in `AppSidebar.tsx` / `Index.tsx`
+- Reuse the existing `xlsx` dependency for export
