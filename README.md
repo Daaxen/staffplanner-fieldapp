@@ -72,6 +72,12 @@ To connect a domain, navigate to Project > Settings > Domains and click Connect 
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
 
-## Building the iOS app for TestFlight
+## Install as a browser app
 
-This project includes a Capacitor wrapper for native iOS distribution. See [`docs/IOS_TESTFLIGHT.md`](docs/IOS_TESTFLIGHT.md) for step-by-step instructions on archiving and uploading to TestFlight.
+This project is configured as a Progressive Web App (PWA). You can install it directly from the browser to your phone or desktop:
+
+1. Open the published URL in a modern browser (Chrome, Safari, Edge).
+2. Use the browser's **Add to Home Screen** / **Install** prompt, or find it in the browser menu.
+3. The app will launch full-screen with the StaffPlanner icon and theme.
+
+No native build or app store submission is required.
