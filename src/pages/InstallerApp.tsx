@@ -6,7 +6,6 @@ import InstallerProjectDetail from '@/components/installer/InstallerProjectDetai
 import InstallerProfile from '@/components/installer/InstallerProfile';
 import InstallerOrderBox from '@/components/installer/schedule/InstallerOrderBox';
 import InstallerDocuments from '@/components/installer/InstallerDocuments';
-import QuickCreateProject from '@/components/installer/schedule/QuickCreateProject';
 import ProjectCard from '@/components/installer/schedule/ProjectCard';
 import ScheduleFilters, { type FilterState } from '@/components/installer/schedule/ScheduleFilters';
 import LogsOverview from '@/components/installer/logs/LogsOverview';
@@ -62,10 +61,6 @@ const InstallerApp = () => {
     setSelectedProject(prev => prev && prev.id === projectId ? { ...prev, status: newStatus } : prev);
     const label = newStatus === 'in-progress' ? 'Started' : newStatus === 'completed' ? 'Completed' : 'Updated';
     toast.success(`${label} project`);
-  };
-
-  const handleCreateProject = (project: Project) => {
-    setLocalProjects(prev => [...prev, project]);
   };
 
   const handleViewOrderDetail = (project: Project) => {
@@ -209,8 +204,6 @@ const InstallerApp = () => {
         </TabsContent>
       </Tabs>
 
-
-      <QuickCreateProject onCreateProject={handleCreateProject} installerId={CURRENT_INSTALLER_ID} />
     </div>
   );
 };
