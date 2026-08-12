@@ -71,3 +71,7 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
+## Building the iOS app for TestFlight
+
+This project includes a Capacitor wrapper for native iOS distribution. See [`docs/IOS_TESTFLIGHT.md`](docs/IOS_TESTFLIGHT.md) for step-by-step instructions on archiving and uploading to TestFlight.
