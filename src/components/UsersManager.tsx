@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Trash2, UserPlus, Shield, User as UserIcon, Copy } from 'lucide-react';
+import { Trash2, UserPlus, Shield, User as UserIcon, Copy, Pencil, KeyRound, Mail } from 'lucide-react';
 
 type Role = 'admin' | 'installer';
 
@@ -20,12 +20,20 @@ interface Row {
   roles: Role[];
 }
 
+const call = async (body: Record<string, unknown>) => {
+  const { data, error } = await supabase.functions.invoke('admin-manage-user', { body });
+  const err = (data as { error?: string } | null)?.error || error?.message;
+  return err ? { error: err } : { ok: true as const };
+};
+
 const UsersManager = () => {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ email: '', full_name: '', phone: '', role: 'installer' as Role });
   const [busy, setBusy] = useState(false);
+  const [edit, setEdit] = useState<Row | null>(null);
+  const [editForm, setEditForm] = useState({ email: '', full_name: '', phone: '' });
 
   const load = async () => {
     setLoading(true);
@@ -55,6 +63,34 @@ const UsersManager = () => {
     load();
   };
 
+  const openEdit = (r: Row) => {
+    setEdit(r);
+    setEditForm({ email: r.email ?? '', full_name: r.full_name ?? '', phone: r.phone ?? '' });
+  };
+
+  const saveEdit = async () => {
+    if (!edit) return;
+    setBusy(true);
+    const res = await call({ action: 'update', user_id: edit.id, ...editForm });
+    setBusy(false);
+    if ('error' in res) return toast.error(res.error);
+    toast.success('User updated');
+    setEdit(null);
+    load();
+  };
+
+  const sendReset = async (r: Row) => {
+    if (!r.email) return toast.error('User has no email');
+    const res = await call({ action: 'reset_password', email: r.email });
+    if ('error' in res) toast.error(res.error); else toast.success(`Password reset link sent to ${r.email}`);
+  };
+
+  const resendInvite = async (r: Row) => {
+    if (!r.email) return toast.error('User has no email');
+    const res = await call({ action: 'resend_invite', email: r.email });
+    if ('error' in res) toast.error(res.error); else toast.success(`Invite resent to ${r.email}`);
+  };
+
   const toggleRole = async (userId: string, role: Role, has: boolean) => {
     if (has) {
       await supabase.from('user_roles').delete().eq('user_id', userId).eq('role', role);
@@ -65,9 +101,9 @@ const UsersManager = () => {
   };
 
   const remove = async (userId: string) => {
-    if (!confirm('Delete this user profile? (Auth user must be removed separately.)')) return;
-    const { error } = await supabase.from('profiles').delete().eq('id', userId);
-    if (error) toast.error(error.message); else { toast.success('Deleted'); load(); }
+    if (!confirm('Permanently delete this user, their login and profile?')) return;
+    const res = await call({ action: 'delete', user_id: userId });
+    if ('error' in res) toast.error(res.error); else { toast.success('User deleted'); load(); }
   };
 
   return (
@@ -130,12 +166,32 @@ const UsersManager = () => {
                   <UserIcon className="w-3 h-3 mr-1" />Installer
                 </Button>
               </div>
-              <Button size="icon" variant="ghost" onClick={() => remove(r.id)}><Trash2 className="w-4 h-4" /></Button>
+              <div className="flex gap-1">
+                <Button size="icon" variant="ghost" title="Edit user" onClick={() => openEdit(r)}><Pencil className="w-4 h-4" /></Button>
+                <Button size="icon" variant="ghost" title="Send password reset" onClick={() => sendReset(r)}><KeyRound className="w-4 h-4" /></Button>
+                <Button size="icon" variant="ghost" title="Resend invite" onClick={() => resendInvite(r)}><Mail className="w-4 h-4" /></Button>
+                <Button size="icon" variant="ghost" title="Delete user" onClick={() => remove(r.id)}><Trash2 className="w-4 h-4" /></Button>
+              </div>
             </div>
           ))}
           {rows.length === 0 && <p className="p-6 text-sm text-muted-foreground text-center">No users yet. Invite one to get started.</p>}
         </div>
       )}
+
+      <Dialog open={!!edit} onOpenChange={(o) => !o && setEdit(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Edit user</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1"><Label>Email</Label><Input type="email" value={editForm.email} onChange={e => setEditForm({ ...editForm, email: e.target.value })} /></div>
+            <div className="space-y-1"><Label>Full name</Label><Input value={editForm.full_name} onChange={e => setEditForm({ ...editForm, full_name: e.target.value })} /></div>
+            <div className="space-y-1"><Label>Phone</Label><Input value={editForm.phone} onChange={e => setEditForm({ ...editForm, phone: e.target.value })} /></div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => edit && sendReset(edit)}><KeyRound className="w-4 h-4 mr-2" />Send password reset</Button>
+            <Button onClick={saveEdit} disabled={busy}>{busy ? 'Saving…' : 'Save changes'}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
