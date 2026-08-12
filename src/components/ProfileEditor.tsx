@@ -11,17 +11,39 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Upload } from 'lucide-react';
 
-interface Profile {
+export interface Profile {
   id: string;
   email: string | null;
   full_name: string | null;
   phone: string | null;
   address: string | null;
+  postal_code: string | null;
+  city: string | null;
+  country: string | null;
+  date_of_birth: string | null;
   emergency_contact_name: string | null;
   emergency_contact_phone: string | null;
+  emergency_contact_relation: string | null;
+  emergency_contact2_name: string | null;
+  emergency_contact2_phone: string | null;
+  job_title: string | null;
+  employment_type: string | null;
+  employment_start_date: string | null;
+  drivers_license: string | null;
+  medical_notes: string | null;
+  clothing_size: string | null;
+  shoe_size: string | null;
   avatar_url: string | null;
   installer_id: string | null;
 }
+
+export const PROFILE_EDITABLE_FIELDS = [
+  'full_name', 'phone', 'address', 'postal_code', 'city', 'country', 'date_of_birth',
+  'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relation',
+  'emergency_contact2_name', 'emergency_contact2_phone',
+  'job_title', 'employment_type', 'employment_start_date', 'drivers_license',
+  'medical_notes', 'clothing_size', 'shoe_size', 'installer_id',
+] as const;
 
 const ProfileEditor = () => {
   const { user } = useAuth();
@@ -32,21 +54,21 @@ const ProfileEditor = () => {
   useEffect(() => {
     if (!user) return;
     supabase.from('profiles').select('*').eq('id', user.id).maybeSingle().then(({ data }) => {
-      setProfile(data as Profile);
+      setProfile(data as unknown as Profile);
     });
   }, [user]);
+
+  const set = (k: keyof Profile, v: string | null) => profile && setProfile({ ...profile, [k]: v });
 
   const save = async () => {
     if (!profile || !user) return;
     setBusy(true);
-    const { error } = await supabase.from('profiles').update({
-      full_name: profile.full_name,
-      phone: profile.phone,
-      address: profile.address,
-      emergency_contact_name: profile.emergency_contact_name,
-      emergency_contact_phone: profile.emergency_contact_phone,
-      installer_id: profile.installer_id,
-    }).eq('id', user.id);
+    const payload: Record<string, unknown> = {};
+    PROFILE_EDITABLE_FIELDS.forEach((f) => {
+      const v = profile[f as keyof Profile];
+      payload[f] = v === '' ? null : v;
+    });
+    const { error } = await supabase.from('profiles').update(payload).eq('id', user.id);
     setBusy(false);
     if (error) toast.error(error.message); else toast.success('Profile saved');
   };
@@ -69,8 +91,15 @@ const ProfileEditor = () => {
 
   if (!profile) return <div className="p-6 text-muted-foreground text-sm">Loading…</div>;
 
+  const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
+    <div className="space-y-3">
+      <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{title}</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{children}</div>
+    </div>
+  );
+
   return (
-    <div className="max-w-2xl mx-auto p-6 space-y-6">
+    <div className="max-w-2xl mx-auto p-6 space-y-8">
       <h1 className="text-xl font-semibold">My profile</h1>
 
       <div className="flex items-center gap-4">
@@ -86,22 +115,50 @@ const ProfileEditor = () => {
         </label>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <Section title="Personal">
+        <div className="space-y-2"><Label>Email</Label><Input value={profile.email ?? ''} disabled /></div>
+        <div className="space-y-2"><Label>Full name</Label><Input value={profile.full_name ?? ''} onChange={e => set('full_name', e.target.value)} /></div>
+        <div className="space-y-2"><Label>Phone</Label><Input value={profile.phone ?? ''} onChange={e => set('phone', e.target.value)} /></div>
+        <div className="space-y-2"><Label>Date of birth</Label><Input type="date" value={profile.date_of_birth ?? ''} onChange={e => set('date_of_birth', e.target.value)} /></div>
+      </Section>
+
+      <Section title="Home address">
+        <div className="space-y-2 md:col-span-2"><Label>Street address</Label><Textarea value={profile.address ?? ''} onChange={e => set('address', e.target.value)} /></div>
+        <div className="space-y-2"><Label>Postal code</Label><Input value={profile.postal_code ?? ''} onChange={e => set('postal_code', e.target.value)} /></div>
+        <div className="space-y-2"><Label>City</Label><Input value={profile.city ?? ''} onChange={e => set('city', e.target.value)} /></div>
+        <div className="space-y-2"><Label>Country</Label><Input value={profile.country ?? ''} onChange={e => set('country', e.target.value)} /></div>
+      </Section>
+
+      <Section title="Emergency contact">
+        <div className="space-y-2"><Label>Name</Label><Input value={profile.emergency_contact_name ?? ''} onChange={e => set('emergency_contact_name', e.target.value)} /></div>
+        <div className="space-y-2"><Label>Phone</Label><Input value={profile.emergency_contact_phone ?? ''} onChange={e => set('emergency_contact_phone', e.target.value)} /></div>
+        <div className="space-y-2"><Label>Relation</Label><Input placeholder="Spouse, parent…" value={profile.emergency_contact_relation ?? ''} onChange={e => set('emergency_contact_relation', e.target.value)} /></div>
+        <div className="space-y-2"><Label>Medical notes / allergies</Label><Input value={profile.medical_notes ?? ''} onChange={e => set('medical_notes', e.target.value)} /></div>
+        <div className="space-y-2"><Label>Second contact name</Label><Input value={profile.emergency_contact2_name ?? ''} onChange={e => set('emergency_contact2_name', e.target.value)} /></div>
+        <div className="space-y-2"><Label>Second contact phone</Label><Input value={profile.emergency_contact2_phone ?? ''} onChange={e => set('emergency_contact2_phone', e.target.value)} /></div>
+      </Section>
+
+      <Section title="Work">
+        <div className="space-y-2"><Label>Job title</Label><Input value={profile.job_title ?? ''} onChange={e => set('job_title', e.target.value)} /></div>
         <div className="space-y-2">
-          <Label>Email</Label>
-          <Input value={profile.email ?? ''} disabled />
+          <Label>Employment type</Label>
+          <Select value={profile.employment_type ?? 'none'} onValueChange={v => set('employment_type', v === 'none' ? null : v)}>
+            <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">— Not set —</SelectItem>
+              <SelectItem value="employee">Employee</SelectItem>
+              <SelectItem value="contractor">Contractor</SelectItem>
+              <SelectItem value="sub_vendor">Sub-vendor</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        <div className="space-y-2">
-          <Label>Full name</Label>
-          <Input value={profile.full_name ?? ''} onChange={e => setProfile({ ...profile, full_name: e.target.value })} />
-        </div>
-        <div className="space-y-2">
-          <Label>Phone</Label>
-          <Input value={profile.phone ?? ''} onChange={e => setProfile({ ...profile, phone: e.target.value })} />
-        </div>
-        <div className="space-y-2">
+        <div className="space-y-2"><Label>Employment start date</Label><Input type="date" value={profile.employment_start_date ?? ''} onChange={e => set('employment_start_date', e.target.value)} /></div>
+        <div className="space-y-2"><Label>Driver's licence</Label><Input placeholder="B, C1E…" value={profile.drivers_license ?? ''} onChange={e => set('drivers_license', e.target.value)} /></div>
+        <div className="space-y-2"><Label>Clothing size</Label><Input value={profile.clothing_size ?? ''} onChange={e => set('clothing_size', e.target.value)} /></div>
+        <div className="space-y-2"><Label>Shoe size</Label><Input value={profile.shoe_size ?? ''} onChange={e => set('shoe_size', e.target.value)} /></div>
+        <div className="space-y-2 md:col-span-2">
           <Label>Linked installer</Label>
-          <Select value={profile.installer_id ?? 'none'} onValueChange={v => setProfile({ ...profile, installer_id: v === 'none' ? null : v })}>
+          <Select value={profile.installer_id ?? 'none'} onValueChange={v => set('installer_id', v === 'none' ? null : v)}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="none">— None —</SelectItem>
@@ -109,19 +166,7 @@ const ProfileEditor = () => {
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-2 md:col-span-2">
-          <Label>Address</Label>
-          <Textarea value={profile.address ?? ''} onChange={e => setProfile({ ...profile, address: e.target.value })} />
-        </div>
-        <div className="space-y-2">
-          <Label>Emergency contact name</Label>
-          <Input value={profile.emergency_contact_name ?? ''} onChange={e => setProfile({ ...profile, emergency_contact_name: e.target.value })} />
-        </div>
-        <div className="space-y-2">
-          <Label>Emergency contact phone</Label>
-          <Input value={profile.emergency_contact_phone ?? ''} onChange={e => setProfile({ ...profile, emergency_contact_phone: e.target.value })} />
-        </div>
-      </div>
+      </Section>
 
       <Button onClick={save} disabled={busy}>{busy ? 'Saving…' : 'Save changes'}</Button>
     </div>
