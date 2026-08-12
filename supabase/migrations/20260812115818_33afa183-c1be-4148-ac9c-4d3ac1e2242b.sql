@@ -1,0 +1,15 @@
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS postal_code text,
+  ADD COLUMN IF NOT EXISTS city text,
+  ADD COLUMN IF NOT EXISTS country text,
+  ADD COLUMN IF NOT EXISTS date_of_birth date,
+  ADD COLUMN IF NOT EXISTS emergency_contact_relation text,
+  ADD COLUMN IF NOT EXISTS emergency_contact2_name text,
+  ADD COLUMN IF NOT EXISTS emergency_contact2_phone text,
+  ADD COLUMN IF NOT EXISTS job_title text,
+  ADD COLUMN IF NOT EXISTS employment_type text,
+  ADD COLUMN IF NOT EXISTS employment_start_date date,
+  ADD COLUMN IF NOT EXISTS drivers_license text,
+  ADD COLUMN IF NOT EXISTS medical_notes text,
+  ADD COLUMN IF NOT EXISTS clothing_size text,
+  ADD COLUMN IF NOT EXISTS shoe_size text;

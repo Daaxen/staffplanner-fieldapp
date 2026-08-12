@@ -289,43 +289,85 @@ export type Database = {
         Row: {
           address: string | null
           avatar_url: string | null
+          city: string | null
+          clothing_size: string | null
+          country: string | null
           created_at: string
+          date_of_birth: string | null
+          drivers_license: string | null
           email: string | null
           emergency_contact_name: string | null
           emergency_contact_phone: string | null
+          emergency_contact_relation: string | null
+          emergency_contact2_name: string | null
+          emergency_contact2_phone: string | null
+          employment_start_date: string | null
+          employment_type: string | null
           full_name: string | null
           id: string
           installer_id: string | null
+          job_title: string | null
+          medical_notes: string | null
           phone: string | null
+          postal_code: string | null
           sandbox_mode: boolean
+          shoe_size: string | null
           updated_at: string
         }
         Insert: {
           address?: string | null
           avatar_url?: string | null
+          city?: string | null
+          clothing_size?: string | null
+          country?: string | null
           created_at?: string
+          date_of_birth?: string | null
+          drivers_license?: string | null
           email?: string | null
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
+          emergency_contact_relation?: string | null
+          emergency_contact2_name?: string | null
+          emergency_contact2_phone?: string | null
+          employment_start_date?: string | null
+          employment_type?: string | null
           full_name?: string | null
           id: string
           installer_id?: string | null
+          job_title?: string | null
+          medical_notes?: string | null
           phone?: string | null
+          postal_code?: string | null
           sandbox_mode?: boolean
+          shoe_size?: string | null
           updated_at?: string
         }
         Update: {
           address?: string | null
           avatar_url?: string | null
+          city?: string | null
+          clothing_size?: string | null
+          country?: string | null
           created_at?: string
+          date_of_birth?: string | null
+          drivers_license?: string | null
           email?: string | null
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
+          emergency_contact_relation?: string | null
+          emergency_contact2_name?: string | null
+          emergency_contact2_phone?: string | null
+          employment_start_date?: string | null
+          employment_type?: string | null
           full_name?: string | null
           id?: string
           installer_id?: string | null
+          job_title?: string | null
+          medical_notes?: string | null
           phone?: string | null
+          postal_code?: string | null
           sandbox_mode?: boolean
+          shoe_size?: string | null
           updated_at?: string
         }
         Relationships: []
