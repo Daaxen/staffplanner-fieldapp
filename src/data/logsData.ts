@@ -59,13 +59,6 @@ export type LogsStore = {
 export const DEFAULT_MILEAGE_RATE = 25; // SEK/km
 export const LOGS_STORAGE_KEY = 'installer-logs-v1';
 
-const today = new Date();
-const d = (offset: number) => {
-  const date = new Date(today);
-  date.setDate(date.getDate() + offset);
-  return date.toISOString().split('T')[0];
-};
-
 export const initialLogsStore: LogsStore = {
   time: [],
   expenses: [],
