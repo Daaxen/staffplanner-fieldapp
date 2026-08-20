@@ -67,16 +67,8 @@ const d = (offset: number) => {
 };
 
 export const initialLogsStore: LogsStore = {
-  time: [
-    { id: 't-seed-1', projectId: 'proj-1', installerId: 'inst-1', date: d(-1), startTime: '08:00', endTime: '12:00', hours: 4, note: 'Assembly of base units', source: 'manual', createdAt: new Date().toISOString() },
-    { id: 't-seed-2', projectId: 'proj-1', installerId: 'inst-1', date: d(-1), startTime: '13:00', endTime: '16:30', hours: 3.5, note: 'Wall cabinets', source: 'manual', createdAt: new Date().toISOString() },
-    { id: 't-seed-3', projectId: 'proj-7', installerId: 'inst-1', date: d(0), startTime: '09:00', endTime: '11:30', hours: 2.5, source: 'timer', createdAt: new Date().toISOString() },
-  ],
-  expenses: [
-    { id: 'e-seed-1', projectId: 'proj-1', installerId: 'inst-1', date: d(-1), category: 'materials', amount: 480, note: 'Screws & brackets', createdAt: new Date().toISOString() },
-    { id: 'e-seed-2', projectId: 'proj-1', installerId: 'inst-1', date: d(-1), category: 'mileage', amount: 32 * DEFAULT_MILEAGE_RATE, km: 32, rate: DEFAULT_MILEAGE_RATE, note: 'Site → warehouse → site', createdAt: new Date().toISOString() },
-    { id: 'e-seed-3', projectId: 'proj-7', installerId: 'inst-1', date: d(0), category: 'parking', amount: 60, createdAt: new Date().toISOString() },
-  ],
+  time: [],
+  expenses: [],
   activeTimer: null,
 };
 
