@@ -701,6 +701,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_project_member: { Args: { _project_id: string }; Returns: boolean }
+      shares_project_with_installer: {
+        Args: { _installer_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "installer"
