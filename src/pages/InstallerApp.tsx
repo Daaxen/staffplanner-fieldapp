@@ -8,7 +8,7 @@ import InstallerOrderBox from '@/components/installer/schedule/InstallerOrderBox
 import InstallerDocuments from '@/components/installer/InstallerDocuments';
 import ProjectCard from '@/components/installer/schedule/ProjectCard';
 import ScheduleFilters, { type FilterState } from '@/components/installer/schedule/ScheduleFilters';
-import LogsOverview from '@/components/installer/logs/LogsOverview';
+import LogsOverview from '@/components/installer/reporting/LogsOverview';
 import RemindersInbox from '@/components/installer/reminders/RemindersInbox';
 import ReminderBanner from '@/components/installer/reminders/ReminderBanner';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
