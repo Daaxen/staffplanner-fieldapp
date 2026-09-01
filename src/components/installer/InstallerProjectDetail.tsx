@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useState } from 'react';
-import ProjectLogTab from '@/components/installer/logs/ProjectLogTab';
+import ProjectLogTab from '@/components/installer/reporting/ProjectLogTab';
 import type { InstallerLogs } from '@/hooks/useInstallerLogs';
 
 interface InstallerProjectDetailProps {
