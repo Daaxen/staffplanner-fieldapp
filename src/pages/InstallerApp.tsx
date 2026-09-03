@@ -78,6 +78,14 @@ const InstallerApp = () => {
     return result;
   }, [myProjects, projectFilters]);
 
+  if (!installer) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background text-sm text-muted-foreground">
+        No installers available yet.
+      </div>
+    );
+  }
+
   if (selectedProject) {
     return (
       <InstallerProjectDetail
