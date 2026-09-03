@@ -150,12 +150,6 @@ export const ratesForClient = (clientName?: string, clientId?: string): Required
 // Backwards-compatible name list for autocomplete/datalists
 export const clients = clientRegister.map(c => c.name);
 
-const today = new Date();
-function d(offset: number) {
-  const date = new Date(today);
-  date.setDate(date.getDate() + offset);
-  return date.toISOString().split('T')[0];
-}
 
 export const installers: Installer[] = [];
 

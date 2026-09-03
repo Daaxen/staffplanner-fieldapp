@@ -26,8 +26,7 @@ const InstallerApp = () => {
   const [localProjects, setLocalProjects] = useState<Project[]>(mockProjects);
   const [projectFilters, setProjectFilters] = useState<FilterState>({ statuses: [], types: [] });
 
-  const installer = installers.find(i => i.id === CURRENT_INSTALLER_ID)
-    ?? { id: CURRENT_INSTALLER_ID, name: 'Installer', color: 1, type: 'own' as const, baseLocation: '', absences: [] };
+  const installer = installers.find(i => i.id === CURRENT_INSTALLER_ID);
   const myProjects = localProjects.filter(p => p.assigneeIds.includes(CURRENT_INSTALLER_ID));
   const logs = useInstallerLogs(localProjects);
   const reminders = useReminders();
