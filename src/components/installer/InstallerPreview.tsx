@@ -50,6 +50,7 @@ const InstallerPreview = ({ projects }: InstallerPreviewProps) => {
   }, [projects]);
 
   const handlePickUp = (project: Project) => {
+    if (!installer) return;
     toast.info(`Pick-up action for "${project.name}" — would assign to ${installer.name} in production`);
   };
 
