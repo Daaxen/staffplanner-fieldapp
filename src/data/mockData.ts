@@ -150,27 +150,9 @@ export const ratesForClient = (clientName?: string, clientId?: string): Required
 // Backwards-compatible name list for autocomplete/datalists
 export const clients = clientRegister.map(c => c.name);
 
-const today = new Date();
-function d(offset: number) {
-  const date = new Date(today);
-  date.setDate(date.getDate() + offset);
-  return date.toISOString().split('T')[0];
-}
 
-export const installers: Installer[] = [
-  { id: 'inst-1', name: 'Erik Lindberg', color: 1, type: 'own', baseLocation: 'Bromma', absences: [
-    { id: 'abs-1', type: 'vacation', startDate: d(8), endDate: d(12), label: 'Summer vacation' },
-  ] },
-  { id: 'inst-2', name: 'Anna Svensson', color: 2, type: 'own', baseLocation: 'Kista', absences: [] },
-  { id: 'inst-3', name: 'MontageTeam AB', color: 3, type: 'sub-vendor', baseLocation: 'Solna', absences: [] },
-  { id: 'inst-4', name: 'Karl Johansson', color: 4, type: 'own', baseLocation: 'Täby', absences: [
-    { id: 'abs-2', type: 'sick', startDate: d(4), endDate: d(5), label: 'Sick leave' },
-  ] },
-  { id: 'inst-5', name: 'Nordic Install Co', color: 5, type: 'sub-vendor', baseLocation: 'Kungens Kurva', absences: [] },
-  { id: 'inst-6', name: 'Sofia Bergström', color: 6, type: 'own', baseLocation: 'Södermalm', absences: [
-    { id: 'abs-3', type: 'vacation', startDate: d(15), endDate: d(22), label: 'Vacation' },
-  ] },
-];
+export const installers: Installer[] = [];
+
 
 // Mock distance matrix (km) between locations for proximity scoring
 export const locationDistances: Record<string, Record<string, number>> = {};

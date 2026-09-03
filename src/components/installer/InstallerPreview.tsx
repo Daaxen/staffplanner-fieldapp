@@ -28,11 +28,11 @@ const installerColorMap: Record<number, string> = {
 };
 
 const InstallerPreview = ({ projects }: InstallerPreviewProps) => {
-  const [selectedInstallerId, setSelectedInstallerId] = useState(installers[0].id);
+  const [selectedInstallerId, setSelectedInstallerId] = useState(installers[0]?.id ?? '');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [projectFilters, setProjectFilters] = useState<FilterState>({ statuses: [], types: [] });
 
-  const installer = installers.find(i => i.id === selectedInstallerId)!;
+  const installer = installers.find(i => i.id === selectedInstallerId);
   const myProjects = projects.filter(p => p.assigneeIds.includes(selectedInstallerId));
   const logs = useInstallerLogs(projects);
 
@@ -50,6 +50,7 @@ const InstallerPreview = ({ projects }: InstallerPreviewProps) => {
   }, [projects]);
 
   const handlePickUp = (project: Project) => {
+    if (!installer) return;
     toast.info(`Pick-up action for "${project.name}" — would assign to ${installer.name} in production`);
   };
 
@@ -66,6 +67,14 @@ const InstallerPreview = ({ projects }: InstallerPreviewProps) => {
 
   const activeProjects = filteredMyProjects.filter(p => p.status !== 'cancelled' && p.status !== 'completed');
   const completedProjects = filteredMyProjects.filter(p => p.status === 'completed');
+
+  if (!installer) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-6 bg-muted/30 text-sm text-muted-foreground">
+        No installers available yet.
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col items-center justify-start p-6 bg-muted/30 overflow-auto">

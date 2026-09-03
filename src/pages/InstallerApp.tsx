@@ -26,7 +26,7 @@ const InstallerApp = () => {
   const [localProjects, setLocalProjects] = useState<Project[]>(mockProjects);
   const [projectFilters, setProjectFilters] = useState<FilterState>({ statuses: [], types: [] });
 
-  const installer = installers.find(i => i.id === CURRENT_INSTALLER_ID)!;
+  const installer = installers.find(i => i.id === CURRENT_INSTALLER_ID);
   const myProjects = localProjects.filter(p => p.assigneeIds.includes(CURRENT_INSTALLER_ID));
   const logs = useInstallerLogs(localProjects);
   const reminders = useReminders();
@@ -77,6 +77,14 @@ const InstallerApp = () => {
     }
     return result;
   }, [myProjects, projectFilters]);
+
+  if (!installer) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background text-sm text-muted-foreground">
+        No installers available yet.
+      </div>
+    );
+  }
 
   if (selectedProject) {
     return (

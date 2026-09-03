@@ -35,7 +35,7 @@ const COLUMNS = [
   'Contact Name',
   'Contact Phone',
   'Contact Email',
-  'Assignees',       // semicolon-separated installer names or IDs, e.g. "Erik Lindberg; inst-3"
+  'Assignees',       // semicolon-separated installer names or IDs
   'Vehicle Type',
 ] as const;
 
