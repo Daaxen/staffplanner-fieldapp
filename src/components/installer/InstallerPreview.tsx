@@ -67,6 +67,14 @@ const InstallerPreview = ({ projects }: InstallerPreviewProps) => {
   const activeProjects = filteredMyProjects.filter(p => p.status !== 'cancelled' && p.status !== 'completed');
   const completedProjects = filteredMyProjects.filter(p => p.status === 'completed');
 
+  if (!installer) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-6 bg-muted/30 text-sm text-muted-foreground">
+        No installers available yet.
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 flex flex-col items-center justify-start p-6 bg-muted/30 overflow-auto">
       {/* Installer Selector */}
