@@ -28,11 +28,11 @@ const installerColorMap: Record<number, string> = {
 };
 
 const InstallerPreview = ({ projects }: InstallerPreviewProps) => {
-  const [selectedInstallerId, setSelectedInstallerId] = useState(installers[0].id);
+  const [selectedInstallerId, setSelectedInstallerId] = useState(installers[0]?.id ?? '');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [projectFilters, setProjectFilters] = useState<FilterState>({ statuses: [], types: [] });
 
-  const installer = installers.find(i => i.id === selectedInstallerId)!;
+  const installer = installers.find(i => i.id === selectedInstallerId);
   const myProjects = projects.filter(p => p.assigneeIds.includes(selectedInstallerId));
   const logs = useInstallerLogs(projects);
 
