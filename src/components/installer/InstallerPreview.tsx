@@ -77,10 +77,11 @@ const InstallerPreview = ({ projects }: InstallerPreviewProps) => {
   if (!installer) {
     return (
       <div className="flex-1 flex items-center justify-center p-6 bg-muted/30 text-sm text-muted-foreground">
-        No installers available yet.
+        {installersLoading ? 'Loading installers…' : 'No installer accounts yet — add a user with the installer role.'}
       </div>
     );
   }
+
 
   return (
     <div className="flex-1 flex flex-col items-center justify-start p-6 bg-muted/30 overflow-auto">
