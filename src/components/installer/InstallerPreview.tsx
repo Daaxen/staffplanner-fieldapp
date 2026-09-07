@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
-import { type Installer, type Project, installers } from '@/data/mockData';
+import { useState, useMemo, useEffect } from 'react';
+import { type Installer, type Project } from '@/data/mockData';
+import { useInstallers } from '@/hooks/useInstallers';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import InstallerSchedule from '@/components/installer/InstallerSchedule';
@@ -28,9 +29,14 @@ const installerColorMap: Record<number, string> = {
 };
 
 const InstallerPreview = ({ projects }: InstallerPreviewProps) => {
-  const [selectedInstallerId, setSelectedInstallerId] = useState(installers[0]?.id ?? '');
+  const { installers, loading: installersLoading } = useInstallers();
+  const [selectedInstallerId, setSelectedInstallerId] = useState('');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [projectFilters, setProjectFilters] = useState<FilterState>({ statuses: [], types: [] });
+
+  useEffect(() => {
+    if (!selectedInstallerId && installers.length > 0) setSelectedInstallerId(installers[0].id);
+  }, [installers, selectedInstallerId]);
 
   const installer = installers.find(i => i.id === selectedInstallerId);
   const myProjects = projects.filter(p => p.assigneeIds.includes(selectedInstallerId));
@@ -71,10 +77,11 @@ const InstallerPreview = ({ projects }: InstallerPreviewProps) => {
   if (!installer) {
     return (
       <div className="flex-1 flex items-center justify-center p-6 bg-muted/30 text-sm text-muted-foreground">
-        No installers available yet.
+        {installersLoading ? 'Loading installers…' : 'No installer accounts yet — add a user with the installer role.'}
       </div>
     );
   }
+
 
   return (
     <div className="flex-1 flex flex-col items-center justify-start p-6 bg-muted/30 overflow-auto">
