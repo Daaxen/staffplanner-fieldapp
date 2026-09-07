@@ -366,6 +366,9 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
                       onMouseEnter={() => setHighlightedIndex(idx)}
                     >
                       {c}
+                      {clientExtra.get(c) && (
+                        <span className="block text-xs text-muted-foreground">{clientExtra.get(c)}</span>
+                      )}
                     </button>
                   ))}
                 </div>
