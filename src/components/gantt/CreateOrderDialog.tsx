@@ -11,7 +11,8 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { installers, projects, locationDistances, type Project, type ProjectStatus, type ProjectType, type TransportStop, type GoodsItem, type Attachment, projectTypeLabels } from '@/data/mockData';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useClientNames } from '@/lib/clientStore';
+import { useClients } from '@/lib/clientStore';
+import { projects } from '@/data/mockData';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface CreateOrderDialogProps {
