@@ -156,7 +156,10 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
     setClient(value);
     setHighlightedIndex(-1);
     const filtered = value.trim()
-      ? clients.filter(c => c.toLowerCase().includes(value.toLowerCase()))
+      ? clients.filter(c => {
+          const q = value.toLowerCase();
+          return c.toLowerCase().includes(q) || (clientExtra.get(c) ?? '').toLowerCase().includes(q);
+        })
       : clients;
     setClientSuggestions(filtered);
     setShowClientSuggestions(filtered.length > 0);
