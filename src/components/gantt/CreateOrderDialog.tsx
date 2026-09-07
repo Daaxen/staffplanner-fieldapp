@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { installers, projects, locationDistances, type Project, type ProjectStatus, type ProjectType, type TransportStop, type GoodsItem, type Attachment, projectTypeLabels } from '@/data/mockData';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useClientNames } from '@/lib/clientStore';
+import { useClients } from '@/lib/clientStore';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface CreateOrderDialogProps {
@@ -31,7 +31,21 @@ const generateGoodsId = () => `gi-${Math.random().toString(36).slice(2, 8)}`;
 
 const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDialogProps) => {
   const projectId = useMemo(() => generateProjectId(), [open]);
-  const clients = useClientNames();
+  const [clientRows] = useClients();
+  const clients = useMemo(() => {
+    const names = new Set<string>();
+    clientRows.forEach((c) => c.name && names.add(c.name));
+    projects.forEach((p) => p.client && names.add(p.client));
+    return Array.from(names).sort((a, b) => a.localeCompare(b));
+  }, [clientRows]);
+  const clientExtra = useMemo(() => {
+    const map = new Map<string, string>();
+    clientRows.forEach((c) => {
+      const label = [c.customerNumber, c.id, c.region].filter(Boolean).join(' · ');
+      if (c.name) map.set(c.name, label);
+    });
+    return map;
+  }, [clientRows]);
   const [projectType, setProjectType] = useState<ProjectType>('installation');
   const [name, setName] = useState('');
   const [projectNumber, setProjectNumber] = useState('');
@@ -142,7 +156,10 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
     setClient(value);
     setHighlightedIndex(-1);
     const filtered = value.trim()
-      ? clients.filter(c => c.toLowerCase().includes(value.toLowerCase()))
+      ? clients.filter(c => {
+          const q = value.toLowerCase();
+          return c.toLowerCase().includes(q) || (clientExtra.get(c) ?? '').toLowerCase().includes(q);
+        })
       : clients;
     setClientSuggestions(filtered);
     setShowClientSuggestions(filtered.length > 0);
@@ -349,6 +366,9 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
                       onMouseEnter={() => setHighlightedIndex(idx)}
                     >
                       {c}
+                      {clientExtra.get(c) && (
+                        <span className="block text-xs text-muted-foreground">{clientExtra.get(c)}</span>
+                      )}
                     </button>
                   ))}
                 </div>
