@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { CalendarDays, Package, FolderKanban, User, BookOpen, Clock, Bell } from 'lucide-react';
+import { CalendarDays, Package, FolderKanban, User, BookOpen, Clock, Bell, LogOut } from 'lucide-react';
 import { addDays, startOfWeek, format } from 'date-fns';
 import InstallerSchedule from '@/components/installer/InstallerSchedule';
 import InstallerProjectDetail from '@/components/installer/InstallerProjectDetail';
@@ -12,22 +12,23 @@ import LogsOverview from '@/components/installer/reporting/LogsOverview';
 import RemindersInbox from '@/components/installer/reminders/RemindersInbox';
 import ReminderBanner from '@/components/installer/reminders/ReminderBanner';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { installers, projects as mockProjects, type Project } from '@/data/mockData';
+import { projects as mockProjects, type Project } from '@/data/mockData';
+import { useCurrentInstaller } from '@/hooks/useInstallers';
+import { useAuth } from '@/hooks/useAuth';
 import { useInstallerLogs } from '@/hooks/useInstallerLogs';
 import { useReminders } from '@/hooks/useReminders';
 import { usePushRegistration } from '@/hooks/usePushRegistration';
 import { toast } from 'sonner';
-
-
-const CURRENT_INSTALLER_ID = 'inst-1';
 
 const InstallerApp = () => {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [localProjects, setLocalProjects] = useState<Project[]>(mockProjects);
   const [projectFilters, setProjectFilters] = useState<FilterState>({ statuses: [], types: [] });
 
-  const installer = installers.find(i => i.id === CURRENT_INSTALLER_ID);
-  const myProjects = localProjects.filter(p => p.assigneeIds.includes(CURRENT_INSTALLER_ID));
+  const { installer, loading: installerLoading } = useCurrentInstaller();
+  const { signOut } = useAuth();
+  const currentInstallerId = installer?.id ?? '';
+  const myProjects = localProjects.filter(p => currentInstallerId && p.assigneeIds.includes(currentInstallerId));
   const logs = useInstallerLogs(localProjects);
   const reminders = useReminders();
   const [tab, setTab] = useState<string>('schedule');
@@ -49,7 +50,7 @@ const InstallerApp = () => {
 
   const handlePickUp = (project: Project) => {
     setLocalProjects(prev => prev.map(p =>
-      p.id === project.id ? { ...p, assigneeIds: [...p.assigneeIds, CURRENT_INSTALLER_ID], status: 'scheduled' as const } : p
+      p.id === project.id ? { ...p, assigneeIds: [...p.assigneeIds, currentInstallerId], status: 'scheduled' as const } : p
     ));
     toast.success(`Picked up: ${project.name}`);
   };
@@ -78,10 +79,28 @@ const InstallerApp = () => {
     return result;
   }, [myProjects, projectFilters]);
 
-  if (!installer) {
+  if (installerLoading) {
     return (
       <div className="h-screen flex items-center justify-center bg-background text-sm text-muted-foreground">
-        No installers available yet.
+        Loading your account…
+      </div>
+    );
+  }
+
+  if (!installer) {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center gap-3 bg-background p-6 text-center">
+        <h1 className="text-lg font-semibold text-foreground">No installer account linked</h1>
+        <p className="text-sm text-muted-foreground max-w-sm">
+          You're signed in, but your account isn't set up as an installer yet. Ask an administrator to give you
+          installer access, then sign in again.
+        </p>
+        <button
+          onClick={signOut}
+          className="mt-2 text-sm font-medium underline underline-offset-4 text-primary"
+        >
+          Sign out
+        </button>
       </div>
     );
   }
@@ -109,8 +128,17 @@ const InstallerApp = () => {
           <h1 className="text-lg font-bold">Installer</h1>
           <p className="text-xs opacity-80">{installer.name}</p>
         </div>
-        <div className="w-9 h-9 rounded-full bg-primary-foreground/20 flex items-center justify-center text-sm font-bold">
-          {installer.name.split(' ').map(n => n[0]).join('')}
+        <div className="flex items-center gap-2">
+          <div className="w-9 h-9 rounded-full bg-primary-foreground/20 flex items-center justify-center text-sm font-bold">
+            {installer.name.split(' ').map(n => n[0]).join('')}
+          </div>
+          <button
+            onClick={signOut}
+            aria-label="Sign out"
+            className="p-2 rounded-md hover:bg-primary-foreground/15 transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </header>
 
