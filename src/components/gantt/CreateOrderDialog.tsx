@@ -331,7 +331,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
                 placeholder="Start typing..."
                 value={client}
                 onChange={(e) => handleClientChange(e.target.value)}
-                onFocus={() => { if (client.trim()) handleClientChange(client); }}
+                onFocus={() => handleClientChange(client)}
                 onKeyDown={handleClientKeyDown}
                 autoComplete="off"
               />
