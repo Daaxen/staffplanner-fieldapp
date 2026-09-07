@@ -9,8 +9,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon, MapPin, Maximize2, Minimize2, Plus, Trash2, GripVertical, PenTool, Package, Paperclip, X, FileText, Image, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { installers, clients, projects, locationDistances, type Project, type ProjectStatus, type ProjectType, type TransportStop, type GoodsItem, type Attachment, projectTypeLabels } from '@/data/mockData';
+import { installers, projects, locationDistances, type Project, type ProjectStatus, type ProjectType, type TransportStop, type GoodsItem, type Attachment, projectTypeLabels } from '@/data/mockData';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useClientNames } from '@/lib/clientStore';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface CreateOrderDialogProps {
@@ -30,6 +31,7 @@ const generateGoodsId = () => `gi-${Math.random().toString(36).slice(2, 8)}`;
 
 const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDialogProps) => {
   const projectId = useMemo(() => generateProjectId(), [open]);
+  const clients = useClientNames();
   const [projectType, setProjectType] = useState<ProjectType>('installation');
   const [name, setName] = useState('');
   const [projectNumber, setProjectNumber] = useState('');
@@ -139,13 +141,11 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
   const handleClientChange = (value: string) => {
     setClient(value);
     setHighlightedIndex(-1);
-    if (value.trim()) {
-      const filtered = clients.filter(c => c.toLowerCase().includes(value.toLowerCase()));
-      setClientSuggestions(filtered);
-      setShowClientSuggestions(filtered.length > 0);
-    } else {
-      setShowClientSuggestions(false);
-    }
+    const filtered = value.trim()
+      ? clients.filter(c => c.toLowerCase().includes(value.toLowerCase()))
+      : clients;
+    setClientSuggestions(filtered);
+    setShowClientSuggestions(filtered.length > 0);
   };
 
   const selectClient = (c: string) => {
