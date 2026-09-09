@@ -44,7 +44,7 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
   const [activeStatuses, setActiveStatuses] = useState<Set<ProjectStatus>>(new Set(allStatuses));
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [pendingChanges, setPendingChanges] = useState<DispatchChange[]>([]);
-  const lastDispatchedState = useRef<string>(JSON.stringify(initialProjects));
+  const lastDispatchedState = useRef<string>('');
 
   useEffect(() => {
     onPendingChangesCount?.(pendingChanges.length);
