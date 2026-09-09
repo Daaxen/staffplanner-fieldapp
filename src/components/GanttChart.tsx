@@ -1,7 +1,8 @@
 import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, LayoutList, Users, Building2, Plus, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { projects as initialProjects, installers, type Project, type ProjectStatus } from '@/data/mockData';
+import { installers, type Project, type ProjectStatus } from '@/data/mockData';
+import { useProjects } from '@/lib/appData';
 import ProjectDetailPanel from './ProjectDetailPanel';
 import ProjectsView from './gantt/ProjectsView';
 import InstallersView from './gantt/InstallersView';
@@ -39,11 +40,11 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
   const [ganttMode, setGanttMode] = useState<GanttMode>('projects');
   const [dateOffset, setDateOffset] = useState(0);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [projectsList, setProjectsList] = useState<Project[]>(initialProjects);
+  const [projectsList, setProjectsList] = useProjects();
   const [activeStatuses, setActiveStatuses] = useState<Set<ProjectStatus>>(new Set(allStatuses));
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [pendingChanges, setPendingChanges] = useState<DispatchChange[]>([]);
-  const lastDispatchedState = useRef<string>(JSON.stringify(initialProjects));
+  const lastDispatchedState = useRef<string>('');
 
   useEffect(() => {
     onPendingChangesCount?.(pendingChanges.length);

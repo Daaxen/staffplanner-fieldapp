@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Search, Filter, X, CheckSquare, Square, Download, History, Users as UsersIcon, Trash2, ArrowRight, AlertTriangle, Check } from 'lucide-react';
-import { projects as mockProjects, installers, type Project, type ProjectStatus, type ProjectType, statusLabels, projectTypeLabels, projectTypeIcons } from '@/data/mockData';
+import { installers, type Project, type ProjectStatus, type ProjectType, statusLabels, projectTypeLabels, projectTypeIcons } from '@/data/mockData';
+import { useProjects } from '@/lib/appData';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,7 +33,7 @@ const statusDot: Record<ProjectStatus, string> = {
 const todayStr = new Date().toISOString().slice(0, 10);
 
 const OrdersRegister = () => {
-  const [orders, setOrders] = useState<Project[]>(mockProjects);
+  const [orders, setOrders] = useProjects();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<ProjectStatus[]>([]);
   const [typeFilter, setTypeFilter] = useState<ProjectType[]>([]);

@@ -41,33 +41,39 @@ export type Database = {
       clients: {
         Row: {
           created_at: string
+          data: Json
           hourly_rate: number | null
           id: string
           mileage_rate: number | null
           name: string
           overtime_rate: number | null
+          ref: string | null
           sandbox: boolean
           updated_at: string
           vat_percent: number
         }
         Insert: {
           created_at?: string
+          data?: Json
           hourly_rate?: number | null
           id?: string
           mileage_rate?: number | null
           name: string
           overtime_rate?: number | null
+          ref?: string | null
           sandbox?: boolean
           updated_at?: string
           vat_percent?: number
         }
         Update: {
           created_at?: string
+          data?: Json
           hourly_rate?: number | null
           id?: string
           mileage_rate?: number | null
           name?: string
           overtime_rate?: number | null
+          ref?: string | null
           sandbox?: boolean
           updated_at?: string
           vat_percent?: number
@@ -415,11 +421,13 @@ export type Database = {
           contact_name: string | null
           contact_phone: string | null
           created_at: string
+          data: Json
           end_date: string | null
           id: string
           location: string | null
           name: string
           project_type: string
+          ref: string | null
           sandbox: boolean
           start_date: string | null
           status: string
@@ -431,11 +439,13 @@ export type Database = {
           contact_name?: string | null
           contact_phone?: string | null
           created_at?: string
+          data?: Json
           end_date?: string | null
           id?: string
           location?: string | null
           name: string
           project_type?: string
+          ref?: string | null
           sandbox?: boolean
           start_date?: string | null
           status?: string
@@ -447,11 +457,13 @@ export type Database = {
           contact_name?: string | null
           contact_phone?: string | null
           created_at?: string
+          data?: Json
           end_date?: string | null
           id?: string
           location?: string | null
           name?: string
           project_type?: string
+          ref?: string | null
           sandbox?: boolean
           start_date?: string | null
           status?: string

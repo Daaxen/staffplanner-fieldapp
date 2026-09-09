@@ -12,7 +12,8 @@ import LogsOverview from '@/components/installer/reporting/LogsOverview';
 import RemindersInbox from '@/components/installer/reminders/RemindersInbox';
 import ReminderBanner from '@/components/installer/reminders/ReminderBanner';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { projects as mockProjects, type Project } from '@/data/mockData';
+import { type Project } from '@/data/mockData';
+import { useProjects } from '@/lib/appData';
 import { useCurrentInstaller } from '@/hooks/useInstallers';
 import { useAuth } from '@/hooks/useAuth';
 import { useInstallerLogs } from '@/hooks/useInstallerLogs';
@@ -22,7 +23,7 @@ import { toast } from 'sonner';
 
 const InstallerApp = () => {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [localProjects, setLocalProjects] = useState<Project[]>(mockProjects);
+  const [localProjects, setLocalProjects] = useProjects();
   const [projectFilters, setProjectFilters] = useState<FilterState>({ statuses: [], types: [] });
 
   const { installer, loading: installerLoading } = useCurrentInstaller();
