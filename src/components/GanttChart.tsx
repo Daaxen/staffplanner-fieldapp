@@ -1,7 +1,8 @@
 import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, LayoutList, Users, Building2, Plus, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { projects as initialProjects, installers, type Project, type ProjectStatus } from '@/data/mockData';
+import { installers, type Project, type ProjectStatus } from '@/data/mockData';
+import { useProjects } from '@/lib/appData';
 import ProjectDetailPanel from './ProjectDetailPanel';
 import ProjectsView from './gantt/ProjectsView';
 import InstallersView from './gantt/InstallersView';
