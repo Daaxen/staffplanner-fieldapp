@@ -40,7 +40,7 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
   const [ganttMode, setGanttMode] = useState<GanttMode>('projects');
   const [dateOffset, setDateOffset] = useState(0);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [projectsList, setProjectsList] = useState<Project[]>(initialProjects);
+  const [projectsList, setProjectsList] = useProjects();
   const [activeStatuses, setActiveStatuses] = useState<Set<ProjectStatus>>(new Set(allStatuses));
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [pendingChanges, setPendingChanges] = useState<DispatchChange[]>([]);
