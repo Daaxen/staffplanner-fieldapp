@@ -11,7 +11,7 @@ import ClientsRegister from '@/components/clients/ClientsRegister';
 import ProfileEditor from '@/components/ProfileEditor';
 import EscalationsView from '@/components/admin/EscalationsView';
 import InvoicingView from '@/components/admin/InvoicingView';
-import { projects } from '@/data/mockData';
+import { useProjects } from '@/lib/appData';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/alert-dialog';
 
 const Index = () => {
+  const [projects] = useProjects();
   const [activeView, setActiveView] = useState('planner');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
