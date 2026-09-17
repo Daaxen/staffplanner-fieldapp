@@ -379,10 +379,12 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
             {projectType !== 'transport' && (
               <div className="grid gap-1.5">
                 <Label htmlFor="order-location">Location</Label>
-                <div className="relative">
-                  <MapPin className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input id="order-location" placeholder="Search address..." className="pl-8" value={location} onChange={(e) => setLocation(e.target.value)} />
-                </div>
+                <AddressAutocomplete
+                  id="order-location"
+                  value={location}
+                  onChange={(v) => { setLocation(v); setLocationCoords(null); }}
+                  onSelect={(p) => setLocationCoords(p.lat != null && p.lng != null ? { lat: p.lat, lng: p.lng } : null)}
+                />
               </div>
             )}
 
