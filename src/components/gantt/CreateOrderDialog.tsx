@@ -562,15 +562,14 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
                           </select>
                         </div>
                         <div className="flex gap-1">
-                          <div className="relative flex-1">
-                            <MapPin className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
-                            <Input
-                              placeholder="Address..."
-                              className="h-8 text-xs pl-7"
-                              value={stop.address}
-                              onChange={(e) => updateStop(stop.id, { address: e.target.value })}
-                            />
-                          </div>
+                          <AddressAutocomplete
+                            className="flex-1"
+                            inputClassName="h-8 text-xs pl-7"
+                            placeholder="Address..."
+                            value={stop.address}
+                            onChange={(v) => updateStop(stop.id, { address: v })}
+                            onSelect={(p) => updateStop(stop.id, { address: p.address })}
+                          />
                           {stop.address.trim() && (
                             <a
                               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(stop.address)}`}
@@ -583,6 +582,9 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
                             </a>
                           )}
                         </div>
+                        {stop.address.trim() && (
+                          <MiniMap address={stop.address} height={90} showLink={false} />
+                        )}
                         <div className="grid grid-cols-2 gap-2">
                           <Input placeholder="Contact name" className="h-7 text-xs" value={stop.contactName || ''} onChange={(e) => updateStop(stop.id, { contactName: e.target.value })} />
                           <Input placeholder="Phone" className="h-7 text-xs" value={stop.contactPhone || ''} onChange={(e) => updateStop(stop.id, { contactPhone: e.target.value })} />
