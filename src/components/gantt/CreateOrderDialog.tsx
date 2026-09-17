@@ -409,16 +409,12 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
                   {mapExpanded ? <Minimize2 className="h-3 w-3" /> : <Maximize2 className="h-3 w-3" />}
                 </Button>
               </div>
-              <div className={cn(
-                "rounded-md border border-border bg-muted/30 flex items-center justify-center text-muted-foreground transition-all overflow-hidden",
-                mapExpanded ? "h-[200px]" : "h-[80px]"
-              )}>
-                <div className="flex flex-col items-center gap-1">
-                  <MapPin className="h-5 w-5 text-primary" />
-                  <span className="text-xs">{location}</span>
-                  <span className="text-[10px] text-muted-foreground/60">Map integration pending — Google Maps API</span>
-                </div>
-              </div>
+              <MiniMap
+                address={location}
+                lat={locationCoords?.lat}
+                lng={locationCoords?.lng}
+                height={mapExpanded ? 220 : 110}
+              />
             </div>
           )}
 
