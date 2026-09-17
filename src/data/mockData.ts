@@ -95,6 +95,8 @@ export interface Project {
   clientId?: string;
   client: string;
   location: string;
+  locationLat?: number;
+  locationLng?: number;
   street?: string;
   postalCode?: string;
   region?: string;

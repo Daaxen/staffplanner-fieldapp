@@ -6,6 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useState } from 'react';
 import ProjectLogTab from '@/components/installer/reporting/ProjectLogTab';
 import type { InstallerLogs } from '@/hooks/useInstallerLogs';
+import MiniMap from '@/components/maps/MiniMap';
 
 interface InstallerProjectDetailProps {
   project: Project;
@@ -26,6 +27,7 @@ const statusDotMap: Record<string, string> = {
 };
 
 const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChange, onPickUp }: InstallerProjectDetailProps) => {
+  
   const [reportPhotos, setReportPhotos] = useState<string[]>([]);
 
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(project.location)}`;
@@ -109,6 +111,16 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
             <Section title="Location">
               <InfoRow icon={<FileText className="w-4 h-4" />} label="Client" value={project.client} />
               <InfoRow icon={<MapPin className="w-4 h-4" />} label="Address" value={project.location} />
+              {project.location?.trim() && (
+                <MiniMap
+                  className="mt-2"
+                  address={project.location}
+                  lat={project.locationLat}
+                  lng={project.locationLng}
+                  height={150}
+                  showLink={false}
+                />
+              )}
               <a
                 href={googleMapsUrl}
                 target="_blank"

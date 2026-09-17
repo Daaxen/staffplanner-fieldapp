@@ -13,6 +13,8 @@ import { installers, projects, locationDistances, type Project, type ProjectStat
 import { Checkbox } from '@/components/ui/checkbox';
 import { useClients } from '@/lib/clientStore';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import AddressAutocomplete from '@/components/maps/AddressAutocomplete';
+import MiniMap from '@/components/maps/MiniMap';
 
 interface CreateOrderDialogProps {
   open: boolean;
@@ -54,6 +56,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
   const [showClientSuggestions, setShowClientSuggestions] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [location, setLocation] = useState('');
+  const [locationCoords, setLocationCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [startTime, setStartTime] = useState('08:00');
@@ -200,6 +203,9 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
       projectType,
       client,
       location: projectType === 'transport' ? transportStops[0]?.address || '' : location,
+      ...(projectType !== 'transport' && locationCoords
+        ? { locationLat: locationCoords.lat, locationLng: locationCoords.lng }
+        : {}),
       status,
       assigneeIds: selectedInstallers,
       startDate: format(startDate, 'yyyy-MM-dd'),
@@ -379,10 +385,12 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
             {projectType !== 'transport' && (
               <div className="grid gap-1.5">
                 <Label htmlFor="order-location">Location</Label>
-                <div className="relative">
-                  <MapPin className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input id="order-location" placeholder="Search address..." className="pl-8" value={location} onChange={(e) => setLocation(e.target.value)} />
-                </div>
+                <AddressAutocomplete
+                  id="order-location"
+                  value={location}
+                  onChange={(v) => { setLocation(v); setLocationCoords(null); }}
+                  onSelect={(p) => setLocationCoords(p.lat != null && p.lng != null ? { lat: p.lat, lng: p.lng } : null)}
+                />
               </div>
             )}
 
@@ -404,16 +412,12 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
                   {mapExpanded ? <Minimize2 className="h-3 w-3" /> : <Maximize2 className="h-3 w-3" />}
                 </Button>
               </div>
-              <div className={cn(
-                "rounded-md border border-border bg-muted/30 flex items-center justify-center text-muted-foreground transition-all overflow-hidden",
-                mapExpanded ? "h-[200px]" : "h-[80px]"
-              )}>
-                <div className="flex flex-col items-center gap-1">
-                  <MapPin className="h-5 w-5 text-primary" />
-                  <span className="text-xs">{location}</span>
-                  <span className="text-[10px] text-muted-foreground/60">Map integration pending — Google Maps API</span>
-                </div>
-              </div>
+              <MiniMap
+                address={location}
+                lat={locationCoords?.lat}
+                lng={locationCoords?.lng}
+                height={mapExpanded ? 220 : 110}
+              />
             </div>
           )}
 
@@ -561,15 +565,14 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
                           </select>
                         </div>
                         <div className="flex gap-1">
-                          <div className="relative flex-1">
-                            <MapPin className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
-                            <Input
-                              placeholder="Address..."
-                              className="h-8 text-xs pl-7"
-                              value={stop.address}
-                              onChange={(e) => updateStop(stop.id, { address: e.target.value })}
-                            />
-                          </div>
+                          <AddressAutocomplete
+                            className="flex-1"
+                            inputClassName="h-8 text-xs pl-7"
+                            placeholder="Address..."
+                            value={stop.address}
+                            onChange={(v) => updateStop(stop.id, { address: v })}
+                            onSelect={(p) => updateStop(stop.id, { address: p.address })}
+                          />
                           {stop.address.trim() && (
                             <a
                               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(stop.address)}`}
@@ -582,6 +585,9 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
                             </a>
                           )}
                         </div>
+                        {stop.address.trim() && (
+                          <MiniMap address={stop.address} height={90} showLink={false} />
+                        )}
                         <div className="grid grid-cols-2 gap-2">
                           <Input placeholder="Contact name" className="h-7 text-xs" value={stop.contactName || ''} onChange={(e) => updateStop(stop.id, { contactName: e.target.value })} />
                           <Input placeholder="Phone" className="h-7 text-xs" value={stop.contactPhone || ''} onChange={(e) => updateStop(stop.id, { contactPhone: e.target.value })} />
