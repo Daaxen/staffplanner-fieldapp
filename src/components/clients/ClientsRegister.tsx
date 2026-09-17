@@ -340,7 +340,19 @@ const ClientsRegister = () => {
                 <div className="grid grid-cols-3 gap-3">
                   <div className="col-span-3">
                     <Label>Street</Label>
-                    <Input value={editing.street ?? ''} onChange={(e) => setEditing({ ...editing, street: e.target.value })} />
+                    <AddressAutocomplete
+                      value={editing.street ?? ''}
+                      onChange={(v) => setEditing({ ...editing, street: v })}
+                      onSelect={(p) => setEditing({ ...editing, street: p.address })}
+                      placeholder="Search address..."
+                    />
+                    {(editing.street ?? '').trim() && (
+                      <MiniMap
+                        className="mt-2"
+                        address={[editing.street, editing.postalCode, editing.region].filter(Boolean).join(', ')}
+                        height={120}
+                      />
+                    )}
                   </div>
                   <div>
                     <Label>Postal Code</Label>
