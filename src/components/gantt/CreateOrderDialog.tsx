@@ -203,6 +203,9 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
       projectType,
       client,
       location: projectType === 'transport' ? transportStops[0]?.address || '' : location,
+      ...(projectType !== 'transport' && locationCoords
+        ? { locationLat: locationCoords.lat, locationLng: locationCoords.lng }
+        : {}),
       status,
       assigneeIds: selectedInstallers,
       startDate: format(startDate, 'yyyy-MM-dd'),
