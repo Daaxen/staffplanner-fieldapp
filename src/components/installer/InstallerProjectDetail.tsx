@@ -109,6 +109,16 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
             <Section title="Location">
               <InfoRow icon={<FileText className="w-4 h-4" />} label="Client" value={project.client} />
               <InfoRow icon={<MapPin className="w-4 h-4" />} label="Address" value={project.location} />
+              {project.location?.trim() && (
+                <MiniMap
+                  className="mt-2"
+                  address={project.location}
+                  lat={project.locationLat}
+                  lng={project.locationLng}
+                  height={150}
+                  showLink={false}
+                />
+              )}
               <a
                 href={googleMapsUrl}
                 target="_blank"
