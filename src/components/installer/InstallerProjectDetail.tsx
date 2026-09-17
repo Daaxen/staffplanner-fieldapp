@@ -6,6 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useState } from 'react';
 import ProjectLogTab from '@/components/installer/reporting/ProjectLogTab';
 import type { InstallerLogs } from '@/hooks/useInstallerLogs';
+import MiniMap from '@/components/maps/MiniMap';
 
 interface InstallerProjectDetailProps {
   project: Project;
@@ -26,7 +27,7 @@ const statusDotMap: Record<string, string> = {
 };
 
 const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChange, onPickUp }: InstallerProjectDetailProps) => {
-  // eslint-disable-next-line
+  
   const [reportPhotos, setReportPhotos] = useState<string[]>([]);
 
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(project.location)}`;
