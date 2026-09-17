@@ -13,6 +13,8 @@ import { installers, projects, locationDistances, type Project, type ProjectStat
 import { Checkbox } from '@/components/ui/checkbox';
 import { useClients } from '@/lib/clientStore';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import AddressAutocomplete from '@/components/maps/AddressAutocomplete';
+import MiniMap from '@/components/maps/MiniMap';
 
 interface CreateOrderDialogProps {
   open: boolean;
@@ -54,6 +56,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
   const [showClientSuggestions, setShowClientSuggestions] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [location, setLocation] = useState('');
+  const [locationCoords, setLocationCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [startTime, setStartTime] = useState('08:00');
