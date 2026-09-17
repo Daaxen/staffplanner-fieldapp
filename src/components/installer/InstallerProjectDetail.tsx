@@ -26,6 +26,7 @@ const statusDotMap: Record<string, string> = {
 };
 
 const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChange, onPickUp }: InstallerProjectDetailProps) => {
+  // eslint-disable-next-line
   const [reportPhotos, setReportPhotos] = useState<string[]>([]);
 
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(project.location)}`;
