@@ -12,6 +12,8 @@ import {
   Building2, Search, MapPin, Copy, Download, Upload, Plus, Pencil, User, Receipt,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import AddressAutocomplete from '@/components/maps/AddressAutocomplete';
+import MiniMap from '@/components/maps/MiniMap';
 
 // Numeric-only auto-id generator
 function nextId(existing: Client[]): string {
