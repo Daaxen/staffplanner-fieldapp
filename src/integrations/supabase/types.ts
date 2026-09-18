@@ -221,6 +221,7 @@ export type Database = {
           created_at: string
           id: string
           installer_id: string
+          photo_meta: Json
           photo_paths: Json
           project_ref: string
           report_text: string | null
@@ -234,6 +235,7 @@ export type Database = {
           created_at?: string
           id?: string
           installer_id: string
+          photo_meta?: Json
           photo_paths?: Json
           project_ref: string
           report_text?: string | null
@@ -247,6 +249,7 @@ export type Database = {
           created_at?: string
           id?: string
           installer_id?: string
+          photo_meta?: Json
           photo_paths?: Json
           project_ref?: string
           report_text?: string | null
