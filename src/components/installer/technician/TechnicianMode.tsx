@@ -16,6 +16,7 @@ interface TechnicianModeProps {
 
 const TechnicianMode = ({ projects, installer, onStatusChange, onExit }: TechnicianModeProps) => {
   const [openId, setOpenId] = useState<string | null>(null);
+  const offline = useOfflineSync();
   const today = format(new Date(), 'yyyy-MM-dd');
 
   const todaysJobs = useMemo(
