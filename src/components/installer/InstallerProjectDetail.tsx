@@ -365,8 +365,8 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
                   <span className="text-sm text-foreground">{statusLabels[project.status]}</span>
                 </div>
               </div>
-              {reportPhotos.length > 0 && (
-                <InfoRow icon={<Camera className="w-4 h-4" />} label="Photos" value={`${reportPhotos.length} added`} />
+              {photoCount > 0 && (
+                <InfoRow icon={<Camera className="w-4 h-4" />} label="Photos" value={`${photoCount} added`} />
               )}
             </Section>
 
