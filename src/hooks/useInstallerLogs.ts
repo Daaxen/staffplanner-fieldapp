@@ -4,6 +4,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { computeHours, DEFAULT_MILEAGE_RATE, type TimeEntry, type ExpenseEntry, type ExpenseCategory, type ActiveTimer } from '@/data/logsData';
 import { ratesForClient, type Project } from '@/data/mockData';
 import { ensureProjectRowId, projectRefForRowId } from '@/lib/appData';
+import { toast } from 'sonner';
+import {
+  timeEntrySchema, mileageEntrySchema, expenseEntrySchema, firstIssue, type ExpenseKind,
+} from '@/lib/validation/reporting';
+
 
 type Meta = { projectName?: string | null; clientName?: string | null };
 
