@@ -82,23 +82,66 @@ async function loadInstallers() {
   );
 }
 
+/* ------------------------------------------------------------------ */
+/* Order key mapping                                                   */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The app identifies an order by its human reference (Project.id === ref),
+ * while reporting tables (time/expense/mileage/timers) store the real
+ * projects.id uuid. These maps translate between the two.
+ */
+const rowIdByRef = new Map<string, string>();
+const refByRowId = new Map<string, string>();
+
+function rememberProjectKey(ref: string | null, rowId: string | null) {
+  if (!ref || !rowId) return;
+  rowIdByRef.set(ref, rowId);
+  refByRowId.set(rowId, ref);
+}
+
+/** projects.id (uuid) for an app-level order reference, if already known. */
+export function projectRowId(ref: string): string | undefined {
+  return rowIdByRef.get(ref);
+}
+
+/** App-level order reference for a projects.id uuid. */
+export function projectRefForRowId(rowId: string): string | undefined {
+  return refByRowId.get(rowId);
+}
+
+/** projects.id for an order reference, querying the database when unknown. */
+export async function ensureProjectRowId(ref: string): Promise<string | null> {
+  const known = rowIdByRef.get(ref);
+  if (known) return known;
+  const { data } = await supabase.from('projects').select('id').eq('ref', ref).maybeSingle();
+  const id = (data as { id: string } | null)?.id ?? null;
+  rememberProjectKey(ref, id);
+  return id;
+}
+
 async function loadProjects() {
   const { data, error } = await supabase
     .from('projects')
-    .select('ref,data,name,status,start_date,end_date')
+    .select('id,ref,data,name,status,start_date,end_date')
     .order('start_date', { ascending: false });
   if (error) throw error;
-  const rows = (data ?? []) as { ref: string | null; data: unknown; name: string }[];
+  const rows = (data ?? []) as { id: string; ref: string | null; data: unknown; name: string }[];
+  rowIdByRef.clear();
+  refByRowId.clear();
   replace(
     projectList,
     rows
       .map((r) => {
         const d = (r.data ?? {}) as Partial<Project>;
-        return { ...d, id: d.id ?? r.ref ?? '', name: d.name ?? r.name } as Project;
+        const project = { ...d, id: d.id ?? r.ref ?? '', name: d.name ?? r.name } as Project;
+        rememberProjectKey(project.id, r.id);
+        return project;
       })
       .filter((p) => p.id),
   );
 }
+
 
 export async function loadAppData(): Promise<void> {
   if (loadingPromise) return loadingPromise;
