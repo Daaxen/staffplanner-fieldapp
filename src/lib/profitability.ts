@@ -18,6 +18,10 @@ export interface ProjectEconomy {
   materialCostExtra?: number;
   /** Travel costs not logged as expenses or mileage. */
   travelCostExtra?: number;
+  /** Budget for external / sub-vendor costs (SEK). */
+  externalBudget?: number;
+  /** Target profitability % for this order. */
+  targetMarginPct?: number;
 }
 
 export const DEFAULT_INTERNAL_HOURLY_COST = 420; // SEK/h, fully loaded own staff
