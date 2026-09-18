@@ -28,6 +28,7 @@ import { vehicles } from '@/data/fleetData';
 import { toast } from 'sonner';
 import RecommendedInstallers from '@/components/scheduling/RecommendedInstallers';
 import { recommendInstallers } from '@/lib/assignmentRecommendations';
+import { projectDateRangeError } from '@/lib/validation/dates';
 
 interface CreateOrderDialogProps {
   open: boolean;
@@ -390,8 +391,13 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
   const requiredFields = template?.requiredFields ?? ['name', 'client', 'startDate', 'endDate'];
   const missingFields = requiredFields.filter(f => !fieldValues[f]);
 
+  const dateRangeError = projectDateRangeError(
+    startDate ? format(startDate, 'yyyy-MM-dd') : null,
+    endDate ? format(endDate, 'yyyy-MM-dd') : null,
+  );
+
   const isValid =
-    name.trim() && client.trim() && startDate && endDate && startDate <= endDate && missingFields.length === 0;
+    name.trim() && client.trim() && startDate && endDate && !dateRangeError && missingFields.length === 0;
 
   const typeButtons: { value: ProjectType; icon: string }[] = [
     { value: 'installation', icon: '🔧' },
@@ -641,6 +647,10 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
                 <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} className="text-xs px-2" />
               </div>
             </div>
+          )}
+
+          {dateRangeError && (
+            <p className="text-xs text-destructive">{dateRangeError}</p>
           )}
 
           {/* Estimated hours & Flex order */}

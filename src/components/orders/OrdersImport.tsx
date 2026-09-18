@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { projectDateRangeError, DATE_RANGE_MESSAGE_SV } from '@/lib/validation/dates';
 import {
   installers, clientRegister, statusLabels, projectTypeLabels,
   type Project, type ProjectStatus, type ProjectType,
@@ -235,13 +236,17 @@ const OrdersImport = ({ orders, onApply }: OrdersImportProps) => {
     if (!applicable.length) { toast.error('Nothing to import'); return; }
 
     let next = [...orders];
-    let created = 0, updated = 0;
+    let created = 0, updated = 0, skippedDates = 0;
     let seq = Date.now();
     for (const row of applicable) {
       if (row.action === 'update' && row.matchedId) {
+        const current = next.find(o => o.id === row.matchedId);
+        const merged = { ...current, ...row.patch };
+        if (projectDateRangeError(merged.startDate, merged.endDate)) { skippedDates++; continue; }
         next = next.map(o => o.id === row.matchedId ? { ...o, ...row.patch } : o);
         updated++;
       } else if (row.action === 'create') {
+        if (projectDateRangeError(row.patch.startDate, row.patch.endDate)) { skippedDates++; continue; }
         const newOrder: Project = {
           id: `imp-${seq++}`,
           name: row.patch.name ?? 'Untitled order',
@@ -260,6 +265,7 @@ const OrdersImport = ({ orders, onApply }: OrdersImportProps) => {
     }
     onApply(next);
     toast.success(`Imported: ${created} created · ${updated} updated`);
+    if (skippedDates) toast.error(`${skippedDates} rad(er) hoppades över: ${DATE_RANGE_MESSAGE_SV}`);
     setOpen(false);
     setRows([]);
     setFileName('');
