@@ -1417,7 +1417,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "installer"
+      app_role: "admin" | "installer" | "hr"
       reminder_event_kind: "push" | "banner" | "admin_alert"
       reminder_level: "gentle" | "urgent" | "escalated"
       reminder_status: "open" | "resolved" | "dismissed"
@@ -1548,7 +1548,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "installer"],
+      app_role: ["admin", "installer", "hr"],
       reminder_event_kind: ["push", "banner", "admin_alert"],
       reminder_level: ["gentle", "urgent", "escalated"],
       reminder_status: ["open", "resolved", "dismissed"],
