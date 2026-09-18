@@ -150,11 +150,12 @@ const UsersManager = () => {
   };
 
   const toggleRole = async (userId: string, role: Role, has: boolean) => {
-    if (has) {
-      await supabase.from('user_roles').delete().eq('user_id', userId).eq('role', role);
-    } else {
-      await supabase.from('user_roles').insert({ user_id: userId, role });
-    }
+    const { error } = await supabase.rpc('admin_set_user_role', {
+      _user_id: userId,
+      _role: role,
+      _grant: !has,
+    });
+    if (error) return toast.error(error.message);
     load();
   };
 
