@@ -454,8 +454,10 @@ const OrdersRegister = () => {
                     <ArrowRight className="w-3 h-3 text-muted-foreground" />
                     <span className="inline-flex items-center gap-1"><span className={cn("w-2 h-2 rounded-full", statusDot[r.to])} />{statusLabels[r.to]}</span>
                   </div>
-                  <div className="w-40 text-right">
-                    {!r.changed ? (
+                  <div className="w-52 text-right">
+                    {r.blocked ? (
+                      <span className="text-xs text-destructive inline-flex items-center gap-1"><AlertTriangle className="w-3 h-3" />{r.blocked}</span>
+                    ) : !r.changed ? (
                       <span className="text-xs text-muted-foreground">No change</span>
                     ) : r.warning ? (
                       <span className="text-xs text-amber-600 inline-flex items-center gap-1"><AlertTriangle className="w-3 h-3" />{r.warning}</span>
@@ -463,6 +465,7 @@ const OrdersRegister = () => {
                       <span className="text-xs text-emerald-600 inline-flex items-center gap-1"><Check className="w-3 h-3" />Will update</span>
                     )}
                   </div>
+
                 </div>
               ))}
             </div>
