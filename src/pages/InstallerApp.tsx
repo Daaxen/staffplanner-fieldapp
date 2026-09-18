@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
-import { CalendarDays, Package, FolderKanban, User, BookOpen, Clock, Bell, LogOut } from 'lucide-react';
+import { CalendarDays, Package, FolderKanban, User, BookOpen, Clock, Bell, LogOut, HardHat } from 'lucide-react';
 import { addDays, startOfWeek, format } from 'date-fns';
 import InstallerSchedule from '@/components/installer/InstallerSchedule';
 import InstallerProjectDetail from '@/components/installer/InstallerProjectDetail';
 import InstallerProfile from '@/components/installer/InstallerProfile';
+import TechnicianMode from '@/components/installer/technician/TechnicianMode';
 import InstallerOrderBox from '@/components/installer/schedule/InstallerOrderBox';
 import InstallerDocuments from '@/components/installer/InstallerDocuments';
 import ProjectCard from '@/components/installer/schedule/ProjectCard';
@@ -33,6 +34,13 @@ const InstallerApp = () => {
   const logs = useInstallerLogs(localProjects);
   const reminders = useReminders();
   const [tab, setTab] = useState<string>('schedule');
+  const [technicianMode, setTechnicianMode] = useState<boolean>(
+    () => localStorage.getItem('technicianMode') === '1',
+  );
+  const toggleTechnicianMode = (on: boolean) => {
+    setTechnicianMode(on);
+    localStorage.setItem('technicianMode', on ? '1' : '0');
+  };
   usePushRegistration(true);
 
 
@@ -106,6 +114,17 @@ const InstallerApp = () => {
     );
   }
 
+  if (technicianMode) {
+    return (
+      <TechnicianMode
+        projects={localProjects}
+        installer={installer}
+        onStatusChange={handleStatusChange}
+        onExit={() => toggleTechnicianMode(false)}
+      />
+    );
+  }
+
   if (selectedProject) {
     return (
       <InstallerProjectDetail
@@ -130,6 +149,13 @@ const InstallerApp = () => {
           <p className="text-xs opacity-80">{installer.name}</p>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => toggleTechnicianMode(true)}
+            className="flex items-center gap-1.5 rounded-lg bg-primary-foreground/15 px-3 py-2 text-xs font-medium"
+          >
+            <HardHat className="w-4 h-4" />
+            Field mode
+          </button>
           <div className="w-9 h-9 rounded-full bg-primary-foreground/20 flex items-center justify-center text-sm font-bold">
             {installer.name.split(' ').map(n => n[0]).join('')}
           </div>
