@@ -50,7 +50,10 @@ describe('installer self-service restrictions', () => {
 
   it('only writes base_location — never admin-managed columns', () => {
     const fn = selfServiceFn()!;
-    const setClause = fn.match(/SET\s+([\s\S]*?)\s+WHERE profile_id = auth\.uid\(\)/i)?.[1] ?? '';
+    const setClause =
+      fn.match(
+        /UPDATE public\.installers\s+SET\s+([\s\S]*?)\s+WHERE profile_id = auth\.uid\(\)/i,
+      )?.[1] ?? '';
     expect(setClause.trim()).toBe('base_location = v_base_location');
     for (const col of ADMIN_ONLY_COLUMNS) {
       expect(new RegExp(`SET[^;]*\\b${col}\\s*=`, 'i').test(fn)).toBe(false);
