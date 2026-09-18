@@ -29,6 +29,8 @@ import { toast } from 'sonner';
 import RecommendedInstallers from '@/components/scheduling/RecommendedInstallers';
 import { recommendInstallers } from '@/lib/assignmentRecommendations';
 import { projectDateRangeError } from '@/lib/validation/dates';
+import { saveBookings, findBookingConflicts, type BookingConflict } from '@/lib/bookings';
+import BookingOverrideDialog from '@/components/scheduling/BookingOverrideDialog';
 
 interface CreateOrderDialogProps {
   open: boolean;
@@ -80,6 +82,9 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
   const [endTime, setEndTime] = useState('17:00');
   const [estimatedHours, setEstimatedHours] = useState('');
   const [isFlexOrder, setIsFlexOrder] = useState(false);
+  const [pendingProject, setPendingProject] = useState<Project | null>(null);
+  const [overrideOpen, setOverrideOpen] = useState(false);
+  const [bookingConflicts, setBookingConflicts] = useState<BookingConflict[]>([]);
   const [selectedInstallers, setSelectedInstallers] = useState<string[]>([]);
   const [startOpen, setStartOpen] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
@@ -221,6 +226,21 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  // Live booking conflicts from the booking register (shown before saving)
+  useEffect(() => {
+    let cancelled = false;
+    if (!startDate || !endDate || selectedInstallers.length === 0) {
+      setBookingConflicts([]);
+      return;
+    }
+    const start = new Date(`${format(startDate, 'yyyy-MM-dd')}T${startTime || '00:00'}:00`).toISOString();
+    const end = new Date(`${format(endDate, 'yyyy-MM-dd')}T${endTime || '23:59'}:00`).toISOString();
+    findBookingConflicts(selectedInstallers, start, end)
+      .then(res => { if (!cancelled) setBookingConflicts(res); })
+      .catch(() => { if (!cancelled) setBookingConflicts([]); });
+    return () => { cancelled = true; };
+  }, [selectedInstallers, startDate, endDate, startTime, endTime]);
+
   const handleClientChange = (value: string) => {
     setClient(value);
     setHighlightedIndex(-1);
@@ -257,6 +277,30 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
     }
   };
 
+  const persistBookings = async (project: Project, overrideReason?: string) => {
+    const res = await saveBookings({
+      projectRef: project.id,
+      installerIds: project.assigneeIds,
+      startDate: project.startDate,
+      endDate: project.endDate,
+      startTime: project.startTime,
+      endTime: project.endTime,
+      overrideReason,
+    });
+    if (res.ok) {
+      if (overrideReason) toast.success('Booking saved with an override reason (logged)');
+      setPendingProject(null);
+      setOverrideOpen(false);
+      return;
+    }
+    if (res.conflict) {
+      setPendingProject(project);
+      setOverrideOpen(true);
+      return;
+    }
+    toast.error('Could not save the booking', { description: res.error });
+  };
+
   const handleSubmit = () => {
     if (!name || !client || !startDate || !endDate) return;
     if (hasBlocking(conflicts)) {
@@ -265,6 +309,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
       });
       return;
     }
+
 
     const status: ProjectStatus = selectedInstallers.length > 0 ? 'scheduled' : 'open';
 
@@ -296,6 +341,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
     };
 
     onCreateOrder(project);
+    void persistBookings(project);
     resetForm();
     onOpenChange(false);
   };
@@ -406,6 +452,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
   ];
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[540px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -894,6 +941,17 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
             {conflictDraft && selectedInstallers.length > 0 && (
               <ConflictPanel conflicts={conflicts} className="mt-1" />
             )}
+            {bookingConflicts.length > 0 && (
+              <div className="mt-1 rounded border border-destructive/30 bg-destructive/5 p-2 space-y-1">
+                <p className="text-xs font-medium text-destructive">Booking register conflicts</p>
+                {bookingConflicts.map((c, i) => (
+                  <p key={i} className="text-xs text-muted-foreground">
+                    {installers.find(inst => inst.id === c.installerId)?.name ?? 'Installer'} — {c.detail}
+                    {' '}({c.from.slice(0, 10)} → {c.to.slice(0, 10)})
+                  </p>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Description */}
@@ -961,6 +1019,15 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+      <BookingOverrideDialog
+        open={overrideOpen}
+        onOpenChange={(o) => { setOverrideOpen(o); if (!o) setPendingProject(null); }}
+        conflicts={bookingConflicts}
+        installerName={(id) => installers.find(i => i.id === id)?.name ?? 'Installer'}
+        onConfirm={(reason) => { if (pendingProject) void persistBookings(pendingProject, reason); }}
+      />
+    </>
   );
 };
 
