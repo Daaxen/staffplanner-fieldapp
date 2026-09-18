@@ -149,6 +149,40 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
     return { score: totalScore, label, color, occupancy: overlapping.length, proximity: distances?.[projLocation] };
   };
 
+  // ---- Scheduling conflict detection -------------------------------------
+  const conflictDraft: AssignmentDraft | null = useMemo(() => {
+    if (!startDate || !endDate) return null;
+    return {
+      projectId,
+      name,
+      startDate: format(startDate, 'yyyy-MM-dd'),
+      endDate: format(endDate, 'yyyy-MM-dd'),
+      startTime: startTime || undefined,
+      endTime: endTime || undefined,
+      location: projectType === 'transport' ? transportStops[0]?.address || '' : location,
+      lat: locationCoords?.lat,
+      lng: locationCoords?.lng,
+    };
+  }, [projectId, name, startDate, endDate, startTime, endTime, projectType, transportStops, location, locationCoords]);
+
+  const conflicts = useMemo(() => {
+    if (!conflictDraft) return [];
+    return detectConflicts({
+      installerIds: selectedInstallers,
+      draft: conflictDraft,
+      installers,
+      projects,
+      vehicles,
+    });
+  }, [conflictDraft, selectedInstallers]);
+
+  const conflictsFor = (installerId: string) => {
+    if (!conflictDraft) return [];
+    const inst = installers.find(i => i.id === installerId);
+    return inst ? installerConflicts(inst, conflictDraft, projects) : [];
+  };
+
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (clientInputRef.current && !clientInputRef.current.contains(e.target as Node)) {
