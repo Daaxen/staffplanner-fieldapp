@@ -72,20 +72,25 @@ const OrdersRegister = () => {
   const installerName = (id: string) => installers.find(i => i.id === id)?.name ?? id;
 
   const statusPreview = useMemo(() => {
-    return selectedOrders.map(o => ({
-      id: o.id,
-      name: o.name,
-      client: o.client,
-      from: o.status,
-      to: massStatus,
-      changed: o.status !== massStatus,
-      warning:
-        (o.status === 'completed' && massStatus !== 'completed') ? 'Reopening a completed order' :
-        (o.status === 'cancelled' && massStatus !== 'cancelled') ? 'Reactivating a cancelled order' :
-        (massStatus === 'cancelled' && o.status === 'in-progress') ? 'Cancelling an in-progress order' :
-        undefined,
-    }));
+    return selectedOrders.map(o => {
+      const blocked = transitionError(o.status, massStatus, statusLabels);
+      return {
+        id: o.id,
+        name: o.name,
+        client: o.client,
+        from: o.status,
+        to: massStatus,
+        blocked,
+        changed: o.status !== massStatus && !blocked,
+        warning:
+          (o.status === 'completed' && massStatus !== 'completed') ? 'Reopening a completed order' :
+          (o.status === 'cancelled' && massStatus !== 'cancelled') ? 'Reactivating a cancelled order' :
+          (massStatus === 'cancelled' && o.status === 'in-progress') ? 'Cancelling an in-progress order' :
+          undefined,
+      };
+    });
   }, [selectedOrders, massStatus]);
+
 
   const assigneePreview = useMemo(() => {
     return selectedOrders.map(o => {
