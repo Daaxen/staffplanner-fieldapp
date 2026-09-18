@@ -247,7 +247,14 @@ function diffAndPersist<T extends { id: string }>(
     if (!nextIds.has(item.id)) tasks.push(remove(item.id));
   }
 
-  Promise.all(tasks).catch((e) => console.error('Failed to save changes', e));
+  Promise.all(tasks).catch((e) => {
+    console.error('Failed to save changes', e);
+    const message = e instanceof Error ? e.message : String(e);
+    toast.error(message.includes('Status cannot go from')
+      ? message.replace('Status cannot go from', 'That status step is not allowed:')
+      : `Could not save changes: ${message}`);
+  });
+
 }
 
 /* ------------------------------------------------------------------ */
