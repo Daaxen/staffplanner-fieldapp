@@ -338,6 +338,18 @@ const ProfitabilityView = () => {
               <div className="flex justify-between"><span className="text-muted-foreground">Logged material</span><span>{sek(open.input.materialExpenses)}</span></div>
             </div>
 
+            {open.alerts.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-foreground">Warnings</p>
+                {open.alerts.map(a => (
+                  <div key={a.kind} className={cn('rounded-lg border px-3 py-2', alertBg(a.severity))}>
+                    <p className={cn('text-xs font-semibold', alertColor(a.severity))}>{a.title}</p>
+                    <p className="text-xs text-muted-foreground">{a.detail}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <p className="text-xs font-semibold text-foreground">Adjust the numbers for this order</p>
             <div className="grid grid-cols-2 gap-3">
               {numberField('Fixed price (ex VAT)', open.project.economy?.fixedPrice, 'From hours', v => saveEconomy(open.project.id, { fixedPrice: v }))}
@@ -348,6 +360,8 @@ const ProfitabilityView = () => {
               {numberField('Extra external cost', open.project.economy?.externalCostExtra, '0', v => saveEconomy(open.project.id, { externalCostExtra: v }))}
               {numberField('Extra material cost', open.project.economy?.materialCostExtra, '0', v => saveEconomy(open.project.id, { materialCostExtra: v }))}
               {numberField('Extra travel cost', open.project.economy?.travelCostExtra, '0', v => saveEconomy(open.project.id, { travelCostExtra: v }))}
+              {numberField('External cost budget', open.project.economy?.externalBudget, 'No budget', v => saveEconomy(open.project.id, { externalBudget: v }))}
+              {numberField('Target margin %', open.project.economy?.targetMarginPct, String(DEFAULT_TARGET_MARGIN_PCT), v => saveEconomy(open.project.id, { targetMarginPct: v }))}
             </div>
             <p className="text-[11px] text-muted-foreground">
               Changes save automatically when you leave a field.
