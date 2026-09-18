@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
-import { CalendarDays, Package, FolderKanban, User, BookOpen, Clock, Bell, LogOut } from 'lucide-react';
+import { CalendarDays, Package, FolderKanban, User, BookOpen, Clock, Bell, LogOut, HardHat } from 'lucide-react';
 import { addDays, startOfWeek, format } from 'date-fns';
 import InstallerSchedule from '@/components/installer/InstallerSchedule';
 import InstallerProjectDetail from '@/components/installer/InstallerProjectDetail';
 import InstallerProfile from '@/components/installer/InstallerProfile';
+import TechnicianMode from '@/components/installer/technician/TechnicianMode';
 import InstallerOrderBox from '@/components/installer/schedule/InstallerOrderBox';
 import InstallerDocuments from '@/components/installer/InstallerDocuments';
 import ProjectCard from '@/components/installer/schedule/ProjectCard';
