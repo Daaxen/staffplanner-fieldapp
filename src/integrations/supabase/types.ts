@@ -80,6 +80,60 @@ export type Database = {
         }
         Relationships: []
       }
+      deviations: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          id: string
+          installer_id: string
+          installer_name: string | null
+          occurred_at: string
+          photo_paths: Json
+          project_name: string | null
+          project_ref: string
+          resolution_note: string | null
+          resolved_at: string | null
+          severity: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description: string
+          id?: string
+          installer_id: string
+          installer_name?: string | null
+          occurred_at?: string
+          photo_paths?: Json
+          project_name?: string | null
+          project_ref: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          installer_id?: string
+          installer_name?: string | null
+          occurred_at?: string
+          photo_paths?: Json
+          project_name?: string | null
+          project_ref?: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           category: string
