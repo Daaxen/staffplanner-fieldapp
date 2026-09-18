@@ -373,6 +373,36 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
               )}
             </Section>
 
+            <Section title="Completion Requirements">
+              <div className="space-y-2">
+                {requirements.map(r => (
+                  <button
+                    key={r.id}
+                    onClick={() => !r.met && setTab(r.tab)}
+                    className="w-full flex items-start gap-2 text-left py-1"
+                  >
+                    <span className={cn('mt-0.5 shrink-0', r.met ? 'text-status-completed' : 'text-status-cancelled')}>
+                      {r.met ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+                    </span>
+                    <span className="min-w-0">
+                      <span className={cn('block text-sm', r.met ? 'text-foreground' : 'font-medium text-foreground')}>
+                        {r.label}
+                      </span>
+                      {!r.met && <span className="block text-[11px] text-muted-foreground">{r.hint}</span>}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              {!readyToComplete && (
+                <div className="mt-3 flex items-start gap-2 rounded-lg border border-status-on-hold/40 bg-status-on-hold/10 p-2.5">
+                  <AlertCircle className="w-4 h-4 text-status-on-hold mt-0.5 shrink-0" />
+                  <p className="text-xs text-foreground">
+                    {missing.length} requirement{missing.length > 1 ? 's' : ''} missing — the order cannot be marked complete yet.
+                  </p>
+                </div>
+              )}
+            </Section>
+
             <Section title="Sign-off">
               <div className="space-y-3">
                 <div className="rounded-lg border border-border p-3">
@@ -381,11 +411,20 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
                     <p className="text-xs text-muted-foreground">Tap to sign</p>
                   </div>
                 </div>
-                <div className="rounded-lg border border-border p-3 opacity-60">
-                  <p className="text-xs font-semibold text-foreground mb-1">Client Sign-off</p>
-                  <p className="text-[10px] text-muted-foreground mb-2">Enabled when admin requires client signature</p>
-                  <div className="h-24 border-2 border-dashed border-border rounded-lg flex items-center justify-center">
-                    <p className="text-xs text-muted-foreground">Client signature area</p>
+                <div className="rounded-lg border border-border p-3">
+                  <p className="text-xs font-semibold text-foreground mb-1">Customer Sign-off</p>
+                  <p className="text-[10px] text-muted-foreground mb-2">Required before the order can be completed.</p>
+                  <Input
+                    value={signature}
+                    maxLength={100}
+                    onChange={e => setSignature(e.target.value)}
+                    placeholder="Customer full name"
+                    className="text-sm"
+                  />
+                  <div className="h-24 mt-2 border-2 border-dashed border-border rounded-lg flex items-center justify-center">
+                    <p className={cn('text-sm', signature.trim() ? 'italic text-foreground' : 'text-muted-foreground text-xs')}>
+                      {signature.trim() || 'Customer signature area'}
+                    </p>
                   </div>
                 </div>
               </div>
