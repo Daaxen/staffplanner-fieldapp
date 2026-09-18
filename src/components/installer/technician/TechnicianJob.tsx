@@ -19,11 +19,13 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { type Project } from '@/data/mockData';
 import {
-  COMPLETION_CHECKLIST,
-  MIN_REQUIRED_PHOTOS,
+  checklistFor,
   completionRequirements,
+  minPhotosFor,
   missingRequirements,
+  signOffsFor,
 } from '@/lib/completionRequirements';
+import { templateForProject } from '@/lib/projectTemplates';
 import { addPhoto, emptyWork, loadWork, saveWork, photoUrl, type FieldWork } from '@/lib/offline/fieldWork';
 import { useOnlineStatus } from '@/hooks/useOffline';
 import DeviationForm from '@/components/installer/DeviationForm';
@@ -42,6 +44,10 @@ const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) 
   const [previews, setPreviews] = useState<Record<string, string>>({});
   const fileInput = useRef<HTMLInputElement>(null);
   const online = useOnlineStatus();
+  const template = useMemo(() => templateForProject(project), [project.templateId, project.projectType]);
+  const checklist = checklistFor(template);
+  const minPhotos = minPhotosFor(template);
+  const signOffs = signOffsFor(template);
 
   useEffect(() => {
     let active = true;
@@ -85,10 +91,11 @@ const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) 
     checkedItems: work.checkedItems,
     signature: work.signature,
     reportSubmitted: work.reportSubmitted,
+    signOffs: work.signOffs,
   };
   const requirements = useMemo(
-    () => completionRequirements(completionState),
-    [work.photos.length, work.checkedItems, work.signature, work.reportSubmitted],
+    () => completionRequirements(completionState, template),
+    [work.photos.length, work.checkedItems, work.signature, work.reportSubmitted, work.signOffs, template],
   );
   const missing = requirements.filter(r => !r.met);
   const ready = missing.length === 0;
@@ -111,7 +118,7 @@ const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) 
   };
 
   const complete = async () => {
-    if (missingRequirements(completionState).length > 0) {
+    if (missingRequirements(completionState, template).length > 0) {
       toast.error('Not ready yet', { description: missing.map(m => m.label).join(' · ') });
       return;
     }
@@ -189,12 +196,12 @@ const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) 
           'checklist',
           <CheckSquare className="w-6 h-6" />,
           'Checklist',
-          `${work.checkedItems.length}/${COMPLETION_CHECKLIST.length} done`,
-          work.checkedItems.length === COMPLETION_CHECKLIST.length,
+          `${work.checkedItems.length}/${checklist.length} done`,
+          work.checkedItems.length === checklist.length,
         )}
         {panel === 'checklist' && (
           <div className="rounded-2xl border border-border bg-card p-2 space-y-1">
-            {COMPLETION_CHECKLIST.map(item => {
+            {checklist.map(item => {
               const on = work.checkedItems.includes(item.id);
               return (
                 <button
@@ -227,8 +234,8 @@ const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) 
           'photos',
           <Camera className="w-6 h-6" />,
           'Photos',
-          `${work.photos.length} of ${MIN_REQUIRED_PHOTOS} required`,
-          work.photos.length >= MIN_REQUIRED_PHOTOS,
+          `${work.photos.length} of ${minPhotos} required`,
+          work.photos.length >= minPhotos,
         )}
         {panel === 'photos' && (
           <div className="rounded-2xl border border-border bg-card p-3 space-y-3">
@@ -244,6 +251,15 @@ const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) 
                 e.target.value = '';
               }}
             />
+            {template && template.photos.length > 0 && (
+              <ul className="space-y-1 text-xs text-muted-foreground">
+                {template.photos.map((p, i) => (
+                  <li key={p.id}>
+                    {i + 1}. {p.label}
+                  </li>
+                ))}
+              </ul>
+            )}
             <button
               onClick={() => fileInput.current?.click()}
               className="w-full rounded-xl bg-primary text-primary-foreground py-6 font-semibold flex flex-col items-center gap-1"
@@ -277,24 +293,38 @@ const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) 
         {bigButton(
           'signature',
           <PenLine className="w-6 h-6" />,
-          'Customer signature',
-          work.signature.trim() ? work.signature : 'Not signed yet',
-          !!work.signature.trim(),
+          'Sign-off',
+          signOffs.every(so => (so.id === 'customer' ? work.signature : work.signOffs?.[so.id] ?? '').trim())
+            ? 'Signed'
+            : `${signOffs.length} sign-off${signOffs.length === 1 ? '' : 's'} required`,
+          signOffs.every(so => (so.id === 'customer' ? work.signature : work.signOffs?.[so.id] ?? '').trim()),
         )}
         {panel === 'signature' && (
-          <div className="rounded-2xl border border-border bg-card p-3 space-y-2">
-            <Input
-              value={work.signature}
-              maxLength={100}
-              onChange={e => update({ signature: e.target.value })}
-              placeholder="Customer full name"
-              className="h-12 text-base"
-            />
-            <div className="h-28 rounded-xl border-2 border-dashed border-border flex items-center justify-center">
-              <p className={cn(work.signature.trim() ? 'italic text-lg text-foreground' : 'text-sm text-muted-foreground')}>
-                {work.signature.trim() || 'Sign here'}
-              </p>
-            </div>
+          <div className="rounded-2xl border border-border bg-card p-3 space-y-3">
+            {signOffs.map(so => {
+              const value = so.id === 'customer' ? work.signature : work.signOffs?.[so.id] ?? '';
+              const setValue = (v: string) =>
+                so.id === 'customer'
+                  ? update({ signature: v })
+                  : update({ signOffs: { ...(work.signOffs ?? {}), [so.id]: v } });
+              return (
+                <div key={so.id} className="space-y-2">
+                  <p className="text-sm font-semibold text-foreground">{so.label}</p>
+                  <Input
+                    value={value}
+                    maxLength={100}
+                    onChange={e => setValue(e.target.value)}
+                    placeholder={so.by === 'customer' ? 'Customer full name' : 'Your full name'}
+                    className="h-12 text-base"
+                  />
+                  <div className="h-24 rounded-xl border-2 border-dashed border-border flex items-center justify-center">
+                    <p className={cn(value.trim() ? 'italic text-lg text-foreground' : 'text-sm text-muted-foreground')}>
+                      {value.trim() || 'Sign here'}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
 
