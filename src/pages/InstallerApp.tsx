@@ -20,7 +20,8 @@ import { useInstallerLogs } from '@/hooks/useInstallerLogs';
 import { useReminders } from '@/hooks/useReminders';
 import { usePushRegistration } from '@/hooks/usePushRegistration';
 import { toast } from 'sonner';
-import { closedStatuses, doneOnSiteStatuses } from '@/lib/projectLifecycle';
+import { closedStatuses, doneOnSiteStatuses, transitionError } from '@/lib/projectLifecycle';
+import { logStatusChange } from '@/lib/statusHistory';
 
 const InstallerApp = () => {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -58,6 +59,12 @@ const InstallerApp = () => {
   };
 
   const handleStatusChange = (projectId: string, newStatus: Project['status']) => {
+    const current = localProjects.find(p => p.id === projectId);
+    if (current) {
+      const err = transitionError(current.status, newStatus);
+      if (err) { toast.error(err); return; }
+      void logStatusChange({ projectRef: current.id, projectName: current.name, from: current.status, to: newStatus });
+    }
     setLocalProjects(prev => prev.map(p =>
       p.id === projectId ? { ...p, status: newStatus } : p
     ));

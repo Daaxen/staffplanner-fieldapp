@@ -390,6 +390,7 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
           project={selectedProject}
           installer={getInstaller(selectedProject.assigneeIds[0] ?? null)}
           onClose={() => setSelectedProject(null)}
+          onUpdateProject={handleUpdateProject}
         />
       )}
       <CreateOrderDialog

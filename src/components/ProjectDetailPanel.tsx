@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { type Project, type Installer, statusLabels, type ProjectStatus, installers } from '@/data/mockData';
 import { motion, AnimatePresence } from 'framer-motion';
 import { statusBadgeMap as statusColorMap } from '@/lib/projectLifecycle';
+import StatusControl from './projects/StatusControl';
 
 const installerDotMap: Record<number, string> = {
   1: 'bg-installer-1',
@@ -18,9 +19,10 @@ interface Props {
   project: Project;
   installer: Installer | null;
   onClose: () => void;
+  onUpdateProject?: (projectId: string, updates: Partial<Project>) => void;
 }
 
-const ProjectDetailPanel = ({ project, installer, onClose }: Props) => {
+const ProjectDetailPanel = ({ project, installer, onClose, onUpdateProject }: Props) => {
   const assignees = project.assigneeIds.map(id => installers.find(i => i.id === id)).filter(Boolean) as Installer[];
   const formatDate = (d: string) => new Date(d).toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' });
 
@@ -59,9 +61,14 @@ const ProjectDetailPanel = ({ project, installer, onClose }: Props) => {
         <div className="flex-1 p-6 space-y-6 overflow-y-auto">
           <div>
             <h4 className="text-lg font-semibold text-foreground">{project.name}</h4>
-            <span className={cn("inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium mt-2", statusColorMap[project.status])}>
-              {statusLabels[project.status]}
-            </span>
+            <div className="mt-3">
+              <StatusControl
+                projectRef={project.id}
+                projectName={project.name}
+                status={project.status}
+                onChange={(next) => onUpdateProject?.(project.id, { status: next })}
+              />
+            </div>
           </div>
 
           <div className="space-y-4">
