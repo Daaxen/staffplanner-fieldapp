@@ -87,6 +87,17 @@ export interface Client {
   rates?: ClientRates;
 }
 
+export interface ProjectEconomyOverrides {
+  fixedPrice?: number;
+  additionalRevenue?: number;
+  budgetHours?: number;
+  internalHourlyCost?: number;
+  externalHourlyCost?: number;
+  externalCostExtra?: number;
+  materialCostExtra?: number;
+  travelCostExtra?: number;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -109,6 +120,8 @@ export interface Project {
   startTime?: string;
   endTime?: string;
   estimatedHours?: number;
+  /** Manual revenue/cost overrides used by the profitability module. */
+  economy?: ProjectEconomyOverrides;
   hourlyRate?: number;   // resolved from client rates
   mileageRate?: number;  // resolved from client rates
   isFlexOrder?: boolean;

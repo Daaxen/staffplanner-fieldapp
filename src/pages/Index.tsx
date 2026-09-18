@@ -13,6 +13,7 @@ import EscalationsView from '@/components/admin/EscalationsView';
 import CapacityDashboard from '@/components/dashboard/CapacityDashboard';
 import InvoicingView from '@/components/admin/InvoicingView';
 import DeviationsView from '@/components/admin/DeviationsView';
+import ProfitabilityView from '@/components/admin/ProfitabilityView';
 import { useProjects } from '@/lib/appData';
 import {
   AlertDialog,
@@ -83,6 +84,9 @@ const Index = () => {
         {activeView === 'users' && (
           <UsersManager />
         )}
+        {activeView === 'profitability' && (
+          <ProfitabilityView />
+        )}
         {activeView === 'invoicing' && (
           <InvoicingView />
         )}
@@ -95,7 +99,7 @@ const Index = () => {
         {activeView === 'profile' && (
           <ProfileEditor />
         )}
-        {activeView !== 'planner' && activeView !== 'dashboard' && activeView !== 'fleet' && activeView !== 'installer-preview' && activeView !== 'documents' && activeView !== 'users' && activeView !== 'escalations' && activeView !== 'deviations' && activeView !== 'invoicing' && activeView !== 'profile' && activeView !== 'orders' && activeView !== 'clients' && (
+        {activeView !== 'planner' && activeView !== 'dashboard' && activeView !== 'fleet' && activeView !== 'installer-preview' && activeView !== 'documents' && activeView !== 'users' && activeView !== 'escalations' && activeView !== 'deviations' && activeView !== 'invoicing' && activeView !== 'profitability' && activeView !== 'profile' && activeView !== 'orders' && activeView !== 'clients' && (
           <div className="flex-1 flex items-center justify-center">
             <p className="text-muted-foreground">Module coming soon</p>
           </div>
