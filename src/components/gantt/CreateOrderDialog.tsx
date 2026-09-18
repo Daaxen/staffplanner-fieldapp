@@ -746,12 +746,13 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
             <div className="border border-input rounded-md p-3 grid gap-2 max-h-[180px] overflow-y-auto">
               <TooltipProvider>
                 {installers
-                  .map(inst => ({ inst, suit: getInstallerSuitability(inst) }))
+                  .map(inst => ({ inst, suit: getInstallerSuitability(inst), blocked: conflictsFor(inst.id).some(c => c.severity === 'blocking') }))
                   .sort((a, b) => (b.suit?.score ?? 50) - (a.suit?.score ?? 50))
-                  .map(({ inst, suit }) => (
+                  .map(({ inst, suit, blocked }) => (
                   <label key={inst.id} className="flex items-center gap-2 cursor-pointer text-sm hover:bg-accent rounded px-1 py-0.5 transition-colors">
-                    <Checkbox checked={selectedInstallers.includes(inst.id)} onCheckedChange={() => toggleInstaller(inst.id)} disabled={suit?.score === 0} />
-                    <span className={cn(suit?.score === 0 && "line-through text-muted-foreground")}>{inst.name}</span>
+                    <Checkbox checked={selectedInstallers.includes(inst.id)} onCheckedChange={() => toggleInstaller(inst.id)} disabled={suit?.score === 0 || (blocked && !selectedInstallers.includes(inst.id))} />
+                    <span className={cn((suit?.score === 0 || blocked) && "line-through text-muted-foreground")}>{inst.name}</span>
+                    {blocked && <span className="text-[10px] font-medium text-destructive">Conflict</span>}
                     {suit && (
                       <Tooltip>
                         <TooltipTrigger asChild>
