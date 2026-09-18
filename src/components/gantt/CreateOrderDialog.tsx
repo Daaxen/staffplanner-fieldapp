@@ -849,7 +849,9 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
 
         <DialogFooter>
           <Button variant="outline" onClick={() => { resetForm(); onOpenChange(false); }}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={!isValid}>Create Project</Button>
+          <Button onClick={handleSubmit} disabled={!isValid || hasBlocking(conflicts)}>
+            {hasBlocking(conflicts) ? 'Resolve conflicts first' : 'Create Project'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
