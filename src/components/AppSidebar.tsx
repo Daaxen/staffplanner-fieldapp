@@ -38,6 +38,7 @@ const AppSidebar = ({ activeView, onViewChange, collapsed = false, onToggleColla
   const { escalated } = useReminders({ adminScope: true });
   const navItems = [
     ...baseNavItems,
+    ...(isAdmin ? [{ id: 'executive', label: 'Executive', icon: TrendingUp }] : []),
     ...(isAdmin ? [{ id: 'deviations', label: 'Deviations', icon: AlertTriangle }] : []),
     ...(isAdmin ? [{ id: 'profitability', label: 'Profitability', icon: TrendingUp }] : []),
     ...(isAdmin ? [{ id: 'invoicing', label: 'Invoicing', icon: Receipt }] : []),
