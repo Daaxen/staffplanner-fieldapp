@@ -15,6 +15,7 @@ export interface FieldWork {
   signature: string;
   reportText: string;
   reportSubmitted: boolean;
+  signOffs: Record<string, string>;
   photos: OfflinePhoto[];
   pendingStatus?: Project['status'];
   updatedAt: string;
@@ -28,6 +29,7 @@ export const emptyWork = (projectRef: string, projectName?: string): FieldWork =
   signature: '',
   reportText: '',
   reportSubmitted: false,
+  signOffs: {},
   photos: [],
   updatedAt: new Date().toISOString(),
   dirty: false,
@@ -44,7 +46,8 @@ const notify = () => listeners.forEach(fn => fn());
 
 export async function loadWork(projectRef: string, projectName?: string): Promise<FieldWork> {
   const stored = await idbGet<FieldWork>('work', projectRef);
-  return stored ?? emptyWork(projectRef, projectName);
+  if (!stored) return emptyWork(projectRef, projectName);
+  return { ...stored, signOffs: stored.signOffs ?? {} };
 }
 
 export async function saveWork(work: FieldWork): Promise<FieldWork> {
@@ -130,6 +133,7 @@ export async function syncFieldWork(): Promise<SyncResult> {
             installer_id: userId,
             checked_items: work.checkedItems,
             signature: work.signature || null,
+            sign_offs: work.signOffs ?? {},
             report_text: work.reportText || null,
             photo_paths: photos.map(p => p.path).filter(Boolean),
             submitted_at: work.reportSubmitted ? work.updatedAt : null,

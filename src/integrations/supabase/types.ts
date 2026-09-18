@@ -224,6 +224,7 @@ export type Database = {
           photo_paths: Json
           project_ref: string
           report_text: string | null
+          sign_offs: Json
           signature: string | null
           submitted_at: string | null
           updated_at: string
@@ -236,6 +237,7 @@ export type Database = {
           photo_paths?: Json
           project_ref: string
           report_text?: string | null
+          sign_offs?: Json
           signature?: string | null
           submitted_at?: string | null
           updated_at?: string
@@ -248,6 +250,7 @@ export type Database = {
           photo_paths?: Json
           project_ref?: string
           report_text?: string | null
+          sign_offs?: Json
           signature?: string | null
           submitted_at?: string | null
           updated_at?: string

@@ -9,11 +9,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import {
-  COMPLETION_CHECKLIST,
-  MIN_REQUIRED_PHOTOS,
+  checklistFor,
   completionRequirements,
+  minPhotosFor,
   missingRequirements,
+  signOffsFor,
 } from '@/lib/completionRequirements';
+import { templateForProject } from '@/lib/projectTemplates';
 import ProjectLogTab from '@/components/installer/reporting/ProjectLogTab';
 import type { InstallerLogs } from '@/hooks/useInstallerLogs';
 import MiniMap from '@/components/maps/MiniMap';
@@ -44,16 +46,23 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
   const [reportText, setReportText] = useState('');
   const [reportSubmitted, setReportSubmitted] = useState(false);
   const [signature, setSignature] = useState('');
+  const [signOffs, setSignOffs] = useState<Record<string, string>>({});
+
+  const template = useMemo(() => templateForProject(project), [project.templateId, project.projectType]);
+  const checklist = checklistFor(template);
+  const minPhotos = minPhotosFor(template);
+  const templateSignOffs = signOffsFor(template);
 
   const completionState = {
     photoCount: reportPhotos.length,
     checkedItems,
     signature,
     reportSubmitted,
+    signOffs,
   };
   const requirements = useMemo(
-    () => completionRequirements(completionState),
-    [reportPhotos.length, checkedItems, signature, reportSubmitted],
+    () => completionRequirements(completionState, template),
+    [reportPhotos.length, checkedItems, signature, reportSubmitted, signOffs, template],
   );
   const missing = requirements.filter(r => !r.met);
   const readyToComplete = missing.length === 0;
@@ -62,7 +71,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
     setCheckedItems(prev => (prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]));
 
   const handleComplete = () => {
-    const blockers = missingRequirements(completionState);
+    const blockers = missingRequirements(completionState, template);
     if (blockers.length > 0) {
       setTab('summary');
       toast.error('Cannot complete yet', {
@@ -297,13 +306,21 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
                 </div>
               )}
               <p className="text-[11px] text-muted-foreground mt-2">
-                At least {MIN_REQUIRED_PHOTOS} photos are required before the order can be completed.
+                At least {minPhotos} photos are required before the order can be completed.
               </p>
+              {template && template.photos.length > 0 && (
+                <ul className="mt-1 space-y-0.5 text-[11px] text-muted-foreground">
+                  {template.photos.map((p, i) => (
+                    <li key={p.id}>{i + 1}. {p.label}</li>
+                  ))}
+                </ul>
+              )}
+
             </Section>
 
             <Section title="Completion Checklist">
               <div className="space-y-2">
-                {COMPLETION_CHECKLIST.map(item => (
+                {checklist.map(item => (
                   <label key={item.id} className="flex items-start gap-2 py-1 cursor-pointer">
                     <Checkbox
                       checked={checkedItems.includes(item.id)}
@@ -405,28 +422,33 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
 
             <Section title="Sign-off">
               <div className="space-y-3">
-                <div className="rounded-lg border border-border p-3">
-                  <p className="text-xs font-semibold text-foreground mb-2">Installer Sign-off</p>
-                  <div className="h-24 border-2 border-dashed border-border rounded-lg flex items-center justify-center">
-                    <p className="text-xs text-muted-foreground">Tap to sign</p>
-                  </div>
-                </div>
-                <div className="rounded-lg border border-border p-3">
-                  <p className="text-xs font-semibold text-foreground mb-1">Customer Sign-off</p>
-                  <p className="text-[10px] text-muted-foreground mb-2">Required before the order can be completed.</p>
-                  <Input
-                    value={signature}
-                    maxLength={100}
-                    onChange={e => setSignature(e.target.value)}
-                    placeholder="Customer full name"
-                    className="text-sm"
-                  />
-                  <div className="h-24 mt-2 border-2 border-dashed border-border rounded-lg flex items-center justify-center">
-                    <p className={cn('text-sm', signature.trim() ? 'italic text-foreground' : 'text-muted-foreground text-xs')}>
-                      {signature.trim() || 'Customer signature area'}
-                    </p>
-                  </div>
-                </div>
+                {templateSignOffs.map(so => {
+                  const value = so.id === 'customer' ? signature : signOffs[so.id] ?? '';
+                  const setValue = (v: string) =>
+                    so.id === 'customer'
+                      ? setSignature(v)
+                      : setSignOffs(prev => ({ ...prev, [so.id]: v }));
+                  return (
+                    <div key={so.id} className="rounded-lg border border-border p-3">
+                      <p className="text-xs font-semibold text-foreground mb-1">{so.label}</p>
+                      <p className="text-[10px] text-muted-foreground mb-2">
+                        Required before the order can be completed.
+                      </p>
+                      <Input
+                        value={value}
+                        maxLength={100}
+                        onChange={e => setValue(e.target.value)}
+                        placeholder={so.by === 'customer' ? 'Customer full name' : 'Your full name'}
+                        className="text-sm"
+                      />
+                      <div className="h-24 mt-2 border-2 border-dashed border-border rounded-lg flex items-center justify-center">
+                        <p className={cn('text-sm', value.trim() ? 'italic text-foreground' : 'text-muted-foreground text-xs')}>
+                          {value.trim() || 'Signature area'}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </Section>
           </div>

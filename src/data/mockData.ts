@@ -92,6 +92,8 @@ export interface Project {
   name: string;
   projectNumber?: string;
   projectType: ProjectType;
+  /** Project template that defines required fields, checklist, photos and sign-offs. */
+  templateId?: string;
   clientId?: string;
   client: string;
   location: string;
