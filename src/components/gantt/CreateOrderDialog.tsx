@@ -1017,6 +1017,14 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      <BookingOverrideDialog
+        open={overrideOpen}
+        onOpenChange={(o) => { setOverrideOpen(o); if (!o) setPendingProject(null); }}
+        conflicts={bookingConflicts}
+        installerName={(id) => installers.find(i => i.id === id)?.name ?? 'Installer'}
+        onConfirm={(reason) => { if (pendingProject) void persistBookings(pendingProject, reason); }}
+      />
     </Dialog>
   );
 };
