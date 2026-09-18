@@ -3,7 +3,17 @@ import { type Project, type Installer, projectTypeIcons, projectTypeLabels, stat
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { useState } from 'react';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
+import {
+  COMPLETION_CHECKLIST,
+  MIN_REQUIRED_PHOTOS,
+  completionRequirements,
+  missingRequirements,
+} from '@/lib/completionRequirements';
 import ProjectLogTab from '@/components/installer/reporting/ProjectLogTab';
 import type { InstallerLogs } from '@/hooks/useInstallerLogs';
 import MiniMap from '@/components/maps/MiniMap';
@@ -29,6 +39,39 @@ const statusDotMap: Record<string, string> = {
 const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChange, onPickUp }: InstallerProjectDetailProps) => {
   
   const [reportPhotos, setReportPhotos] = useState<string[]>([]);
+  const [tab, setTab] = useState('info');
+  const [checkedItems, setCheckedItems] = useState<string[]>([]);
+  const [reportText, setReportText] = useState('');
+  const [reportSubmitted, setReportSubmitted] = useState(false);
+  const [signature, setSignature] = useState('');
+
+  const completionState = {
+    photoCount: reportPhotos.length,
+    checkedItems,
+    signature,
+    reportSubmitted,
+  };
+  const requirements = useMemo(
+    () => completionRequirements(completionState),
+    [reportPhotos.length, checkedItems, signature, reportSubmitted],
+  );
+  const missing = requirements.filter(r => !r.met);
+  const readyToComplete = missing.length === 0;
+
+  const toggleCheck = (id: string) =>
+    setCheckedItems(prev => (prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]));
+
+  const handleComplete = () => {
+    const blockers = missingRequirements(completionState);
+    if (blockers.length > 0) {
+      setTab('summary');
+      toast.error('Cannot complete yet', {
+        description: blockers.map(b => b.label.replace(/\s*\(.*\)$/, '')).join(' · '),
+      });
+      return;
+    }
+    onStatusChange!(project.id, 'completed');
+  };
 
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(project.location)}`;
 
