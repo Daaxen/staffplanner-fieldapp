@@ -134,6 +134,15 @@ Deno.serve(async (req) => {
       }
     }
 
+    await supabase
+      .from('job_runs')
+      .update({
+        finished_at: new Date().toISOString(),
+        result: { created: created.length, bumped: bumped.length, via: auth.via },
+      })
+      .eq('job', 'reminders-scan')
+      .eq('bucket', bucket);
+
     return new Response(
       JSON.stringify({ ok: true, created: created.length, bumped: bumped.length }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
