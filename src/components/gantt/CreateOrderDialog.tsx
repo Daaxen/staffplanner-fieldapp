@@ -28,6 +28,7 @@ import { vehicles } from '@/data/fleetData';
 import { toast } from 'sonner';
 import RecommendedInstallers from '@/components/scheduling/RecommendedInstallers';
 import { recommendInstallers } from '@/lib/assignmentRecommendations';
+import { projectDateRangeError } from '@/lib/validation/dates';
 
 interface CreateOrderDialogProps {
   open: boolean;
