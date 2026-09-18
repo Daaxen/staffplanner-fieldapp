@@ -14,6 +14,7 @@ import {
 import { toast } from 'sonner';
 import AddressAutocomplete from '@/components/maps/AddressAutocomplete';
 import MiniMap from '@/components/maps/MiniMap';
+import { doneOnSiteStatuses } from '@/lib/projectLifecycle';
 
 // Numeric-only auto-id generator
 function nextId(existing: Client[]): string {
@@ -51,7 +52,7 @@ const ClientsRegister = () => {
         return {
           ...c,
           projectCount: cp.length,
-          activeCount: cp.filter((p) => p.status !== 'completed' && p.status !== 'cancelled').length,
+          activeCount: cp.filter((p) => !doneOnSiteStatuses.includes(p.status) && p.status !== 'cancelled').length,
         };
       })
       .filter((c) =>
