@@ -126,11 +126,15 @@ export function useInstallerLogs(projects: Project[] = []) {
     const hours = Math.max(0, Math.round(((ended.getTime() - started.getTime()) / 3_600_000) * 100) / 100);
     const pad = (n: number) => n.toString().padStart(2, '0');
     const hm = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    const sameDay = started.toDateString() === ended.toDateString();
     await addTime({
       projectId: activeTimer.projectId,
       date: started.toISOString().slice(0, 10),
-      startTime: hm(started), endTime: hm(ended), hours, source: 'timer',
+      startTime: sameDay ? hm(started) : undefined,
+      endTime: sameDay ? hm(ended) : undefined,
+      hours, source: 'timer',
     });
+
     await supabase.from('active_timers').delete().eq('installer_id', installerId);
     setActiveTimer(null);
     return null;
