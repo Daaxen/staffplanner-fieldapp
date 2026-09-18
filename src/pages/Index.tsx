@@ -12,6 +12,7 @@ import ProfileEditor from '@/components/ProfileEditor';
 import EscalationsView from '@/components/admin/EscalationsView';
 import CapacityDashboard from '@/components/dashboard/CapacityDashboard';
 import OperationsDashboard from '@/components/dashboard/OperationsDashboard';
+import ExecutiveDashboard from '@/components/dashboard/ExecutiveDashboard';
 import InvoicingView from '@/components/admin/InvoicingView';
 import DeviationsView from '@/components/admin/DeviationsView';
 import ProfitabilityView from '@/components/admin/ProfitabilityView';
@@ -69,6 +70,9 @@ const Index = () => {
         )}
         {activeView === 'operations' && (
           <OperationsDashboard />
+        )}
+        {activeView === 'executive' && (
+          <ExecutiveDashboard />
         )}
         {activeView === 'fleet' && (
           <FleetManager projects={projects} />
