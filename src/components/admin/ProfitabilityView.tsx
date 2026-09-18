@@ -220,6 +220,14 @@ const ProfitabilityView = () => {
           <Label className="text-xs">To</Label>
           <Input type="date" value={to} onChange={e => setTo(e.target.value)} className="w-40" />
         </div>
+        <Button
+          variant={onlyAlerts ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setOnlyAlerts(v => !v)}
+        >
+          <AlertTriangle className="w-4 h-4 mr-2" />
+          {onlyAlerts ? 'Showing alerts only' : `Alerts (${alertCount})`}
+        </Button>
       </div>
 
       <div className="rounded-xl border border-border overflow-x-auto">
