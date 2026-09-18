@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useProjects } from '@/lib/appData';
+import { projectRefForRowId, useProjects } from '@/lib/appData';
 import { useInstallers } from '@/hooks/useInstallers';
 import { emptyInput, type ProfitabilityInput } from '@/lib/profitability';
 import type { Project } from '@/data/mockData';
@@ -26,7 +26,9 @@ export function useProfitabilityData() {
       installers.find(i => i.profileId === profileId)?.type === 'sub-vendor';
 
     const next: ProfitabilityTotals = {};
-    const ensure = (projectId: string) => {
+    // Reporting rows key on projects.id (uuid); the app keys on the order ref.
+    const ensure = (projectRowId: string) => {
+      const projectId = projectRefForRowId(projectRowId) ?? projectRowId;
       if (!next[projectId]) {
         const project = projects.find(p => p.id === projectId);
         next[projectId] = emptyInput(project ?? ({ id: projectId, client: '' } as Project));

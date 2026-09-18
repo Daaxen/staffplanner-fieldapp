@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { computeHours, DEFAULT_MILEAGE_RATE, type TimeEntry, type ExpenseEntry, type ExpenseCategory, type ActiveTimer } from '@/data/logsData';
 import { ratesForClient, type Project } from '@/data/mockData';
+import { ensureProjectRowId, projectRefForRowId } from '@/lib/appData';
 
 type Meta = { projectName?: string | null; clientName?: string | null };
 
@@ -36,25 +37,25 @@ export function useInstallerLogs(projects: Project[] = []) {
     ]);
 
     setTime((t.data ?? []).map(r => ({
-      id: r.id, projectId: r.project_id, installerId: r.installer_id, date: r.entry_date,
+      id: r.id, projectId: projectRefForRowId(r.project_id) ?? r.project_id, installerId: r.installer_id, date: r.entry_date,
       startTime: r.start_time ?? undefined, endTime: r.end_time ?? undefined,
       hours: Number(r.hours), note: r.note ?? undefined,
       source: (r.source === 'timer' ? 'timer' : 'manual'), createdAt: r.created_at,
     })));
 
     const exp: ExpenseEntry[] = (e.data ?? []).map(r => ({
-      id: r.id, projectId: r.project_id, installerId: r.installer_id, date: r.entry_date,
+      id: r.id, projectId: projectRefForRowId(r.project_id) ?? r.project_id, installerId: r.installer_id, date: r.entry_date,
       category: r.category as ExpenseCategory, amount: Number(r.amount),
       note: r.note ?? undefined, receiptName: r.receipt_path ?? undefined, createdAt: r.created_at,
     }));
     const mil: ExpenseEntry[] = (m.data ?? []).map(r => ({
-      id: r.id, projectId: r.project_id, installerId: r.installer_id, date: r.entry_date,
+      id: r.id, projectId: projectRefForRowId(r.project_id) ?? r.project_id, installerId: r.installer_id, date: r.entry_date,
       category: 'mileage' as ExpenseCategory, amount: Number(r.amount),
       km: Number(r.km), rate: Number(r.rate), note: r.note ?? undefined, createdAt: r.created_at,
     }));
     setExpenses([...exp, ...mil].sort((a, b) => (a.date < b.date ? 1 : -1)));
 
-    setActiveTimer(timer.data ? { projectId: timer.data.project_id, startedAt: timer.data.started_at } : null);
+    setActiveTimer(timer.data ? { projectId: projectRefForRowId(timer.data.project_id) ?? timer.data.project_id, startedAt: timer.data.started_at } : null);
     setLoading(false);
   }, [installerId]);
 
@@ -72,8 +73,11 @@ export function useInstallerLogs(projects: Project[] = []) {
   const startTimer = useCallback(async (projectId: string) => {
     if (!installerId) return;
     const startedAt = new Date().toISOString();
+    const projectRowId = await ensureProjectRowId(projectId);
+    if (!projectRowId) return;
     await supabase.from('active_timers').upsert({
-      installer_id: installerId, project_id: projectId, project_name: metaFor(projectId).projectName, started_at: startedAt,
+      installer_id: installerId, project_id: projectRowId,
+      snapshot_project_name: metaFor(projectId).projectName, started_at: startedAt,
     });
     setActiveTimer({ projectId, startedAt });
   }, [installerId, metaFor]);
@@ -85,8 +89,10 @@ export function useInstallerLogs(projects: Project[] = []) {
     const hours = entry.hours || (entry.startTime && entry.endTime ? computeHours(entry.startTime, entry.endTime) : 0);
     const meta = metaFor(entry.projectId);
     const project = projects.find(p => p.id === entry.projectId);
+    const projectRowId = await ensureProjectRowId(entry.projectId);
+    if (!projectRowId) return null;
     const { data } = await supabase.from('time_entries').insert({
-      project_id: entry.projectId, project_name: meta.projectName, client_name: meta.clientName,
+      project_id: projectRowId, snapshot_project_name: meta.projectName, snapshot_client_name: meta.clientName,
       installer_id: installerId, entry_date: entry.date, start_time: entry.startTime ?? null,
       end_time: entry.endTime ?? null, hours, note: entry.note ?? null, source: entry.source ?? 'manual',
       hourly_rate: ratesForClient(project?.client, project?.clientId).hourlyRate ?? null,
@@ -128,8 +134,10 @@ export function useInstallerLogs(projects: Project[] = []) {
   }) => {
     if (!installerId) return null;
     const meta = metaFor(entry.projectId);
+    const projectRowId = await ensureProjectRowId(entry.projectId);
+    if (!projectRowId) return null;
     const { data } = await supabase.from('expense_entries').insert({
-      project_id: entry.projectId, project_name: meta.projectName, client_name: meta.clientName,
+      project_id: projectRowId, snapshot_project_name: meta.projectName, snapshot_client_name: meta.clientName,
       installer_id: installerId, entry_date: entry.date, category: entry.category,
       amount: entry.amount, note: entry.note ?? null, receipt_path: entry.receiptName ?? null,
     }).select().maybeSingle();
@@ -141,8 +149,10 @@ export function useInstallerLogs(projects: Project[] = []) {
     if (!installerId) return null;
     const meta = metaFor(projectId);
     const effectiveRate = rate ?? rateFor(projectId);
+    const projectRowId = await ensureProjectRowId(projectId);
+    if (!projectRowId) return null;
     const { data } = await supabase.from('mileage_entries').insert({
-      project_id: projectId, project_name: meta.projectName, client_name: meta.clientName,
+      project_id: projectRowId, snapshot_project_name: meta.projectName, snapshot_client_name: meta.clientName,
       installer_id: installerId, entry_date: date, km, rate: effectiveRate,
       amount: Math.round(km * effectiveRate * 100) / 100, note: note ?? null,
     }).select().maybeSingle();
