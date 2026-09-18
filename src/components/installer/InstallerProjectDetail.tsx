@@ -114,7 +114,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
       )}
 
       {/* Tabbed content */}
-      <Tabs defaultValue="info" className="flex-1 flex flex-col overflow-hidden">
+      <Tabs value={tab} onValueChange={setTab} className="flex-1 flex flex-col overflow-hidden">
         <TabsList className="shrink-0 w-full rounded-none border-b border-border bg-card h-10 p-0 justify-start gap-0">
           <TabsTrigger value="info" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-[11px] h-full gap-1">
             <Info className="w-3 h-3" />
@@ -296,6 +296,52 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
                   ))}
                 </div>
               )}
+              <p className="text-[11px] text-muted-foreground mt-2">
+                At least {MIN_REQUIRED_PHOTOS} photos are required before the order can be completed.
+              </p>
+            </Section>
+
+            <Section title="Completion Checklist">
+              <div className="space-y-2">
+                {COMPLETION_CHECKLIST.map(item => (
+                  <label key={item.id} className="flex items-start gap-2 py-1 cursor-pointer">
+                    <Checkbox
+                      checked={checkedItems.includes(item.id)}
+                      onCheckedChange={() => toggleCheck(item.id)}
+                      className="mt-0.5"
+                    />
+                    <span className="text-sm text-foreground leading-snug">{item.label}</span>
+                  </label>
+                ))}
+              </div>
+            </Section>
+
+            <Section title="Installation Report">
+              <Textarea
+                value={reportText}
+                maxLength={2000}
+                onChange={e => {
+                  setReportText(e.target.value);
+                  setReportSubmitted(false);
+                }}
+                placeholder="Describe the work performed, deviations and any follow-up needed…"
+                className="min-h-[110px] text-sm"
+              />
+              <div className="flex items-center justify-between mt-2">
+                <span className="text-[11px] text-muted-foreground">
+                  {reportSubmitted ? 'Report submitted' : 'Not submitted yet'}
+                </span>
+                <Button
+                  size="sm"
+                  disabled={reportText.trim().length < 10 || reportSubmitted}
+                  onClick={() => {
+                    setReportSubmitted(true);
+                    toast.success('Installation report submitted');
+                  }}
+                >
+                  Submit report
+                </Button>
+              </div>
             </Section>
           </div>
         </TabsContent>
