@@ -446,14 +446,30 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
             </Button>
           )}
           {showCompleteButton && (
-            <Button
-              className="w-full bg-status-completed hover:bg-status-completed/90 text-foreground"
-              size="lg"
-              onClick={() => onStatusChange!(project.id, 'completed')}
-            >
-              <CheckSquare className="w-4 h-4 mr-2" />
-              Mark Complete
-            </Button>
+            <>
+              {!readyToComplete && (
+                <div className="mb-2 rounded-lg border border-status-on-hold/40 bg-status-on-hold/10 p-2.5">
+                  <p className="text-[11px] font-semibold text-foreground flex items-center gap-1.5 mb-1">
+                    <AlertCircle className="w-3.5 h-3.5 text-status-on-hold" />
+                    Missing before completion
+                  </p>
+                  <ul className="space-y-0.5">
+                    {missing.map(r => (
+                      <li key={r.id} className="text-[11px] text-muted-foreground">• {r.label}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <Button
+                className="w-full bg-status-completed hover:bg-status-completed/90 text-foreground disabled:opacity-50"
+                size="lg"
+                disabled={!readyToComplete}
+                onClick={handleComplete}
+              >
+                <CheckSquare className="w-4 h-4 mr-2" />
+                {readyToComplete ? 'Mark Complete' : `Mark Complete (${missing.length} missing)`}
+              </Button>
+            </>
           )}
         </div>
       )}
