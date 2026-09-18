@@ -186,12 +186,20 @@ const OrdersRegister = () => {
     (dateFrom ? 1 : 0) + (dateTo ? 1 : 0) + (historicalOnly ? 1 : 0);
 
   const applyMassStatus = () => {
+    const blockedCount = statusPreview.filter(r => r.blocked).length;
     const changedIds = new Set(statusPreview.filter(r => r.changed).map(r => r.id));
-    if (changedIds.size === 0) { toast.error('No orders would change'); return; }
+    if (changedIds.size === 0) {
+      toast.error(blockedCount ? 'That status step is not allowed for the selected orders' : 'No orders would change');
+      return;
+    }
     setOrders(prev => prev.map(p => changedIds.has(p.id) ? { ...p, status: massStatus } : p));
-    toast.success(`Updated status on ${changedIds.size} order(s)`);
+    toast.success(
+      `Updated status on ${changedIds.size} order(s)` +
+      (blockedCount ? ` · ${blockedCount} skipped (step not allowed)` : ''),
+    );
     closeMassDialog(); setSelected(new Set());
   };
+
   const applyMassAssignee = () => {
     if (!massAssignee) return;
     const changedIds = new Set(assigneePreview.filter(r => !r.already).map(r => r.id));
