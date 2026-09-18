@@ -248,8 +248,9 @@ const ProfitabilityView = () => {
             </tr>
           </thead>
           <tbody>
-            {rows.map(({ project, result }) => {
+            {rows.map(({ project, result, alerts }) => {
               const level = marginLevel(result.profitabilityPct);
+              const worst = alerts.some(a => a.severity === 'critical') ? 'critical' : 'warning';
               return (
                 <tr
                   key={project.id}
@@ -257,7 +258,18 @@ const ProfitabilityView = () => {
                   className="border-t border-border cursor-pointer hover:bg-muted/40"
                 >
                   <td className="px-3 py-2">
-                    <p className="font-medium text-foreground">{project.name}</p>
+                    <p className="font-medium text-foreground flex items-center gap-1.5">
+                      {project.name}
+                      {alerts.length > 0 && (
+                        <span
+                          title={alerts.map(a => a.title).join(' · ')}
+                          className={cn('inline-flex items-center gap-1 text-[11px] font-semibold rounded-full border px-1.5 py-0.5', alertBg(worst), alertColor(worst))}
+                        >
+                          <AlertTriangle className="w-3 h-3" />
+                          {alerts.length}
+                        </span>
+                      )}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       {project.id} · {project.client || 'No client'} · {statusLabels[project.status]}
                     </p>
