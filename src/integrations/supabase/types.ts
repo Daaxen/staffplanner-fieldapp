@@ -226,6 +226,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "expense_entries_category_fk"
+            columns: ["category"]
+            isOneToOne: false
+            referencedRelation: "expense_rules"
+            referencedColumns: ["category"]
+          },
+          {
             foreignKeyName: "expense_entries_project_fk"
             columns: ["project_id"]
             isOneToOne: false
@@ -345,6 +352,13 @@ export type Database = {
             referencedRelation: "installers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "installer_absences_type_fk"
+            columns: ["type"]
+            isOneToOne: false
+            referencedRelation: "ref_absence_type"
+            referencedColumns: ["code"]
+          },
         ]
       }
       installers: {
@@ -388,6 +402,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "installers_type_fk"
+            columns: ["type"]
+            isOneToOne: false
+            referencedRelation: "ref_installer_type"
+            referencedColumns: ["code"]
           },
         ]
       }
@@ -529,7 +550,15 @@ export type Database = {
           shoe_size?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_employment_type_fk"
+            columns: ["employment_type"]
+            isOneToOne: false
+            referencedRelation: "ref_employment_type"
+            referencedColumns: ["code"]
+          },
+        ]
       }
       project_assignees: {
         Row: {
@@ -666,6 +695,20 @@ export type Database = {
             referencedRelation: "clients"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "projects_status_fk"
+            columns: ["status"]
+            isOneToOne: false
+            referencedRelation: "ref_project_status"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "projects_type_fk"
+            columns: ["project_type"]
+            isOneToOne: false
+            referencedRelation: "ref_project_type"
+            referencedColumns: ["code"]
+          },
         ]
       }
       push_subscriptions: {
@@ -695,6 +738,204 @@ export type Database = {
           platform?: string | null
           user_agent?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      ref_absence_type: {
+        Row: {
+          code: string
+          created_at: string
+          is_approved: boolean
+          label: string
+          sort_order: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          is_approved?: boolean
+          label: string
+          sort_order?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          is_approved?: boolean
+          label?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      ref_employment_type: {
+        Row: {
+          code: string
+          created_at: string
+          is_approved: boolean
+          label: string
+          sort_order: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          is_approved?: boolean
+          label: string
+          sort_order?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          is_approved?: boolean
+          label?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      ref_installer_type: {
+        Row: {
+          code: string
+          created_at: string
+          is_approved: boolean
+          label: string
+          sort_order: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          is_approved?: boolean
+          label: string
+          sort_order?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          is_approved?: boolean
+          label?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      ref_project_status: {
+        Row: {
+          code: string
+          created_at: string
+          is_approved: boolean
+          label: string
+          sort_order: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          is_approved?: boolean
+          label: string
+          sort_order?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          is_approved?: boolean
+          label?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      ref_project_status_transition: {
+        Row: {
+          from_status: string
+          to_status: string
+        }
+        Insert: {
+          from_status: string
+          to_status: string
+        }
+        Update: {
+          from_status?: string
+          to_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ref_project_status_transition_from_status_fkey"
+            columns: ["from_status"]
+            isOneToOne: false
+            referencedRelation: "ref_project_status"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "ref_project_status_transition_to_status_fkey"
+            columns: ["to_status"]
+            isOneToOne: false
+            referencedRelation: "ref_project_status"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      ref_project_type: {
+        Row: {
+          code: string
+          created_at: string
+          is_approved: boolean
+          label: string
+          sort_order: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          is_approved?: boolean
+          label: string
+          sort_order?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          is_approved?: boolean
+          label?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      ref_time_source: {
+        Row: {
+          code: string
+          created_at: string
+          is_approved: boolean
+          label: string
+          sort_order: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          is_approved?: boolean
+          label: string
+          sort_order?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          is_approved?: boolean
+          label?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      ref_transport_stop_type: {
+        Row: {
+          code: string
+          created_at: string
+          is_approved: boolean
+          label: string
+          sort_order: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          is_approved?: boolean
+          label: string
+          sort_order?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          is_approved?: boolean
+          label?: string
+          sort_order?: number
         }
         Relationships: []
       }
@@ -864,6 +1105,13 @@ export type Database = {
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "time_entries_source_fk"
+            columns: ["source"]
+            isOneToOne: false
+            referencedRelation: "ref_time_source"
+            referencedColumns: ["code"]
+          },
         ]
       }
       transport_stops: {
@@ -898,6 +1146,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transport_stops_type_fk"
+            columns: ["type"]
+            isOneToOne: false
+            referencedRelation: "ref_transport_stop_type"
+            referencedColumns: ["code"]
           },
         ]
       }
