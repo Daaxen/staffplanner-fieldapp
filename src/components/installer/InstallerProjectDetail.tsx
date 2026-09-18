@@ -1,4 +1,4 @@
-import { ArrowLeft, MapPin, Clock, Users, FileText, Phone, Camera, CheckSquare, ExternalLink, Info, Paperclip, ClipboardCheck, Mail, Receipt } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Users, FileText, Phone, Camera, CheckSquare, ExternalLink, Info, Paperclip, ClipboardCheck, Mail, Receipt, AlertCircle, Check, X } from 'lucide-react';
 import { type Project, type Installer, projectTypeIcons, projectTypeLabels, statusLabels, installers } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
