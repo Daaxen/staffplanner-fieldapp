@@ -47,10 +47,14 @@ const ProfitabilityView = () => {
       .filter(p => (to ? p.startDate <= to : true))
       .map(p => {
         const input = { ...(inputs[p.id] ?? emptyInput(p)), project: p };
-        return { project: p, result: computeProfitability(input), input };
+        const result = computeProfitability(input);
+        return { project: p, result, input, alerts: profitabilityAlerts(p, result) };
       })
+      .filter(r => (onlyAlerts ? r.alerts.length > 0 : true))
       .sort((a, b) => a.result.profitabilityPct - b.result.profitabilityPct);
-  }, [projects, inputs, client, status, from, to]);
+  }, [projects, inputs, client, status, from, to, onlyAlerts]);
+
+  const alertCount = rows.reduce((n, r) => n + r.alerts.length, 0);
 
   const totals = useMemo(() => {
     const acc = rows.reduce(
