@@ -87,7 +87,12 @@ async function loadProjects() {
     rows
       .map((r) => {
         const d = (r.data ?? {}) as Partial<Project>;
-        return { ...d, id: d.id ?? r.ref ?? '', name: d.name ?? r.name } as Project;
+        return {
+          ...d,
+          id: d.id ?? r.ref ?? '',
+          name: d.name ?? r.name,
+          status: normalizeStatus(d.status),
+        } as Project;
       })
       .filter((p) => p.id),
   );
