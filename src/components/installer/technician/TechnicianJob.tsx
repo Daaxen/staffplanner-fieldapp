@@ -26,6 +26,7 @@ import {
 } from '@/lib/completionRequirements';
 import { addPhoto, emptyWork, loadWork, saveWork, photoUrl, type FieldWork } from '@/lib/offline/fieldWork';
 import { useOnlineStatus } from '@/hooks/useOffline';
+import DeviationForm from '@/components/installer/DeviationForm';
 
 interface TechnicianJobProps {
   project: Project;
@@ -33,7 +34,7 @@ interface TechnicianJobProps {
   onStatusChange?: (projectId: string, newStatus: Project['status']) => void;
 }
 
-type Panel = 'checklist' | 'photos' | 'signature' | 'deviation' | null;
+type Panel = 'checklist' | 'photos' | 'signature' | 'deviation' | 'issue' | null;
 
 const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) => {
   const [panel, setPanel] = useState<Panel>(null);
@@ -300,7 +301,7 @@ const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) 
         {bigButton(
           'deviation',
           <AlertTriangle className="w-6 h-6" />,
-          'Report / deviation',
+          'Work report',
           work.reportSubmitted ? 'Submitted' : 'Not submitted',
           work.reportSubmitted,
         )}
@@ -325,6 +326,21 @@ const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) 
               Submit report
             </Button>
           </div>
+        )}
+
+        {bigButton(
+          'issue',
+          <AlertTriangle className="w-6 h-6" />,
+          'Report a deviation',
+          'Damage, missing goods, access, permits…',
+          false,
+        )}
+        {panel === 'issue' && (
+          <DeviationForm
+            projectRef={project.id}
+            projectName={project.name}
+            onDone={() => setPanel(null)}
+          />
         )}
       </div>
 

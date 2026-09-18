@@ -2,6 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import type { Project } from '@/data/mockData';
 import {
+  pendingDeviationCount,
+  subscribeDeviations,
+  syncDeviations,
+} from '@/lib/deviations';
+import {
   cacheProjects,
   cachedProjects,
   pendingCount,
@@ -31,14 +36,18 @@ export function useOfflineSync() {
   const [syncing, setSyncing] = useState(false);
 
   const refresh = useCallback(() => {
-    pendingCount().then(setPending).catch(() => undefined);
+    Promise.all([pendingCount(), pendingDeviationCount()])
+      .then(([work, deviations]) => setPending(work + deviations))
+      .catch(() => undefined);
   }, []);
 
   const sync = useCallback(
     async (silent = false) => {
       if (!navigator.onLine) return;
       setSyncing(true);
-      const res = await syncFieldWork();
+      const [res, dev] = await Promise.all([syncFieldWork(), syncDeviations()]);
+      res.synced += dev.synced;
+      res.failed += dev.failed;
       setSyncing(false);
       refresh();
       if (!silent && res.synced > 0) {
@@ -53,7 +62,12 @@ export function useOfflineSync() {
 
   useEffect(() => {
     refresh();
-    return subscribeFieldWork(refresh);
+    const offWork = subscribeFieldWork(refresh);
+    const offDev = subscribeDeviations(refresh);
+    return () => {
+      offWork();
+      offDev();
+    };
   }, [refresh]);
 
   useEffect(() => {

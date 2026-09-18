@@ -1,4 +1,4 @@
-import { Calendar, Users, LayoutDashboard, ClipboardList, FileText, Settings, PanelLeftClose, PanelLeft, Car, Smartphone, BookOpen, UserCog, LogOut, User as UserIcon, Flame, Building2, Receipt } from 'lucide-react';
+import { Calendar, Users, LayoutDashboard, ClipboardList, FileText, Settings, PanelLeftClose, PanelLeft, Car, Smartphone, BookOpen, UserCog, LogOut, User as UserIcon, Flame, Building2, Receipt, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { installers } from '@/data/mockData';
 import { useAuth } from '@/hooks/useAuth';
@@ -37,6 +37,7 @@ const AppSidebar = ({ activeView, onViewChange, collapsed = false, onToggleColla
   const { escalated } = useReminders({ adminScope: true });
   const navItems = [
     ...baseNavItems,
+    ...(isAdmin ? [{ id: 'deviations', label: 'Deviations', icon: AlertTriangle }] : []),
     ...(isAdmin ? [{ id: 'invoicing', label: 'Invoicing', icon: Receipt }] : []),
     ...(isAdmin ? [{ id: 'escalations', label: 'Escalations', icon: Flame, badge: escalated.length }] : []),
     ...(isAdmin ? [{ id: 'users', label: 'Users', icon: UserCog }] : []),
