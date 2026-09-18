@@ -785,6 +785,9 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
                 ))}
               </TooltipProvider>
             </div>
+            {conflictDraft && selectedInstallers.length > 0 && (
+              <ConflictPanel conflicts={conflicts} className="mt-1" />
+            )}
           </div>
 
           {/* Description */}
