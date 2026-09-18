@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
     // Pull candidate projects: end_date < today and not completed/cancelled.
     const { data: projects, error: pErr } = await supabase
       .from('projects')
-      .select('id, end_date, status, project_assignees(user_id)')
+      .select('id, end_date, status, project_assignees(installers(profile_id))')
       .lt('end_date', today)
       .not('status', 'in', '(completed,cancelled)');
 
