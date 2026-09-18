@@ -36,6 +36,7 @@ interface Row {
   clothing_size: string | null;
   shoe_size: string | null;
   roles: Role[];
+  pending?: boolean;
 }
 
 const EDITABLE = [
@@ -82,7 +83,15 @@ const UsersManager = () => {
     (roles ?? []).forEach((r: { user_id: string; role: Role }) => {
       byUser[r.user_id] = [...(byUser[r.user_id] ?? []), r.role];
     });
-    setRows((profiles ?? []).map((p) => ({ ...(p as unknown as Omit<Row, 'roles'>), roles: byUser[(p as { id: string }).id] ?? [] })));
+    const { data: statusData } = await supabase.functions.invoke('admin-manage-user', { body: { action: 'auth_status' } });
+    const pendingById: Record<string, boolean> = {};
+    ((statusData as { users?: { id: string; last_sign_in_at: string | null }[] } | null)?.users ?? []).forEach((u) => {
+      pendingById[u.id] = !u.last_sign_in_at;
+    });
+    setRows((profiles ?? []).map((p) => {
+      const id = (p as { id: string }).id;
+      return { ...(p as unknown as Omit<Row, 'roles'>), roles: byUser[id] ?? [], pending: pendingById[id] ?? false };
+    }));
     setLoading(false);
   };
 
