@@ -940,6 +940,17 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
             {conflictDraft && selectedInstallers.length > 0 && (
               <ConflictPanel conflicts={conflicts} className="mt-1" />
             )}
+            {bookingConflicts.length > 0 && (
+              <div className="mt-1 rounded border border-destructive/30 bg-destructive/5 p-2 space-y-1">
+                <p className="text-xs font-medium text-destructive">Booking register conflicts</p>
+                {bookingConflicts.map((c, i) => (
+                  <p key={i} className="text-xs text-muted-foreground">
+                    {installers.find(inst => inst.id === c.installerId)?.name ?? 'Installer'} — {c.detail}
+                    {' '}({c.from.slice(0, 10)} → {c.to.slice(0, 10)})
+                  </p>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Description */}
