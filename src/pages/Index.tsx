@@ -10,6 +10,7 @@ import OrdersRegister from '@/components/orders/OrdersRegister';
 import ClientsRegister from '@/components/clients/ClientsRegister';
 import ProfileEditor from '@/components/ProfileEditor';
 import EscalationsView from '@/components/admin/EscalationsView';
+import CapacityDashboard from '@/components/dashboard/CapacityDashboard';
 import InvoicingView from '@/components/admin/InvoicingView';
 import { useProjects } from '@/lib/appData';
 import {
@@ -59,6 +60,9 @@ const Index = () => {
             <StatsBar />
             <GanttChart onPendingChangesCount={setPendingCount} />
           </>
+        )}
+        {activeView === 'dashboard' && (
+          <CapacityDashboard />
         )}
         {activeView === 'fleet' && (
           <FleetManager projects={projects} />
