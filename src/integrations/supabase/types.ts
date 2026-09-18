@@ -246,38 +246,88 @@ export type Database = {
       documents: {
         Row: {
           category: string
+          client_id: string | null
           created_at: string
+          created_by: string | null
           description: string | null
           file_type: string | null
           id: string
+          is_sensitive: boolean
+          owner_id: string | null
+          project_id: string | null
           sandbox: boolean
+          scope: string
           title: string
           updated_at: string
           url: string | null
+          visible_to_installers: boolean
         }
         Insert: {
           category: string
+          client_id?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           file_type?: string | null
           id?: string
+          is_sensitive?: boolean
+          owner_id?: string | null
+          project_id?: string | null
           sandbox?: boolean
+          scope?: string
           title: string
           updated_at?: string
           url?: string | null
+          visible_to_installers?: boolean
         }
         Update: {
           category?: string
+          client_id?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           file_type?: string | null
           id?: string
+          is_sensitive?: boolean
+          owner_id?: string | null
+          project_id?: string | null
           sandbox?: boolean
+          scope?: string
           title?: string
           updated_at?: string
           url?: string | null
+          visible_to_installers?: boolean
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "documents_client_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_owner_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_project_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_scope_fkey"
+            columns: ["scope"]
+            isOneToOne: false
+            referencedRelation: "ref_document_scope"
+            referencedColumns: ["code"]
+          },
+        ]
       }
       expense_entries: {
         Row: {
@@ -867,6 +917,30 @@ export type Database = {
         Relationships: []
       }
       ref_absence_type: {
+        Row: {
+          code: string
+          created_at: string
+          is_approved: boolean
+          label: string
+          sort_order: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          is_approved?: boolean
+          label: string
+          sort_order?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          is_approved?: boolean
+          label?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      ref_document_scope: {
         Row: {
           code: string
           created_at: string
