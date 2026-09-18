@@ -190,3 +190,13 @@ export const normalizeStatus = (value: string | null | undefined): ProjectStatus
   if ((allStatuses as string[]).includes(value)) return value as ProjectStatus;
   return LEGACY[value] ?? 'draft';
 };
+
+/** Soft translucent background (Gantt bars). */
+export const statusSoftMap: Record<ProjectStatus, string> = Object.fromEntries(
+  allStatuses.map(s => [s, `${statusColorMap[s]}/20`]),
+) as Record<ProjectStatus, string>;
+
+/** Badge styling: tinted background + matching text colour. */
+export const statusBadgeMap: Record<ProjectStatus, string> = Object.fromEntries(
+  allStatuses.map(s => [s, `${statusColorMap[s]}/15 ${statusTextMap[s]}`]),
+) as Record<ProjectStatus, string>;

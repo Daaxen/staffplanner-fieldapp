@@ -7,6 +7,7 @@ import { Package } from 'lucide-react';
 import DraggableBar from './DraggableBar';
 import DateChangeDialog from './DateChangeDialog';
 import {
+import { statusBorderMap, statusSoftMap as statusColorMap } from '@/lib/projectLifecycle';
   AlertDialog,
   AlertDialogAction,
   AlertDialogContent,
@@ -15,24 +16,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-
-const statusBorderMap: Record<ProjectStatus, string> = {
-  'open': 'border-status-open',
-  'scheduled': 'border-status-scheduled',
-  'in-progress': 'border-status-in-progress',
-  'completed': 'border-status-completed',
-  'on-hold': 'border-status-on-hold',
-  'cancelled': 'border-status-cancelled',
-};
-
-const statusColorMap: Record<ProjectStatus, string> = {
-  'open': 'bg-status-open/20',
-  'scheduled': 'bg-status-scheduled/20',
-  'in-progress': 'bg-status-in-progress/20',
-  'completed': 'bg-status-completed/20',
-  'on-hold': 'bg-status-on-hold/20',
-  'cancelled': 'bg-status-cancelled/20',
-};
 
 const installerColorMap: Record<number, string> = {
   1: 'bg-installer-1',

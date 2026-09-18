@@ -14,21 +14,13 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import OrdersImport from './OrdersImport';
+import { statusColorMap as statusDot } from '@/lib/projectLifecycle';
 
 type SortKey = 'name' | 'client' | 'startDate' | 'endDate' | 'status' | 'projectType';
 type SortDir = 'asc' | 'desc';
 
 const allStatuses: ProjectStatus[] = ['open', 'scheduled', 'in-progress', 'completed', 'on-hold', 'cancelled'];
 const allTypes: ProjectType[] = ['installation', 'site-survey', 'transport'];
-
-const statusDot: Record<ProjectStatus, string> = {
-  'open': 'bg-status-open',
-  'scheduled': 'bg-status-scheduled',
-  'in-progress': 'bg-status-in-progress',
-  'completed': 'bg-status-completed',
-  'on-hold': 'bg-status-on-hold',
-  'cancelled': 'bg-status-cancelled',
-};
 
 const todayStr = new Date().toISOString().slice(0, 10);
 

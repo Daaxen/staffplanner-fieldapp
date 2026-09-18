@@ -1,14 +1,6 @@
 import { cn } from '@/lib/utils';
 import { type ProjectStatus, statusLabels } from '@/data/mockData';
-
-const statusColorMap: Record<ProjectStatus, string> = {
-  'open': 'bg-status-open',
-  'scheduled': 'bg-status-scheduled',
-  'in-progress': 'bg-status-in-progress',
-  'completed': 'bg-status-completed',
-  'on-hold': 'bg-status-on-hold',
-  'cancelled': 'bg-status-cancelled',
-};
+import { statusColorMap } from '@/lib/projectLifecycle';
 
 interface StatusFilterProps {
   activeStatuses: Set<ProjectStatus>;
