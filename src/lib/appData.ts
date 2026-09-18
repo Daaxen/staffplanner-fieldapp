@@ -37,9 +37,16 @@ function replace<T>(target: T[], next: T[]) {
 /* ------------------------------------------------------------------ */
 
 async function loadClients() {
+  // Admins can read the clients table directly. Installers are blocked by RLS
+  // and instead get a restricted set (no rates, VAT, invoicing or internal
+  // references) for the clients behind orders assigned to them.
   const { data, error } = await supabase.from('clients').select('ref,data,name').order('name');
   if (error) throw error;
-  const rows = (data ?? []) as { ref: string | null; data: unknown; name: string }[];
+  let rows = (data ?? []) as { ref: string | null; data: unknown; name: string }[];
+  if (rows.length === 0) {
+    const { data: safe } = await supabase.rpc('assigned_clients');
+    rows = ((safe ?? []) as { ref: string | null; data: unknown; name: string }[]);
+  }
   replace(
     clientRegister,
     rows.map((r) => {

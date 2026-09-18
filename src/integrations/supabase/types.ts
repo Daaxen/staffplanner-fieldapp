@@ -849,6 +849,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      assigned_clients: {
+        Args: never
+        Returns: {
+          data: Json
+          id: string
+          name: string
+          ref: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
