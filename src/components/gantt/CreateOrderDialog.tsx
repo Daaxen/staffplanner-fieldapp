@@ -257,6 +257,30 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
     }
   };
 
+  const persistBookings = async (project: Project, overrideReason?: string) => {
+    const res = await saveBookings({
+      projectRef: project.id,
+      installerIds: project.assigneeIds,
+      startDate: project.startDate,
+      endDate: project.endDate,
+      startTime: project.startTime,
+      endTime: project.endTime,
+      overrideReason,
+    });
+    if (res.ok) {
+      if (overrideReason) toast.success('Booking saved with an override reason (logged)');
+      setPendingProject(null);
+      setOverrideOpen(false);
+      return;
+    }
+    if (res.conflict) {
+      setPendingProject(project);
+      setOverrideOpen(true);
+      return;
+    }
+    toast.error('Could not save the booking', { description: res.error });
+  };
+
   const handleSubmit = () => {
     if (!name || !client || !startDate || !endDate) return;
     if (hasBlocking(conflicts)) {
@@ -265,6 +289,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
       });
       return;
     }
+
 
     const status: ProjectStatus = selectedInstallers.length > 0 ? 'scheduled' : 'open';
 
