@@ -265,6 +265,7 @@ const OrdersImport = ({ orders, onApply }: OrdersImportProps) => {
     }
     onApply(next);
     toast.success(`Imported: ${created} created · ${updated} updated`);
+    if (skippedDates) toast.error(`${skippedDates} rad(er) hoppades över: ${DATE_RANGE_MESSAGE_SV}`);
     setOpen(false);
     setRows([]);
     setFileName('');
