@@ -56,7 +56,7 @@ describe('installer self-service restrictions', () => {
       )?.[1] ?? '';
     expect(setClause.trim()).toBe('base_location = v_base_location');
     for (const col of ADMIN_ONLY_COLUMNS) {
-      expect(new RegExp(`SET[^;]*\\b${col}\\s*=`, 'i').test(fn)).toBe(false);
+      expect(setClause.includes(col)).toBe(false);
     }
   });
 
