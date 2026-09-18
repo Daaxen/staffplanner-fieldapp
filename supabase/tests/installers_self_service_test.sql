@@ -33,12 +33,16 @@ BEGIN
   PERFORM set_config('request.jwt.claims', json_build_object('sub', v_profile, 'role','authenticated')::text, true);
 
   -- 1. direct update must fail (privilege revoked)
+  -- RLS matches no rows for a non-admin, so the write is silently a no-op.
   BEGIN
     UPDATE public.installers SET type = 'sub-vendor', sandbox = true WHERE id = v_id;
-    INSERT INTO rls_results VALUES ('direct update blocked', 'update succeeded', false);
+    SELECT * INTO v_after FROM public.installers WHERE id = v_id;
+    INSERT INTO rls_results VALUES ('direct update changes nothing',
+      v_after.type || '/' || v_after.sandbox::text,
+      v_after.type IS NOT DISTINCT FROM v_before.type AND v_after.sandbox IS NOT DISTINCT FROM v_before.sandbox);
   EXCEPTION WHEN OTHERS THEN
     v_err := SQLERRM;
-    INSERT INTO rls_results VALUES ('direct update blocked', v_err, true);
+    INSERT INTO rls_results VALUES ('direct update rejected', v_err, true);
   END;
 
   -- 2 + 3. self-service RPC only touches base_location
