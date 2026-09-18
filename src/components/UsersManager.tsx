@@ -36,6 +36,7 @@ interface Row {
   clothing_size: string | null;
   shoe_size: string | null;
   roles: Role[];
+  pending?: boolean;
 }
 
 const EDITABLE = [
@@ -82,7 +83,15 @@ const UsersManager = () => {
     (roles ?? []).forEach((r: { user_id: string; role: Role }) => {
       byUser[r.user_id] = [...(byUser[r.user_id] ?? []), r.role];
     });
-    setRows((profiles ?? []).map((p) => ({ ...(p as unknown as Omit<Row, 'roles'>), roles: byUser[(p as { id: string }).id] ?? [] })));
+    const { data: statusData } = await supabase.functions.invoke('admin-manage-user', { body: { action: 'auth_status' } });
+    const pendingById: Record<string, boolean> = {};
+    ((statusData as { users?: { id: string; last_sign_in_at: string | null }[] } | null)?.users ?? []).forEach((u) => {
+      pendingById[u.id] = !u.last_sign_in_at;
+    });
+    setRows((profiles ?? []).map((p) => {
+      const id = (p as { id: string }).id;
+      return { ...(p as unknown as Omit<Row, 'roles'>), roles: byUser[id] ?? [], pending: pendingById[id] ?? false };
+    }));
     setLoading(false);
   };
 
@@ -207,6 +216,11 @@ const UsersManager = () => {
                   <p className="font-medium truncate">
                     {r.full_name || '(no name)'}
                     {r.job_title && <span className="text-xs text-muted-foreground font-normal"> · {r.job_title}</span>}
+                    {r.pending && (
+                      <span className="ml-2 align-middle text-[10px] font-medium uppercase tracking-wide rounded px-1.5 py-0.5 bg-status-on-hold/15 text-status-on-hold">
+                        Pending invite
+                      </span>
+                    )}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">{r.email} {r.phone && `· ${r.phone}`} {r.city && `· ${r.city}`}</p>
                   <div className="flex items-center gap-1 mt-1">

@@ -21,12 +21,24 @@ Deno.serve(async (req) => {
     if (!isAdmin) return json({ error: 'Admin only' }, 403);
 
     const body = await req.json().catch(() => null) as
-      | { action: 'update' | 'reset_password' | 'resend_invite' | 'delete'; user_id?: string; email?: string; full_name?: string; phone?: string }
+      | { action: 'update' | 'reset_password' | 'resend_invite' | 'delete' | 'auth_status'; user_id?: string; email?: string; full_name?: string; phone?: string }
       | null;
     if (!body?.action) return json({ error: 'action required' }, 400);
 
     const origin = req.headers.get('origin');
     const redirectTo = origin ? `${origin}/auth` : undefined;
+
+    if (body.action === 'auth_status') {
+      const { data, error } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      if (error) return json({ error: error.message }, 400);
+      return json({
+        users: data.users.map((u) => ({
+          id: u.id,
+          last_sign_in_at: u.last_sign_in_at ?? null,
+          confirmed_at: u.email_confirmed_at ?? null,
+        })),
+      });
+    }
 
     if (body.action === 'update') {
       if (!body.user_id) return json({ error: 'user_id required' }, 400);
