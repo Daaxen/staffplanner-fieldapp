@@ -4,6 +4,8 @@ import { ChevronRight, Clock, HardHat, LayoutGrid, MapPin, Navigation } from 'lu
 import { cn } from '@/lib/utils';
 import { type Installer, type Project } from '@/data/mockData';
 import TechnicianJob from './TechnicianJob';
+import OfflineBanner from '@/components/installer/OfflineBanner';
+import { useOfflineSync } from '@/hooks/useOffline';
 
 interface TechnicianModeProps {
   projects: Project[];
@@ -14,6 +16,7 @@ interface TechnicianModeProps {
 
 const TechnicianMode = ({ projects, installer, onStatusChange, onExit }: TechnicianModeProps) => {
   const [openId, setOpenId] = useState<string | null>(null);
+  const offline = useOfflineSync();
   const today = format(new Date(), 'yyyy-MM-dd');
 
   const todaysJobs = useMemo(
@@ -52,6 +55,9 @@ const TechnicianMode = ({ projects, installer, onStatusChange, onExit }: Technic
           Full app
         </button>
       </header>
+
+      <OfflineBanner online={offline.online} pending={offline.pending} syncing={offline.syncing} onSync={offline.sync} />
+
 
       <div className="flex-1 overflow-auto p-4 space-y-3">
         {todaysJobs.length === 0 && (

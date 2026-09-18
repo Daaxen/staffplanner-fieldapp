@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { CalendarDays, Package, FolderKanban, User, BookOpen, Clock, Bell, LogOut, HardHat } from 'lucide-react';
 import { addDays, startOfWeek, format } from 'date-fns';
 import InstallerSchedule from '@/components/installer/InstallerSchedule';
@@ -14,7 +14,10 @@ import RemindersInbox from '@/components/installer/reminders/RemindersInbox';
 import ReminderBanner from '@/components/installer/reminders/ReminderBanner';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { type Project } from '@/data/mockData';
-import { useProjects } from '@/lib/appData';
+import { useProjects, useAppDataLoaded } from '@/lib/appData';
+import OfflineBanner from '@/components/installer/OfflineBanner';
+import { useCachedProjects, useOfflineSync } from '@/hooks/useOffline';
+import { setStatusHandler } from '@/lib/offline/fieldWork';
 import { useCurrentInstaller } from '@/hooks/useInstallers';
 import { useAuth } from '@/hooks/useAuth';
 import { useInstallerLogs } from '@/hooks/useInstallerLogs';
@@ -24,7 +27,10 @@ import { toast } from 'sonner';
 
 const InstallerApp = () => {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [localProjects, setLocalProjects] = useProjects();
+  const [liveProjects, setLocalProjects] = useProjects();
+  const appDataLoaded = useAppDataLoaded();
+  const localProjects = useCachedProjects(liveProjects, appDataLoaded);
+  const offline = useOfflineSync();
   const [projectFilters, setProjectFilters] = useState<FilterState>({ statuses: [], types: [] });
 
   const { installer, loading: installerLoading } = useCurrentInstaller();
@@ -72,6 +78,14 @@ const InstallerApp = () => {
     const label = newStatus === 'in-progress' ? 'Started' : newStatus === 'completed' ? 'Completed' : 'Updated';
     toast.success(`${label} project`);
   };
+
+  // Replay status changes made while offline once the connection is back.
+  useEffect(() => {
+    setStatusHandler((projectRef, status) => {
+      setLocalProjects(prev => prev.map(p => (p.id === projectRef ? { ...p, status } : p)));
+    });
+    return () => setStatusHandler(null);
+  }, [setLocalProjects]);
 
   const handleViewOrderDetail = (project: Project) => {
     setSelectedProject(project);
@@ -168,6 +182,8 @@ const InstallerApp = () => {
           </button>
         </div>
       </header>
+
+      <OfflineBanner online={offline.online} pending={offline.pending} syncing={offline.syncing} onSync={offline.sync} />
 
       <ReminderBanner
         level={reminders.highestLevel}
