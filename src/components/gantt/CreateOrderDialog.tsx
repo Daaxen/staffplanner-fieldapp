@@ -1018,6 +1018,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
           </Button>
         </DialogFooter>
       </DialogContent>
+    </Dialog>
 
       <BookingOverrideDialog
         open={overrideOpen}
