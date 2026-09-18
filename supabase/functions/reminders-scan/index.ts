@@ -17,14 +17,43 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
+  // Privileged job: only the server-side job secret or a verified admin may run it.
+  const auth = await authorizeJobRequest(req, 'REMINDERS_CRON_SECRET');
+  if (!auth.ok) {
+    return new Response(JSON.stringify({ error: auth.error }), {
+      status: auth.status,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   );
+  const jobSecret = Deno.env.get('REMINDERS_CRON_SECRET') ?? '';
+
+  const notify = async (reminderId: string, level: string) => {
+    await supabase.functions.invoke('reminders-notify', {
+      body: { reminder_id: reminderId, level },
+      headers: { 'x-cron-secret': jobSecret },
+    });
+  };
 
   try {
     const now = new Date();
     const today = now.toISOString().slice(0, 10);
+
+    // Idempotency: claim this 15-minute bucket; a duplicate trigger is a no-op.
+    const bucket = new Date(Math.floor(now.getTime() / BUCKET_MS) * BUCKET_MS).toISOString();
+    const { error: claimErr } = await supabase
+      .from('job_runs')
+      .insert({ job: 'reminders-scan', bucket });
+    if (claimErr) {
+      return new Response(
+        JSON.stringify({ ok: true, skipped: 'already ran for this window', bucket }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
 
     // Pull candidate projects: end_date < today and not completed/cancelled.
     const { data: projects, error: pErr } = await supabase
