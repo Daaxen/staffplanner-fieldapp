@@ -1,10 +1,14 @@
 import { supabase } from '@/integrations/supabase/client';
 import { idbAll, idbDel, idbGet, idbSet } from './idb';
 import type { Project } from '@/data/mockData';
+import { DEFAULT_PHOTO_CATEGORY, type PhotoCategory, type PhotoPosition } from '@/lib/photoMeta';
 
 export interface OfflinePhoto {
   id: string;
   capturedAt: string;
+  category: PhotoCategory;
+  comment?: string;
+  position?: PhotoPosition | null;
   path?: string; // storage path once uploaded
 }
 
@@ -47,7 +51,11 @@ const notify = () => listeners.forEach(fn => fn());
 export async function loadWork(projectRef: string, projectName?: string): Promise<FieldWork> {
   const stored = await idbGet<FieldWork>('work', projectRef);
   if (!stored) return emptyWork(projectRef, projectName);
-  return { ...stored, signOffs: stored.signOffs ?? {} };
+  return {
+    ...stored,
+    signOffs: stored.signOffs ?? {},
+    photos: (stored.photos ?? []).map(p => ({ ...p, category: p.category ?? DEFAULT_PHOTO_CATEGORY })),
+  };
 }
 
 export async function saveWork(work: FieldWork): Promise<FieldWork> {
@@ -57,10 +65,37 @@ export async function saveWork(work: FieldWork): Promise<FieldWork> {
   return next;
 }
 
-export async function addPhoto(work: FieldWork, blob: Blob): Promise<FieldWork> {
+export async function addPhoto(
+  work: FieldWork,
+  blob: Blob,
+  meta?: { category?: PhotoCategory; comment?: string; position?: PhotoPosition | null },
+): Promise<FieldWork> {
   const id = `${work.projectRef}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   await idbSet('photos', id, blob);
-  return saveWork({ ...work, photos: [...work.photos, { id, capturedAt: new Date().toISOString() }] });
+  const photo: OfflinePhoto = {
+    id,
+    capturedAt: new Date().toISOString(),
+    category: meta?.category ?? DEFAULT_PHOTO_CATEGORY,
+    comment: meta?.comment,
+    position: meta?.position ?? null,
+  };
+  return saveWork({ ...work, photos: [...work.photos, photo] });
+}
+
+export async function updatePhoto(
+  work: FieldWork,
+  photoId: string,
+  patch: Partial<Pick<OfflinePhoto, 'category' | 'comment'>>,
+): Promise<FieldWork> {
+  return saveWork({
+    ...work,
+    photos: work.photos.map(p => (p.id === photoId ? { ...p, ...patch } : p)),
+  });
+}
+
+export async function removePhoto(work: FieldWork, photoId: string): Promise<FieldWork> {
+  await idbDel('photos', photoId);
+  return saveWork({ ...work, photos: work.photos.filter(p => p.id !== photoId) });
 }
 
 export async function photoUrl(id: string): Promise<string | null> {
@@ -136,6 +171,15 @@ export async function syncFieldWork(): Promise<SyncResult> {
             sign_offs: work.signOffs ?? {},
             report_text: work.reportText || null,
             photo_paths: photos.map(p => p.path).filter(Boolean),
+          photo_meta: photos.map(p => ({
+            path: p.path ?? null,
+            category: p.category,
+            comment: p.comment ?? null,
+            captured_at: p.capturedAt,
+            lat: p.position?.lat ?? null,
+            lng: p.position?.lng ?? null,
+            accuracy: p.position?.accuracy ?? null,
+          })),
             submitted_at: work.reportSubmitted ? work.updatedAt : null,
           },
           { onConflict: 'project_ref,installer_id' },
