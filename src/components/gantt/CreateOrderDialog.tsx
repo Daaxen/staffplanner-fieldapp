@@ -226,6 +226,21 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  // Live booking conflicts from the booking register (shown before saving)
+  useEffect(() => {
+    let cancelled = false;
+    if (!startDate || !endDate || selectedInstallers.length === 0) {
+      setBookingConflicts([]);
+      return;
+    }
+    const start = new Date(`${format(startDate, 'yyyy-MM-dd')}T${startTime || '00:00'}:00`).toISOString();
+    const end = new Date(`${format(endDate, 'yyyy-MM-dd')}T${endTime || '23:59'}:00`).toISOString();
+    findBookingConflicts(selectedInstallers, start, end)
+      .then(res => { if (!cancelled) setBookingConflicts(res); })
+      .catch(() => { if (!cancelled) setBookingConflicts([]); });
+    return () => { cancelled = true; };
+  }, [selectedInstallers, startDate, endDate, startTime, endTime]);
+
   const handleClientChange = (value: string) => {
     setClient(value);
     setHighlightedIndex(-1);
