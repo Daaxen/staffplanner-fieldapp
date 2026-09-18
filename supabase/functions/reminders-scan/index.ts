@@ -114,9 +114,7 @@ Deno.serve(async (req) => {
             .single();
           if (error) { console.error('insert reminder', error); continue; }
           created.push(ins.id);
-          await supabase.functions.invoke('reminders-notify', {
-            body: { reminder_id: ins.id, level: targetLevel },
-          });
+          await notify(ins.id, targetLevel);
         } else if (existing.status === 'open') {
           const order = { gentle: 0, urgent: 1, escalated: 2 } as const;
           if (order[targetLevel] > order[existing.level as keyof typeof order]) {
@@ -125,9 +123,12 @@ Deno.serve(async (req) => {
               .update({ level: targetLevel, missing })
               .eq('id', existing.id);
             bumped.push(existing.id);
-            await supabase.functions.invoke('reminders-notify', {
-              body: { reminder_id: existing.id, level: targetLevel },
-            });
+            // Duplicate-notification guard: never notify the same reminder
+            // more often than the cooldown, even if the scan runs repeatedly.
+            const last = existing.last_notified_at ? Date.parse(existing.last_notified_at) : 0;
+            if (now.getTime() - last >= NOTIFY_COOLDOWN_MS) {
+              await notify(existing.id, targetLevel);
+            }
           }
         }
       }
