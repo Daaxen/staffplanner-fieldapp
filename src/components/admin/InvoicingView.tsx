@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { projects as mockProjects, clientRegister, ratesForClient, DEFAULT_CLIENT_RATES } from '@/data/mockData';
+import { projectRefForRowId } from '@/lib/appData';
 import { expenseCategoryLabels, type ExpenseCategory } from '@/data/logsData';
 import { toast } from 'sonner';
 
@@ -49,18 +50,21 @@ const InvoicingView = () => {
       const p = (profs.data ?? []).find(x => x.id === id);
       return p?.full_name || p?.email || id.slice(0, 8);
     };
-    const projMeta = (projectId: string, fallbackProject?: string | null, fallbackClient?: string | null) => {
-      const p = mockProjects.find(x => x.id === projectId);
+    // Current names always come from the order itself (project_id -> projects);
+    // the stored snapshot_* labels are only a historical fallback.
+    const projMeta = (projectRowId: string, snapshotProject?: string | null, snapshotClient?: string | null) => {
+      const ref = projectRefForRowId(projectRowId);
+      const p = ref ? mockProjects.find(x => x.id === ref) : undefined;
       return {
-        projectName: p?.name ?? fallbackProject ?? projectId,
-        clientName: p?.client ?? fallbackClient ?? '—',
+        projectName: p?.name ?? snapshotProject ?? ref ?? projectRowId,
+        clientName: p?.client ?? snapshotClient ?? '—',
         clientId: p?.clientId,
       };
     };
 
     const rows: Line[] = [];
     (t.data ?? []).forEach(r => {
-      const meta = projMeta(r.project_id, r.project_name, r.client_name);
+      const meta = projMeta(r.project_id, r.snapshot_project_name, r.snapshot_client_name);
       const rate = Number(r.hourly_rate ?? ratesForClient(meta.clientName, meta.clientId).hourlyRate);
       rows.push({
         id: r.id, type: 'time', date: r.entry_date, projectId: r.project_id, ...meta,
@@ -70,7 +74,7 @@ const InvoicingView = () => {
       });
     });
     (e.data ?? []).forEach(r => {
-      const meta = projMeta(r.project_id, r.project_name, r.client_name);
+      const meta = projMeta(r.project_id, r.snapshot_project_name, r.snapshot_client_name);
       rows.push({
         id: r.id, type: 'expense', date: r.entry_date, projectId: r.project_id, ...meta,
         installerId: r.installer_id, installerName: nameOf(r.installer_id),
@@ -79,7 +83,7 @@ const InvoicingView = () => {
       });
     });
     (m.data ?? []).forEach(r => {
-      const meta = projMeta(r.project_id, r.project_name, r.client_name);
+      const meta = projMeta(r.project_id, r.snapshot_project_name, r.snapshot_client_name);
       rows.push({
         id: r.id, type: 'mileage', date: r.entry_date, projectId: r.project_id, ...meta,
         installerId: r.installer_id, installerName: nameOf(r.installer_id),
