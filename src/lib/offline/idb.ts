@@ -1,7 +1,7 @@
 // Tiny IndexedDB wrapper — no dependencies.
 const DB_NAME = 'staffplanner-offline';
-const DB_VERSION = 1;
-export const STORES = ['kv', 'work', 'photos'] as const;
+const DB_VERSION = 2;
+export const STORES = ['kv', 'work', 'photos', 'deviations'] as const;
 export type StoreName = (typeof STORES)[number];
 
 let dbPromise: Promise<IDBDatabase> | null = null;
