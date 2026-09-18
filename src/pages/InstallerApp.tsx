@@ -183,6 +183,8 @@ const InstallerApp = () => {
         </div>
       </header>
 
+      <OfflineBanner online={offline.online} pending={offline.pending} syncing={offline.syncing} onSync={offline.sync} />
+
       <ReminderBanner
         level={reminders.highestLevel}
         count={reminders.reminders.length}
