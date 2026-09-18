@@ -272,8 +272,16 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
   };
 
   const toggleInstaller = (id: string) => {
+    const alreadySelected = selectedInstallers.includes(id);
+    if (!alreadySelected) {
+      const blockers = conflictsFor(id).filter(c => c.severity === 'blocking');
+      if (blockers.length > 0) {
+        toast.error('Double booking prevented', { description: blockers[0].detail });
+        return;
+      }
+    }
     setSelectedInstallers(prev =>
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+      alreadySelected ? prev.filter(i => i !== id) : [...prev, id]
     );
   };
 
