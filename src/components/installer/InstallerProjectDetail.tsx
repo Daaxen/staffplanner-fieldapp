@@ -315,8 +315,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
                   ))}
                 </ul>
               )}
-              <p className="hidden">
-              </p>
+
             </Section>
 
             <Section title="Completion Checklist">
