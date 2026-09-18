@@ -7,7 +7,6 @@ import { Package } from 'lucide-react';
 import DraggableBar from './DraggableBar';
 import DateChangeDialog from './DateChangeDialog';
 import {
-import { statusBorderMap, statusSoftMap as statusColorMap } from '@/lib/projectLifecycle';
   AlertDialog,
   AlertDialogAction,
   AlertDialogContent,
@@ -16,6 +15,7 @@ import { statusBorderMap, statusSoftMap as statusColorMap } from '@/lib/projectL
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { statusBorderMap, statusSoftMap as statusColorMap } from '@/lib/projectLifecycle';
 
 const installerColorMap: Record<number, string> = {
   1: 'bg-installer-1',

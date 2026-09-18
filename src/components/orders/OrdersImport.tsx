@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from '@/components/ui/dialog';
+import { allStatuses } from '@/lib/projectLifecycle';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import {
-import { allStatuses } from '@/lib/projectLifecycle';
   installers, clientRegister, statusLabels, projectTypeLabels,
   type Project, type ProjectStatus, type ProjectType,
 } from '@/data/mockData';
