@@ -152,35 +152,50 @@ export function useInstallerLogs(projects: Project[] = []) {
   }, []);
 
   const addExpense = useCallback(async (entry: {
-    projectId: string; date: string; category: ExpenseCategory; amount: number; note?: string; receiptName?: string;
+    projectId: string; date: string; category: ExpenseCategory; amount: number; note?: string; receiptName?: string; kind?: ExpenseKind;
   }) => {
     if (!installerId) return null;
+    const kind = entry.kind ?? 'expense';
+    const check = expenseEntrySchema.safeParse({
+      projectId: entry.projectId, date: entry.date, category: entry.category,
+      kind, amount: entry.amount, receiptName: entry.receiptName, note: entry.note,
+    });
+    const issue = firstIssue(check);
+    if (issue) { toast.error(issue); return null; }
+
     const meta = metaFor(entry.projectId);
     const projectRowId = await ensureProjectRowId(entry.projectId);
     if (!projectRowId) return null;
-    const { data } = await supabase.from('expense_entries').insert({
+    const { data, error } = await supabase.from('expense_entries').insert({
       project_id: projectRowId, snapshot_project_name: meta.projectName, snapshot_client_name: meta.clientName,
-      installer_id: installerId, entry_date: entry.date, category: entry.category,
+      installer_id: installerId, entry_date: entry.date, category: entry.category, entry_kind: kind,
       amount: entry.amount, note: entry.note ?? null, receipt_path: entry.receiptName ?? null,
     }).select().maybeSingle();
+    if (error) { toast.error(error.message); return null; }
     await refresh();
     return data;
   }, [installerId, metaFor, refresh]);
 
   const addMileage = useCallback(async (projectId: string, date: string, km: number, rate?: number, note?: string) => {
     if (!installerId) return null;
-    const meta = metaFor(projectId);
     const effectiveRate = rate ?? rateFor(projectId);
+    const check = mileageEntrySchema.safeParse({ projectId, date, km, rate: effectiveRate, note });
+    const issue = firstIssue(check);
+    if (issue) { toast.error(issue); return null; }
+
+    const meta = metaFor(projectId);
     const projectRowId = await ensureProjectRowId(projectId);
     if (!projectRowId) return null;
-    const { data } = await supabase.from('mileage_entries').insert({
+    const { data, error } = await supabase.from('mileage_entries').insert({
       project_id: projectRowId, snapshot_project_name: meta.projectName, snapshot_client_name: meta.clientName,
       installer_id: installerId, entry_date: date, km, rate: effectiveRate,
       amount: Math.round(km * effectiveRate * 100) / 100, note: note ?? null,
     }).select().maybeSingle();
+    if (error) { toast.error(error.message); return null; }
     await refresh();
     return data;
   }, [installerId, metaFor, rateFor, refresh]);
+
 
   const deleteExpense = useCallback(async (id: string) => {
     const entry = expenses.find(e => e.id === id);
