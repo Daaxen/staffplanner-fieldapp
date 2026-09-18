@@ -15,6 +15,10 @@ import { useClients } from '@/lib/clientStore';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import AddressAutocomplete from '@/components/maps/AddressAutocomplete';
 import MiniMap from '@/components/maps/MiniMap';
+import ConflictPanel from '@/components/scheduling/ConflictPanel';
+import { detectConflicts, installerConflicts, hasBlocking, type AssignmentDraft } from '@/lib/schedulingConflicts';
+import { vehicles } from '@/data/fleetData';
+import { toast } from 'sonner';
 
 interface CreateOrderDialogProps {
   open: boolean;
@@ -145,6 +149,40 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
     return { score: totalScore, label, color, occupancy: overlapping.length, proximity: distances?.[projLocation] };
   };
 
+  // ---- Scheduling conflict detection -------------------------------------
+  const conflictDraft: AssignmentDraft | null = useMemo(() => {
+    if (!startDate || !endDate) return null;
+    return {
+      projectId,
+      name,
+      startDate: format(startDate, 'yyyy-MM-dd'),
+      endDate: format(endDate, 'yyyy-MM-dd'),
+      startTime: startTime || undefined,
+      endTime: endTime || undefined,
+      location: projectType === 'transport' ? transportStops[0]?.address || '' : location,
+      lat: locationCoords?.lat,
+      lng: locationCoords?.lng,
+    };
+  }, [projectId, name, startDate, endDate, startTime, endTime, projectType, transportStops, location, locationCoords]);
+
+  const conflicts = useMemo(() => {
+    if (!conflictDraft) return [];
+    return detectConflicts({
+      installerIds: selectedInstallers,
+      draft: conflictDraft,
+      installers,
+      projects,
+      vehicles,
+    });
+  }, [conflictDraft, selectedInstallers]);
+
+  const conflictsFor = (installerId: string) => {
+    if (!conflictDraft) return [];
+    const inst = installers.find(i => i.id === installerId);
+    return inst ? installerConflicts(inst, conflictDraft, projects) : [];
+  };
+
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (clientInputRef.current && !clientInputRef.current.contains(e.target as Node)) {
@@ -193,6 +231,12 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
 
   const handleSubmit = () => {
     if (!name || !client || !startDate || !endDate) return;
+    if (hasBlocking(conflicts)) {
+      toast.error('Scheduling conflict', {
+        description: 'Resolve the blocking conflicts before assigning these resources.',
+      });
+      return;
+    }
 
     const status: ProjectStatus = selectedInstallers.length > 0 ? 'scheduled' : 'open';
 
@@ -228,8 +272,16 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
   };
 
   const toggleInstaller = (id: string) => {
+    const alreadySelected = selectedInstallers.includes(id);
+    if (!alreadySelected) {
+      const blockers = conflictsFor(id).filter(c => c.severity === 'blocking');
+      if (blockers.length > 0) {
+        toast.error('Double booking prevented', { description: blockers[0].detail });
+        return;
+      }
+    }
     setSelectedInstallers(prev =>
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+      alreadySelected ? prev.filter(i => i !== id) : [...prev, id]
     );
   };
 
@@ -694,12 +746,13 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
             <div className="border border-input rounded-md p-3 grid gap-2 max-h-[180px] overflow-y-auto">
               <TooltipProvider>
                 {installers
-                  .map(inst => ({ inst, suit: getInstallerSuitability(inst) }))
+                  .map(inst => ({ inst, suit: getInstallerSuitability(inst), blocked: conflictsFor(inst.id).some(c => c.severity === 'blocking') }))
                   .sort((a, b) => (b.suit?.score ?? 50) - (a.suit?.score ?? 50))
-                  .map(({ inst, suit }) => (
+                  .map(({ inst, suit, blocked }) => (
                   <label key={inst.id} className="flex items-center gap-2 cursor-pointer text-sm hover:bg-accent rounded px-1 py-0.5 transition-colors">
-                    <Checkbox checked={selectedInstallers.includes(inst.id)} onCheckedChange={() => toggleInstaller(inst.id)} disabled={suit?.score === 0} />
-                    <span className={cn(suit?.score === 0 && "line-through text-muted-foreground")}>{inst.name}</span>
+                    <Checkbox checked={selectedInstallers.includes(inst.id)} onCheckedChange={() => toggleInstaller(inst.id)} disabled={suit?.score === 0 || (blocked && !selectedInstallers.includes(inst.id))} />
+                    <span className={cn((suit?.score === 0 || blocked) && "line-through text-muted-foreground")}>{inst.name}</span>
+                    {blocked && <span className="text-[10px] font-medium text-destructive">Conflict</span>}
                     {suit && (
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -732,6 +785,9 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
                 ))}
               </TooltipProvider>
             </div>
+            {conflictDraft && selectedInstallers.length > 0 && (
+              <ConflictPanel conflicts={conflicts} className="mt-1" />
+            )}
           </div>
 
           {/* Description */}
@@ -793,7 +849,9 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
 
         <DialogFooter>
           <Button variant="outline" onClick={() => { resetForm(); onOpenChange(false); }}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={!isValid}>Create Project</Button>
+          <Button onClick={handleSubmit} disabled={!isValid || hasBlocking(conflicts)}>
+            {hasBlocking(conflicts) ? 'Resolve conflicts first' : 'Create Project'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

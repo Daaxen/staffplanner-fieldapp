@@ -10,6 +10,7 @@ import ClientsView from './gantt/ClientsView';
 import StatusFilter from './gantt/StatusFilter';
 import CreateOrderDialog from './gantt/CreateOrderDialog';
 import { toast } from 'sonner';
+import { installerConflicts } from '@/lib/schedulingConflicts';
 
 interface DispatchChange {
   projectId: string;
@@ -146,6 +147,29 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
   const getInstaller = (id: string | null) => id ? installers.find(i => i.id === id) ?? null : null;
 
   const handleDropProject = useCallback((projectId: string, installerId: string) => {
+    const target = projectsList.find(p => p.id === projectId);
+    const installer = installers.find(i => i.id === installerId);
+    if (target && installer) {
+      const blockers = installerConflicts(
+        installer,
+        {
+          projectId: target.id,
+          name: target.name,
+          startDate: target.startDate,
+          endDate: target.endDate,
+          startTime: target.startTime,
+          endTime: target.endTime,
+          location: target.location,
+          lat: target.locationLat,
+          lng: target.locationLng,
+        },
+        projectsList,
+      ).filter(c => c.severity === 'blocking');
+      if (blockers.length > 0) {
+        toast.error(blockers[0].title, { description: blockers[0].detail });
+        return;
+      }
+    }
     setProjectsList(prev => {
       const updated = prev.map(p =>
         p.id === projectId
@@ -162,7 +186,7 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
       }
       return updated;
     });
-  }, [trackChange]);
+  }, [trackChange, projectsList, setProjectsList]);
 
   const handleUnassignProject = useCallback((projectId: string) => {
     setProjectsList(prev => {
