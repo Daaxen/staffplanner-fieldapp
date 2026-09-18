@@ -513,6 +513,30 @@ export type Database = {
           },
         ]
       }
+      job_runs: {
+        Row: {
+          bucket: string
+          finished_at: string | null
+          job: string
+          result: Json
+          started_at: string
+        }
+        Insert: {
+          bucket: string
+          finished_at?: string | null
+          job: string
+          result?: Json
+          started_at?: string
+        }
+        Update: {
+          bucket?: string
+          finished_at?: string | null
+          job?: string
+          result?: Json
+          started_at?: string
+        }
+        Relationships: []
+      }
       mileage_entries: {
         Row: {
           amount: number
@@ -1312,6 +1336,7 @@ export type Database = {
         Returns: undefined
       }
       is_project_member: { Args: { _project_id: string }; Returns: boolean }
+      schedule_reminders_scan: { Args: { _cron?: string }; Returns: string }
       shares_project_with_installer: {
         Args: { _installer_id: string }
         Returns: boolean
