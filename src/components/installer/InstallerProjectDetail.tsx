@@ -1,9 +1,19 @@
-import { ArrowLeft, MapPin, Clock, Users, FileText, Phone, Camera, CheckSquare, ExternalLink, Info, Paperclip, ClipboardCheck, Mail, Receipt } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Users, FileText, Phone, Camera, CheckSquare, ExternalLink, Info, Paperclip, ClipboardCheck, Mail, Receipt, AlertCircle, Check, X } from 'lucide-react';
 import { type Project, type Installer, projectTypeIcons, projectTypeLabels, statusLabels, installers } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { useState } from 'react';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
+import {
+  COMPLETION_CHECKLIST,
+  MIN_REQUIRED_PHOTOS,
+  completionRequirements,
+  missingRequirements,
+} from '@/lib/completionRequirements';
 import ProjectLogTab from '@/components/installer/reporting/ProjectLogTab';
 import type { InstallerLogs } from '@/hooks/useInstallerLogs';
 import MiniMap from '@/components/maps/MiniMap';
@@ -29,6 +39,39 @@ const statusDotMap: Record<string, string> = {
 const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChange, onPickUp }: InstallerProjectDetailProps) => {
   
   const [reportPhotos, setReportPhotos] = useState<string[]>([]);
+  const [tab, setTab] = useState('info');
+  const [checkedItems, setCheckedItems] = useState<string[]>([]);
+  const [reportText, setReportText] = useState('');
+  const [reportSubmitted, setReportSubmitted] = useState(false);
+  const [signature, setSignature] = useState('');
+
+  const completionState = {
+    photoCount: reportPhotos.length,
+    checkedItems,
+    signature,
+    reportSubmitted,
+  };
+  const requirements = useMemo(
+    () => completionRequirements(completionState),
+    [reportPhotos.length, checkedItems, signature, reportSubmitted],
+  );
+  const missing = requirements.filter(r => !r.met);
+  const readyToComplete = missing.length === 0;
+
+  const toggleCheck = (id: string) =>
+    setCheckedItems(prev => (prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]));
+
+  const handleComplete = () => {
+    const blockers = missingRequirements(completionState);
+    if (blockers.length > 0) {
+      setTab('summary');
+      toast.error('Cannot complete yet', {
+        description: blockers.map(b => b.label.replace(/\s*\(.*\)$/, '')).join(' · '),
+      });
+      return;
+    }
+    onStatusChange!(project.id, 'completed');
+  };
 
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(project.location)}`;
 
@@ -71,7 +114,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
       )}
 
       {/* Tabbed content */}
-      <Tabs defaultValue="info" className="flex-1 flex flex-col overflow-hidden">
+      <Tabs value={tab} onValueChange={setTab} className="flex-1 flex flex-col overflow-hidden">
         <TabsList className="shrink-0 w-full rounded-none border-b border-border bg-card h-10 p-0 justify-start gap-0">
           <TabsTrigger value="info" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-[11px] h-full gap-1">
             <Info className="w-3 h-3" />
@@ -253,6 +296,52 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
                   ))}
                 </div>
               )}
+              <p className="text-[11px] text-muted-foreground mt-2">
+                At least {MIN_REQUIRED_PHOTOS} photos are required before the order can be completed.
+              </p>
+            </Section>
+
+            <Section title="Completion Checklist">
+              <div className="space-y-2">
+                {COMPLETION_CHECKLIST.map(item => (
+                  <label key={item.id} className="flex items-start gap-2 py-1 cursor-pointer">
+                    <Checkbox
+                      checked={checkedItems.includes(item.id)}
+                      onCheckedChange={() => toggleCheck(item.id)}
+                      className="mt-0.5"
+                    />
+                    <span className="text-sm text-foreground leading-snug">{item.label}</span>
+                  </label>
+                ))}
+              </div>
+            </Section>
+
+            <Section title="Installation Report">
+              <Textarea
+                value={reportText}
+                maxLength={2000}
+                onChange={e => {
+                  setReportText(e.target.value);
+                  setReportSubmitted(false);
+                }}
+                placeholder="Describe the work performed, deviations and any follow-up needed…"
+                className="min-h-[110px] text-sm"
+              />
+              <div className="flex items-center justify-between mt-2">
+                <span className="text-[11px] text-muted-foreground">
+                  {reportSubmitted ? 'Report submitted' : 'Not submitted yet'}
+                </span>
+                <Button
+                  size="sm"
+                  disabled={reportText.trim().length < 10 || reportSubmitted}
+                  onClick={() => {
+                    setReportSubmitted(true);
+                    toast.success('Installation report submitted');
+                  }}
+                >
+                  Submit report
+                </Button>
+              </div>
             </Section>
           </div>
         </TabsContent>
@@ -284,6 +373,36 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
               )}
             </Section>
 
+            <Section title="Completion Requirements">
+              <div className="space-y-2">
+                {requirements.map(r => (
+                  <button
+                    key={r.id}
+                    onClick={() => !r.met && setTab(r.tab)}
+                    className="w-full flex items-start gap-2 text-left py-1"
+                  >
+                    <span className={cn('mt-0.5 shrink-0', r.met ? 'text-status-completed' : 'text-status-cancelled')}>
+                      {r.met ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+                    </span>
+                    <span className="min-w-0">
+                      <span className={cn('block text-sm', r.met ? 'text-foreground' : 'font-medium text-foreground')}>
+                        {r.label}
+                      </span>
+                      {!r.met && <span className="block text-[11px] text-muted-foreground">{r.hint}</span>}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              {!readyToComplete && (
+                <div className="mt-3 flex items-start gap-2 rounded-lg border border-status-on-hold/40 bg-status-on-hold/10 p-2.5">
+                  <AlertCircle className="w-4 h-4 text-status-on-hold mt-0.5 shrink-0" />
+                  <p className="text-xs text-foreground">
+                    {missing.length} requirement{missing.length > 1 ? 's' : ''} missing — the order cannot be marked complete yet.
+                  </p>
+                </div>
+              )}
+            </Section>
+
             <Section title="Sign-off">
               <div className="space-y-3">
                 <div className="rounded-lg border border-border p-3">
@@ -292,11 +411,20 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
                     <p className="text-xs text-muted-foreground">Tap to sign</p>
                   </div>
                 </div>
-                <div className="rounded-lg border border-border p-3 opacity-60">
-                  <p className="text-xs font-semibold text-foreground mb-1">Client Sign-off</p>
-                  <p className="text-[10px] text-muted-foreground mb-2">Enabled when admin requires client signature</p>
-                  <div className="h-24 border-2 border-dashed border-border rounded-lg flex items-center justify-center">
-                    <p className="text-xs text-muted-foreground">Client signature area</p>
+                <div className="rounded-lg border border-border p-3">
+                  <p className="text-xs font-semibold text-foreground mb-1">Customer Sign-off</p>
+                  <p className="text-[10px] text-muted-foreground mb-2">Required before the order can be completed.</p>
+                  <Input
+                    value={signature}
+                    maxLength={100}
+                    onChange={e => setSignature(e.target.value)}
+                    placeholder="Customer full name"
+                    className="text-sm"
+                  />
+                  <div className="h-24 mt-2 border-2 border-dashed border-border rounded-lg flex items-center justify-center">
+                    <p className={cn('text-sm', signature.trim() ? 'italic text-foreground' : 'text-muted-foreground text-xs')}>
+                      {signature.trim() || 'Customer signature area'}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -318,14 +446,30 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
             </Button>
           )}
           {showCompleteButton && (
-            <Button
-              className="w-full bg-status-completed hover:bg-status-completed/90 text-foreground"
-              size="lg"
-              onClick={() => onStatusChange!(project.id, 'completed')}
-            >
-              <CheckSquare className="w-4 h-4 mr-2" />
-              Mark Complete
-            </Button>
+            <>
+              {!readyToComplete && (
+                <div className="mb-2 rounded-lg border border-status-on-hold/40 bg-status-on-hold/10 p-2.5">
+                  <p className="text-[11px] font-semibold text-foreground flex items-center gap-1.5 mb-1">
+                    <AlertCircle className="w-3.5 h-3.5 text-status-on-hold" />
+                    Missing before completion
+                  </p>
+                  <ul className="space-y-0.5">
+                    {missing.map(r => (
+                      <li key={r.id} className="text-[11px] text-muted-foreground">• {r.label}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <Button
+                className="w-full bg-status-completed hover:bg-status-completed/90 text-foreground disabled:opacity-50"
+                size="lg"
+                disabled={!readyToComplete}
+                onClick={handleComplete}
+              >
+                <CheckSquare className="w-4 h-4 mr-2" />
+                {readyToComplete ? 'Mark Complete' : `Mark Complete (${missing.length} missing)`}
+              </Button>
+            </>
           )}
         </div>
       )}
