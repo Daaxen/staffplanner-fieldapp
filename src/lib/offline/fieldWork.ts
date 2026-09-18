@@ -34,9 +34,11 @@ export const emptyWork = (projectRef: string, projectName?: string): FieldWork =
 });
 
 const listeners = new Set<() => void>();
-export const subscribeFieldWork = (fn: () => void) => {
+export const subscribeFieldWork = (fn: () => void): (() => void) => {
   listeners.add(fn);
-  return () => listeners.delete(fn);
+  return () => {
+    listeners.delete(fn);
+  };
 };
 const notify = () => listeners.forEach(fn => fn());
 
