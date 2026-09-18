@@ -26,23 +26,47 @@ async function sendFcm(tokens: string[], title: string, body: string, data: Reco
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
+  const auth = await authorizeJobRequest(req, 'REMINDERS_CRON_SECRET');
+  if (!auth.ok) {
+    return new Response(JSON.stringify({ error: auth.error }), {
+      status: auth.status,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   );
+  const NOTIFY_COOLDOWN_MS = 4 * 60 * 60 * 1000;
 
   try {
     const { reminder_id, level } = await req.json();
-    if (!reminder_id) return new Response(JSON.stringify({ error: 'reminder_id required' }), {
-      status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    if (!reminder_id || typeof reminder_id !== 'string') {
+      return new Response(JSON.stringify({ error: 'reminder_id required' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    if (level !== undefined && !['gentle', 'urgent', 'escalated'].includes(level)) {
+      return new Response(JSON.stringify({ error: 'invalid level' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     const { data: reminder, error } = await supabase
       .from('reminders')
-      .select('id, project_id, installer_id, level')
+      .select('id, project_id, installer_id, level, last_notified_at')
       .eq('id', reminder_id)
       .single();
     if (error || !reminder) throw error ?? new Error('reminder not found');
+
+    // Idempotency: swallow repeated calls for the same reminder inside the cooldown.
+    const last = reminder.last_notified_at ? Date.parse(reminder.last_notified_at) : 0;
+    if (Date.now() - last < NOTIFY_COOLDOWN_MS) {
+      return new Response(JSON.stringify({ ok: true, skipped: 'cooldown' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     const lvl = level ?? reminder.level;
     const title =
