@@ -79,6 +79,14 @@ const InstallerApp = () => {
     toast.success(`${label} project`);
   };
 
+  // Replay status changes made while offline once the connection is back.
+  useEffect(() => {
+    setStatusHandler((projectRef, status) => {
+      setLocalProjects(prev => prev.map(p => (p.id === projectRef ? { ...p, status } : p)));
+    });
+    return () => setStatusHandler(null);
+  }, [setLocalProjects]);
+
   const handleViewOrderDetail = (project: Project) => {
     setSelectedProject(project);
   };
