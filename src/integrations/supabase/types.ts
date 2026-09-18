@@ -161,6 +161,45 @@ export type Database = {
         }
         Relationships: []
       }
+      field_reports: {
+        Row: {
+          checked_items: Json
+          created_at: string
+          id: string
+          installer_id: string
+          photo_paths: Json
+          project_ref: string
+          report_text: string | null
+          signature: string | null
+          submitted_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          checked_items?: Json
+          created_at?: string
+          id?: string
+          installer_id: string
+          photo_paths?: Json
+          project_ref: string
+          report_text?: string | null
+          signature?: string | null
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          checked_items?: Json
+          created_at?: string
+          id?: string
+          installer_id?: string
+          photo_paths?: Json
+          project_ref?: string
+          report_text?: string | null
+          signature?: string | null
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       installer_absences: {
         Row: {
           created_at: string
