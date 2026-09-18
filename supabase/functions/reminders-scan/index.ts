@@ -93,10 +93,11 @@ Deno.serve(async (req) => {
 
         const { data: existing } = await supabase
           .from('reminders')
-          .select('id, level, status')
+          .select('id, level, status, last_notified_at')
           .eq('project_id', p.id)
           .eq('installer_id', installerId)
           .maybeSingle();
+
 
         if (!existing) {
           const { data: ins, error } = await supabase
