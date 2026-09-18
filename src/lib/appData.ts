@@ -8,6 +8,7 @@ import {
   type Installer,
   type Project,
 } from '@/data/mockData';
+import { normalizeStatus } from '@/lib/projectLifecycle';
 
 /**
  * Shared, database-backed application data.
