@@ -14,7 +14,6 @@ import { Package, Smartphone } from 'lucide-react';
 import { addDays, startOfWeek, format } from 'date-fns';
 import { toast } from 'sonner';
 import { useInstallerLogs } from '@/hooks/useInstallerLogs';
-import { closedStatuses, doneOnSiteStatuses } from '@/lib/projectLifecycle';
 
 interface InstallerPreviewProps {
   projects: Project[];
@@ -72,8 +71,8 @@ const InstallerPreview = ({ projects }: InstallerPreviewProps) => {
     return result;
   }, [myProjects, projectFilters]);
 
-  const activeProjects = filteredMyProjects.filter(p => !closedStatuses.includes(p.status) && !doneOnSiteStatuses.includes(p.status));
-  const completedProjects = filteredMyProjects.filter(p => doneOnSiteStatuses.includes(p.status));
+  const activeProjects = filteredMyProjects.filter(p => p.status !== 'cancelled' && p.status !== 'completed');
+  const completedProjects = filteredMyProjects.filter(p => p.status === 'completed');
 
   if (!installer) {
     return (

@@ -6,7 +6,24 @@ import GanttHeader from './GanttHeader';
 import GanttGrid from './GanttGrid';
 import DraggableBar from './DraggableBar';
 import DateChangeDialog from './DateChangeDialog';
-import { statusColorMap, statusBorderMap } from '@/lib/projectLifecycle';
+
+const statusColorMap: Record<ProjectStatus, string> = {
+  'open': 'bg-status-open',
+  'scheduled': 'bg-status-scheduled',
+  'in-progress': 'bg-status-in-progress',
+  'completed': 'bg-status-completed',
+  'on-hold': 'bg-status-on-hold',
+  'cancelled': 'bg-status-cancelled',
+};
+
+const statusBorderMap: Record<ProjectStatus, string> = {
+  'open': 'border-status-open',
+  'scheduled': 'border-status-scheduled',
+  'in-progress': 'border-status-in-progress',
+  'completed': 'border-status-completed',
+  'on-hold': 'border-status-on-hold',
+  'cancelled': 'border-status-cancelled',
+};
 
 const installerBgMap: Record<number, string> = {
   1: 'bg-installer-1/15',

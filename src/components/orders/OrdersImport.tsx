@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from '@/components/ui/dialog';
-import { allStatuses } from '@/lib/projectLifecycle';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import {
@@ -40,7 +39,7 @@ const COLUMNS = [
   'Vehicle Type',
 ] as const;
 
-const STATUS_VALUES: ProjectStatus[] = [...allStatuses];
+const STATUS_VALUES: ProjectStatus[] = ['open', 'scheduled', 'in-progress', 'completed', 'on-hold', 'cancelled'];
 const TYPE_VALUES: ProjectType[] = ['installation', 'site-survey', 'transport'];
 
 type RowAction = 'create' | 'update' | 'skip';
@@ -249,7 +248,7 @@ const OrdersImport = ({ orders, onApply }: OrdersImportProps) => {
           projectType: (row.patch.projectType ?? 'installation'),
           client: row.patch.client ?? '',
           location: row.patch.location ?? '',
-          status: row.patch.status ?? 'draft',
+          status: row.patch.status ?? 'open',
           assigneeIds: row.patch.assigneeIds ?? [],
           startDate: row.patch.startDate ?? new Date().toISOString().slice(0, 10),
           endDate: row.patch.endDate ?? row.patch.startDate ?? new Date().toISOString().slice(0, 10),
