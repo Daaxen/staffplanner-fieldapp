@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { CalendarDays, Package, FolderKanban, User, BookOpen, Clock, Bell, LogOut, HardHat } from 'lucide-react';
 import { addDays, startOfWeek, format } from 'date-fns';
 import InstallerSchedule from '@/components/installer/InstallerSchedule';
@@ -14,7 +14,10 @@ import RemindersInbox from '@/components/installer/reminders/RemindersInbox';
 import ReminderBanner from '@/components/installer/reminders/ReminderBanner';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { type Project } from '@/data/mockData';
-import { useProjects } from '@/lib/appData';
+import { useProjects, useAppDataLoaded } from '@/lib/appData';
+import OfflineBanner from '@/components/installer/OfflineBanner';
+import { useCachedProjects, useOfflineSync } from '@/hooks/useOffline';
+import { setStatusHandler } from '@/lib/offline/fieldWork';
 import { useCurrentInstaller } from '@/hooks/useInstallers';
 import { useAuth } from '@/hooks/useAuth';
 import { useInstallerLogs } from '@/hooks/useInstallerLogs';
