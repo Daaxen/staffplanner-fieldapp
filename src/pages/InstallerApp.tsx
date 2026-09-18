@@ -27,7 +27,10 @@ import { toast } from 'sonner';
 
 const InstallerApp = () => {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [localProjects, setLocalProjects] = useProjects();
+  const [liveProjects, setLocalProjects] = useProjects();
+  const appDataLoaded = useAppDataLoaded();
+  const localProjects = useCachedProjects(liveProjects, appDataLoaded);
+  const offline = useOfflineSync();
   const [projectFilters, setProjectFilters] = useState<FilterState>({ statuses: [], types: [] });
 
   const { installer, loading: installerLoading } = useCurrentInstaller();
