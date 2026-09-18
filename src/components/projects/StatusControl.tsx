@@ -94,8 +94,8 @@ const StatusControl = ({ projectRef, projectName, status, onChange }: Props) => 
             {history.map(e => (
               <li key={e.id} className="text-[11px] text-muted-foreground">
                 <span className="inline-flex items-center gap-1.5 text-foreground">
-                  <span className={cn('w-2 h-2 rounded-full', statusColorMap[e.from ?? 'draft'])} />
-                  {e.from ? statusLabels[e.from] : '—'}
+                  <span className={cn('w-2 h-2 rounded-full', statusColorMap[e.from_status ?? 'draft'])} />
+                  {e.from_status ? statusLabels[e.from_status] : "—"}
                   <ArrowRight className="w-3 h-3" />
                   <span className={cn('w-2 h-2 rounded-full', statusColorMap[e.to_status])} />
                   {statusLabels[e.to_status]}
