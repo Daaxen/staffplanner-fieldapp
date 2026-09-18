@@ -1027,7 +1027,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
         installerName={(id) => installers.find(i => i.id === id)?.name ?? 'Installer'}
         onConfirm={(reason) => { if (pendingProject) void persistBookings(pendingProject, reason); }}
       />
-    </Dialog>
+    </>
   );
 };
 
