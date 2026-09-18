@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, MapPin, Maximize2, Minimize2, Plus, Trash2, GripVertical, PenTool, Package, Paperclip, X, FileText, Image, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
+import { CalendarIcon, MapPin, Maximize2, Minimize2, Plus, Trash2, GripVertical, PenTool, Package, Paperclip, X, FileText, Image, CheckCircle2, AlertTriangle, XCircle, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { installers, projects, locationDistances, type Project, type ProjectStatus, type ProjectType, type TransportStop, type GoodsItem, type Attachment, projectTypeLabels } from '@/data/mockData';
@@ -19,6 +19,8 @@ import ConflictPanel from '@/components/scheduling/ConflictPanel';
 import { detectConflicts, installerConflicts, hasBlocking, type AssignmentDraft } from '@/lib/schedulingConflicts';
 import { vehicles } from '@/data/fleetData';
 import { toast } from 'sonner';
+import RecommendedInstallers from '@/components/scheduling/RecommendedInstallers';
+import { recommendInstallers } from '@/lib/assignmentRecommendations';
 
 interface CreateOrderDialogProps {
   open: boolean;
@@ -181,6 +183,21 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
     const inst = installers.find(i => i.id === installerId);
     return inst ? installerConflicts(inst, conflictDraft, projects) : [];
   };
+
+  // ---- Intelligent assignment recommendations ----------------------------
+  const recommendations = useMemo(() => {
+    if (!conflictDraft) return [];
+    return recommendInstallers({
+      installers,
+      projects,
+      draft: conflictDraft,
+      projectType,
+      topN: 3,
+    });
+  }, [conflictDraft, projectType]);
+
+  const recommendationFor = (installerId: string) =>
+    recommendations.find(r => r.installer.id === installerId);
 
 
   useEffect(() => {
@@ -743,15 +760,25 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
           {/* Assign Installers with suitability */}
           <div className="grid gap-1.5">
             <Label>{projectType === 'transport' ? 'Assign Drivers' : 'Assign Installers'}</Label>
+            <RecommendedInstallers
+              recommendations={recommendations}
+              selectedIds={selectedInstallers}
+              onSelect={toggleInstaller}
+            />
             <div className="border border-input rounded-md p-3 grid gap-2 max-h-[180px] overflow-y-auto">
               <TooltipProvider>
                 {installers
-                  .map(inst => ({ inst, suit: getInstallerSuitability(inst), blocked: conflictsFor(inst.id).some(c => c.severity === 'blocking') }))
-                  .sort((a, b) => (b.suit?.score ?? 50) - (a.suit?.score ?? 50))
-                  .map(({ inst, suit, blocked }) => (
+                  .map(inst => ({ inst, suit: getInstallerSuitability(inst), blocked: conflictsFor(inst.id).some(c => c.severity === 'blocking'), rec: recommendationFor(inst.id) }))
+                  .sort((a, b) => (b.rec?.score ?? b.suit?.score ?? 50) - (a.rec?.score ?? a.suit?.score ?? 50))
+                  .map(({ inst, suit, blocked, rec }) => (
                   <label key={inst.id} className="flex items-center gap-2 cursor-pointer text-sm hover:bg-accent rounded px-1 py-0.5 transition-colors">
                     <Checkbox checked={selectedInstallers.includes(inst.id)} onCheckedChange={() => toggleInstaller(inst.id)} disabled={suit?.score === 0 || (blocked && !selectedInstallers.includes(inst.id))} />
                     <span className={cn((suit?.score === 0 || blocked) && "line-through text-muted-foreground")}>{inst.name}</span>
+                    {rec?.recommended && (
+                      <span className="text-[10px] font-semibold text-primary flex items-center gap-0.5">
+                        <Sparkles className="h-3 w-3" />#{rec.rank}
+                      </span>
+                    )}
                     {blocked && <span className="text-[10px] font-medium text-destructive">Conflict</span>}
                     {suit && (
                       <Tooltip>
