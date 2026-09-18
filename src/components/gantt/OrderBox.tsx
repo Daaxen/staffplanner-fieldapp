@@ -1,7 +1,15 @@
 import { cn } from '@/lib/utils';
 import { type Project, type ProjectStatus } from '@/data/mockData';
 import { Package } from 'lucide-react';
-import { statusColorMap } from '@/lib/projectLifecycle';
+
+const statusColorMap: Record<ProjectStatus, string> = {
+  'open': 'bg-status-open',
+  'scheduled': 'bg-status-scheduled',
+  'in-progress': 'bg-status-in-progress',
+  'completed': 'bg-status-completed',
+  'on-hold': 'bg-status-on-hold',
+  'cancelled': 'bg-status-cancelled',
+};
 
 interface OrderBoxProps {
   projects: Project[];

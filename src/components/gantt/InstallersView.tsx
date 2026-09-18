@@ -15,7 +15,24 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { statusBorderMap, statusSoftMap as statusColorMap } from '@/lib/projectLifecycle';
+
+const statusBorderMap: Record<ProjectStatus, string> = {
+  'open': 'border-status-open',
+  'scheduled': 'border-status-scheduled',
+  'in-progress': 'border-status-in-progress',
+  'completed': 'border-status-completed',
+  'on-hold': 'border-status-on-hold',
+  'cancelled': 'border-status-cancelled',
+};
+
+const statusColorMap: Record<ProjectStatus, string> = {
+  'open': 'bg-status-open/20',
+  'scheduled': 'bg-status-scheduled/20',
+  'in-progress': 'bg-status-in-progress/20',
+  'completed': 'bg-status-completed/20',
+  'on-hold': 'bg-status-on-hold/20',
+  'cancelled': 'bg-status-cancelled/20',
+};
 
 const installerColorMap: Record<number, string> = {
   1: 'bg-installer-1',
@@ -237,7 +254,7 @@ const InstallersView = ({
               startDate: newStart,
               endDate: newEnd,
               assigneeIds: newAssigneeIds,
-              status: project.status === 'planned' ? 'assigned' as ProjectStatus : project.status,
+              status: project.status === 'open' ? 'scheduled' as ProjectStatus : project.status,
             });
             return;
           }

@@ -8,7 +8,6 @@ import {
   type Installer,
   type Project,
 } from '@/data/mockData';
-import { normalizeStatus } from '@/lib/projectLifecycle';
 
 /**
  * Shared, database-backed application data.
@@ -88,12 +87,7 @@ async function loadProjects() {
     rows
       .map((r) => {
         const d = (r.data ?? {}) as Partial<Project>;
-        return {
-          ...d,
-          id: d.id ?? r.ref ?? '',
-          name: d.name ?? r.name,
-          status: normalizeStatus(d.status),
-        } as Project;
+        return { ...d, id: d.id ?? r.ref ?? '', name: d.name ?? r.name } as Project;
       })
       .filter((p) => p.id),
   );

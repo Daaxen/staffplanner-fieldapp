@@ -5,7 +5,24 @@ import GanttHeader from './GanttHeader';
 import GanttGrid from './GanttGrid';
 import DraggableBar from './DraggableBar';
 import DateChangeDialog from './DateChangeDialog';
-import { statusBorderMap, statusSoftMap as statusColorMap } from '@/lib/projectLifecycle';
+
+const statusBorderMap: Record<ProjectStatus, string> = {
+  'open': 'border-status-open',
+  'scheduled': 'border-status-scheduled',
+  'in-progress': 'border-status-in-progress',
+  'completed': 'border-status-completed',
+  'on-hold': 'border-status-on-hold',
+  'cancelled': 'border-status-cancelled',
+};
+
+const statusColorMap: Record<ProjectStatus, string> = {
+  'open': 'bg-status-open/20',
+  'scheduled': 'bg-status-scheduled/20',
+  'in-progress': 'bg-status-in-progress/20',
+  'completed': 'bg-status-completed/20',
+  'on-hold': 'bg-status-on-hold/20',
+  'cancelled': 'bg-status-cancelled/20',
+};
 
 interface ClientsViewProps {
   projects: Project[];
@@ -25,7 +42,7 @@ const barGap = 4;
 const headerHeight = 60;
 const labelWidth = 260;
 
-import { activeBoardStatuses as activeStatuses } from '@/lib/projectLifecycle';
+const activeStatuses: ProjectStatus[] = ['open', 'scheduled', 'in-progress', 'on-hold'];
 
 interface ClientGroup {
   client: string;
