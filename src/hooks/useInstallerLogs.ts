@@ -4,6 +4,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { computeHours, DEFAULT_MILEAGE_RATE, type TimeEntry, type ExpenseEntry, type ExpenseCategory, type ActiveTimer } from '@/data/logsData';
 import { ratesForClient, type Project } from '@/data/mockData';
 import { ensureProjectRowId, projectRefForRowId } from '@/lib/appData';
+import { toast } from 'sonner';
+import {
+  timeEntrySchema, mileageEntrySchema, expenseEntrySchema, firstIssue, type ExpenseKind,
+} from '@/lib/validation/reporting';
+
 
 type Meta = { projectName?: string | null; clientName?: string | null };
 
@@ -86,20 +91,33 @@ export function useInstallerLogs(projects: Project[] = []) {
     projectId: string; date: string; startTime?: string; endTime?: string; hours?: number; note?: string; source?: TimeEntry['source'];
   }) => {
     if (!installerId) return null;
-    const hours = entry.hours || (entry.startTime && entry.endTime ? computeHours(entry.startTime, entry.endTime) : 0);
+    const bothTimes = Boolean(entry.startTime && entry.endTime);
+    const hours = bothTimes
+      ? computeHours(entry.startTime!, entry.endTime!)
+      : (entry.hours || 0);
+
+    const check = timeEntrySchema.safeParse({
+      projectId: entry.projectId, date: entry.date,
+      startTime: entry.startTime, endTime: entry.endTime, hours, note: entry.note,
+    });
+    const issue = firstIssue(check);
+    if (issue) { toast.error(issue); return null; }
+
     const meta = metaFor(entry.projectId);
     const project = projects.find(p => p.id === entry.projectId);
     const projectRowId = await ensureProjectRowId(entry.projectId);
     if (!projectRowId) return null;
-    const { data } = await supabase.from('time_entries').insert({
+    const { data, error } = await supabase.from('time_entries').insert({
       project_id: projectRowId, snapshot_project_name: meta.projectName, snapshot_client_name: meta.clientName,
       installer_id: installerId, entry_date: entry.date, start_time: entry.startTime ?? null,
       end_time: entry.endTime ?? null, hours, note: entry.note ?? null, source: entry.source ?? 'manual',
       hourly_rate: ratesForClient(project?.client, project?.clientId).hourlyRate ?? null,
     }).select().maybeSingle();
+    if (error) { toast.error(error.message); return null; }
     await refresh();
     return data;
   }, [installerId, metaFor, projects, refresh]);
+
 
   const stopTimer = useCallback(async () => {
     if (!activeTimer || !installerId) return null;
@@ -108,11 +126,15 @@ export function useInstallerLogs(projects: Project[] = []) {
     const hours = Math.max(0, Math.round(((ended.getTime() - started.getTime()) / 3_600_000) * 100) / 100);
     const pad = (n: number) => n.toString().padStart(2, '0');
     const hm = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    const sameDay = started.toDateString() === ended.toDateString();
     await addTime({
       projectId: activeTimer.projectId,
       date: started.toISOString().slice(0, 10),
-      startTime: hm(started), endTime: hm(ended), hours, source: 'timer',
+      startTime: sameDay ? hm(started) : undefined,
+      endTime: sameDay ? hm(ended) : undefined,
+      hours, source: 'timer',
     });
+
     await supabase.from('active_timers').delete().eq('installer_id', installerId);
     setActiveTimer(null);
     return null;
@@ -130,35 +152,50 @@ export function useInstallerLogs(projects: Project[] = []) {
   }, []);
 
   const addExpense = useCallback(async (entry: {
-    projectId: string; date: string; category: ExpenseCategory; amount: number; note?: string; receiptName?: string;
+    projectId: string; date: string; category: ExpenseCategory; amount: number; note?: string; receiptName?: string; kind?: ExpenseKind;
   }) => {
     if (!installerId) return null;
+    const kind = entry.kind ?? 'expense';
+    const check = expenseEntrySchema.safeParse({
+      projectId: entry.projectId, date: entry.date, category: entry.category,
+      kind, amount: entry.amount, receiptName: entry.receiptName, note: entry.note,
+    });
+    const issue = firstIssue(check);
+    if (issue) { toast.error(issue); return null; }
+
     const meta = metaFor(entry.projectId);
     const projectRowId = await ensureProjectRowId(entry.projectId);
     if (!projectRowId) return null;
-    const { data } = await supabase.from('expense_entries').insert({
+    const { data, error } = await supabase.from('expense_entries').insert({
       project_id: projectRowId, snapshot_project_name: meta.projectName, snapshot_client_name: meta.clientName,
-      installer_id: installerId, entry_date: entry.date, category: entry.category,
+      installer_id: installerId, entry_date: entry.date, category: entry.category, entry_kind: kind,
       amount: entry.amount, note: entry.note ?? null, receipt_path: entry.receiptName ?? null,
     }).select().maybeSingle();
+    if (error) { toast.error(error.message); return null; }
     await refresh();
     return data;
   }, [installerId, metaFor, refresh]);
 
   const addMileage = useCallback(async (projectId: string, date: string, km: number, rate?: number, note?: string) => {
     if (!installerId) return null;
-    const meta = metaFor(projectId);
     const effectiveRate = rate ?? rateFor(projectId);
+    const check = mileageEntrySchema.safeParse({ projectId, date, km, rate: effectiveRate, note });
+    const issue = firstIssue(check);
+    if (issue) { toast.error(issue); return null; }
+
+    const meta = metaFor(projectId);
     const projectRowId = await ensureProjectRowId(projectId);
     if (!projectRowId) return null;
-    const { data } = await supabase.from('mileage_entries').insert({
+    const { data, error } = await supabase.from('mileage_entries').insert({
       project_id: projectRowId, snapshot_project_name: meta.projectName, snapshot_client_name: meta.clientName,
       installer_id: installerId, entry_date: date, km, rate: effectiveRate,
       amount: Math.round(km * effectiveRate * 100) / 100, note: note ?? null,
     }).select().maybeSingle();
+    if (error) { toast.error(error.message); return null; }
     await refresh();
     return data;
   }, [installerId, metaFor, rateFor, refresh]);
+
 
   const deleteExpense = useCallback(async (id: string) => {
     const entry = expenses.find(e => e.id === id);

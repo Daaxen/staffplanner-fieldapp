@@ -184,6 +184,7 @@ export type Database = {
           category: string
           created_at: string
           entry_date: string
+          entry_kind: string
           id: string
           installer_id: string
           note: string | null
@@ -198,6 +199,7 @@ export type Database = {
           category?: string
           created_at?: string
           entry_date: string
+          entry_kind?: string
           id?: string
           installer_id: string
           note?: string | null
@@ -212,6 +214,7 @@ export type Database = {
           category?: string
           created_at?: string
           entry_date?: string
+          entry_kind?: string
           id?: string
           installer_id?: string
           note?: string | null
@@ -230,6 +233,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      expense_rules: {
+        Row: {
+          category: string
+          created_at: string
+          max_amount: number | null
+          receipt_threshold: number
+          requires_receipt: boolean
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          max_amount?: number | null
+          receipt_threshold?: number
+          requires_receipt?: boolean
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          max_amount?: number | null
+          receipt_threshold?: number
+          requires_receipt?: boolean
+          updated_at?: string
+        }
+        Relationships: []
       }
       field_reports: {
         Row: {
