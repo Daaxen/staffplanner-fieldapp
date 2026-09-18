@@ -649,6 +649,10 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
             </div>
           )}
 
+          {dateRangeError && (
+            <p className="text-xs text-destructive">{dateRangeError}</p>
+          )}
+
           {/* Estimated hours & Flex order */}
           <div className={cn("grid gap-3", projectType !== 'transport' ? "grid-cols-2" : "grid-cols-1")}>
             {projectType !== 'transport' && (
