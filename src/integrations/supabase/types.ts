@@ -19,24 +19,32 @@ export type Database = {
           created_at: string
           installer_id: string
           project_id: string
-          project_name: string | null
+          snapshot_project_name: string | null
           started_at: string
         }
         Insert: {
           created_at?: string
           installer_id: string
           project_id: string
-          project_name?: string | null
+          snapshot_project_name?: string | null
           started_at?: string
         }
         Update: {
           created_at?: string
           installer_id?: string
           project_id?: string
-          project_name?: string | null
+          snapshot_project_name?: string | null
           started_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "active_timers_project_fk"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       clients: {
         Row: {
@@ -174,46 +182,54 @@ export type Database = {
         Row: {
           amount: number
           category: string
-          client_name: string | null
           created_at: string
           entry_date: string
           id: string
           installer_id: string
           note: string | null
           project_id: string
-          project_name: string | null
           receipt_path: string | null
+          snapshot_client_name: string | null
+          snapshot_project_name: string | null
           updated_at: string
         }
         Insert: {
           amount?: number
           category?: string
-          client_name?: string | null
           created_at?: string
           entry_date: string
           id?: string
           installer_id: string
           note?: string | null
           project_id: string
-          project_name?: string | null
           receipt_path?: string | null
+          snapshot_client_name?: string | null
+          snapshot_project_name?: string | null
           updated_at?: string
         }
         Update: {
           amount?: number
           category?: string
-          client_name?: string | null
           created_at?: string
           entry_date?: string
           id?: string
           installer_id?: string
           note?: string | null
           project_id?: string
-          project_name?: string | null
           receipt_path?: string | null
+          snapshot_client_name?: string | null
+          snapshot_project_name?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "expense_entries_project_fk"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       field_reports: {
         Row: {
@@ -348,7 +364,6 @@ export type Database = {
       mileage_entries: {
         Row: {
           amount: number
-          client_name: string | null
           created_at: string
           entry_date: string
           id: string
@@ -356,13 +371,13 @@ export type Database = {
           km: number
           note: string | null
           project_id: string
-          project_name: string | null
           rate: number
+          snapshot_client_name: string | null
+          snapshot_project_name: string | null
           updated_at: string
         }
         Insert: {
           amount?: number
-          client_name?: string | null
           created_at?: string
           entry_date: string
           id?: string
@@ -370,13 +385,13 @@ export type Database = {
           km?: number
           note?: string | null
           project_id: string
-          project_name?: string | null
           rate?: number
+          snapshot_client_name?: string | null
+          snapshot_project_name?: string | null
           updated_at?: string
         }
         Update: {
           amount?: number
-          client_name?: string | null
           created_at?: string
           entry_date?: string
           id?: string
@@ -384,11 +399,20 @@ export type Database = {
           km?: number
           note?: string | null
           project_id?: string
-          project_name?: string | null
           rate?: number
+          snapshot_client_name?: string | null
+          snapshot_project_name?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "mileage_entries_project_fk"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -729,9 +753,32 @@ export type Database = {
           },
         ]
       }
+      reporting_migration_unmatched: {
+        Row: {
+          created_at: string
+          id: string
+          raw_project_id: string | null
+          row_id: string
+          table_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          raw_project_id?: string | null
+          row_id: string
+          table_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          raw_project_id?: string | null
+          row_id?: string
+          table_name?: string
+        }
+        Relationships: []
+      }
       time_entries: {
         Row: {
-          client_name: string | null
           created_at: string
           end_time: string | null
           entry_date: string
@@ -741,13 +788,13 @@ export type Database = {
           installer_id: string
           note: string | null
           project_id: string
-          project_name: string | null
+          snapshot_client_name: string | null
+          snapshot_project_name: string | null
           source: string
           start_time: string | null
           updated_at: string
         }
         Insert: {
-          client_name?: string | null
           created_at?: string
           end_time?: string | null
           entry_date: string
@@ -757,13 +804,13 @@ export type Database = {
           installer_id: string
           note?: string | null
           project_id: string
-          project_name?: string | null
+          snapshot_client_name?: string | null
+          snapshot_project_name?: string | null
           source?: string
           start_time?: string | null
           updated_at?: string
         }
         Update: {
-          client_name?: string | null
           created_at?: string
           end_time?: string | null
           entry_date?: string
@@ -773,12 +820,21 @@ export type Database = {
           installer_id?: string
           note?: string | null
           project_id?: string
-          project_name?: string | null
+          snapshot_client_name?: string | null
+          snapshot_project_name?: string | null
           source?: string
           start_time?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "time_entries_project_fk"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       transport_stops: {
         Row: {
