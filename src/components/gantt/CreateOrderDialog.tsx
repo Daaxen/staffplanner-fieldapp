@@ -15,6 +15,10 @@ import { useClients } from '@/lib/clientStore';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import AddressAutocomplete from '@/components/maps/AddressAutocomplete';
 import MiniMap from '@/components/maps/MiniMap';
+import ConflictPanel from '@/components/scheduling/ConflictPanel';
+import { detectConflicts, installerConflicts, hasBlocking, type AssignmentDraft } from '@/lib/schedulingConflicts';
+import { vehicles } from '@/data/fleetData';
+import { toast } from 'sonner';
 
 interface CreateOrderDialogProps {
   open: boolean;
@@ -193,6 +197,12 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
 
   const handleSubmit = () => {
     if (!name || !client || !startDate || !endDate) return;
+    if (hasBlocking(conflicts)) {
+      toast.error('Scheduling conflict', {
+        description: 'Resolve the blocking conflicts before assigning these resources.',
+      });
+      return;
+    }
 
     const status: ProjectStatus = selectedInstallers.length > 0 ? 'scheduled' : 'open';
 
