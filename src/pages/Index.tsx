@@ -8,6 +8,7 @@ import DocumentsManager from '@/components/documents/DocumentsManager';
 import UsersManager from '@/components/UsersManager';
 import OrdersRegister from '@/components/orders/OrdersRegister';
 import ClientsRegister from '@/components/clients/ClientsRegister';
+import Customer360 from '@/components/clients/Customer360';
 import ProfileEditor from '@/components/ProfileEditor';
 import EscalationsView from '@/components/admin/EscalationsView';
 import CapacityDashboard from '@/components/dashboard/CapacityDashboard';
