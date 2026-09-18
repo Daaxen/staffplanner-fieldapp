@@ -1,89 +1,42 @@
-import { useEffect, useMemo, useState } from 'react';
-import { RefreshCw, TrendingUp, X, Download } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { AlertTriangle, RefreshCw, TrendingUp, X, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { supabase } from '@/integrations/supabase/client';
 import { useProjects } from '@/lib/appData';
-import { useInstallers } from '@/hooks/useInstallers';
-import { statusLabels, type Project } from '@/data/mockData';
+import { useProfitabilityData } from '@/hooks/useProfitabilityData';
+import { statusLabels } from '@/data/mockData';
 import {
   DEFAULT_EXTERNAL_HOURLY_COST,
   DEFAULT_INTERNAL_HOURLY_COST,
+  DEFAULT_TARGET_MARGIN_PCT,
+  alertBg,
+  alertColor,
   computeProfitability,
   emptyInput,
   marginBg,
   marginColor,
   marginLevel,
   pctLabel,
+  profitabilityAlerts,
   sek,
-  type ProfitabilityInput,
 } from '@/lib/profitability';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
-type Totals = Record<string, ProfitabilityInput>;
-
 const ProfitabilityView = () => {
   const [projects, setProjects] = useProjects();
-  const { installers } = useInstallers();
-  const [inputs, setInputs] = useState<Totals>({});
-  const [loading, setLoading] = useState(true);
+  const { inputs, loading, reload: load } = useProfitabilityData();
   const [client, setClient] = useState('all');
   const [status, setStatus] = useState('all');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [openId, setOpenId] = useState<string | null>(null);
+  const [onlyAlerts, setOnlyAlerts] = useState(false);
 
-  const load = async () => {
-    setLoading(true);
-    const [t, e, m] = await Promise.all([
-      supabase.from('time_entries').select('project_id, installer_id, hours, entry_date'),
-      supabase.from('expense_entries').select('project_id, category, amount, entry_date'),
-      supabase.from('mileage_entries').select('project_id, km, amount, entry_date'),
-    ]);
 
-    const isExternal = (profileId: string) =>
-      installers.find(i => i.profileId === profileId)?.type === 'sub-vendor';
-
-    const next: Totals = {};
-    const ensure = (projectId: string) => {
-      if (!next[projectId]) {
-        const project = projects.find(p => p.id === projectId);
-        next[projectId] = emptyInput(project ?? ({ id: projectId, client: '' } as Project));
-      }
-      return next[projectId];
-    };
-
-    (t.data ?? []).forEach(r => {
-      const row = ensure(r.project_id);
-      const hours = Number(r.hours) || 0;
-      if (isExternal(r.installer_id)) row.externalHours += hours;
-      else row.internalHours += hours;
-    });
-    (e.data ?? []).forEach(r => {
-      const row = ensure(r.project_id);
-      const amount = Number(r.amount) || 0;
-      if (r.category === 'materials') row.materialExpenses += amount;
-      else if (r.category === 'travel' || r.category === 'parking') row.travelExpenses += amount;
-      else row.otherExpenses += amount;
-    });
-    (m.data ?? []).forEach(r => {
-      const row = ensure(r.project_id);
-      row.mileageKm += Number(r.km) || 0;
-      row.mileageCost += Number(r.amount) || 0;
-    });
-
-    setInputs(next);
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [installers.length, projects.length]);
 
   const rows = useMemo(() => {
     return projects
@@ -94,10 +47,14 @@ const ProfitabilityView = () => {
       .filter(p => (to ? p.startDate <= to : true))
       .map(p => {
         const input = { ...(inputs[p.id] ?? emptyInput(p)), project: p };
-        return { project: p, result: computeProfitability(input), input };
+        const result = computeProfitability(input);
+        return { project: p, result, input, alerts: profitabilityAlerts(p, result) };
       })
+      .filter(r => (onlyAlerts ? r.alerts.length > 0 : true))
       .sort((a, b) => a.result.profitabilityPct - b.result.profitabilityPct);
-  }, [projects, inputs, client, status, from, to]);
+  }, [projects, inputs, client, status, from, to, onlyAlerts]);
+
+  const alertCount = rows.reduce((n, r) => n + r.alerts.length, 0);
 
   const totals = useMemo(() => {
     const acc = rows.reduce(
@@ -263,6 +220,14 @@ const ProfitabilityView = () => {
           <Label className="text-xs">To</Label>
           <Input type="date" value={to} onChange={e => setTo(e.target.value)} className="w-40" />
         </div>
+        <Button
+          variant={onlyAlerts ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setOnlyAlerts(v => !v)}
+        >
+          <AlertTriangle className="w-4 h-4 mr-2" />
+          {onlyAlerts ? 'Showing alerts only' : `Alerts (${alertCount})`}
+        </Button>
       </div>
 
       <div className="rounded-xl border border-border overflow-x-auto">
@@ -283,8 +248,9 @@ const ProfitabilityView = () => {
             </tr>
           </thead>
           <tbody>
-            {rows.map(({ project, result }) => {
+            {rows.map(({ project, result, alerts }) => {
               const level = marginLevel(result.profitabilityPct);
+              const worst = alerts.some(a => a.severity === 'critical') ? 'critical' : 'warning';
               return (
                 <tr
                   key={project.id}
@@ -292,7 +258,18 @@ const ProfitabilityView = () => {
                   className="border-t border-border cursor-pointer hover:bg-muted/40"
                 >
                   <td className="px-3 py-2">
-                    <p className="font-medium text-foreground">{project.name}</p>
+                    <p className="font-medium text-foreground flex items-center gap-1.5">
+                      {project.name}
+                      {alerts.length > 0 && (
+                        <span
+                          title={alerts.map(a => a.title).join(' · ')}
+                          className={cn('inline-flex items-center gap-1 text-[11px] font-semibold rounded-full border px-1.5 py-0.5', alertBg(worst), alertColor(worst))}
+                        >
+                          <AlertTriangle className="w-3 h-3" />
+                          {alerts.length}
+                        </span>
+                      )}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       {project.id} · {project.client || 'No client'} · {statusLabels[project.status]}
                     </p>
@@ -361,6 +338,18 @@ const ProfitabilityView = () => {
               <div className="flex justify-between"><span className="text-muted-foreground">Logged material</span><span>{sek(open.input.materialExpenses)}</span></div>
             </div>
 
+            {open.alerts.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-foreground">Warnings</p>
+                {open.alerts.map(a => (
+                  <div key={a.kind} className={cn('rounded-lg border px-3 py-2', alertBg(a.severity))}>
+                    <p className={cn('text-xs font-semibold', alertColor(a.severity))}>{a.title}</p>
+                    <p className="text-xs text-muted-foreground">{a.detail}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <p className="text-xs font-semibold text-foreground">Adjust the numbers for this order</p>
             <div className="grid grid-cols-2 gap-3">
               {numberField('Fixed price (ex VAT)', open.project.economy?.fixedPrice, 'From hours', v => saveEconomy(open.project.id, { fixedPrice: v }))}
@@ -371,6 +360,8 @@ const ProfitabilityView = () => {
               {numberField('Extra external cost', open.project.economy?.externalCostExtra, '0', v => saveEconomy(open.project.id, { externalCostExtra: v }))}
               {numberField('Extra material cost', open.project.economy?.materialCostExtra, '0', v => saveEconomy(open.project.id, { materialCostExtra: v }))}
               {numberField('Extra travel cost', open.project.economy?.travelCostExtra, '0', v => saveEconomy(open.project.id, { travelCostExtra: v }))}
+              {numberField('External cost budget', open.project.economy?.externalBudget, 'No budget', v => saveEconomy(open.project.id, { externalBudget: v }))}
+              {numberField('Target margin %', open.project.economy?.targetMarginPct, String(DEFAULT_TARGET_MARGIN_PCT), v => saveEconomy(open.project.id, { targetMarginPct: v }))}
             </div>
             <p className="text-[11px] text-muted-foreground">
               Changes save automatically when you leave a field.

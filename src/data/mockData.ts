@@ -96,6 +96,10 @@ export interface ProjectEconomyOverrides {
   externalCostExtra?: number;
   materialCostExtra?: number;
   travelCostExtra?: number;
+  /** Budget for sub-vendor / external costs (SEK). Alerts fire when actual exceeds it. */
+  externalBudget?: number;
+  /** Target profitability in % for this order. Falls back to the default target. */
+  targetMarginPct?: number;
 }
 
 export interface Project {

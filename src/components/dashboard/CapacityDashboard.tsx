@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { useInstallersList, useProjects } from '@/lib/appData';
 import { computeCapacity, type CapacityLevel } from '@/lib/capacity';
 import { statusLabels } from '@/data/mockData';
+import ProfitabilityAlerts from '@/components/dashboard/ProfitabilityAlerts';
 
 type RangeKey = 'week' | 'next-week' | 'month';
 
@@ -157,6 +158,8 @@ const CapacityDashboard = () => {
             level={unassignedLevel}
           />
         </div>
+
+        <ProfitabilityAlerts />
 
         <div className="rounded-xl border border-border bg-card">
           <div className="px-4 py-3 border-b border-border flex items-center justify-between">
