@@ -25,7 +25,7 @@ const barGap = 4;
 const headerHeight = 60;
 const labelWidth = 260;
 
-const activeStatuses: ProjectStatus[] = ['open', 'scheduled', 'in-progress', 'on-hold'];
+import { activeBoardStatuses as activeStatuses } from '@/lib/projectLifecycle';
 
 interface ClientGroup {
   client: string;

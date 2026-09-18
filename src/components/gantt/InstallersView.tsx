@@ -237,7 +237,7 @@ const InstallersView = ({
               startDate: newStart,
               endDate: newEnd,
               assigneeIds: newAssigneeIds,
-              status: project.status === 'open' ? 'scheduled' as ProjectStatus : project.status,
+              status: project.status === 'planned' ? 'assigned' as ProjectStatus : project.status,
             });
             return;
           }
