@@ -86,20 +86,33 @@ export function useInstallerLogs(projects: Project[] = []) {
     projectId: string; date: string; startTime?: string; endTime?: string; hours?: number; note?: string; source?: TimeEntry['source'];
   }) => {
     if (!installerId) return null;
-    const hours = entry.hours || (entry.startTime && entry.endTime ? computeHours(entry.startTime, entry.endTime) : 0);
+    const bothTimes = Boolean(entry.startTime && entry.endTime);
+    const hours = bothTimes
+      ? computeHours(entry.startTime!, entry.endTime!)
+      : (entry.hours || 0);
+
+    const check = timeEntrySchema.safeParse({
+      projectId: entry.projectId, date: entry.date,
+      startTime: entry.startTime, endTime: entry.endTime, hours, note: entry.note,
+    });
+    const issue = firstIssue(check);
+    if (issue) { toast.error(issue); return null; }
+
     const meta = metaFor(entry.projectId);
     const project = projects.find(p => p.id === entry.projectId);
     const projectRowId = await ensureProjectRowId(entry.projectId);
     if (!projectRowId) return null;
-    const { data } = await supabase.from('time_entries').insert({
+    const { data, error } = await supabase.from('time_entries').insert({
       project_id: projectRowId, snapshot_project_name: meta.projectName, snapshot_client_name: meta.clientName,
       installer_id: installerId, entry_date: entry.date, start_time: entry.startTime ?? null,
       end_time: entry.endTime ?? null, hours, note: entry.note ?? null, source: entry.source ?? 'manual',
       hourly_rate: ratesForClient(project?.client, project?.clientId).hourlyRate ?? null,
     }).select().maybeSingle();
+    if (error) { toast.error(error.message); return null; }
     await refresh();
     return data;
   }, [installerId, metaFor, projects, refresh]);
+
 
   const stopTimer = useCallback(async () => {
     if (!activeTimer || !installerId) return null;
