@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { projects as mockProjects, clientRegister, ratesForClient, DEFAULT_CLIENT_RATES } from '@/data/mockData';
 import { expenseCategoryLabels, type ExpenseCategory } from '@/data/logsData';
 import { toast } from 'sonner';
+import { doneOnSiteStatuses } from '@/lib/projectLifecycle';
 
 type Line = {
   id: string;
@@ -131,7 +132,7 @@ const InvoicingView = () => {
 
   const flags = useMemo(() => {
     const reported = new Set(lines.map(l => l.projectId));
-    const missing = mockProjects.filter(p => p.status === 'completed' && !reported.has(p.id));
+    const missing = mockProjects.filter(p => doneOnSiteStatuses.includes(p.status) && !reported.has(p.id));
     const noNote = filtered.filter(l => l.type === 'expense' && !l.detail.includes('·'));
     return { missing, noNote };
   }, [lines, filtered]);

@@ -13,7 +13,7 @@ interface ScheduleFiltersProps {
   onChange: (filters: FilterState) => void;
 }
 
-const allStatuses: ProjectStatus[] = ['open', 'scheduled', 'in-progress', 'completed', 'on-hold', 'cancelled'];
+import { allStatuses } from '@/lib/projectLifecycle';
 const allTypes: ProjectType[] = ['installation', 'site-survey', 'transport'];
 
 const statusDotMap: Record<string, string> = {

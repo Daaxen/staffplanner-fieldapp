@@ -414,6 +414,42 @@ export type Database = {
           },
         ]
       }
+      project_status_events: {
+        Row: {
+          changed_by: string
+          changed_by_name: string | null
+          created_at: string
+          from_status: string | null
+          id: string
+          note: string | null
+          project_name: string | null
+          project_ref: string
+          to_status: string
+        }
+        Insert: {
+          changed_by: string
+          changed_by_name?: string | null
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          note?: string | null
+          project_name?: string | null
+          project_ref: string
+          to_status: string
+        }
+        Update: {
+          changed_by?: string
+          changed_by_name?: string | null
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          note?: string | null
+          project_name?: string | null
+          project_ref?: string
+          to_status?: string
+        }
+        Relationships: []
+      }
       projects: {
         Row: {
           client_id: string | null

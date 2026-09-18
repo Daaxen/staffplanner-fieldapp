@@ -35,7 +35,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
   const isUnassigned = project.assigneeIds.length === 0;
 
   // Determine which bottom action to show
-  const showStartButton = project.status === 'scheduled' && onStatusChange;
+  const showStartButton = project.status === 'assigned' && onStatusChange;
   const showCompleteButton = project.status === 'in-progress' && onStatusChange;
 
   return (
@@ -321,7 +321,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
             <Button
               className="w-full bg-status-completed hover:bg-status-completed/90 text-foreground"
               size="lg"
-              onClick={() => onStatusChange!(project.id, 'completed')}
+              onClick={() => onStatusChange!(project.id, 'completed-on-site')}
             >
               <CheckSquare className="w-4 h-4 mr-2" />
               Mark Complete

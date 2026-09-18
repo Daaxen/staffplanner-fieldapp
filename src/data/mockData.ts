@@ -1,6 +1,7 @@
 export type ProjectType = 'installation' | 'site-survey' | 'transport';
 
-export type ProjectStatus = 'open' | 'scheduled' | 'in-progress' | 'completed' | 'on-hold' | 'cancelled';
+export type { ProjectStatus } from '@/lib/projectLifecycle';
+import type { ProjectStatus } from '@/lib/projectLifecycle';
 
 export interface Installer {
   id: string;
@@ -161,11 +162,4 @@ export const locationDistances: Record<string, Record<string, number>> = {};
 
 export const projects: Project[] = [];
 
-export const statusLabels: Record<ProjectStatus, string> = {
-  'open': 'Open / Unassigned',
-  'scheduled': 'Scheduled',
-  'in-progress': 'In Progress',
-  'completed': 'Completed',
-  'on-hold': 'On Hold',
-  'cancelled': 'Cancelled',
-};
+export { statusLabels } from '@/lib/projectLifecycle';

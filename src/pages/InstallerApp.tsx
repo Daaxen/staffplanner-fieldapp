@@ -20,6 +20,8 @@ import { useInstallerLogs } from '@/hooks/useInstallerLogs';
 import { useReminders } from '@/hooks/useReminders';
 import { usePushRegistration } from '@/hooks/usePushRegistration';
 import { toast } from 'sonner';
+import { closedStatuses, doneOnSiteStatuses, transitionError } from '@/lib/projectLifecycle';
+import { logStatusChange } from '@/lib/statusHistory';
 
 const InstallerApp = () => {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -51,17 +53,23 @@ const InstallerApp = () => {
 
   const handlePickUp = (project: Project) => {
     setLocalProjects(prev => prev.map(p =>
-      p.id === project.id ? { ...p, assigneeIds: [...p.assigneeIds, currentInstallerId], status: 'scheduled' as const } : p
+      p.id === project.id ? { ...p, assigneeIds: [...p.assigneeIds, currentInstallerId], status: 'assigned' as const } : p
     ));
     toast.success(`Picked up: ${project.name}`);
   };
 
   const handleStatusChange = (projectId: string, newStatus: Project['status']) => {
+    const current = localProjects.find(p => p.id === projectId);
+    if (current) {
+      const err = transitionError(current.status, newStatus);
+      if (err) { toast.error(err); return; }
+      void logStatusChange({ projectRef: current.id, projectName: current.name, from: current.status, to: newStatus });
+    }
     setLocalProjects(prev => prev.map(p =>
       p.id === projectId ? { ...p, status: newStatus } : p
     ));
     setSelectedProject(prev => prev && prev.id === projectId ? { ...prev, status: newStatus } : prev);
-    const label = newStatus === 'in-progress' ? 'Started' : newStatus === 'completed' ? 'Completed' : 'Updated';
+    const label = newStatus === 'in-progress' ? 'Started' : newStatus === 'completed-on-site' ? 'Completed' : 'Updated';
     toast.success(`${label} project`);
   };
 
@@ -119,8 +127,8 @@ const InstallerApp = () => {
     );
   }
 
-  const activeProjects = filteredMyProjects.filter(p => p.status !== 'cancelled' && p.status !== 'completed');
-  const completedProjects = filteredMyProjects.filter(p => p.status === 'completed');
+  const activeProjects = filteredMyProjects.filter(p => !closedStatuses.includes(p.status) && !doneOnSiteStatuses.includes(p.status));
+  const completedProjects = filteredMyProjects.filter(p => doneOnSiteStatuses.includes(p.status));
 
   return (
     <div className="h-screen flex flex-col bg-background">

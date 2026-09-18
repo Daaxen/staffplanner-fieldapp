@@ -194,7 +194,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
   const handleSubmit = () => {
     if (!name || !client || !startDate || !endDate) return;
 
-    const status: ProjectStatus = selectedInstallers.length > 0 ? 'scheduled' : 'open';
+    const status: ProjectStatus = selectedInstallers.length > 0 ? 'assigned' : 'planned';
 
     const project: Project = {
       id: projectId,

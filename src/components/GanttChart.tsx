@@ -21,7 +21,7 @@ interface DispatchChange {
 type ViewMode = 'day' | 'week' | 'month';
 type GanttMode = 'projects' | 'installers' | 'clients';
 
-const allStatuses: ProjectStatus[] = ['open', 'scheduled', 'in-progress', 'completed', 'on-hold', 'cancelled'];
+import { allStatuses } from '@/lib/projectLifecycle';
 
 function getISOWeekNumber(date: Date): number {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -152,7 +152,7 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
           ? {
               ...p,
               assigneeIds: p.assigneeIds.includes(installerId) ? p.assigneeIds : [...p.assigneeIds, installerId],
-              status: p.status === 'open' ? 'scheduled' as ProjectStatus : p.status,
+              status: p.status === 'planned' ? 'assigned' as ProjectStatus : p.status,
             }
           : p
       );
@@ -172,7 +172,7 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
       }
       return prev.map(p =>
         p.id === projectId
-          ? { ...p, assigneeIds: [], status: 'open' as ProjectStatus }
+          ? { ...p, assigneeIds: [], status: 'planned' as ProjectStatus }
           : p
       );
     });
@@ -390,6 +390,7 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
           project={selectedProject}
           installer={getInstaller(selectedProject.assigneeIds[0] ?? null)}
           onClose={() => setSelectedProject(null)}
+          onUpdateProject={handleUpdateProject}
         />
       )}
       <CreateOrderDialog
