@@ -1,4 +1,5 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { authorizeJobRequest } from '../_shared/jobAuth.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 // Sends push notifications for a reminder and logs reminder_events.
