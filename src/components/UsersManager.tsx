@@ -217,7 +217,7 @@ const UsersManager = () => {
                     {r.full_name || '(no name)'}
                     {r.job_title && <span className="text-xs text-muted-foreground font-normal"> · {r.job_title}</span>}
                     {r.pending && (
-                      <span className="ml-2 align-middle text-[10px] font-medium uppercase tracking-wide rounded px-1.5 py-0.5 bg-warning/15 text-warning">
+                      <span className="ml-2 align-middle text-[10px] font-medium uppercase tracking-wide rounded px-1.5 py-0.5 bg-status-on-hold/15 text-status-on-hold">
                         Pending invite
                       </span>
                     )}
