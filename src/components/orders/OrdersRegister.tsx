@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Search, Filter, X, CheckSquare, Square, Download, History, Users as UsersIcon, Trash2, ArrowRight, AlertTriangle, Check } from 'lucide-react';
 import { installers, type Project, type ProjectStatus, type ProjectType, statusLabels, projectTypeLabels, projectTypeIcons } from '@/data/mockData';
+import { transitionError } from '@/lib/validation/controlledValues';
+
 import { useProjects } from '@/lib/appData';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -72,20 +74,25 @@ const OrdersRegister = () => {
   const installerName = (id: string) => installers.find(i => i.id === id)?.name ?? id;
 
   const statusPreview = useMemo(() => {
-    return selectedOrders.map(o => ({
-      id: o.id,
-      name: o.name,
-      client: o.client,
-      from: o.status,
-      to: massStatus,
-      changed: o.status !== massStatus,
-      warning:
-        (o.status === 'completed' && massStatus !== 'completed') ? 'Reopening a completed order' :
-        (o.status === 'cancelled' && massStatus !== 'cancelled') ? 'Reactivating a cancelled order' :
-        (massStatus === 'cancelled' && o.status === 'in-progress') ? 'Cancelling an in-progress order' :
-        undefined,
-    }));
+    return selectedOrders.map(o => {
+      const blocked = transitionError(o.status, massStatus, statusLabels);
+      return {
+        id: o.id,
+        name: o.name,
+        client: o.client,
+        from: o.status,
+        to: massStatus,
+        blocked,
+        changed: o.status !== massStatus && !blocked,
+        warning:
+          (o.status === 'completed' && massStatus !== 'completed') ? 'Reopening a completed order' :
+          (o.status === 'cancelled' && massStatus !== 'cancelled') ? 'Reactivating a cancelled order' :
+          (massStatus === 'cancelled' && o.status === 'in-progress') ? 'Cancelling an in-progress order' :
+          undefined,
+      };
+    });
   }, [selectedOrders, massStatus]);
+
 
   const assigneePreview = useMemo(() => {
     return selectedOrders.map(o => {
@@ -179,12 +186,20 @@ const OrdersRegister = () => {
     (dateFrom ? 1 : 0) + (dateTo ? 1 : 0) + (historicalOnly ? 1 : 0);
 
   const applyMassStatus = () => {
+    const blockedCount = statusPreview.filter(r => r.blocked).length;
     const changedIds = new Set(statusPreview.filter(r => r.changed).map(r => r.id));
-    if (changedIds.size === 0) { toast.error('No orders would change'); return; }
+    if (changedIds.size === 0) {
+      toast.error(blockedCount ? 'That status step is not allowed for the selected orders' : 'No orders would change');
+      return;
+    }
     setOrders(prev => prev.map(p => changedIds.has(p.id) ? { ...p, status: massStatus } : p));
-    toast.success(`Updated status on ${changedIds.size} order(s)`);
+    toast.success(
+      `Updated status on ${changedIds.size} order(s)` +
+      (blockedCount ? ` · ${blockedCount} skipped (step not allowed)` : ''),
+    );
     closeMassDialog(); setSelected(new Set());
   };
+
   const applyMassAssignee = () => {
     if (!massAssignee) return;
     const changedIds = new Set(assigneePreview.filter(r => !r.already).map(r => r.id));
@@ -447,8 +462,10 @@ const OrdersRegister = () => {
                     <ArrowRight className="w-3 h-3 text-muted-foreground" />
                     <span className="inline-flex items-center gap-1"><span className={cn("w-2 h-2 rounded-full", statusDot[r.to])} />{statusLabels[r.to]}</span>
                   </div>
-                  <div className="w-40 text-right">
-                    {!r.changed ? (
+                  <div className="w-52 text-right">
+                    {r.blocked ? (
+                      <span className="text-xs text-destructive inline-flex items-center gap-1"><AlertTriangle className="w-3 h-3" />{r.blocked}</span>
+                    ) : !r.changed ? (
                       <span className="text-xs text-muted-foreground">No change</span>
                     ) : r.warning ? (
                       <span className="text-xs text-amber-600 inline-flex items-center gap-1"><AlertTriangle className="w-3 h-3" />{r.warning}</span>
@@ -456,6 +473,7 @@ const OrdersRegister = () => {
                       <span className="text-xs text-emerald-600 inline-flex items-center gap-1"><Check className="w-3 h-3" />Will update</span>
                     )}
                   </div>
+
                 </div>
               ))}
             </div>
