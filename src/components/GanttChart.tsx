@@ -186,7 +186,7 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
       }
       return updated;
     });
-  }, [trackChange]);
+  }, [trackChange, projectsList, setProjectsList]);
 
   const handleUnassignProject = useCallback((projectId: string) => {
     setProjectsList(prev => {
