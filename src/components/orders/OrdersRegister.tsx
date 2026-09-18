@@ -14,12 +14,12 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import OrdersImport from './OrdersImport';
-import { statusColorMap as statusDot } from '@/lib/projectLifecycle';
+import { statusColorMap as statusDot, allStatuses, transitionError, canTransition, doneOnSiteStatuses } from '@/lib/projectLifecycle';
+import { logStatusChange } from '@/lib/statusHistory';
 
 type SortKey = 'name' | 'client' | 'startDate' | 'endDate' | 'status' | 'projectType';
 type SortDir = 'asc' | 'desc';
 
-const allStatuses: ProjectStatus[] = ['open', 'scheduled', 'in-progress', 'completed', 'on-hold', 'cancelled'];
 const allTypes: ProjectType[] = ['installation', 'site-survey', 'transport'];
 
 const todayStr = new Date().toISOString().slice(0, 10);
@@ -40,7 +40,7 @@ const OrdersRegister = () => {
   const [showFilters, setShowFilters] = useState(true);
   const [massDialog, setMassDialog] = useState<null | 'status' | 'assignee' | 'delete'>(null);
   const [massStep, setMassStep] = useState<'configure' | 'preview'>('configure');
-  const [massStatus, setMassStatus] = useState<ProjectStatus>('scheduled');
+  const [massStatus, setMassStatus] = useState<ProjectStatus>('assigned');
   const [massAssignee, setMassAssignee] = useState<string>('');
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
@@ -70,12 +70,9 @@ const OrdersRegister = () => {
       client: o.client,
       from: o.status,
       to: massStatus,
-      changed: o.status !== massStatus,
-      warning:
-        (o.status === 'completed' && massStatus !== 'completed') ? 'Reopening a completed order' :
-        (o.status === 'cancelled' && massStatus !== 'cancelled') ? 'Reactivating a cancelled order' :
-        (massStatus === 'cancelled' && o.status === 'in-progress') ? 'Cancelling an in-progress order' :
-        undefined,
+      changed: o.status !== massStatus && canTransition(o.status, massStatus),
+      blocked: o.status !== massStatus && !canTransition(o.status, massStatus),
+      warning: transitionError(o.status, massStatus) ?? undefined,
     }));
   }, [selectedOrders, massStatus]);
 
@@ -83,7 +80,7 @@ const OrdersRegister = () => {
     return selectedOrders.map(o => {
       const already = !!massAssignee && o.assigneeIds.includes(massAssignee);
       const nextIds = already ? o.assigneeIds : Array.from(new Set([...o.assigneeIds, massAssignee]));
-      const statusChange = !already && o.status === 'open' ? 'scheduled' as ProjectStatus : undefined;
+      const statusChange = !already && o.status === 'planned' ? 'assigned' as ProjectStatus : undefined;
       return {
         id: o.id,
         name: o.name,
@@ -104,7 +101,7 @@ const OrdersRegister = () => {
       status: o.status,
       warning:
         o.status === 'in-progress' ? 'Currently in progress' :
-        o.status === 'scheduled' ? 'Scheduled with a team' :
+        o.status === 'assigned' ? 'Assigned to a team' :
         undefined,
     }));
   }, [selectedOrders]);
@@ -130,7 +127,7 @@ const OrdersRegister = () => {
       }
       if (dateFrom && o.endDate < dateFrom) return false;
       if (dateTo && o.startDate > dateTo) return false;
-      if (historicalOnly && !(o.status === 'completed' || o.status === 'cancelled' || o.endDate < todayStr)) return false;
+      if (historicalOnly && !(doneOnSiteStatuses.includes(o.status) || o.status === 'cancelled' || o.endDate < todayStr)) return false;
       return true;
     });
 
@@ -172,9 +169,18 @@ const OrdersRegister = () => {
 
   const applyMassStatus = () => {
     const changedIds = new Set(statusPreview.filter(r => r.changed).map(r => r.id));
-    if (changedIds.size === 0) { toast.error('No orders would change'); return; }
+    const blockedCount = statusPreview.filter(r => r.blocked).length;
+    if (changedIds.size === 0) {
+      toast.error(blockedCount ? 'No allowed status change for the selected orders' : 'No orders would change');
+      return;
+    }
+    const before = new Map(orders.map(o => [o.id, o] as const));
     setOrders(prev => prev.map(p => changedIds.has(p.id) ? { ...p, status: massStatus } : p));
-    toast.success(`Updated status on ${changedIds.size} order(s)`);
+    changedIds.forEach(id => {
+      const o = before.get(id);
+      if (o) void logStatusChange({ projectRef: o.id, projectName: o.name, from: o.status, to: massStatus, note: 'Bulk update' });
+    });
+    toast.success(`Updated status on ${changedIds.size} order(s)${blockedCount ? ` — ${blockedCount} skipped (not allowed)` : ''}`);
     closeMassDialog(); setSelected(new Set());
   };
   const applyMassAssignee = () => {
@@ -183,7 +189,7 @@ const OrdersRegister = () => {
     if (changedIds.size === 0) { toast.error('All selected orders already have this installer'); return; }
     setOrders(prev => prev.map(p =>
       changedIds.has(p.id)
-        ? { ...p, assigneeIds: Array.from(new Set([...p.assigneeIds, massAssignee])), status: p.status === 'open' ? 'scheduled' : p.status }
+        ? { ...p, assigneeIds: Array.from(new Set([...p.assigneeIds, massAssignee])), status: p.status === 'planned' ? 'assigned' : p.status }
         : p
     ));
     toast.success(`Assigned installer to ${changedIds.size} order(s)`);
