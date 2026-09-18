@@ -91,7 +91,7 @@ const Index = () => {
         {activeView === 'profile' && (
           <ProfileEditor />
         )}
-        {activeView !== 'planner' && activeView !== 'fleet' && activeView !== 'installer-preview' && activeView !== 'documents' && activeView !== 'users' && activeView !== 'escalations' && activeView !== 'invoicing' && activeView !== 'profile' && activeView !== 'orders' && activeView !== 'clients' && (
+        {activeView !== 'planner' && activeView !== 'dashboard' && activeView !== 'fleet' && activeView !== 'installer-preview' && activeView !== 'documents' && activeView !== 'users' && activeView !== 'escalations' && activeView !== 'invoicing' && activeView !== 'profile' && activeView !== 'orders' && activeView !== 'clients' && (
           <div className="flex-1 flex items-center justify-center">
             <p className="text-muted-foreground">Module coming soon</p>
           </div>
