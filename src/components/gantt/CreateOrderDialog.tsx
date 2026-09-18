@@ -341,6 +341,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
     };
 
     onCreateOrder(project);
+    void persistBookings(project);
     resetForm();
     onOpenChange(false);
   };
