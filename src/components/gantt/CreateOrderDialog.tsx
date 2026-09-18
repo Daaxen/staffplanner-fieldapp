@@ -760,15 +760,25 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
           {/* Assign Installers with suitability */}
           <div className="grid gap-1.5">
             <Label>{projectType === 'transport' ? 'Assign Drivers' : 'Assign Installers'}</Label>
+            <RecommendedInstallers
+              recommendations={recommendations}
+              selectedIds={selectedInstallers}
+              onSelect={toggleInstaller}
+            />
             <div className="border border-input rounded-md p-3 grid gap-2 max-h-[180px] overflow-y-auto">
               <TooltipProvider>
                 {installers
-                  .map(inst => ({ inst, suit: getInstallerSuitability(inst), blocked: conflictsFor(inst.id).some(c => c.severity === 'blocking') }))
-                  .sort((a, b) => (b.suit?.score ?? 50) - (a.suit?.score ?? 50))
-                  .map(({ inst, suit, blocked }) => (
+                  .map(inst => ({ inst, suit: getInstallerSuitability(inst), blocked: conflictsFor(inst.id).some(c => c.severity === 'blocking'), rec: recommendationFor(inst.id) }))
+                  .sort((a, b) => (b.rec?.score ?? b.suit?.score ?? 50) - (a.rec?.score ?? a.suit?.score ?? 50))
+                  .map(({ inst, suit, blocked, rec }) => (
                   <label key={inst.id} className="flex items-center gap-2 cursor-pointer text-sm hover:bg-accent rounded px-1 py-0.5 transition-colors">
                     <Checkbox checked={selectedInstallers.includes(inst.id)} onCheckedChange={() => toggleInstaller(inst.id)} disabled={suit?.score === 0 || (blocked && !selectedInstallers.includes(inst.id))} />
                     <span className={cn((suit?.score === 0 || blocked) && "line-through text-muted-foreground")}>{inst.name}</span>
+                    {rec?.recommended && (
+                      <span className="text-[10px] font-semibold text-primary flex items-center gap-0.5">
+                        <Sparkles className="h-3 w-3" />#{rec.rank}
+                      </span>
+                    )}
                     {blocked && <span className="text-[10px] font-medium text-destructive">Conflict</span>}
                     {suit && (
                       <Tooltip>
