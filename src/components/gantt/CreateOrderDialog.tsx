@@ -9,6 +9,13 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon, MapPin, Maximize2, Minimize2, Plus, Trash2, GripVertical, PenTool, Package, Paperclip, X, FileText, Image, CheckCircle2, AlertTriangle, XCircle, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import {
+  PROJECT_TEMPLATES,
+  DEFAULT_TEMPLATE_ID,
+  TEMPLATE_FIELD_LABELS,
+  getTemplate,
+  type TemplateFieldId,
+} from '@/lib/projectTemplates';
 import { installers, projects, locationDistances, type Project, type ProjectStatus, type ProjectType, type TransportStop, type GoodsItem, type Attachment, projectTypeLabels } from '@/data/mockData';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useClients } from '@/lib/clientStore';
@@ -54,6 +61,8 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
     });
     return map;
   }, [clientRows]);
+  const [templateId, setTemplateId] = useState<string>(DEFAULT_TEMPLATE_ID);
+  const template = useMemo(() => getTemplate(templateId), [templateId]);
   const [projectType, setProjectType] = useState<ProjectType>('installation');
   const [name, setName] = useState('');
   const [projectNumber, setProjectNumber] = useState('');
@@ -91,6 +100,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
   const [attachments, setAttachments] = useState<Attachment[]>([]);
 
   const resetForm = () => {
+    setTemplateId(DEFAULT_TEMPLATE_ID);
     setProjectType('installation');
     setName('');
     setProjectNumber('');
@@ -262,6 +272,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
       name,
       projectNumber: projectNumber || undefined,
       projectType,
+      templateId,
       client,
       location: projectType === 'transport' ? transportStops[0]?.address || '' : location,
       ...(projectType !== 'transport' && locationCoords
@@ -360,7 +371,27 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const isValid = name.trim() && client.trim() && startDate && endDate && startDate <= endDate;
+  const selectTemplate = (id: string) => {
+    setTemplateId(id);
+    const tpl = getTemplate(id);
+    if (tpl) setProjectType(tpl.projectType);
+  };
+
+  const fieldValues: Record<TemplateFieldId, boolean> = {
+    name: !!name.trim(),
+    client: !!client.trim(),
+    projectNumber: !!projectNumber.trim(),
+    location: !!(projectType === 'transport' ? transportStops[0]?.address?.trim() : location.trim()),
+    startDate: !!startDate,
+    endDate: !!endDate,
+    estimatedHours: !!estimatedHours.trim(),
+    description: !!description.trim(),
+  };
+  const requiredFields = template?.requiredFields ?? ['name', 'client', 'startDate', 'endDate'];
+  const missingFields = requiredFields.filter(f => !fieldValues[f]);
+
+  const isValid =
+    name.trim() && client.trim() && startDate && endDate && startDate <= endDate && missingFields.length === 0;
 
   const typeButtons: { value: ProjectType; icon: string }[] = [
     { value: 'installation', icon: '🔧' },
@@ -379,6 +410,44 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
         </DialogHeader>
 
         <div className="grid gap-4 py-2">
+          {/* Project Template */}
+          <div className="grid gap-1.5">
+            <Label>Project Template</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {PROJECT_TEMPLATES.map(t => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => selectTemplate(t.id)}
+                  title={t.summary}
+                  className={cn(
+                    "flex flex-col items-start gap-0.5 px-2.5 py-2 rounded-md border text-xs font-medium transition-colors text-left",
+                    templateId === t.id
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-input bg-background text-muted-foreground hover:bg-accent"
+                  )}
+                >
+                  <span className="text-base leading-none">{t.icon}</span>
+                  <span className="leading-tight">{t.label}</span>
+                </button>
+              ))}
+            </div>
+            {template && (
+              <div className="rounded-md border border-border bg-muted/40 px-3 py-2 text-[11px] text-muted-foreground space-y-1">
+                <p className="text-foreground">{template.summary}</p>
+                <p>
+                  Requires {template.checklist.length} checklist items · {template.photos.length} photos ·{' '}
+                  {template.signOffs.map(s => s.label.toLowerCase()).join(' + ')}
+                </p>
+                {missingFields.length > 0 && (
+                  <p className="text-status-on-hold">
+                    Still needed: {missingFields.map(f => TEMPLATE_FIELD_LABELS[f]).join(', ')}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Project Type */}
           <div className="grid gap-1.5">
             <Label>Project Type</Label>
