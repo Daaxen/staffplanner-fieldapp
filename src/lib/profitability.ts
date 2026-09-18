@@ -145,3 +145,69 @@ export const marginBg = (level: MarginLevel) =>
 
 export const sek = (n: number) => `${Math.round(n).toLocaleString('sv-SE')} SEK`;
 export const pctLabel = (n: number) => `${n.toFixed(1)} %`;
+
+/* ---------------------------------------------------------------- alerts */
+
+/** Hours overrun tolerated before an alert fires. */
+export const HOURS_OVERRUN_TOLERANCE_PCT = 10;
+/** Default target profitability % per order. */
+export const DEFAULT_TARGET_MARGIN_PCT = 25;
+
+export type AlertKind = 'hours' | 'external' | 'margin';
+export type AlertSeverity = 'warning' | 'critical';
+
+export interface ProfitabilityAlert {
+  kind: AlertKind;
+  severity: AlertSeverity;
+  title: string;
+  detail: string;
+}
+
+/** Warnings for one order: hours overrun, external cost overrun, margin below target. */
+export function profitabilityAlerts(project: Project, result: Profitability): ProfitabilityAlert[] {
+  const eco: ProjectEconomy = project.economy ?? {};
+  const alerts: ProfitabilityAlert[] = [];
+
+  if (result.budgetHours > 0 && result.actualHours > 0) {
+    const overPct = ((result.actualHours - result.budgetHours) / result.budgetHours) * 100;
+    if (overPct > HOURS_OVERRUN_TOLERANCE_PCT) {
+      alerts.push({
+        kind: 'hours',
+        severity: overPct >= 25 ? 'critical' : 'warning',
+        title: `Hours ${overPct.toFixed(0)} % over budget`,
+        detail: `${result.actualHours} h logged against ${result.budgetHours} h budgeted.`,
+      });
+    }
+  }
+
+  const externalBudget = eco.externalBudget;
+  if (typeof externalBudget === 'number' && externalBudget > 0 && result.externalCost > externalBudget) {
+    const over = result.externalCost - externalBudget;
+    alerts.push({
+      kind: 'external',
+      severity: over > externalBudget * 0.25 ? 'critical' : 'warning',
+      title: 'External costs over budget',
+      detail: `${sek(result.externalCost)} spent of ${sek(externalBudget)} budgeted (${sek(over)} over).`,
+    });
+  }
+
+  const target = eco.targetMarginPct ?? DEFAULT_TARGET_MARGIN_PCT;
+  if (result.revenue > 0 && result.profitabilityPct < target) {
+    alerts.push({
+      kind: 'margin',
+      severity: result.profitabilityPct < target / 2 ? 'critical' : 'warning',
+      title: `Margin below target (${pctLabel(target)})`,
+      detail: `Profitability is ${pctLabel(result.profitabilityPct)} · contribution ${sek(result.contributionMargin)}.`,
+    });
+  }
+
+  return alerts;
+}
+
+export const alertColor = (severity: AlertSeverity) =>
+  severity === 'critical' ? 'text-status-cancelled' : 'text-status-in-progress';
+
+export const alertBg = (severity: AlertSeverity) =>
+  severity === 'critical'
+    ? 'bg-status-cancelled/10 border-status-cancelled/40'
+    : 'bg-status-in-progress/10 border-status-in-progress/40';
