@@ -68,7 +68,11 @@ Deno.serve(async (req) => {
     const bumped: string[] = [];
 
     for (const p of projects ?? []) {
-      const assignees: string[] = (p.project_assignees ?? []).map((a: { user_id: string }) => a.user_id);
+      // reminders.installer_id references the user account, so resolve the
+      // assigned installer rows to their linked profile ids.
+      const assignees: string[] = (p.project_assignees ?? [])
+        .map((a: { installers?: { profile_id: string | null } | null }) => a.installers?.profile_id)
+        .filter((id: string | null | undefined): id is string => !!id);
       if (assignees.length === 0) continue;
 
       // T0 = end_date + 1 day at 08:00 UTC (simple, no per-tz handling yet)
