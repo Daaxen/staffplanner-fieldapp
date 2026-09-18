@@ -34,6 +34,13 @@ const InstallerApp = () => {
   const logs = useInstallerLogs(localProjects);
   const reminders = useReminders();
   const [tab, setTab] = useState<string>('schedule');
+  const [technicianMode, setTechnicianMode] = useState<boolean>(
+    () => localStorage.getItem('technicianMode') === '1',
+  );
+  const toggleTechnicianMode = (on: boolean) => {
+    setTechnicianMode(on);
+    localStorage.setItem('technicianMode', on ? '1' : '0');
+  };
   usePushRegistration(true);
 
 
