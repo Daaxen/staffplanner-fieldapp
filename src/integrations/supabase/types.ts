@@ -46,6 +46,107 @@ export type Database = {
           },
         ]
       }
+      assignment_overrides: {
+        Row: {
+          assignment_id: string | null
+          conflicts: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          installer_id: string | null
+          planned_end_at: string | null
+          planned_start_at: string | null
+          project_id: string | null
+          reason: string
+        }
+        Insert: {
+          assignment_id?: string | null
+          conflicts?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          installer_id?: string | null
+          planned_end_at?: string | null
+          planned_start_at?: string | null
+          project_id?: string | null
+          reason: string
+        }
+        Update: {
+          assignment_id?: string | null
+          conflicts?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          installer_id?: string | null
+          planned_end_at?: string | null
+          planned_start_at?: string | null
+          project_id?: string | null
+          reason?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assignment_overrides_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assignments: {
+        Row: {
+          assignment_status: string
+          created_at: string
+          created_by: string | null
+          id: string
+          installer_id: string
+          override_reason: string | null
+          planned_end_at: string
+          planned_start_at: string
+          project_id: string
+          updated_at: string
+        }
+        Insert: {
+          assignment_status?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          installer_id: string
+          override_reason?: string | null
+          planned_end_at: string
+          planned_start_at: string
+          project_id: string
+          updated_at?: string
+        }
+        Update: {
+          assignment_status?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          installer_id?: string
+          override_reason?: string | null
+          planned_end_at?: string
+          planned_start_at?: string
+          project_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assignments_installer_id_fkey"
+            columns: ["installer_id"]
+            isOneToOne: false
+            referencedRelation: "installers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assignments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           created_at: string
