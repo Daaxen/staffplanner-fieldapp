@@ -8,6 +8,7 @@ import DocumentsManager from '@/components/documents/DocumentsManager';
 import UsersManager from '@/components/UsersManager';
 import OrdersRegister from '@/components/orders/OrdersRegister';
 import ClientsRegister from '@/components/clients/ClientsRegister';
+import Customer360 from '@/components/clients/Customer360';
 import ProfileEditor from '@/components/ProfileEditor';
 import EscalationsView from '@/components/admin/EscalationsView';
 import CapacityDashboard from '@/components/dashboard/CapacityDashboard';
@@ -89,6 +90,9 @@ const Index = () => {
         {activeView === 'clients' && (
           <ClientsRegister />
         )}
+        {activeView === 'customer360' && (
+          <Customer360 />
+        )}
         {activeView === 'users' && (
           <UsersManager />
         )}
@@ -107,7 +111,7 @@ const Index = () => {
         {activeView === 'profile' && (
           <ProfileEditor />
         )}
-        {activeView !== 'planner' && activeView !== 'dashboard' && activeView !== 'operations' && activeView !== 'executive' && activeView !== 'fleet' && activeView !== 'installer-preview' && activeView !== 'documents' && activeView !== 'users' && activeView !== 'escalations' && activeView !== 'deviations' && activeView !== 'invoicing' && activeView !== 'profitability' && activeView !== 'profile' && activeView !== 'orders' && activeView !== 'clients' && (
+        {activeView !== 'planner' && activeView !== 'dashboard' && activeView !== 'operations' && activeView !== 'executive' && activeView !== 'fleet' && activeView !== 'installer-preview' && activeView !== 'documents' && activeView !== 'users' && activeView !== 'escalations' && activeView !== 'deviations' && activeView !== 'invoicing' && activeView !== 'profitability' && activeView !== 'profile' && activeView !== 'orders' && activeView !== 'clients' && activeView !== 'customer360' && (
           <div className="flex-1 flex items-center justify-center">
             <p className="text-muted-foreground">Module coming soon</p>
           </div>
