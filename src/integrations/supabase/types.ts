@@ -865,6 +865,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      installer_update_self: {
+        Args: { _base_location?: string }
+        Returns: undefined
+      }
       is_project_member: { Args: { _project_id: string }; Returns: boolean }
       shares_project_with_installer: {
         Args: { _installer_id: string }
