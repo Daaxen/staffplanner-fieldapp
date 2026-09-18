@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Search, Filter, X, CheckSquare, Square, Download, History, Users as UsersIcon, Trash2, ArrowRight, AlertTriangle, Check } from 'lucide-react';
 import { installers, type Project, type ProjectStatus, type ProjectType, statusLabels, projectTypeLabels, projectTypeIcons } from '@/data/mockData';
+import { transitionError } from '@/lib/validation/controlledValues';
+
 import { useProjects } from '@/lib/appData';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
