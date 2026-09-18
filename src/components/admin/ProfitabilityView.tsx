@@ -1,25 +1,27 @@
-import { useEffect, useMemo, useState } from 'react';
-import { RefreshCw, TrendingUp, X, Download } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { AlertTriangle, RefreshCw, TrendingUp, X, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { supabase } from '@/integrations/supabase/client';
 import { useProjects } from '@/lib/appData';
-import { useInstallers } from '@/hooks/useInstallers';
-import { statusLabels, type Project } from '@/data/mockData';
+import { useProfitabilityData } from '@/hooks/useProfitabilityData';
+import { statusLabels } from '@/data/mockData';
 import {
   DEFAULT_EXTERNAL_HOURLY_COST,
   DEFAULT_INTERNAL_HOURLY_COST,
+  DEFAULT_TARGET_MARGIN_PCT,
+  alertBg,
+  alertColor,
   computeProfitability,
   emptyInput,
   marginBg,
   marginColor,
   marginLevel,
   pctLabel,
+  profitabilityAlerts,
   sek,
-  type ProfitabilityInput,
 } from '@/lib/profitability';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -28,6 +30,12 @@ const ProfitabilityView = () => {
   const [projects, setProjects] = useProjects();
   const { inputs, loading, reload: load } = useProfitabilityData();
   const [client, setClient] = useState('all');
+  const [status, setStatus] = useState('all');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [onlyAlerts, setOnlyAlerts] = useState(false);
+
 
 
   const rows = useMemo(() => {
