@@ -1,4 +1,10 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { authorizeJobRequest } from '../_shared/jobAuth.ts';
+
+// Minimum time between two notifications for the same reminder.
+const NOTIFY_COOLDOWN_MS = 4 * 60 * 60 * 1000;
+// Runs are bucketed: only one scan per 15-minute window is ever processed.
+const BUCKET_MS = 15 * 60 * 1000;
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 // Scans projects past their end date and creates/updates reminders for
