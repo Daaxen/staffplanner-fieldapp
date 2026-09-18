@@ -216,6 +216,11 @@ const UsersManager = () => {
                   <p className="font-medium truncate">
                     {r.full_name || '(no name)'}
                     {r.job_title && <span className="text-xs text-muted-foreground font-normal"> · {r.job_title}</span>}
+                    {r.pending && (
+                      <span className="ml-2 align-middle text-[10px] font-medium uppercase tracking-wide rounded px-1.5 py-0.5 bg-warning/15 text-warning">
+                        Pending invite
+                      </span>
+                    )}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">{r.email} {r.phone && `· ${r.phone}`} {r.city && `· ${r.city}`}</p>
                   <div className="flex items-center gap-1 mt-1">
