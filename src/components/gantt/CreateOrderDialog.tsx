@@ -19,6 +19,8 @@ import ConflictPanel from '@/components/scheduling/ConflictPanel';
 import { detectConflicts, installerConflicts, hasBlocking, type AssignmentDraft } from '@/lib/schedulingConflicts';
 import { vehicles } from '@/data/fleetData';
 import { toast } from 'sonner';
+import RecommendedInstallers from '@/components/scheduling/RecommendedInstallers';
+import { recommendInstallers } from '@/lib/assignmentRecommendations';
 
 interface CreateOrderDialogProps {
   open: boolean;
@@ -181,6 +183,21 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
     const inst = installers.find(i => i.id === installerId);
     return inst ? installerConflicts(inst, conflictDraft, projects) : [];
   };
+
+  // ---- Intelligent assignment recommendations ----------------------------
+  const recommendations = useMemo(() => {
+    if (!conflictDraft) return [];
+    return recommendInstallers({
+      installers,
+      projects,
+      draft: conflictDraft,
+      projectType,
+      topN: 3,
+    });
+  }, [conflictDraft, projectType]);
+
+  const recommendationFor = (installerId: string) =>
+    recommendations.find(r => r.installer.id === installerId);
 
 
   useEffect(() => {
