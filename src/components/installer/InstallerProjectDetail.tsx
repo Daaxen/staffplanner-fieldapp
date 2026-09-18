@@ -19,6 +19,7 @@ import { templateForProject } from '@/lib/projectTemplates';
 import ProjectLogTab from '@/components/installer/reporting/ProjectLogTab';
 import type { InstallerLogs } from '@/hooks/useInstallerLogs';
 import MiniMap from '@/components/maps/MiniMap';
+import PhotoManager from '@/components/installer/PhotoManager';
 
 interface InstallerProjectDetailProps {
   project: Project;
@@ -40,7 +41,7 @@ const statusDotMap: Record<string, string> = {
 
 const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChange, onPickUp }: InstallerProjectDetailProps) => {
   
-  const [reportPhotos, setReportPhotos] = useState<string[]>([]);
+  const [photoCount, setPhotoCount] = useState(0);
   const [tab, setTab] = useState('info');
   const [checkedItems, setCheckedItems] = useState<string[]>([]);
   const [reportText, setReportText] = useState('');
@@ -54,7 +55,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
   const templateSignOffs = signOffsFor(template);
 
   const completionState = {
-    photoCount: reportPhotos.length,
+    photoCount,
     checkedItems,
     signature,
     reportSubmitted,
@@ -62,7 +63,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
   };
   const requirements = useMemo(
     () => completionRequirements(completionState, template),
-    [reportPhotos.length, checkedItems, signature, reportSubmitted, signOffs, template],
+    [photoCount, checkedItems, signature, reportSubmitted, signOffs, template],
   );
   const missing = requirements.filter(r => !r.met);
   const readyToComplete = missing.length === 0;
@@ -285,37 +286,16 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
         <TabsContent value="report" className="flex-1 overflow-auto mt-0">
           <div className="p-4 space-y-4">
             <Section title="Add Photos / Reporting">
-              <p className="text-xs text-muted-foreground mb-3">Take photos of the work progress or completed installation.</p>
-              <button
-                className="w-full border-2 border-dashed border-border rounded-xl py-8 flex flex-col items-center gap-2 hover:bg-muted/50 transition-colors"
-                onClick={() => {
-                  const id = `photo-${Date.now()}`;
-                  setReportPhotos(prev => [...prev, id]);
-                }}
-              >
-                <Camera className="w-8 h-8 text-muted-foreground/50" />
-                <span className="text-xs font-medium text-muted-foreground">Tap to add photo</span>
-              </button>
-              {reportPhotos.length > 0 && (
-                <div className="grid grid-cols-3 gap-2 mt-3">
-                  {reportPhotos.map((id) => (
-                    <div key={id} className="aspect-square bg-muted rounded-lg flex items-center justify-center">
-                      <Camera className="w-5 h-5 text-muted-foreground/40" />
-                    </div>
-                  ))}
-                </div>
-              )}
-              <p className="text-[11px] text-muted-foreground mt-2">
-                At least {minPhotos} photos are required before the order can be completed.
+              <p className="text-xs text-muted-foreground mb-3">
+                Pick a category, then take the photo — the time and GPS position are saved automatically, and you can add a comment to each photo.
               </p>
-              {template && template.photos.length > 0 && (
-                <ul className="mt-1 space-y-0.5 text-[11px] text-muted-foreground">
-                  {template.photos.map((p, i) => (
-                    <li key={p.id}>{i + 1}. {p.label}</li>
-                  ))}
-                </ul>
-              )}
-
+              <PhotoManager
+                projectRef={project.id}
+                projectName={project.name}
+                onCountChange={setPhotoCount}
+                requiredShots={template?.photos}
+                minPhotos={minPhotos}
+              />
             </Section>
 
             <Section title="Completion Checklist">
@@ -385,8 +365,8 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
                   <span className="text-sm text-foreground">{statusLabels[project.status]}</span>
                 </div>
               </div>
-              {reportPhotos.length > 0 && (
-                <InfoRow icon={<Camera className="w-4 h-4" />} label="Photos" value={`${reportPhotos.length} added`} />
+              {photoCount > 0 && (
+                <InfoRow icon={<Camera className="w-4 h-4" />} label="Photos" value={`${photoCount} added`} />
               )}
             </Section>
 

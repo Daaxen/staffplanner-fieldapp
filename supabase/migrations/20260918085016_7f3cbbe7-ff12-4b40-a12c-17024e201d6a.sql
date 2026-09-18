@@ -1,0 +1,1 @@
+ALTER TABLE public.field_reports ADD COLUMN IF NOT EXISTS photo_meta jsonb NOT NULL DEFAULT '[]'::jsonb;

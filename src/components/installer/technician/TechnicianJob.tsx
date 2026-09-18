@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -26,7 +26,8 @@ import {
   signOffsFor,
 } from '@/lib/completionRequirements';
 import { templateForProject } from '@/lib/projectTemplates';
-import { addPhoto, emptyWork, loadWork, saveWork, photoUrl, type FieldWork } from '@/lib/offline/fieldWork';
+import { emptyWork, loadWork, saveWork, type FieldWork } from '@/lib/offline/fieldWork';
+import PhotoManager from '@/components/installer/PhotoManager';
 import { useOnlineStatus } from '@/hooks/useOffline';
 import DeviationForm from '@/components/installer/DeviationForm';
 
@@ -41,8 +42,6 @@ type Panel = 'checklist' | 'photos' | 'signature' | 'deviation' | 'issue' | null
 const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) => {
   const [panel, setPanel] = useState<Panel>(null);
   const [work, setWork] = useState<FieldWork>(() => emptyWork(project.id, project.name));
-  const [previews, setPreviews] = useState<Record<string, string>>({});
-  const fileInput = useRef<HTMLInputElement>(null);
   const online = useOnlineStatus();
   const template = useMemo(() => templateForProject(project), [project.templateId, project.projectType]);
   const checklist = checklistFor(template);
@@ -58,28 +57,6 @@ const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) 
       active = false;
     };
   }, [project.id, project.name]);
-
-  useEffect(() => {
-    let revoked: string[] = [];
-    Promise.all(
-      work.photos
-        .filter(p => !previews[p.id])
-        .map(async p => ({ id: p.id, url: await photoUrl(p.id) })),
-    ).then(results => {
-      const next: Record<string, string> = {};
-      results.forEach(r => {
-        if (r.url) {
-          next[r.id] = r.url;
-          revoked.push(r.url);
-        }
-      });
-      if (Object.keys(next).length > 0) setPreviews(prev => ({ ...prev, ...next }));
-    });
-    return () => {
-      revoked = [];
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [work.photos]);
 
   const update = async (patch: Partial<FieldWork>) => {
     const next = await saveWork({ ...work, ...patch });
@@ -101,16 +78,6 @@ const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) 
   const ready = missing.length === 0;
 
   const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(project.location || '')}`;
-
-  const capture = async (files: FileList | null) => {
-    if (!files) return;
-    let current = work;
-    for (const file of Array.from(files)) {
-      current = await addPhoto(current, file);
-    }
-    setWork(current);
-    if (!online) toast.success('Photo saved on this phone — it uploads when you are back online');
-  };
 
   const setStatus = async (status: Project['status']) => {
     await update({ pendingStatus: status });
@@ -238,55 +205,15 @@ const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) 
           work.photos.length >= minPhotos,
         )}
         {panel === 'photos' && (
-          <div className="rounded-2xl border border-border bg-card p-3 space-y-3">
-            <input
-              ref={fileInput}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              multiple
-              className="hidden"
-              onChange={e => {
-                void capture(e.target.files);
-                e.target.value = '';
-              }}
+          <div className="rounded-2xl border border-border bg-card p-3">
+            <PhotoManager
+              projectRef={project.id}
+              projectName={project.name}
+              work={work}
+              onWorkChange={setWork}
+              requiredShots={template?.photos}
+              minPhotos={minPhotos}
             />
-            {template && template.photos.length > 0 && (
-              <ul className="space-y-1 text-xs text-muted-foreground">
-                {template.photos.map((p, i) => (
-                  <li key={p.id}>
-                    {i + 1}. {p.label}
-                  </li>
-                ))}
-              </ul>
-            )}
-            <button
-              onClick={() => fileInput.current?.click()}
-              className="w-full rounded-xl bg-primary text-primary-foreground py-6 font-semibold flex flex-col items-center gap-1"
-            >
-              <Camera className="w-7 h-7" />
-              Take photo
-            </button>
-            {work.photos.length > 0 && (
-              <div className="grid grid-cols-3 gap-2">
-                {work.photos.map(photo => (
-                  <div key={photo.id} className="relative aspect-square rounded-xl bg-muted overflow-hidden">
-                    {previews[photo.id] ? (
-                      <img src={previews[photo.id]} alt="Site photo" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Camera className="w-5 h-5 text-muted-foreground/50" />
-                      </div>
-                    )}
-                    {!photo.path && (
-                      <span className="absolute bottom-1 right-1 rounded-full bg-background/80 p-1">
-                        <CloudOff className="w-3 h-3 text-status-on-hold" />
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         )}
 
