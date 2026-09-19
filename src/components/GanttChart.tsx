@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, LayoutList, Users, Building2, Plus, Send } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LayoutList, Users, Building2, Plus, Send, Folder } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { installers, type Project, type ProjectStatus } from '@/data/mockData';
 import { useProjects } from '@/lib/appData';
@@ -21,7 +21,7 @@ interface DispatchChange {
 }
 
 type ViewMode = 'day' | 'week' | 'month';
-type GanttMode = 'projects' | 'installers' | 'clients';
+type GanttMode = 'workorders' | 'projects' | 'installers' | 'clients';
 
 const allStatuses: ProjectStatus[] = ['open', 'scheduled', 'in-progress', 'completed', 'on-hold', 'cancelled'];
 
@@ -39,7 +39,7 @@ interface GanttChartProps {
 
 const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
   const [viewMode, setViewMode] = useState<ViewMode>('week');
-  const [ganttMode, setGanttMode] = useState<GanttMode>('projects');
+  const [ganttMode, setGanttMode] = useState<GanttMode>('workorders');
   const [dateOffset, setDateOffset] = useState(0);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [projectsList, setProjectsList] = useProjects();
@@ -255,13 +255,23 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
           {/* Gantt mode toggle */}
           <div className="flex bg-secondary rounded-lg p-1">
             <button
+              onClick={() => setGanttMode('workorders')}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all",
+                ganttMode === 'workorders' ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <LayoutList className="w-3.5 h-3.5" />
+              Work Orders
+            </button>
+            <button
               onClick={() => setGanttMode('projects')}
               className={cn(
                 "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all",
                 ganttMode === 'projects' ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <LayoutList className="w-3.5 h-3.5" />
+              <Folder className="w-3.5 h-3.5" />
               Projects
             </button>
             <button
@@ -370,7 +380,7 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
       />
 
       {/* Gantt body */}
-      {ganttMode === 'projects' ? (
+      {ganttMode === 'workorders' || ganttMode === 'projects' ? (
         <ProjectsView
           projects={projectsList}
           days={days}
@@ -381,6 +391,7 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
           onUpdateProject={handleUpdateProject}
           activeStatuses={activeStatuses}
           viewMode={viewMode}
+          grouped={ganttMode === 'projects'}
         />
       ) : ganttMode === 'clients' ? (
         <ClientsView
