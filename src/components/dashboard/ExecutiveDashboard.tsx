@@ -88,8 +88,14 @@ const ExecutiveDashboard = () => {
 
   useEffect(() => {
     void (async () => {
-      const { data } = await supabase.from('deviations').select('project_ref,severity');
-      setDeviationRefs(new Set((data ?? []).map(d => d.project_ref as string)));
+      const { data } = await supabase.from('deviations').select('project_id,project_ref,severity');
+      setDeviationRefs(
+        new Set(
+          (data ?? []).map(
+            d => projectRefForRowId(d.project_id as string) ?? (d.project_ref as string),
+          ),
+        ),
+      );
     })();
   }, []);
 

@@ -30,6 +30,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type DeviationRow = {
   id: string;
+  project_id: string;
   project_ref: string;
   project_name: string | null;
   category: string;
