@@ -28,9 +28,10 @@ interface Props {
   project: Project;
   installer: Installer | null;
   onClose: () => void;
+  onEdit?: (project: Project) => void;
 }
 
-const ProjectDetailPanel = ({ project, installer, onClose }: Props) => {
+const ProjectDetailPanel = ({ project, installer, onClose, onEdit }: Props) => {
   const assignees = project.assigneeIds.map(id => installers.find(i => i.id === id)).filter(Boolean) as Installer[];
   const formatDate = (d: string) => new Date(d).toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' });
 
@@ -60,7 +61,7 @@ const ProjectDetailPanel = ({ project, installer, onClose }: Props) => {
         className="fixed right-0 top-0 bottom-0 w-96 bg-card border-l border-border shadow-2xl z-50 flex flex-col"
       >
         <div className="flex items-center justify-between p-6 border-b border-border">
-          <h3 className="text-base font-semibold text-foreground">Project Details</h3>
+          <h3 className="text-base font-semibold text-foreground">Work order details</h3>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
             <X className="w-4 h-4 text-muted-foreground" />
           </button>
@@ -159,8 +160,11 @@ const ProjectDetailPanel = ({ project, installer, onClose }: Props) => {
             <button className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">
               Dispatch Order
             </button>
-            <button className="w-full py-2.5 rounded-lg bg-secondary text-secondary-foreground text-sm font-medium hover:bg-secondary/80 transition-colors">
-              Edit Project
+            <button
+              onClick={() => onEdit?.(project)}
+              className="w-full py-2.5 rounded-lg bg-secondary text-secondary-foreground text-sm font-medium hover:bg-secondary/80 transition-colors"
+            >
+              Edit work order
             </button>
           </div>
         </div>
