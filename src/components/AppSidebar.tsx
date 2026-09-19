@@ -81,7 +81,7 @@ const AppSidebar = ({ activeView, onViewChange, collapsed = false, onToggleColla
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-2 space-y-1 overflow-hidden">
+      <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
         {!collapsed && <p className="text-xs font-medium text-sidebar-foreground/40 uppercase tracking-wider mb-3 px-3">Menu</p>}
         {navItems.map((item) => (
           <button
