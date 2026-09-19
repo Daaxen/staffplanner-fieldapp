@@ -114,6 +114,9 @@ const Index = () => {
         {activeView === 'orders' && (
           <OrdersRegister />
         )}
+        {activeView === 'project-groups' && (
+          <ProjectGroupsRegister />
+        )}
         {activeView === 'clients' && (
           <ClientsRegister />
         )}
