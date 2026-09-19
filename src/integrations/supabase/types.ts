@@ -329,6 +329,101 @@ export type Database = {
           },
         ]
       }
+      employee_private_access_log: {
+        Row: {
+          accessed_by: string | null
+          action: string
+          created_at: string
+          fields: string[] | null
+          id: string
+          profile_id: string
+          reason: string | null
+        }
+        Insert: {
+          accessed_by?: string | null
+          action: string
+          created_at?: string
+          fields?: string[] | null
+          id?: string
+          profile_id: string
+          reason?: string | null
+        }
+        Update: {
+          accessed_by?: string | null
+          action?: string
+          created_at?: string
+          fields?: string[] | null
+          id?: string
+          profile_id?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
+      employee_private_details: {
+        Row: {
+          clothing_size: string | null
+          created_at: string
+          date_of_birth: string | null
+          drivers_license: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          emergency_contact_relation: string | null
+          emergency_contact2_name: string | null
+          emergency_contact2_phone: string | null
+          employment_end_date: string | null
+          employment_start_date: string | null
+          medical_notes: string | null
+          profile_id: string
+          retain_until: string | null
+          shoe_size: string | null
+          updated_at: string
+        }
+        Insert: {
+          clothing_size?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          drivers_license?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_contact_relation?: string | null
+          emergency_contact2_name?: string | null
+          emergency_contact2_phone?: string | null
+          employment_end_date?: string | null
+          employment_start_date?: string | null
+          medical_notes?: string | null
+          profile_id: string
+          retain_until?: string | null
+          shoe_size?: string | null
+          updated_at?: string
+        }
+        Update: {
+          clothing_size?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          drivers_license?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_contact_relation?: string | null
+          emergency_contact2_name?: string | null
+          emergency_contact2_phone?: string | null
+          employment_end_date?: string | null
+          employment_start_date?: string | null
+          medical_notes?: string | null
+          profile_id?: string
+          retain_until?: string | null
+          shoe_size?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_private_details_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expense_entries: {
         Row: {
           amount: number
@@ -645,84 +740,51 @@ export type Database = {
           address: string | null
           avatar_url: string | null
           city: string | null
-          clothing_size: string | null
           country: string | null
           created_at: string
-          date_of_birth: string | null
-          drivers_license: string | null
           email: string | null
-          emergency_contact_name: string | null
-          emergency_contact_phone: string | null
-          emergency_contact_relation: string | null
-          emergency_contact2_name: string | null
-          emergency_contact2_phone: string | null
-          employment_start_date: string | null
           employment_type: string | null
           full_name: string | null
           id: string
           installer_id: string | null
           job_title: string | null
-          medical_notes: string | null
           phone: string | null
           postal_code: string | null
           sandbox_mode: boolean
-          shoe_size: string | null
           updated_at: string
         }
         Insert: {
           address?: string | null
           avatar_url?: string | null
           city?: string | null
-          clothing_size?: string | null
           country?: string | null
           created_at?: string
-          date_of_birth?: string | null
-          drivers_license?: string | null
           email?: string | null
-          emergency_contact_name?: string | null
-          emergency_contact_phone?: string | null
-          emergency_contact_relation?: string | null
-          emergency_contact2_name?: string | null
-          emergency_contact2_phone?: string | null
-          employment_start_date?: string | null
           employment_type?: string | null
           full_name?: string | null
           id: string
           installer_id?: string | null
           job_title?: string | null
-          medical_notes?: string | null
           phone?: string | null
           postal_code?: string | null
           sandbox_mode?: boolean
-          shoe_size?: string | null
           updated_at?: string
         }
         Update: {
           address?: string | null
           avatar_url?: string | null
           city?: string | null
-          clothing_size?: string | null
           country?: string | null
           created_at?: string
-          date_of_birth?: string | null
-          drivers_license?: string | null
           email?: string | null
-          emergency_contact_name?: string | null
-          emergency_contact_phone?: string | null
-          emergency_contact_relation?: string | null
-          emergency_contact2_name?: string | null
-          emergency_contact2_phone?: string | null
-          employment_start_date?: string | null
           employment_type?: string | null
           full_name?: string | null
           id?: string
           installer_id?: string | null
           job_title?: string | null
-          medical_notes?: string | null
           phone?: string | null
           postal_code?: string | null
           sandbox_mode?: boolean
-          shoe_size?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1398,6 +1460,38 @@ export type Database = {
           ref: string
         }[]
       }
+      delete_employee_private_details: {
+        Args: { _profile_id: string; _reason?: string }
+        Returns: undefined
+      }
+      get_employee_private_details: {
+        Args: { _profile_id: string; _reason?: string }
+        Returns: {
+          clothing_size: string | null
+          created_at: string
+          date_of_birth: string | null
+          drivers_license: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          emergency_contact_relation: string | null
+          emergency_contact2_name: string | null
+          emergency_contact2_phone: string | null
+          employment_end_date: string | null
+          employment_start_date: string | null
+          medical_notes: string | null
+          profile_id: string
+          retain_until: string | null
+          shoe_size: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "employee_private_details"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      has_hr_access: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1410,10 +1504,30 @@ export type Database = {
         Returns: undefined
       }
       is_project_member: { Args: { _project_id: string }; Returns: boolean }
+      purge_expired_employee_private_details: { Args: never; Returns: number }
       schedule_reminders_scan: { Args: { _cron?: string }; Returns: string }
       shares_project_with_installer: {
         Args: { _installer_id: string }
         Returns: boolean
+      }
+      upsert_employee_private_details: {
+        Args: {
+          _clothing_size?: string
+          _date_of_birth?: string
+          _drivers_license?: string
+          _emergency_contact_name?: string
+          _emergency_contact_phone?: string
+          _emergency_contact_relation?: string
+          _emergency_contact2_name?: string
+          _emergency_contact2_phone?: string
+          _employment_end_date?: string
+          _employment_start_date?: string
+          _medical_notes?: string
+          _profile_id: string
+          _reason?: string
+          _shoe_size?: string
+        }
+        Returns: undefined
       }
     }
     Enums: {
