@@ -8,9 +8,13 @@ import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Trash2, UserPlus, Shield, User as UserIcon, Copy, Pencil, KeyRound, Mail, ChevronDown, ChevronRight } from 'lucide-react';
+import { Trash2, UserPlus, Shield, User as UserIcon, Copy, Pencil, KeyRound, Mail, ChevronDown, ChevronRight, Lock, BriefcaseMedical } from 'lucide-react';
+import {
+  EmployeePrivate, EMPLOYEE_PRIVATE_FIELDS, emptyEmployeePrivate,
+  loadEmployeePrivate, saveEmployeePrivate, useHrAccess,
+} from '@/lib/employeePrivate';
 
-type Role = 'admin' | 'installer';
+type Role = 'admin' | 'installer' | 'hr';
 
 interface Row {
   id: string;
@@ -22,29 +26,15 @@ interface Row {
   postal_code: string | null;
   city: string | null;
   country: string | null;
-  date_of_birth: string | null;
-  emergency_contact_name: string | null;
-  emergency_contact_phone: string | null;
-  emergency_contact_relation: string | null;
-  emergency_contact2_name: string | null;
-  emergency_contact2_phone: string | null;
   job_title: string | null;
   employment_type: string | null;
-  employment_start_date: string | null;
-  drivers_license: string | null;
-  medical_notes: string | null;
-  clothing_size: string | null;
-  shoe_size: string | null;
   roles: Role[];
   pending?: boolean;
 }
 
 const EDITABLE = [
-  'full_name', 'phone', 'address', 'postal_code', 'city', 'country', 'date_of_birth',
-  'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relation',
-  'emergency_contact2_name', 'emergency_contact2_phone',
-  'job_title', 'employment_type', 'employment_start_date', 'drivers_license',
-  'medical_notes', 'clothing_size', 'shoe_size',
+  'full_name', 'phone', 'address', 'postal_code', 'city', 'country',
+  'job_title', 'employment_type',
 ] as const;
 
 type EditForm = Record<(typeof EDITABLE)[number], string> & { email: string };
