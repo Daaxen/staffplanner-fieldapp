@@ -106,6 +106,8 @@ const ProjectLogTab = ({ projectId, logs, plannedHours }: ProjectLogTabProps) =>
 
   return (
     <div className="p-4 space-y-4 pb-24">
+      <TimeVarianceCard plannedHours={plannedHours} actual={actual} />
+
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-lg border border-border bg-card p-3">
           <p className="text-xs text-muted-foreground">Reported time</p>
