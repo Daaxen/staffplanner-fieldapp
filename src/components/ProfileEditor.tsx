@@ -93,6 +93,7 @@ const ProfileEditor = () => {
   );
 
   return (
+    <div className="h-full overflow-y-auto">
     <div className="max-w-2xl mx-auto p-6 space-y-8">
       <h1 className="text-xl font-semibold">My profile</h1>
 
@@ -167,6 +168,7 @@ const ProfileEditor = () => {
       </Section>
 
       <Button onClick={save} disabled={busy}>{busy ? 'Saving…' : 'Save changes'}</Button>
+    </div>
     </div>
   );
 };
