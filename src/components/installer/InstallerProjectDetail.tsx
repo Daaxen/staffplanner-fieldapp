@@ -23,6 +23,7 @@ import type { InstallerLogs } from '@/hooks/useInstallerLogs';
 import MiniMap from '@/components/maps/MiniMap';
 import PhotoManager from '@/components/installer/PhotoManager';
 import { useFieldWork } from '@/hooks/useFieldWork';
+import DeviationForm from '@/components/installer/DeviationForm';
 
 interface InstallerProjectDetailProps {
   project: Project;
@@ -31,6 +32,7 @@ interface InstallerProjectDetailProps {
   onBack: () => void;
   onStatusChange?: (projectId: string, newStatus: Project['status']) => void;
   onPickUp?: () => void;
+  initialTab?: 'info' | 'docs' | 'report' | 'log' | 'deviation' | 'summary';
 }
 
 const statusDotMap: Record<string, string> = {
@@ -42,9 +44,9 @@ const statusDotMap: Record<string, string> = {
   'open': 'bg-status-open',
 };
 
-const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChange, onPickUp }: InstallerProjectDetailProps) => {
+const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChange, onPickUp, initialTab = 'info' }: InstallerProjectDetailProps) => {
   
-  const [tab, setTab] = useState('info');
+  const [tab, setTab] = useState(initialTab);
   // Same saved field report, offline queue and sync as technician mode.
   const { work, state: completionState, update, replace, loaded, online } = useFieldWork(project.id, project.name);
   const { checkedItems, reportText, reportSubmitted, signature } = work;
@@ -151,6 +153,10 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
           <TabsTrigger value="log" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-[11px] h-full gap-1">
             <Receipt className="w-3 h-3" />
             Log
+          </TabsTrigger>
+          <TabsTrigger value="deviation" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-[11px] h-full gap-1">
+            <AlertTriangle className="w-3 h-3" />
+            Deviation
           </TabsTrigger>
           <TabsTrigger value="summary" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-[11px] h-full gap-1">
             <ClipboardCheck className="w-3 h-3" />
@@ -390,6 +396,12 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
         {/* LOG TAB */}
         <TabsContent value="log" className="flex-1 overflow-auto mt-0">
           <ProjectLogTab projectId={project.id} logs={logs} plannedHours={project.estimatedHours} />
+        </TabsContent>
+
+        <TabsContent value="deviation" className="flex-1 overflow-auto mt-0">
+          <div className="p-4">
+            <DeviationForm projectRef={project.id} projectName={project.name} installerName={installer.name} />
+          </div>
         </TabsContent>
 
 
