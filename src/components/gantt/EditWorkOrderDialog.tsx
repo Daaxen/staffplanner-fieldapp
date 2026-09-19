@@ -27,6 +27,9 @@ interface Props {
  */
 const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => {
   const [clients] = useClients();
+  const installers = useInstallersList();
+  const [allProjects] = useProjects();
+  const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
   const [form, setForm] = useState({
     name: '',
     projectNumber: '',
@@ -46,6 +49,7 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
 
   useEffect(() => {
     if (!project || !open) return;
+    setAssigneeIds(project.assigneeIds ?? []);
     setForm({
       name: project.name ?? '',
       projectNumber: project.projectNumber ?? '',
@@ -65,6 +69,36 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
   }, [project, open]);
 
   const set = (key: keyof typeof form, value: string) => setForm(prev => ({ ...prev, [key]: value }));
+
+  const toggleInstaller = (id: string) =>
+    setAssigneeIds(prev => (prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]));
+
+  /** Conflicts (absence, overlap, travel) per selected installer for the edited dates. */
+  const conflictsByInstaller = useMemo(() => {
+    const map = new Map<string, string[]>();
+    if (!project || !form.startDate || !form.endDate) return map;
+    for (const id of assigneeIds) {
+      const inst = installers.find(i => i.id === id);
+      if (!inst) continue;
+      const found = installerConflicts(
+        inst,
+        {
+          projectId: project.id,
+          name: form.name || project.name,
+          startDate: form.startDate,
+          endDate: form.endDate,
+          startTime: form.startTime,
+          endTime: form.endTime,
+          location: form.location,
+          lat: project.locationLat,
+          lng: project.locationLng,
+        },
+        allProjects,
+      );
+      if (found.length > 0) map.set(id, found.map(c => c.title));
+    }
+    return map;
+  }, [project, assigneeIds, installers, allProjects, form.startDate, form.endDate, form.startTime, form.endTime, form.location, form.name]);
 
   const handleSave = () => {
     if (!project) return;
