@@ -8,6 +8,7 @@ import InstallerPreview from '@/components/installer/InstallerPreview';
 import DocumentsManager from '@/components/documents/DocumentsManager';
 import UsersManager from '@/components/UsersManager';
 import OrdersRegister from '@/components/orders/OrdersRegister';
+import ProjectGroupsRegister from '@/components/projects/ProjectGroupsRegister';
 import ClientsRegister from '@/components/clients/ClientsRegister';
 import Customer360 from '@/components/clients/Customer360';
 import ProfileEditor from '@/components/ProfileEditor';
