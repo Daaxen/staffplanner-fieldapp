@@ -114,7 +114,8 @@ export function useInstallerLogs(projects: Project[] = []) {
     const { data, error } = await supabase.from('time_entries').insert({
       project_id: projectRowId, snapshot_project_name: meta.projectName, snapshot_client_name: meta.clientName,
       installer_id: installerId, entry_date: entry.date, start_time: entry.startTime ?? null,
-      end_time: entry.endTime ?? null, hours, note: entry.note ?? null, source: entry.source ?? 'manual',
+      end_time: entry.endTime ?? null, hours, travel_hours: travelHours,
+      note: entry.note ?? null, source: entry.source ?? 'manual',
       hourly_rate: ratesForClient(project?.client, project?.clientId).hourlyRate ?? null,
     }).select().maybeSingle();
     if (error) { toast.error(error.message); return null; }
