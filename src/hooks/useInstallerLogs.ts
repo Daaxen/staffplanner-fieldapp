@@ -46,7 +46,7 @@ export function useInstallerLogs(projects: Project[] = []) {
     setTime((t.data ?? []).map(r => ({
       id: r.id, projectId: projectRefForRowId(r.project_id) ?? r.project_id, installerId: r.installer_id, date: r.entry_date,
       startTime: r.start_time ?? undefined, endTime: r.end_time ?? undefined,
-      hours: Number(r.hours), note: r.note ?? undefined,
+      hours: Number(r.hours), travelHours: Number(r.travel_hours ?? 0), note: r.note ?? undefined,
       source: (r.source === 'timer' ? 'timer' : 'manual'), createdAt: r.created_at,
     })));
 
