@@ -61,7 +61,7 @@ const ProjectDetailPanel = ({ project, installer, onClose, onEdit }: Props) => {
         className="fixed right-0 top-0 bottom-0 w-96 bg-card border-l border-border shadow-2xl z-50 flex flex-col"
       >
         <div className="flex items-center justify-between p-6 border-b border-border">
-          <h3 className="text-base font-semibold text-foreground">Project Details</h3>
+          <h3 className="text-base font-semibold text-foreground">Work order details</h3>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
             <X className="w-4 h-4 text-muted-foreground" />
           </button>
