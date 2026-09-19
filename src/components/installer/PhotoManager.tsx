@@ -17,7 +17,7 @@ import {
 import {
   addPhoto,
   emptyWork,
-  loadWork,
+  hydrateWork,
   photoUrl,
   removePhoto,
   saveWork,
@@ -62,7 +62,7 @@ const PhotoManager = ({
   useEffect(() => {
     if (controlledWork) return;
     let active = true;
-    loadWork(projectRef, projectName).then(w => {
+    hydrateWork(projectRef, projectName).then(w => {
       if (active) setLocalWork(w);
     });
     return () => {
