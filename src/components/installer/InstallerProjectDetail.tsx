@@ -509,8 +509,8 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
               <Button
                 className="w-full bg-status-completed hover:bg-status-completed/90 text-foreground disabled:opacity-50"
                 size="lg"
-                disabled={!readyToComplete}
-                onClick={handleComplete}
+                disabled={!readyToComplete || !loaded}
+                onClick={() => void handleComplete()}
               >
                 <CheckSquare className="w-4 h-4 mr-2" />
                 {readyToComplete ? 'Mark Complete' : `Mark Complete (${missing.length} missing)`}
