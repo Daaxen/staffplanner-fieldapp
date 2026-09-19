@@ -4,6 +4,7 @@ import { useMyInstallerId } from '@/lib/installerIdentity';
 import { computeHours, DEFAULT_MILEAGE_RATE, type TimeEntry, type ExpenseEntry, type ExpenseCategory, type ActiveTimer } from '@/data/logsData';
 import { ratesForClient, type Project } from '@/data/mockData';
 import { ensureProjectRowId, projectRefForRowId } from '@/lib/appData';
+import { sumActualTime } from '@/lib/timeVariance';
 import { toast } from 'sonner';
 import {
   timeEntrySchema, mileageEntrySchema, expenseEntrySchema, firstIssue, type ExpenseKind,
