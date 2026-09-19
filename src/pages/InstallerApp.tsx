@@ -243,6 +243,13 @@ const InstallerApp = () => {
 
         <TabsContent value="reporting" className="flex-1 overflow-auto mt-0">
           <LogsOverview logs={logs} projects={myProjects} />
+          <div className="px-4 pb-20 space-y-3">
+            <h2 className="text-sm font-semibold text-foreground">Report on a job</h2>
+            {activeProjects.map(project => (
+              <ProjectCard key={project.id} project={project} onSelect={project => openProjectWorkflow(project, 'log')} currentInstallerId={installer.id} actual={logs.actualFor(project.id)} />
+            ))}
+            {activeProjects.length === 0 && <p className="text-sm text-muted-foreground py-3">No active jobs to report on.</p>}
+          </div>
         </TabsContent>
 
         <TabsContent value="deviations" className="flex-1 overflow-auto mt-0">
