@@ -25,9 +25,12 @@ interface ProjectCardProps {
   project: Project;
   onSelect: (p: Project) => void;
   currentInstallerId?: string;
+  /** Reported work + travel time for this order. */
+  actual?: ActualTime;
 }
 
-const ProjectCard = ({ project, onSelect, currentInstallerId }: ProjectCardProps) => {
+const ProjectCard = ({ project, onSelect, currentInstallerId, actual }: ProjectCardProps) => {
+  const pct = variancePct(project.estimatedHours, actual?.total);
   const coWorkers = project.assigneeIds
     .filter(id => id !== currentInstallerId)
     .map(id => installers.find(i => i.id === id))
