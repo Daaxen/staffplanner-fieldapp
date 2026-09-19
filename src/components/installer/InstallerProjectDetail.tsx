@@ -160,9 +160,41 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
               )}
             </Section>
 
+            {/* Customer — name, address and contact only, never commercial data */}
+            <Section title="Customer">
+              <InfoRow
+                icon={<FileText className="w-4 h-4" />}
+                label="Client"
+                value={customer?.name ?? project.client}
+              />
+              {customer?.address && (
+                <InfoRow icon={<MapPin className="w-4 h-4" />} label="Address" value={customer.address} />
+              )}
+              {customer?.contactName && (
+                <InfoRow
+                  icon={<Users className="w-4 h-4" />}
+                  label="Contact"
+                  value={[customer.contactName, customer.contactRole].filter(Boolean).join(' · ')}
+                />
+              )}
+              {customer?.contactPhone && (
+                <div className="flex items-center gap-2 py-0.5">
+                  <span className="text-muted-foreground"><Phone className="w-4 h-4" /></span>
+                  <span className="text-xs text-muted-foreground w-20 shrink-0">Phone</span>
+                  <a href={`tel:${customer.contactPhone}`} className="text-sm text-primary hover:underline">{customer.contactPhone}</a>
+                </div>
+              )}
+              {customer?.contactEmail && (
+                <div className="flex items-center gap-2 py-0.5">
+                  <span className="text-muted-foreground"><Mail className="w-4 h-4" /></span>
+                  <span className="text-xs text-muted-foreground w-20 shrink-0">Email</span>
+                  <a href={`mailto:${customer.contactEmail}`} className="text-sm text-primary hover:underline">{customer.contactEmail}</a>
+                </div>
+              )}
+            </Section>
+
             {/* Location */}
             <Section title="Location">
-              <InfoRow icon={<FileText className="w-4 h-4" />} label="Client" value={project.client} />
               <InfoRow icon={<MapPin className="w-4 h-4" />} label="Address" value={project.location} />
               {project.location?.trim() && (
                 <MiniMap
