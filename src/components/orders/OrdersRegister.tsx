@@ -601,6 +601,10 @@ const OrdersRegister = () => {
                   <div className="w-36 text-right">
                     {r.already ? (
                       <span className="text-xs text-muted-foreground">Already assigned</span>
+                    ) : r.blocked ? (
+                      <span className="text-xs text-destructive inline-flex items-center gap-1" title={r.blockDetail}>
+                        <AlertTriangle className="w-3 h-3" />Conflict
+                      </span>
                     ) : (
                       <span className="text-xs text-emerald-600 inline-flex items-center gap-1">
                         <Check className="w-3 h-3" />Add{r.statusChange ? ' + Scheduled' : ''}
@@ -609,6 +613,21 @@ const OrdersRegister = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {massStep === 'preview' && assigneePreview.some(r => !r.already && r.blocked) && (
+            <div className="space-y-2">
+              <p className="text-xs text-destructive">
+                Some orders clash with another booking or a planned absence. An admin may push them
+                through with a reason — it is stored on the booking and logged.
+              </p>
+              <Textarea
+                value={massOverrideReason}
+                onChange={e => setMassOverrideReason(e.target.value)}
+                placeholder={`Reason for the override (min ${OVERRIDE_REASON_MIN} characters)`}
+                rows={2}
+              />
             </div>
           )}
 
