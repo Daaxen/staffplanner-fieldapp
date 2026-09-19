@@ -10,6 +10,8 @@ import {
   type Installer,
   type Project,
 } from '@/data/mockData';
+import { parseClientMetadata, parseProjectMetadata } from '@/lib/validation/appJson';
+
 
 /**
  * Shared, database-backed application data.
