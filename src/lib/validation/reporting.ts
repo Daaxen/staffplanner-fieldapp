@@ -7,6 +7,8 @@ import { z } from 'zod';
  */
 
 export const MAX_ENTRY_HOURS = 16;
+export const MAX_TRAVEL_HOURS = 12;
+export const MAX_TOTAL_HOURS = 20;
 export const MAX_ENTRY_KM = 2000;
 
 export type ExpenseRule = {
@@ -49,6 +51,11 @@ export const timeEntrySchema = z
     startTime: timeOfDay.optional(),
     endTime: timeOfDay.optional(),
     hours: z.number().min(0, 'Hours cannot be negative').max(MAX_ENTRY_HOURS).optional(),
+    travelHours: z
+      .number()
+      .min(0, 'Travel time cannot be negative')
+      .max(MAX_TRAVEL_HOURS, `Travel time cannot exceed ${MAX_TRAVEL_HOURS} hours`)
+      .optional(),
     note: z.string().max(1000).optional(),
   })
   .superRefine((v, ctx) => {
@@ -74,6 +81,13 @@ export const timeEntrySchema = z
         code: z.ZodIssueCode.custom,
         path: ['hours'],
         message: `A single entry cannot exceed ${MAX_ENTRY_HOURS} hours`,
+      });
+    }
+    if (hours + (v.travelHours ?? 0) > MAX_TOTAL_HOURS) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['travelHours'],
+        message: `Work time plus travel time cannot exceed ${MAX_TOTAL_HOURS} hours`,
       });
     }
   });

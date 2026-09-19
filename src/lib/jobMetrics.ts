@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { variancePct } from '@/lib/timeVariance';
 
 /**
  * Historical job metrics — one immutable snapshot per completed order.
@@ -25,8 +26,12 @@ export interface JobMetric {
   installerIds: string[];
   plannedHours: number | null;
   actualHours: number;
-  /** Reserved for future travel-time measurement — currently 0. */
+  /** Travel time reported on the order, summed from the time entries. */
   travelHours: number;
+  /** Work time + travel time. */
+  totalHours: number;
+  /** Deviation between planned and total actual time, in percent. */
+  variancePct: number | null;
   plannedInstallers: number;
   actualInstallers: number;
   plannedDate: string | null;
@@ -77,6 +82,8 @@ function mapRow(r: Row): JobMetric {
     materialCost: r.material_cost,
     jobValue: r.job_value,
     createdAt: r.created_at,
+    totalHours: Math.round((Number(r.actual_hours ?? 0) + Number(r.travel_hours ?? 0)) * 100) / 100,
+    variancePct: variancePct(r.planned_hours, Number(r.actual_hours ?? 0) + Number(r.travel_hours ?? 0)),
   };
 }
 

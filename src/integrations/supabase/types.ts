@@ -1910,6 +1910,7 @@ export type Database = {
           snapshot_project_name: string | null
           source: string
           start_time: string | null
+          travel_hours: number
           updated_at: string
         }
         Insert: {
@@ -1926,6 +1927,7 @@ export type Database = {
           snapshot_project_name?: string | null
           source?: string
           start_time?: string | null
+          travel_hours?: number
           updated_at?: string
         }
         Update: {
@@ -1942,6 +1944,7 @@ export type Database = {
           snapshot_project_name?: string | null
           source?: string
           start_time?: string | null
+          travel_hours?: number
           updated_at?: string
         }
         Relationships: [

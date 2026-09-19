@@ -4,6 +4,7 @@ import { useMyInstallerId } from '@/lib/installerIdentity';
 import { computeHours, DEFAULT_MILEAGE_RATE, type TimeEntry, type ExpenseEntry, type ExpenseCategory, type ActiveTimer } from '@/data/logsData';
 import { ratesForClient, type Project } from '@/data/mockData';
 import { ensureProjectRowId, projectRefForRowId } from '@/lib/appData';
+import { sumActualTime } from '@/lib/timeVariance';
 import { toast } from 'sonner';
 import {
   timeEntrySchema, mileageEntrySchema, expenseEntrySchema, firstIssue, type ExpenseKind,
@@ -46,7 +47,7 @@ export function useInstallerLogs(projects: Project[] = []) {
     setTime((t.data ?? []).map(r => ({
       id: r.id, projectId: projectRefForRowId(r.project_id) ?? r.project_id, installerId: r.installer_id, date: r.entry_date,
       startTime: r.start_time ?? undefined, endTime: r.end_time ?? undefined,
-      hours: Number(r.hours), note: r.note ?? undefined,
+      hours: Number(r.hours), travelHours: Number(r.travel_hours ?? 0), note: r.note ?? undefined,
       source: (r.source === 'timer' ? 'timer' : 'manual'), createdAt: r.created_at,
     })));
 
@@ -90,17 +91,19 @@ export function useInstallerLogs(projects: Project[] = []) {
   }, [installerId, metaFor]);
 
   const addTime = useCallback(async (entry: {
-    projectId: string; date: string; startTime?: string; endTime?: string; hours?: number; note?: string; source?: TimeEntry['source'];
+    projectId: string; date: string; startTime?: string; endTime?: string; hours?: number;
+    travelHours?: number; note?: string; source?: TimeEntry['source'];
   }) => {
     if (!installerId) return null;
     const bothTimes = Boolean(entry.startTime && entry.endTime);
     const hours = bothTimes
       ? computeHours(entry.startTime!, entry.endTime!)
       : (entry.hours || 0);
+    const travelHours = Math.round((entry.travelHours || 0) * 100) / 100;
 
     const check = timeEntrySchema.safeParse({
       projectId: entry.projectId, date: entry.date,
-      startTime: entry.startTime, endTime: entry.endTime, hours, note: entry.note,
+      startTime: entry.startTime, endTime: entry.endTime, hours, travelHours, note: entry.note,
     });
     const issue = firstIssue(check);
     if (issue) { toast.error(issue); return null; }
@@ -112,7 +115,8 @@ export function useInstallerLogs(projects: Project[] = []) {
     const { data, error } = await supabase.from('time_entries').insert({
       project_id: projectRowId, snapshot_project_name: meta.projectName, snapshot_client_name: meta.clientName,
       installer_id: installerId, entry_date: entry.date, start_time: entry.startTime ?? null,
-      end_time: entry.endTime ?? null, hours, note: entry.note ?? null, source: entry.source ?? 'manual',
+      end_time: entry.endTime ?? null, hours, travel_hours: travelHours,
+      note: entry.note ?? null, source: entry.source ?? 'manual',
       hourly_rate: ratesForClient(project?.client, project?.clientId).hourlyRate ?? null,
     }).select().maybeSingle();
     if (error) { toast.error(error.message); return null; }
@@ -121,7 +125,8 @@ export function useInstallerLogs(projects: Project[] = []) {
   }, [installerId, metaFor, projects, refresh]);
 
 
-  const stopTimer = useCallback(async () => {
+  /** Check out: stores start, finish, work time and travel time in one entry. */
+  const stopTimer = useCallback(async (travelHours = 0) => {
     if (!activeTimer || !installerId) return null;
     const started = new Date(activeTimer.startedAt);
     const ended = new Date();
@@ -134,7 +139,7 @@ export function useInstallerLogs(projects: Project[] = []) {
       date: started.toISOString().slice(0, 10),
       startTime: sameDay ? hm(started) : undefined,
       endTime: sameDay ? hm(ended) : undefined,
-      hours, source: 'timer',
+      hours, travelHours, source: 'timer',
     });
 
     await supabase.from('active_timers').delete().eq('installer_id', installerId);
@@ -211,9 +216,15 @@ export function useInstallerLogs(projects: Project[] = []) {
 
   const categories = useMemo(() => ['materials', 'travel', 'parking', 'meal', 'other'] as ExpenseCategory[], []);
 
+  /** Actual time on an order: work hours, travel hours and their total. */
+  const actualFor = useCallback(
+    (projectId?: string) => sumActualTime(time.filter(t => !projectId || t.projectId === projectId)),
+    [time],
+  );
+
   return {
     loading, refresh,
-    timeFor, expensesFor, activeTimer,
+    timeFor, expensesFor, activeTimer, actualFor,
     startTimer, stopTimer, cancelTimer,
     addTime, deleteTime,
     addExpense, addMileage, deleteExpense,

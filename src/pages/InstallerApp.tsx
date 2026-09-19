@@ -253,13 +253,13 @@ const InstallerApp = () => {
           <div className="p-4 space-y-3">
             <h2 className="text-base font-semibold text-foreground">Active ({activeProjects.length})</h2>
             {activeProjects.map(project => (
-              <ProjectCard key={project.id} project={project} onSelect={setSelectedProject} currentInstallerId={installer.id} />
+              <ProjectCard key={project.id} project={project} onSelect={setSelectedProject} currentInstallerId={installer.id} actual={logs.actualFor(project.id)} />
             ))}
             {completedProjects.length > 0 && (
               <>
                 <h2 className="text-base font-semibold text-muted-foreground mt-4">Completed ({completedProjects.length})</h2>
                 {completedProjects.map(project => (
-                  <ProjectCard key={project.id} project={project} onSelect={setSelectedProject} currentInstallerId={installer.id} />
+                  <ProjectCard key={project.id} project={project} onSelect={setSelectedProject} currentInstallerId={installer.id} actual={logs.actualFor(project.id)} />
                 ))}
               </>
             )}
