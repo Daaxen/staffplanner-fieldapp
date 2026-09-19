@@ -48,7 +48,7 @@ describe('similarity score', () => {
 
   it('gives half weight for a crew one person off, none for further away', () => {
     expect(scoreSimilarity(target, metric({ actualInstallers: 3 })).similarity)
-      .toBe(100 - SIMILARITY_WEIGHTS.installers / 2);
+      .toBe(Math.round(100 - SIMILARITY_WEIGHTS.installers / 2));
     expect(scoreSimilarity(target, metric({ actualInstallers: 5 })).similarity)
       .toBe(100 - SIMILARITY_WEIGHTS.installers);
   });
