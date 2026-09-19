@@ -118,6 +118,8 @@ export interface Project {
   postalCode?: string;
   region?: string;
   status: ProjectStatus;
+  /** Commercial track (quote → paid → closed), separate from the work status. */
+  commercialStatus?: string;
   assigneeIds: string[]; // multiple assignees
   startDate: string; // ISO date
   endDate: string;   // ISO date
