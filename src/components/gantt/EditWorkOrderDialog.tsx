@@ -216,6 +216,46 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
               <Label htmlFor="wo-desc">Description</Label>
               <Textarea id="wo-desc" rows={3} value={form.description} onChange={e => set('description', e.target.value)} />
             </div>
+
+            <div className="col-span-2 space-y-1.5">
+              <Label>Assigned installers</Label>
+              {installers.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No installers available yet.</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {installers.map(inst => {
+                    const selected = assigneeIds.includes(inst.id);
+                    const issues = conflictsByInstaller.get(inst.id);
+                    return (
+                      <button
+                        key={inst.id}
+                        type="button"
+                        onClick={() => toggleInstaller(inst.id)}
+                        title={issues?.join(' · ')}
+                        className={cn(
+                          'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
+                          selected
+                            ? 'border-primary bg-primary/10 text-foreground'
+                            : 'border-border text-muted-foreground hover:bg-secondary',
+                        )}
+                      >
+                        {selected && <Check className="h-3 w-3" />}
+                        {inst.name}
+                        {selected && issues && <AlertTriangle className="h-3 w-3 text-destructive" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              {conflictsByInstaller.size > 0 && (
+                <p className="text-xs text-destructive">
+                  Scheduling conflict for {[...conflictsByInstaller.keys()]
+                    .map(id => installers.find(i => i.id === id)?.name)
+                    .filter(Boolean)
+                    .join(', ')}. Saving may be rejected by the booking rules.
+                </p>
+              )}
+            </div>
           </div>
         </div>
 
