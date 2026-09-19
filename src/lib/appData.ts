@@ -556,7 +556,10 @@ export function useClients(): [Client[], (next: Updater<Client>) => void] {
     const value = typeof next === 'function' ? next(prev) : next;
     replace(clientRegister, value);
     notify();
-    diffAndPersist(prev, value, upsertClientRow, deleteClientRow);
+    diffAndPersist(prev, value, upsertClientRow, deleteClientRow, (restore) => {
+      replace(clientRegister, restore);
+      notify();
+    });
   }, []);
   return [snapshot, setClients];
 }
