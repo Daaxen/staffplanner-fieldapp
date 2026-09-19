@@ -80,7 +80,7 @@ const Index = () => {
     if (!view && (isAdmin || isHr) && !isMobileDevice) navigate(canonicalViewPath(defaultView), { replace: true });
   }, [defaultView, isAdmin, isHr, navigate, view, isMobileDevice]);
 
-  if (isInstaller && !isAdmin && !isHr) return <Navigate to="/installer" replace />;
+  if (isInstaller && (!isAdmin && !isHr || (isMobileDevice && !view))) return <Navigate to="/installer" replace />;
   if (!allowedView && view) return <Navigate to={canonicalViewPath(defaultView)} replace />;
 
   return (
