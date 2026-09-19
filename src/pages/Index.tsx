@@ -22,6 +22,7 @@ import ResourcePlanningDashboard from '@/components/dashboard/ResourcePlanningDa
 import VarianceAnalysisDashboard from '@/components/dashboard/VarianceAnalysisDashboard';
 import PortalUsersManager from '@/components/admin/PortalUsersManager';
 import AuditTimeline from '@/components/admin/AuditTimeline';
+import FeedbackModule from '@/components/feedback/FeedbackModule';
 
 import { useProjects } from '@/lib/appData';
 import {
