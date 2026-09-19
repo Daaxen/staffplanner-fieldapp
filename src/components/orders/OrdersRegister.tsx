@@ -98,11 +98,27 @@ const OrdersRegister = () => {
   }, [selectedOrders, massStatus]);
 
 
+  // Bulk assignment runs the same conflict and absence checks as every other path.
   const assigneePreview = useMemo(() => {
     return selectedOrders.map(o => {
       const already = !!massAssignee && o.assigneeIds.includes(massAssignee);
       const nextIds = already ? o.assigneeIds : Array.from(new Set([...o.assigneeIds, massAssignee]));
       const statusChange = !already && o.status === 'open' ? 'scheduled' as ProjectStatus : undefined;
+      const conflicts = already || !massAssignee
+        ? []
+        : detectConflicts({
+            installerIds: [massAssignee],
+            draft: {
+              projectId: o.id,
+              startDate: o.startDate,
+              endDate: o.endDate,
+              startTime: o.startTime,
+              endTime: o.endTime,
+            },
+            installers,
+            projects: orders,
+          });
+      const blockers = conflicts.filter(c => c.severity === 'blocking');
       return {
         id: o.id,
         name: o.name,
@@ -111,9 +127,11 @@ const OrdersRegister = () => {
         next: nextIds,
         already,
         statusChange,
+        blocked: blockers.length > 0,
+        blockDetail: blockers[0]?.detail,
       };
     });
-  }, [selectedOrders, massAssignee]);
+  }, [selectedOrders, massAssignee, orders]);
 
   const deletePreview = useMemo(() => {
     return selectedOrders.map(o => ({
