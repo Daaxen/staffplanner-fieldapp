@@ -241,8 +241,18 @@ async function loadProjects() {
             }
           : d.economy;
 
+        // Assignment rows are authoritative for who is staffed on the order;
+        // the JSON snapshot is only a fallback for rows written before them.
+        const assigneeRows = (Array.isArray(r.project_assignees)
+          ? r.project_assignees
+          : []) as { installer_id: string }[];
+        const assigneeIds = assigneeRows.length > 0
+          ? Array.from(new Set(assigneeRows.map((a) => a.installer_id)))
+          : (d.assigneeIds ?? []);
+
         const project = {
           ...d,
+          assigneeIds,
           id: d.id ?? (r.ref as string) ?? '',
           name: (r.name as string) ?? d.name,
           projectType: col('project_type', d.projectType),
