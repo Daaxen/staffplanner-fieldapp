@@ -74,11 +74,46 @@ const toRow = (d: DocDraft) => ({
   file_type: d.fileType?.trim() || null,
   scope: d.scope,
   visible_to_installers: d.scope === 'global_internal' ? d.visibleToInstallers && !d.isSensitive : false,
-  is_sensitive: d.isSensitive,
-  project_id: d.scope === 'project' ? d.projectId ?? null : null,
+  is_sensitive: d.scope === 'project_sensitive' ? true : d.isSensitive,
+  project_id: d.scope === 'project' || d.scope === 'project_sensitive' ? d.projectId ?? null : null,
   client_id: d.scope === 'client' ? d.clientId ?? null : null,
   owner_id: d.scope === 'installer_private' ? d.ownerId ?? null : null,
 });
+
+export interface DocGrant {
+  id: string;
+  profileId: string;
+  reason: string;
+  createdAt: string;
+}
+
+/** Explicit, reasoned access grants for sensitive order documents. */
+export const listDocGrants = async (documentId: string): Promise<DocGrant[]> => {
+  const { data, error } = await supabase
+    .from('document_access')
+    .select('id, profile_id, reason, created_at')
+    .eq('document_id', documentId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(r => ({
+    id: r.id as string,
+    profileId: r.profile_id as string,
+    reason: r.reason as string,
+    createdAt: r.created_at as string,
+  }));
+};
+
+export const grantDocAccess = async (documentId: string, profileId: string, reason: string) => {
+  const { error } = await supabase
+    .from('document_access')
+    .insert({ document_id: documentId, profile_id: profileId, reason: reason.trim() });
+  if (error) throw error;
+};
+
+export const revokeDocAccess = async (grantId: string) => {
+  const { error } = await supabase.from('document_access').delete().eq('id', grantId);
+  if (error) throw error;
+};
 
 /** Loads the documents the signed-in user is allowed to see. Access is decided
  *  in the database by document purpose, never by any client-side filter. */

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { FileText, BookOpen, ShieldAlert, Link2, Plus, Search, Trash2, Download, ExternalLink, Pencil, Lock, Building2, Briefcase, Globe } from 'lucide-react';
+import { FileText, BookOpen, ShieldAlert, Link2, Plus, Search, Trash2, Download, ExternalLink, Pencil, Lock, Building2, Briefcase, Globe, UserCog } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { docCategoryLabels, docScopeLabels, docScopeHints, type DocCategory, type DocScope } from '@/data/documentsData';
-import { useDocuments, type DocDraft } from '@/hooks/useDocuments';
+import { useDocuments, listDocGrants, grantDocAccess, revokeDocAccess, type DocDraft, type DocGrant } from '@/hooks/useDocuments';
 import { useProjects, projectRowId, projectRefForRowId } from '@/lib/appData';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -25,7 +25,9 @@ const categoryIcon: Record<DocCategory, typeof FileText> = {
 const scopeIcon: Record<DocScope, typeof FileText> = {
   global_internal: Globe,
   project: Briefcase,
+  project_sensitive: ShieldAlert,
   client: Building2,
+  hr: UserCog,
   installer_private: Lock,
 };
 
@@ -53,6 +55,9 @@ const DocumentsManager = () => {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<DocDraft>(emptyDraft);
+  const [grants, setGrants] = useState<DocGrant[]>([]);
+  const [grantPerson, setGrantPerson] = useState('');
+  const [grantReason, setGrantReason] = useState('');
 
   useEffect(() => {
     void (async () => {
@@ -85,7 +90,7 @@ const DocumentsManager = () => {
     return c;
   }, [docs]);
 
-  const openCreate = () => { setEditingId(null); setDraft(emptyDraft); setOpen(true); };
+  const openCreate = () => { setEditingId(null); setDraft(emptyDraft); setGrants([]); setOpen(true); };
 
   const openEdit = (id: string) => {
     const doc = docs.find(d => d.id === id);
@@ -104,12 +109,16 @@ const DocumentsManager = () => {
       clientId: doc.clientId,
       ownerId: doc.ownerId,
     });
+    setGrants([]); setGrantPerson(''); setGrantReason('');
+    if (doc.scope === 'project_sensitive') {
+      void listDocGrants(id).then(setGrants).catch(() => setGrants([]));
+    }
     setOpen(true);
   };
 
   const save = async () => {
     if (!draft.title.trim()) { toast.error('Title is required'); return; }
-    if (draft.scope === 'project' && !draft.projectId) { toast.error('Pick the order this document belongs to'); return; }
+    if ((draft.scope === 'project' || draft.scope === 'project_sensitive') && !draft.projectId) { toast.error('Pick the order this document belongs to'); return; }
     if (draft.scope === 'client' && !draft.clientId) { toast.error('Pick the customer this document belongs to'); return; }
     if (draft.scope === 'installer_private' && !draft.ownerId) { toast.error('Pick who this private document belongs to'); return; }
     try {
@@ -126,9 +135,30 @@ const DocumentsManager = () => {
     catch (e) { toast.error((e as Error).message ?? 'Could not remove the document'); }
   };
 
+  const addGrant = async () => {
+    if (!editingId || !grantPerson) { toast.error('Select the person who needs access'); return; }
+    if (!grantReason.trim()) { toast.error('A reason is required'); return; }
+    try {
+      await grantDocAccess(editingId, grantPerson, grantReason);
+      setGrantPerson(''); setGrantReason('');
+      setGrants(await listDocGrants(editingId));
+      toast.success('Access granted');
+    } catch (e) { toast.error((e as Error).message ?? 'Could not grant access'); }
+  };
+
+  const removeGrant = async (grantId: string) => {
+    if (!editingId) return;
+    try {
+      await revokeDocAccess(grantId);
+      setGrants(await listDocGrants(editingId));
+      toast.success('Access removed');
+    } catch (e) { toast.error((e as Error).message ?? 'Could not remove access'); }
+  };
+
   const ownerLabel = (d: typeof docs[number]) => {
-    if (d.scope === 'project') return projectName(d.projectId);
+    if (d.scope === 'project' || d.scope === 'project_sensitive') return projectName(d.projectId);
     if (d.scope === 'client') return clientName(d.clientId);
+    if (d.scope === 'hr') return 'HR and admins only';
     if (d.scope === 'installer_private') return personName(d.ownerId);
     return d.visibleToInstallers ? 'Published to field staff' : 'Internal only';
   };
@@ -243,7 +273,7 @@ const DocumentsManager = () => {
               <p className="text-xs text-muted-foreground mt-1">{docScopeHints[draft.scope]}</p>
             </div>
 
-            {draft.scope === 'project' && (
+            {(draft.scope === 'project' || draft.scope === 'project_sensitive') && (
               <div>
                 <Label>Order</Label>
                 <Select value={draft.projectId ?? ''} onValueChange={v => setDraft({ ...draft, projectId: v })}>
@@ -255,6 +285,46 @@ const DocumentsManager = () => {
                     })}
                   </SelectContent>
                 </Select>
+              </div>
+            )}
+
+            {draft.scope === 'project_sensitive' && (
+              <div className="rounded-lg border border-border p-3 space-y-3">
+                <div>
+                  <Label className="text-sm">Who may open this document</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Being assigned to the order is not enough — each person needs a grant with a reason.
+                  </p>
+                </div>
+                {!editingId && (
+                  <p className="text-xs text-muted-foreground">Save the document first, then reopen it to give access.</p>
+                )}
+                {editingId && (
+                  <>
+                    {grants.length === 0 && <p className="text-xs text-muted-foreground">Nobody has access yet.</p>}
+                    {grants.map(g => (
+                      <div key={g.id} className="flex items-start justify-between gap-2 text-sm">
+                        <div>
+                          <div>{personName(g.profileId)}</div>
+                          <div className="text-xs text-muted-foreground">{g.reason}</div>
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={() => void removeGrant(g.id)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    <div className="grid gap-2">
+                      <Select value={grantPerson} onValueChange={setGrantPerson}>
+                        <SelectTrigger><SelectValue placeholder="Select person" /></SelectTrigger>
+                        <SelectContent>
+                          {people.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <Input value={grantReason} onChange={e => setGrantReason(e.target.value)} placeholder="Reason for access" />
+                      <Button variant="outline" size="sm" onClick={() => void addGrant()}>Give access</Button>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
