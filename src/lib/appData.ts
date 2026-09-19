@@ -182,7 +182,7 @@ async function loadProjects() {
   const { data, error } = await supabase
     .from('projects')
     .select(
-      'id,ref,data,name,status,start_date,end_date,project_type,location,' +
+      'id,ref,data,name,status,commercial_status,start_date,end_date,project_type,location,' +
         'contact_name,contact_phone,contact_email,project_number,template_id,' +
         'client_ref,client_name,street,postal_code,region,location_lat,location_lng,' +
         'start_time,end_time,estimated_hours,is_flex_order,description,' +
@@ -230,6 +230,7 @@ async function loadProjects() {
           name: (r.name as string) ?? d.name,
           projectType: col('project_type', d.projectType),
           status: col('status', d.status),
+          commercialStatus: col('commercial_status', d.commercialStatus) ?? 'quote',
           location: col('location', d.location) ?? '',
           startDate: col('start_date', d.startDate) ?? '',
           endDate: col('end_date', d.endDate) ?? '',
@@ -335,6 +336,7 @@ async function upsertProjectRow(p: Project) {
         name: p.name,
         project_type: p.projectType,
         status: p.status,
+        commercial_status: p.commercialStatus || 'quote',
         location: p.location || null,
         start_date: p.startDate || null,
         end_date: p.endDate || null,
