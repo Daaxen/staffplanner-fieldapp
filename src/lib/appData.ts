@@ -540,7 +540,10 @@ export function useProjects(): [Project[], (next: Updater<Project>) => void] {
     const value = typeof next === 'function' ? next(prev) : next;
     replace(projectList, value);
     notify();
-    diffAndPersist(prev, value, upsertProjectRow, deleteProjectRow);
+    diffAndPersist(prev, value, upsertProjectRow, deleteProjectRow, (restore) => {
+      replace(projectList, restore);
+      notify();
+    });
   }, []);
   return [snapshot, setProjects];
 }
