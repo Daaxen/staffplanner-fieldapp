@@ -6,6 +6,7 @@ import GanttHeader from './GanttHeader';
 import GanttGrid from './GanttGrid';
 import DraggableBar from './DraggableBar';
 import DateChangeDialog from './DateChangeDialog';
+import { dayCount, dayOffset } from '@/lib/ganttDates';
 
 const statusColorMap: Record<ProjectStatus, string> = {
   'open': 'bg-status-open',
@@ -23,6 +24,17 @@ const statusBorderMap: Record<ProjectStatus, string> = {
   'completed': 'border-status-completed',
   'on-hold': 'border-status-on-hold',
   'cancelled': 'border-status-cancelled',
+};
+
+// Work orders without an installer are tinted by their status so every bar on
+// the board is readable at a glance.
+const statusBgMap: Record<ProjectStatus, string> = {
+  'open': 'bg-status-open/20',
+  'scheduled': 'bg-status-scheduled/20',
+  'in-progress': 'bg-status-in-progress/20',
+  'completed': 'bg-status-completed/20',
+  'on-hold': 'bg-status-on-hold/20',
+  'cancelled': 'bg-status-cancelled/20',
 };
 
 const installerBgMap: Record<number, string> = {
@@ -99,10 +111,8 @@ const ProjectsView = ({ projects, days, colWidth, startDate, todayStr, onSelectP
   const totalGridWidth = days.length * colWidth;
 
   const getBarPosition = (project: Project) => {
-    const pStart = new Date(project.startDate);
-    const pEnd = new Date(project.endDate);
-    const startDiff = Math.floor((pStart.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-    const duration = Math.floor((pEnd.getTime() - pStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const startDiff = dayOffset(project.startDate, startDate);
+    const duration = dayCount(project.startDate, project.endDate);
     const rawLeft = startDiff * colWidth;
     const rawRight = rawLeft + duration * colWidth - 4;
     const clippedLeft = Math.max(rawLeft, 0);
@@ -210,7 +220,9 @@ const ProjectsView = ({ projects, days, colWidth, startDate, todayStr, onSelectP
               {filteredAndSorted.map((project, idx) => {
                 const { left, width, overflowRight } = getBarPosition(project);
                 const assignees = project.assigneeIds.map(id => getInstaller(id)).filter(Boolean) as Installer[];
-                const instColor = assignees.length > 0 && assignees[0] ? installerBgMap[assignees[0].color] : 'bg-muted/40';
+                const instColor = assignees.length > 0 && assignees[0]
+                  ? installerBgMap[assignees[0].color]
+                  : statusBgMap[project.status];
                 return (
                   <div
                     key={project.id}

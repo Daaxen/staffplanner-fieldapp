@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -490,8 +490,14 @@ function diffAndPersist<T extends { id: string }>(
 /* Public API                                                          */
 /* ------------------------------------------------------------------ */
 
-function useVersion() {
-  const [, setV] = useState(version);
+/**
+ * Re-renders on every data change and returns the current version so hooks can
+ * hand out a fresh array. The module-level caches are mutated in place, so a
+ * new array identity is what tells memoised views (planner, registers) that the
+ * data actually changed.
+ */
+function useVersion(): number {
+  const [v, setV] = useState(version);
   useEffect(() => {
     const l = () => setV(version);
     listeners.add(l);
@@ -501,17 +507,19 @@ function useVersion() {
       listeners.delete(l);
     };
   }, []);
-  return loaded;
+  return v;
 }
 
 type Updater<T> = T[] | ((prev: T[]) => T[]);
 
 export function useAppDataLoaded(): boolean {
-  return useVersion();
+  useVersion();
+  return loaded;
 }
 
 export function useProjects(): [Project[], (next: Updater<Project>) => void] {
-  useVersion();
+  const v = useVersion();
+  const snapshot = useMemo(() => [...projectList], [v]);
   const setProjects = useCallback((next: Updater<Project>) => {
     const prev = [...projectList];
     const value = typeof next === 'function' ? next(prev) : next;
@@ -519,11 +527,12 @@ export function useProjects(): [Project[], (next: Updater<Project>) => void] {
     notify();
     diffAndPersist(prev, value, upsertProjectRow, deleteProjectRow);
   }, []);
-  return [projectList, setProjects];
+  return [snapshot, setProjects];
 }
 
 export function useClients(): [Client[], (next: Updater<Client>) => void] {
-  useVersion();
+  const v = useVersion();
+  const snapshot = useMemo(() => [...clientRegister], [v]);
   const setClients = useCallback((next: Updater<Client>) => {
     const prev = [...clientRegister];
     const value = typeof next === 'function' ? next(prev) : next;
@@ -531,12 +540,12 @@ export function useClients(): [Client[], (next: Updater<Client>) => void] {
     notify();
     diffAndPersist(prev, value, upsertClientRow, deleteClientRow);
   }, []);
-  return [clientRegister, setClients];
+  return [snapshot, setClients];
 }
 
 export function useInstallersList(): Installer[] {
-  useVersion();
-  return installerList;
+  const v = useVersion();
+  return useMemo(() => [...installerList], [v]);
 }
 
 /** Client names for autocomplete / dropdowns. */
