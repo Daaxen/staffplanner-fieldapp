@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { variancePct } from '@/lib/timeVariance';
 
 /**
  * Historical job metrics — one immutable snapshot per completed order.
