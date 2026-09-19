@@ -2050,10 +2050,17 @@ export type Database = {
       assigned_clients: {
         Args: never
         Returns: {
-          data: Json
+          contact_email: string
+          contact_name: string
+          contact_phone: string
+          contact_role: string
+          customer_number: string
           id: string
           name: string
+          postal_code: string
           ref: string
+          region: string
+          street: string
         }[]
       }
       current_installer_id: { Args: never; Returns: string }

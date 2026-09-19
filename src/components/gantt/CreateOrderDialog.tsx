@@ -50,27 +50,21 @@ const generateGoodsId = () => `gi-${Math.random().toString(36).slice(2, 8)}`;
 const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDialogProps) => {
   const projectId = useMemo(() => generateProjectId(), [open]);
   const [clientRows] = useClients();
-  const clients = useMemo(() => {
-    const names = new Set<string>();
-    clientRows.forEach((c) => c.name && names.add(c.name));
-    projects.forEach((p) => p.client && names.add(p.client));
-    return Array.from(names).sort((a, b) => a.localeCompare(b));
-  }, [clientRows]);
-  const clientExtra = useMemo(() => {
-    const map = new Map<string, string>();
-    clientRows.forEach((c) => {
-      const label = [c.customerNumber, c.id, c.region].filter(Boolean).join(' · ');
-      if (c.name) map.set(c.name, label);
-    });
-    return map;
-  }, [clientRows]);
+  // Orders are linked to a customer record — only registered customers can be picked.
+  const clients = useMemo(
+    () => [...clientRows].filter((c) => c.name).sort((a, b) => a.name.localeCompare(b.name)),
+    [clientRows],
+  );
+  const clientLabel = (c: (typeof clientRows)[number]) =>
+    [c.customerNumber, c.id, c.region].filter(Boolean).join(' · ');
   const [templateId, setTemplateId] = useState<string>(DEFAULT_TEMPLATE_ID);
   const template = useMemo(() => getTemplate(templateId), [templateId]);
   const [projectType, setProjectType] = useState<ProjectType>('installation');
   const [name, setName] = useState('');
   const [projectNumber, setProjectNumber] = useState('');
   const [client, setClient] = useState('');
-  const [clientSuggestions, setClientSuggestions] = useState<string[]>([]);
+  const [clientRef, setClientRef] = useState('');
+  const [clientSuggestions, setClientSuggestions] = useState<typeof clientRows>([]);
   const [showClientSuggestions, setShowClientSuggestions] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [location, setLocation] = useState('');
@@ -111,6 +105,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
     setName('');
     setProjectNumber('');
     setClient('');
+    setClientRef('');
     setLocation('');
     setDescription('');
     setStartDate(undefined);
@@ -243,19 +238,23 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
 
   const handleClientChange = (value: string) => {
     setClient(value);
+    // typing again clears the link until a customer is picked from the register
+    setClientRef('');
     setHighlightedIndex(-1);
-    const filtered = value.trim()
-      ? clients.filter(c => {
-          const q = value.toLowerCase();
-          return c.toLowerCase().includes(q) || (clientExtra.get(c) ?? '').toLowerCase().includes(q);
-        })
+    const q = value.trim().toLowerCase();
+    const filtered = q
+      ? clients.filter(
+          c =>
+            c.name.toLowerCase().includes(q) || clientLabel(c).toLowerCase().includes(q),
+        )
       : clients;
     setClientSuggestions(filtered);
     setShowClientSuggestions(filtered.length > 0);
   };
 
-  const selectClient = (c: string) => {
-    setClient(c);
+  const selectClient = (c: (typeof clientRows)[number]) => {
+    setClient(c.name);
+    setClientRef(c.id);
     setShowClientSuggestions(false);
     setHighlightedIndex(-1);
   };
@@ -302,7 +301,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
   };
 
   const handleSubmit = () => {
-    if (!name || !client || !startDate || !endDate) return;
+    if (!name || !clientRef || !startDate || !endDate) return;
     if (hasBlocking(conflicts)) {
       toast.error('Scheduling conflict', {
         description: 'Resolve the blocking conflicts before assigning these resources.',
@@ -319,6 +318,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
       projectNumber: projectNumber || undefined,
       projectType,
       templateId,
+      clientId: clientRef,
       client,
       location: projectType === 'transport' ? transportStops[0]?.address || '' : location,
       ...(projectType !== 'transport' && locationCoords
@@ -426,7 +426,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
 
   const fieldValues: Record<TemplateFieldId, boolean> = {
     name: !!name.trim(),
-    client: !!client.trim(),
+    client: !!clientRef,
     projectNumber: !!projectNumber.trim(),
     location: !!(projectType === 'transport' ? transportStops[0]?.address?.trim() : location.trim()),
     startDate: !!startDate,
@@ -443,7 +443,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
   );
 
   const isValid =
-    name.trim() && client.trim() && startDate && endDate && !dateRangeError && missingFields.length === 0;
+    name.trim() && !!clientRef && startDate && endDate && !dateRangeError && missingFields.length === 0;
 
   const typeButtons: { value: ProjectType; icon: string }[] = [
     { value: 'installation', icon: '🔧' },
@@ -542,18 +542,26 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
               <Label htmlFor="order-client">Client *</Label>
               <Input
                 id="order-client"
-                placeholder="Start typing..."
+                placeholder="Search the customer register..."
                 value={client}
                 onChange={(e) => handleClientChange(e.target.value)}
                 onFocus={() => handleClientChange(client)}
                 onKeyDown={handleClientKeyDown}
                 autoComplete="off"
+                aria-invalid={!!client.trim() && !clientRef}
               />
+              {!clientRef && (
+                <p className="text-xs text-muted-foreground">
+                  {client.trim()
+                    ? 'Pick the customer from the register — free text is not linked to a customer.'
+                    : 'Pick a customer from the register.'}
+                </p>
+              )}
               {showClientSuggestions && clientSuggestions.length > 0 && (
                 <div className="absolute top-full left-0 right-0 z-50 mt-1 border border-border rounded-md bg-popover shadow-md max-h-[140px] overflow-y-auto">
                   {clientSuggestions.map((c, idx) => (
                     <button
-                      key={c}
+                      key={c.id}
                       type="button"
                       className={cn(
                         "w-full text-left px-3 py-1.5 text-sm transition-colors",
@@ -562,9 +570,9 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
                       onClick={() => selectClient(c)}
                       onMouseEnter={() => setHighlightedIndex(idx)}
                     >
-                      {c}
-                      {clientExtra.get(c) && (
-                        <span className="block text-xs text-muted-foreground">{clientExtra.get(c)}</span>
+                      {c.name}
+                      {clientLabel(c) && (
+                        <span className="block text-xs text-muted-foreground">{clientLabel(c)}</span>
                       )}
                     </button>
                   ))}

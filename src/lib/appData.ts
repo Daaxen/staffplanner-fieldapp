@@ -40,6 +40,17 @@ function replace<T>(target: T[], next: T[]) {
 /* Loading                                                             */
 /* ------------------------------------------------------------------ */
 
+/**
+ * clients.ref (the app-level customer id) -> clients.id (the database uuid the
+ * order rows, the customer portal and Customer 360 are linked by).
+ */
+const clientRowIdByRef = new Map<string, string>();
+
+/** The database id of a customer, used to link orders to the real record. */
+export function clientRowId(ref?: string | null): string | undefined {
+  return ref ? clientRowIdByRef.get(ref) : undefined;
+}
+
 async function loadClients() {
   // Admins can read the clients table directly. Installers are blocked by RLS
   // and instead get a restricted set (no rates, VAT, invoicing or internal
@@ -50,7 +61,7 @@ async function loadClients() {
   const { data, error } = await supabase
     .from('clients')
     .select(
-      'ref,name,data,customer_number,street,postal_code,region,' +
+      'id,ref,name,data,customer_number,street,postal_code,region,' +
         'contact_name,contact_role,contact_phone,contact_email,' +
         'hourly_rate,overtime_rate,mileage_rate,vat_percent,' +
         'billing_name,billing_street,billing_postal_code,billing_city,billing_country,' +
@@ -63,9 +74,13 @@ async function loadClients() {
     const { data: safe } = await supabase.rpc('assigned_clients');
     rows = (safe ?? []) as Record<string, unknown>[];
   }
+  clientRowIdByRef.clear();
   replace(
     clientRegister,
     rows.map((r) => {
+      if (typeof r.ref === 'string' && typeof r.id === 'string') {
+        clientRowIdByRef.set(r.ref, r.id);
+      }
       const d = parseClientMetadata(r.data) as Partial<Client>;
       const col = <T,>(key: string, fallback: T | undefined): T | undefined =>
         (r[key] ?? undefined) !== undefined ? (r[key] as T) : fallback;
@@ -346,6 +361,8 @@ async function upsertProjectRow(p: Project) {
         project_number: p.projectNumber || null,
         template_id: p.templateId || null,
         client_ref: p.clientId || null,
+        // the real relation; the name below is only a historical snapshot
+        client_id: clientRowIdByRef.get(p.clientId ?? '') ?? null,
         client_name: p.client || null,
         street: p.street || null,
         postal_code: p.postalCode || null,
