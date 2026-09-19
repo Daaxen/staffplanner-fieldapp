@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
+import { useMyInstallerId } from '@/lib/installerIdentity';
 import { computeHours, DEFAULT_MILEAGE_RATE, type TimeEntry, type ExpenseEntry, type ExpenseCategory, type ActiveTimer } from '@/data/logsData';
 import { ratesForClient, type Project } from '@/data/mockData';
 import { ensureProjectRowId, projectRefForRowId } from '@/lib/appData';
@@ -13,8 +13,10 @@ import {
 type Meta = { projectName?: string | null; clientName?: string | null };
 
 export function useInstallerLogs(projects: Project[] = []) {
-  const { user } = useAuth();
-  const installerId = user?.id ?? '';
+  // Operational records key on the installer record (public.installers.id),
+  // never on the auth user id.
+  const { installerId: myInstallerId } = useMyInstallerId();
+  const installerId = myInstallerId ?? '';
 
   const [time, setTime] = useState<TimeEntry[]>([]);
   const [expenses, setExpenses] = useState<ExpenseEntry[]>([]);

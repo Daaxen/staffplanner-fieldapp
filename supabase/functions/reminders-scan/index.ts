@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
     // Pull candidate projects: end_date < today and not completed/cancelled.
     const { data: projects, error: pErr } = await supabase
       .from('projects')
-      .select('id, end_date, status, project_assignees(installers(profile_id))')
+      .select('id, end_date, status, project_assignees(installer_id)')
       .lt('end_date', today)
       .not('status', 'in', '(completed,cancelled)');
 
@@ -68,10 +68,9 @@ Deno.serve(async (req) => {
     const bumped: string[] = [];
 
     for (const p of projects ?? []) {
-      // reminders.installer_id references the user account, so resolve the
-      // assigned installer rows to their linked profile ids.
+      // reminders.installer_id references the installer register directly.
       const assignees: string[] = (p.project_assignees ?? [])
-        .map((a: { installers?: { profile_id: string | null } | null }) => a.installers?.profile_id)
+        .map((a: { installer_id: string | null }) => a.installer_id)
         .filter((id: string | null | undefined): id is string => !!id);
       if (assignees.length === 0) continue;
 

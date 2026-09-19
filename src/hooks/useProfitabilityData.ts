@@ -22,8 +22,9 @@ export function useProfitabilityData() {
       supabase.from('mileage_entries').select('project_id, km, amount, entry_date'),
     ]);
 
-    const isExternal = (profileId: string) =>
-      installers.find(i => i.profileId === profileId)?.type === 'sub-vendor';
+    // installer_id on reporting rows is public.installers.id
+    const isExternal = (installerId: string) =>
+      installers.find(i => i.id === installerId)?.type === 'sub-vendor';
 
     const next: ProfitabilityTotals = {};
     // Reporting rows key on projects.id (uuid); the app keys on the order ref.
