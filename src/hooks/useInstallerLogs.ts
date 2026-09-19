@@ -215,9 +215,15 @@ export function useInstallerLogs(projects: Project[] = []) {
 
   const categories = useMemo(() => ['materials', 'travel', 'parking', 'meal', 'other'] as ExpenseCategory[], []);
 
+  /** Actual time on an order: work hours, travel hours and their total. */
+  const actualFor = useCallback(
+    (projectId?: string) => sumActualTime(time.filter(t => !projectId || t.projectId === projectId)),
+    [time],
+  );
+
   return {
     loading, refresh,
-    timeFor, expensesFor, activeTimer,
+    timeFor, expensesFor, activeTimer, actualFor,
     startTimer, stopTimer, cancelTimer,
     addTime, deleteTime,
     addExpense, addMileage, deleteExpense,
