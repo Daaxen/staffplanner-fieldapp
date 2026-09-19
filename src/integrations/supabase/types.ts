@@ -158,6 +158,9 @@ export type Database = {
         Row: {
           action: string
           actor_id: string | null
+          actor_name: string | null
+          actor_type: string
+          correlation_id: string | null
           created_at: string
           entity_id: string
           entity_label: string | null
@@ -166,10 +169,14 @@ export type Database = {
           new_values: Json | null
           old_values: Json | null
           reason: string | null
+          source: string | null
         }
         Insert: {
           action: string
           actor_id?: string | null
+          actor_name?: string | null
+          actor_type?: string
+          correlation_id?: string | null
           created_at?: string
           entity_id: string
           entity_label?: string | null
@@ -178,10 +185,14 @@ export type Database = {
           new_values?: Json | null
           old_values?: Json | null
           reason?: string | null
+          source?: string | null
         }
         Update: {
           action?: string
           actor_id?: string | null
+          actor_name?: string | null
+          actor_type?: string
+          correlation_id?: string | null
           created_at?: string
           entity_id?: string
           entity_label?: string | null
@@ -190,6 +201,7 @@ export type Database = {
           new_values?: Json | null
           old_values?: Json | null
           reason?: string | null
+          source?: string | null
         }
         Relationships: []
       }

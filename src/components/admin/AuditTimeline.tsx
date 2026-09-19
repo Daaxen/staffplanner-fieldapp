@@ -12,6 +12,10 @@ import { ScrollText, RefreshCw } from 'lucide-react';
 interface AuditRow {
   id: string;
   actor_id: string | null;
+  actor_type: 'user' | 'admin' | 'service' | 'system' | 'cron' | 'migration';
+  actor_name: string | null;
+  source: string | null;
+  correlation_id: string | null;
   entity_type: string;
   entity_id: string;
   entity_label: string | null;
@@ -21,6 +25,15 @@ interface AuditRow {
   reason: string | null;
   created_at: string;
 }
+
+const ACTOR_TYPE_LABELS: Record<string, string> = {
+  user: 'Användare',
+  admin: 'Administratör',
+  service: 'Tjänst',
+  system: 'System',
+  cron: 'Schemalagt jobb',
+  migration: 'Migrering',
+};
 
 /** Svenska etiketter för typ av post. */
 const ENTITY_LABELS: Record<string, string> = {
@@ -117,6 +130,7 @@ export function AuditTimeline() {
   const [loading, setLoading] = useState(true);
   const [entity, setEntity] = useState('all');
   const [action, setAction] = useState('all');
+  const [actorType, setActorType] = useState('all');
   const [search, setSearch] = useState('');
 
   const load = async () => {
@@ -144,18 +158,22 @@ export function AuditTimeline() {
     return rows.filter((r) => {
       if (entity !== 'all' && r.entity_type !== entity) return false;
       if (action !== 'all' && r.action !== action) return false;
+      if (actorType !== 'all' && r.actor_type !== actorType) return false;
       if (!q) return true;
       const hay = [
         r.entity_label ?? '',
         r.entity_id,
         actors[r.actor_id ?? ''] ?? '',
+        r.actor_name ?? '',
+        r.source ?? '',
+        r.correlation_id ?? '',
         r.reason ?? '',
         JSON.stringify(r.new_values ?? {}),
         JSON.stringify(r.old_values ?? {}),
       ].join(' ').toLowerCase();
       return hay.includes(q);
     });
-  }, [rows, entity, action, search, actors]);
+  }, [rows, entity, action, actorType, search, actors]);
 
   const changes = (r: AuditRow) => {
     const keys = new Set([
@@ -206,6 +224,15 @@ export function AuditTimeline() {
             <SelectItem value="delete">Borttagen</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={actorType} onValueChange={setActorType}>
+          <SelectTrigger className="w-48"><SelectValue placeholder="Aktör" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alla aktörer</SelectItem>
+            {Object.entries(ACTOR_TYPE_LABELS).map(([k, v]) => (
+              <SelectItem key={k} value={k}>{v}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {loading ? (
@@ -228,8 +255,21 @@ export function AuditTimeline() {
                 </div>
 
                 <p className="text-xs text-muted-foreground">
-                  Av: {r.actor_id ? (actors[r.actor_id] ?? r.actor_id) : 'Systemet'}
+                  Av:{' '}
+                  {r.actor_id
+                    ? (actors[r.actor_id] ?? r.actor_name ?? r.actor_id)
+                    : (r.actor_name ?? ACTOR_TYPE_LABELS[r.actor_type] ?? 'Systemet')}
+                  {' · '}
+                  {ACTOR_TYPE_LABELS[r.actor_type] ?? r.actor_type}
+                  {r.source ? ` · ${r.source}` : ''}
                 </p>
+
+                {r.correlation_id && (
+                  <p className="text-xs text-muted-foreground">
+                    <span>Kopplings-ID: </span>
+                    <span className="font-mono">{r.correlation_id}</span>
+                  </p>
+                )}
 
                 {r.reason && (
                   <p className="text-sm">
