@@ -47,7 +47,7 @@ const InvoicePrepView = () => {
 
   const [settings, setSettings] = useState<InvoiceSettings>(loadInvoiceSettings);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [filter, setFilter] = useState<'all' | 'ready' | 'blocked'>('all');
+  const [filter, setFilter] = useState<'all' | 'ready' | 'blocked' | 'negative'>('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const update = (patch: Partial<InvoiceSettings>) => {
@@ -76,7 +76,7 @@ const InvoicePrepView = () => {
   );
 
   const shown = suggestions.filter(s =>
-    filter === 'all' ? true : filter === 'ready' ? s.ready : !s.ready,
+    filter === 'all' ? true : filter === 'ready' ? s.ready : filter === 'negative' ? s.margin < 0 : !s.ready,
   );
 
   const totals = useMemo(
@@ -87,10 +87,12 @@ const InvoicePrepView = () => {
           internal: acc.internal + s.internalCost,
           external: acc.external + s.externalCost,
           mileage: acc.mileage + s.mileageCost,
+          material: acc.material + s.materialCost,
+          travel: acc.travel + s.travelCost,
           expenses: acc.expenses + s.expenseCost,
           margin: acc.margin + s.margin,
         }),
-        { revenue: 0, internal: 0, external: 0, mileage: 0, expenses: 0, margin: 0 },
+        { revenue: 0, internal: 0, external: 0, mileage: 0, material: 0, travel: 0, expenses: 0, margin: 0 },
       ),
     [shown],
   );
@@ -119,6 +121,8 @@ const InvoicePrepView = () => {
       'Internal cost': s.internalCost,
       'External cost': s.externalCost,
       Mileage: s.mileageCost,
+      'Material cost': s.materialCost,
+      'Travel cost': s.travelCost,
       Expenses: s.expenseCost,
       Margin: s.margin,
       'Margin %': s.marginPct,
@@ -150,6 +154,7 @@ const InvoicePrepView = () => {
               <SelectItem value="all">All orders</SelectItem>
               <SelectItem value="ready">Ready to invoice</SelectItem>
               <SelectItem value="blocked">Needs attention</SelectItem>
+              <SelectItem value="negative">Negative margin</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" size="sm" onClick={refresh}><RefreshCw className="w-4 h-4 mr-1" />Refresh</Button>
@@ -159,14 +164,19 @@ const InvoicePrepView = () => {
       </div>
 
       <div className="p-6 space-y-6">
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {[
             { label: 'Revenue', value: sek(totals.revenue) },
             { label: 'Internal cost', value: sek(totals.internal) },
             { label: 'External cost', value: sek(totals.external) },
-            { label: 'Mileage', value: sek(totals.mileage) },
-            { label: 'Expenses', value: sek(totals.expenses) },
-            { label: 'Margin', value: sek(totals.margin) },
+            { label: 'Material cost', value: sek(totals.material) },
+            { label: 'Travel cost', value: sek(totals.travel) },
+            { label: 'Other expenses', value: sek(totals.expenses - totals.material) },
+            { label: 'Gross margin', value: sek(totals.margin) },
+            {
+              label: 'Margin %',
+              value: totals.revenue > 0 ? `${((totals.margin / totals.revenue) * 100).toFixed(1)} %` : '—',
+            },
           ].map(c => (
             <div key={c.label} className="rounded-xl border border-border bg-card p-4">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{c.label}</p>
@@ -197,7 +207,7 @@ const InvoicePrepView = () => {
                 <tr
                   key={s.project.id}
                   onClick={() => setSelectedId(s.project.id)}
-                  className="border-t border-border hover:bg-muted/30 cursor-pointer"
+                  className={`border-t border-border hover:bg-muted/30 cursor-pointer ${s.margin < 0 ? 'bg-destructive/5' : ''}`}
                 >
                   <td className="px-3 py-2">
                     <div className="font-medium text-foreground">{s.project.name}</div>
@@ -270,6 +280,8 @@ const InvoicePrepView = () => {
                   ['Internal cost', sek(selected.internalCost)],
                   ['External cost', sek(selected.externalCost)],
                   ['Mileage', sek(selected.mileageCost)],
+                  ['Material cost', sek(selected.materialCost)],
+                  ['Travel cost', sek(selected.travelCost)],
                   ['Expenses', sek(selected.expenseCost)],
                   ['Margin', `${sek(selected.margin)} (${selected.marginPct.toFixed(1)} %)`],
                 ].map(([k, v]) => (
@@ -353,6 +365,7 @@ const InvoicePrepView = () => {
                 {numberField('Open deviation', settings.penaltyOpenDeviation, v => update({ penaltyOpenDeviation: v }))}
                 {numberField('No hours reported', settings.penaltyNoHours, v => update({ penaltyNoHours: v }))}
                 {numberField('Margin below target', settings.penaltyLowMargin, v => update({ penaltyLowMargin: v }))}
+                {numberField('Negative margin', settings.penaltyNegativeMargin, v => update({ penaltyNegativeMargin: v }))}
               </div>
             </div>
           </div>
