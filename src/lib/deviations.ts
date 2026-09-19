@@ -177,7 +177,11 @@ export async function fetchDeviations(opts: { projectRef?: string } = {}): Promi
     .from('deviations')
     .select('*')
     .order('occurred_at', { ascending: false });
-  if (opts.projectRef) q = q.eq('project_ref', opts.projectRef);
+  if (opts.projectRef) {
+    const projectId = await ensureProjectRowId(opts.projectRef);
+    if (!projectId) return [];
+    q = q.eq('project_id', projectId);
+  }
   const { data, error } = await q;
   if (error) throw error;
   return (data ?? []).map(d => ({

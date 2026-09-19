@@ -166,8 +166,11 @@ export async function syncFieldWork(): Promise<SyncResult> {
     for (const work of await pendingWork()) {
       try {
         const photos = await uploadPhotos(userId, work);
+        const projectId = await ensureProjectRowId(work.projectRef);
+        if (!projectId) throw new Error(`Unknown project ${work.projectRef}`);
         const { error } = await supabase.from('field_reports').upsert(
           {
+            project_id: projectId,
             project_ref: work.projectRef,
             installer_id: installerId,
             checked_items: work.checkedItems,
