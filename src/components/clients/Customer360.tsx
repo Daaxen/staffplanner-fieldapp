@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  AlertTriangle,
   Building2,
   ClipboardList,
   FileSignature,
   FileText,
+  HardHat,
   History,
   Mail,
   Phone,
@@ -13,7 +15,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { useClients, useProjects, projectRefForRowId } from '@/lib/appData';
+import { useClients, useProjects, useInstallersList, projectRefForRowId, projectRowId } from '@/lib/appData';
 import { useProfitabilityData } from '@/hooks/useProfitabilityData';
 import { useFieldReportStates } from '@/hooks/useFieldReportStates';
 import {
@@ -25,6 +27,7 @@ import {
   sek,
   type Profitability,
 } from '@/lib/profitability';
+import { commercialLabels, commercialStatusOf } from '@/lib/commercial';
 import { statusLabels, type Client, type Project } from '@/data/mockData';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -40,6 +43,17 @@ type DeviationRow = {
   status: string;
 };
 
+type DocRow = {
+  id: string;
+  title: string;
+  category: string;
+  scope: string;
+  project_id: string | null;
+  client_id: string | null;
+  updated_at: string;
+};
+
+const OPEN_STATUSES = ['open', 'scheduled', 'in-progress', 'on-hold'];
 const QUOTE_STATUSES = ['open', 'scheduled'];
 
 const belongsToClient = (p: Project, c: Client) =>
@@ -98,10 +112,13 @@ const Panel = ({
 const Customer360 = () => {
   const [clients] = useClients();
   const [projects] = useProjects();
+  const installers = useInstallersList();
   const { inputs } = useProfitabilityData();
   const { reports } = useFieldReportStates();
   const [selectedId, setSelectedId] = useState<string>('');
   const [deviations, setDeviations] = useState<DeviationRow[]>([]);
+  const [docs, setDocs] = useState<DocRow[]>([]);
+  const [clientRowIds, setClientRowIds] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!selectedId && clients.length > 0) setSelectedId(clients[0].id);
@@ -109,11 +126,24 @@ const Customer360 = () => {
 
   useEffect(() => {
     void (async () => {
-      const { data } = await supabase
-        .from('deviations')
-        .select('id,project_id,project_ref,project_name,category,severity,description,occurred_at,status')
-        .order('occurred_at', { ascending: false });
-      setDeviations((data ?? []) as DeviationRow[]);
+      const [dev, doc, cl] = await Promise.all([
+        supabase
+          .from('deviations')
+          .select('id,project_id,project_ref,project_name,category,severity,description,occurred_at,status')
+          .order('occurred_at', { ascending: false }),
+        supabase
+          .from('documents')
+          .select('id,title,category,scope,project_id,client_id,updated_at')
+          .order('updated_at', { ascending: false }),
+        supabase.from('clients').select('id,ref'),
+      ]);
+      setDeviations((dev.data ?? []) as DeviationRow[]);
+      setDocs((doc.data ?? []) as DocRow[]);
+      const map: Record<string, string> = {};
+      for (const row of cl.data ?? []) {
+        if (row.ref) map[row.ref as string] = row.id as string;
+      }
+      setClientRowIds(map);
     })();
   }, []);
 
@@ -161,13 +191,55 @@ const Customer360 = () => {
     };
   }, [results]);
 
+  const openOrders = results.filter(r => OPEN_STATUSES.includes(r.project.status));
+  const historical = results.filter(r => ['completed', 'cancelled'].includes(r.project.status));
   const quotes = results.filter(r => QUOTE_STATUSES.includes(r.project.status));
-  const invoices = results.filter(r => r.project.status === 'completed');
+
+  // Invoices follow the commercial track: everything from Ready For Invoice onwards.
+  const invoiceRows = results.filter(r =>
+    ['ready_for_invoice', 'invoiced', 'paid', 'closed'].includes(commercialStatusOf(r.project)),
+  );
+  const invoicedValue = invoiceRows
+    .filter(r => ['invoiced'].includes(commercialStatusOf(r.project)))
+    .reduce((s, r) => s + r.result.revenue, 0);
+  const paidValue = invoiceRows
+    .filter(r => ['paid', 'closed'].includes(commercialStatusOf(r.project)))
+    .reduce((s, r) => s + r.result.revenue, 0);
+
   const clientRefs = new Set(clientProjects.map(p => p.id));
   const clientDeviations = deviations.filter(d =>
     clientRefs.has(projectRefForRowId(d.project_id) ?? d.project_ref),
   );
+  const openDeviations = clientDeviations.filter(d => d.status !== 'resolved');
 
+  const fieldReports = clientProjects
+    .map(p => ({ project: p, report: reports[p.id] }))
+    .filter(r => !!r.report);
+
+  const assignedInstallers = useMemo(() => {
+    const map = new Map<string, { name: string; orders: number; lastDate: string }>();
+    for (const p of clientProjects) {
+      for (const id of p.assigneeIds ?? []) {
+        const name = installers.find(i => i.id === id)?.name ?? id;
+        const prev = map.get(id);
+        const date = p.endDate || p.startDate || '';
+        map.set(id, {
+          name,
+          orders: (prev?.orders ?? 0) + 1,
+          lastDate: prev && prev.lastDate > date ? prev.lastDate : date,
+        });
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => b.orders - a.orders);
+  }, [clientProjects, installers]);
+
+  const clientRowId = client ? clientRowIds[client.id] : undefined;
+  const projectRowIds = new Set(
+    clientProjects.map(p => projectRowId(p.id)).filter(Boolean) as string[],
+  );
+  const clientDocs = docs.filter(
+    d => (d.client_id && d.client_id === clientRowId) || (d.project_id && projectRowIds.has(d.project_id)),
+  );
   const attachments = clientProjects.flatMap(p =>
     (p.attachments ?? []).map(a => ({ ...a, projectName: p.name })),
   );
@@ -197,22 +269,59 @@ const Customer360 = () => {
       })),
   ];
 
-  const serviceHistory = [
-    ...clientProjects
-      .filter(p => p.status === 'completed')
-      .map(p => ({
-        key: `p-${p.id}`,
-        date: p.endDate || p.startDate || '',
-        title: p.name,
-        detail: `Completed · ${p.location || '—'}${reports[p.id]?.hasSignature ? ' · signed off' : ''}`,
-      })),
-    ...clientDeviations.map(d => ({
-      key: `d-${d.id}`,
-      date: d.occurred_at?.slice(0, 10) ?? '',
-      title: `Deviation: ${d.category}`,
-      detail: `${d.severity} · ${d.project_name ?? d.project_ref} · ${d.status}`,
-    })),
-  ].sort((a, b) => b.date.localeCompare(a.date));
+  // One merged activity feed across orders, reports, deviations and documents.
+  const timeline = useMemo(() => {
+    const items: { key: string; date: string; kind: string; title: string; detail: string }[] = [];
+    for (const p of clientProjects) {
+      if (p.startDate) {
+        items.push({
+          key: `s-${p.id}`,
+          date: p.startDate.slice(0, 10),
+          kind: 'Order',
+          title: p.name,
+          detail: `Planned start · ${statusLabels[p.status]} · ${commercialLabels[commercialStatusOf(p)]}`,
+        });
+      }
+      if (p.status === 'completed' && p.endDate) {
+        items.push({
+          key: `c-${p.id}`,
+          date: p.endDate.slice(0, 10),
+          kind: 'Completed',
+          title: p.name,
+          detail: `Finished on site${reports[p.id]?.hasSignature ? ' · signed off' : ''}`,
+        });
+      }
+      const rep = reports[p.id];
+      if (rep?.submittedAt) {
+        items.push({
+          key: `r-${p.id}`,
+          date: rep.submittedAt.slice(0, 10),
+          kind: 'Field report',
+          title: p.name,
+          detail: `${rep.photoCount} photo(s)${rep.hasSignature ? ' · customer signature' : ''}`,
+        });
+      }
+    }
+    for (const d of clientDeviations) {
+      items.push({
+        key: `d-${d.id}`,
+        date: (d.occurred_at ?? '').slice(0, 10),
+        kind: 'Deviation',
+        title: `${d.category} (${d.severity})`,
+        detail: `${d.project_name ?? d.project_ref} · ${d.status}`,
+      });
+    }
+    for (const doc of clientDocs) {
+      items.push({
+        key: `doc-${doc.id}`,
+        date: (doc.updated_at ?? '').slice(0, 10),
+        kind: 'Document',
+        title: doc.title,
+        detail: doc.scope.replace(/_/g, ' '),
+      });
+    }
+    return items.sort((a, b) => b.date.localeCompare(a.date));
+  }, [clientProjects, clientDeviations, clientDocs, reports]);
 
   if (clients.length === 0) {
     return (
@@ -256,37 +365,109 @@ const Customer360 = () => {
       <div className="p-6 space-y-6">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <Stat label="Projects" value={`${clientProjects.length}`} />
+          <Stat label="Open orders" value={`${openOrders.length}`} />
           <Stat label="Revenue" value={totals ? sek(totals.revenue) : '—'} />
           <Stat
             label="Gross margin"
-            value={totals ? pctLabel(totals.grossMarginPct) : '—'}
+            value={totals ? `${sek(totals.grossMargin)} (${pctLabel(totals.grossMarginPct)})` : '—'}
             tone={totals ? marginColor(marginLevel(totals.grossMarginPct)) : undefined}
+          />
+          <Stat label="Outstanding invoices" value={sek(invoicedValue)} />
+          <Stat label="Paid" value={sek(paidValue)} />
+          <Stat
+            label="Open deviations"
+            value={`${openDeviations.length}`}
+            tone={openDeviations.length > 0 ? 'text-destructive' : undefined}
           />
           <Stat label="Logged hours" value={totals ? `${Math.round(totals.actualHours)} h` : '—'} />
         </div>
 
-        <Tabs defaultValue="projects">
+        <Tabs defaultValue="timeline">
           <TabsList className="flex-wrap h-auto">
+            <TabsTrigger value="timeline">Timeline</TabsTrigger>
             <TabsTrigger value="projects">Projects</TabsTrigger>
+            <TabsTrigger value="open">Open orders</TabsTrigger>
+            <TabsTrigger value="historical">Historical</TabsTrigger>
             <TabsTrigger value="quotes">Quotes</TabsTrigger>
             <TabsTrigger value="invoices">Invoices</TabsTrigger>
+            <TabsTrigger value="installers">Installers</TabsTrigger>
+            <TabsTrigger value="deviations">Deviations</TabsTrigger>
+            <TabsTrigger value="reports">Field reports</TabsTrigger>
             <TabsTrigger value="contacts">Contacts</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
-            <TabsTrigger value="history">Service history</TabsTrigger>
             <TabsTrigger value="profitability">Profitability</TabsTrigger>
           </TabsList>
 
+          <TabsContent value="timeline" className="mt-4">
+            <Panel title="Activity timeline" icon={History} empty="Nothing has happened for this customer yet.">
+              {timeline.length > 0 ? (
+                <div className="p-4">
+                  <ol className="relative border-l border-border pl-5 space-y-4">
+                    {timeline.map(item => (
+                      <li key={item.key} className="relative">
+                        <span className="absolute -left-[26px] top-1.5 w-2.5 h-2.5 rounded-full bg-primary" />
+                        <div className="flex items-baseline justify-between gap-3">
+                          <p className="font-medium text-foreground">{item.title}</p>
+                          <span className="text-xs text-muted-foreground shrink-0">{item.date}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          <span className="uppercase tracking-wide">{item.kind}</span> · {item.detail}
+                        </p>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              ) : undefined}
+            </Panel>
+          </TabsContent>
+
           <TabsContent value="projects" className="mt-4">
-            <Panel title="Projects" icon={ClipboardList} empty="No orders for this customer yet.">
+            <Panel title="All projects" icon={ClipboardList} empty="No orders for this customer yet.">
               {clientProjects.length > 0 ? (
                 <div className="divide-y divide-border">
                   {clientProjects.map(p => (
                     <Row
                       key={p.id}
                       title={p.name}
-                      subtitle={`${statusLabels[p.status]} · ${p.location || '—'}`}
+                      subtitle={`${statusLabels[p.status]} · ${commercialLabels[commercialStatusOf(p)]} · ${p.location || '—'}`}
                       right={`${p.startDate?.slice(0, 10) ?? ''} → ${p.endDate?.slice(0, 10) ?? ''}`}
                       rightSub={p.estimatedHours ? `${p.estimatedHours} h planned` : undefined}
+                    />
+                  ))}
+                </div>
+              ) : undefined}
+            </Panel>
+          </TabsContent>
+
+          <TabsContent value="open" className="mt-4">
+            <Panel title="Open orders" icon={ClipboardList} empty="Nothing open right now.">
+              {openOrders.length > 0 ? (
+                <div className="divide-y divide-border">
+                  {openOrders.map(({ project, result }) => (
+                    <Row
+                      key={project.id}
+                      title={project.name}
+                      subtitle={`${statusLabels[project.status]} · ${commercialLabels[commercialStatusOf(project)]}`}
+                      right={sek(result.revenue)}
+                      rightSub={`${Math.round(result.actualHours)} h logged`}
+                    />
+                  ))}
+                </div>
+              ) : undefined}
+            </Panel>
+          </TabsContent>
+
+          <TabsContent value="historical" className="mt-4">
+            <Panel title="Historical orders" icon={History} empty="No finished or cancelled orders yet.">
+              {historical.length > 0 ? (
+                <div className="divide-y divide-border">
+                  {historical.map(({ project, result }) => (
+                    <Row
+                      key={project.id}
+                      title={project.name}
+                      subtitle={`${statusLabels[project.status]} · ${project.endDate?.slice(0, 10) ?? ''}`}
+                      right={sek(result.revenue)}
+                      rightSub={`${pctLabel(result.grossMarginPct)} margin`}
                     />
                   ))}
                 </div>
@@ -317,18 +498,70 @@ const Customer360 = () => {
           </TabsContent>
 
           <TabsContent value="invoices" className="mt-4">
-            <Panel title="Ready to invoice" icon={Receipt} empty="No completed work to invoice.">
-              {invoices.length > 0 ? (
+            <Panel title="Invoices" icon={Receipt} empty="Nothing ready to invoice yet.">
+              {invoiceRows.length > 0 ? (
                 <div className="divide-y divide-border">
-                  {invoices.map(({ project, result }) => (
+                  {invoiceRows.map(({ project, result }) => (
                     <Row
                       key={project.id}
                       title={project.name}
-                      subtitle={`Completed ${project.endDate?.slice(0, 10) ?? ''} · ${Math.round(result.actualHours)} h logged`}
+                      subtitle={`${commercialLabels[commercialStatusOf(project)]} · ${Math.round(result.actualHours)} h logged`}
                       right={sek(result.revenue)}
-                      rightSub={
-                        reports[project.id]?.hasSignature ? 'signed off' : 'awaiting sign-off'
-                      }
+                      rightSub={reports[project.id]?.hasSignature ? 'signed off' : 'awaiting sign-off'}
+                    />
+                  ))}
+                </div>
+              ) : undefined}
+            </Panel>
+          </TabsContent>
+
+          <TabsContent value="installers" className="mt-4">
+            <Panel title="Assigned installers" icon={HardHat} empty="Nobody has been assigned to this customer yet.">
+              {assignedInstallers.length > 0 ? (
+                <div className="divide-y divide-border">
+                  {assignedInstallers.map(i => (
+                    <Row
+                      key={i.name}
+                      title={i.name}
+                      subtitle={`${i.orders} order${i.orders === 1 ? '' : 's'} for this customer`}
+                      right={i.lastDate}
+                      rightSub="latest order"
+                    />
+                  ))}
+                </div>
+              ) : undefined}
+            </Panel>
+          </TabsContent>
+
+          <TabsContent value="deviations" className="mt-4">
+            <Panel title="Deviations" icon={AlertTriangle} empty="No deviations reported for this customer.">
+              {clientDeviations.length > 0 ? (
+                <div className="divide-y divide-border">
+                  {clientDeviations.map(d => (
+                    <Row
+                      key={d.id}
+                      title={`${d.category} · ${d.severity}`}
+                      subtitle={`${d.project_name ?? d.project_ref} — ${d.description}`}
+                      right={(d.occurred_at ?? '').slice(0, 10)}
+                      rightSub={d.status}
+                    />
+                  ))}
+                </div>
+              ) : undefined}
+            </Panel>
+          </TabsContent>
+
+          <TabsContent value="reports" className="mt-4">
+            <Panel title="Field reports" icon={FileSignature} empty="No field reports for this customer yet.">
+              {fieldReports.length > 0 ? (
+                <div className="divide-y divide-border">
+                  {fieldReports.map(({ project, report }) => (
+                    <Row
+                      key={project.id}
+                      title={project.name}
+                      subtitle={`${report?.photoCount ?? 0} photo(s)${report?.hasSignature ? ' · customer signature' : ' · no signature'}`}
+                      right={report?.submittedAt ? report.submittedAt.slice(0, 10) : 'Draft'}
+                      rightSub={report?.submittedAt ? 'submitted' : 'not submitted'}
                     />
                   ))}
                 </div>
@@ -368,9 +601,18 @@ const Customer360 = () => {
           </TabsContent>
 
           <TabsContent value="documents" className="mt-4">
-            <Panel title="Documents & files" icon={FileText} empty="No files attached to this customer's orders.">
-              {attachments.length > 0 ? (
+            <Panel title="Documents & files" icon={FileText} empty="No documents or files for this customer.">
+              {clientDocs.length + attachments.length > 0 ? (
                 <div className="divide-y divide-border">
+                  {clientDocs.map(d => (
+                    <Row
+                      key={d.id}
+                      title={d.title}
+                      subtitle={d.scope.replace(/_/g, ' ')}
+                      right={(d.updated_at ?? '').slice(0, 10)}
+                      rightSub={d.category}
+                    />
+                  ))}
                   {attachments.map(a => (
                     <Row
                       key={a.id}
@@ -379,18 +621,6 @@ const Customer360 = () => {
                       right={`${Math.round((a.size ?? 0) / 1024)} kB`}
                       rightSub={a.type}
                     />
-                  ))}
-                </div>
-              ) : undefined}
-            </Panel>
-          </TabsContent>
-
-          <TabsContent value="history" className="mt-4">
-            <Panel title="Service history" icon={History} empty="No completed work or reported issues yet.">
-              {serviceHistory.length > 0 ? (
-                <div className="divide-y divide-border">
-                  {serviceHistory.map(h => (
-                    <Row key={h.key} title={h.title} subtitle={h.detail} right={h.date} />
                   ))}
                 </div>
               ) : undefined}
