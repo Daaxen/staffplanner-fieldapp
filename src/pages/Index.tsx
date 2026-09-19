@@ -17,6 +17,8 @@ import ExecutiveDashboard from '@/components/dashboard/ExecutiveDashboard';
 import InvoicingView from '@/components/admin/InvoicingView';
 import DeviationsView from '@/components/admin/DeviationsView';
 import ProfitabilityView from '@/components/admin/ProfitabilityView';
+import AuditTimeline from '@/components/admin/AuditTimeline';
+
 import { useProjects } from '@/lib/appData';
 import {
   AlertDialog,
