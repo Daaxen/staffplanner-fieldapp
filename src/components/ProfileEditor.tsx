@@ -112,7 +112,7 @@ const ProfileEditor = () => {
         <div className="space-y-2"><Label>Email</Label><Input value={profile.email ?? ''} disabled /></div>
         <div className="space-y-2"><Label>Full name</Label><Input value={profile.full_name ?? ''} onChange={e => set('full_name', e.target.value)} /></div>
         <div className="space-y-2"><Label>Phone</Label><Input value={profile.phone ?? ''} onChange={e => set('phone', e.target.value)} /></div>
-        <div className="space-y-2"><Label>Date of birth</Label><Input type="date" value={profile.date_of_birth ?? ''} onChange={e => set('date_of_birth', e.target.value)} /></div>
+        <div className="space-y-2"><Label>Date of birth</Label><Input type="date" value={priv.date_of_birth ?? ''} onChange={e => setPrivate('date_of_birth', e.target.value)} /></div>
       </Section>
 
       <Section title="Home address">
@@ -123,12 +123,15 @@ const ProfileEditor = () => {
       </Section>
 
       <Section title="Emergency contact">
-        <div className="space-y-2"><Label>Name</Label><Input value={profile.emergency_contact_name ?? ''} onChange={e => set('emergency_contact_name', e.target.value)} /></div>
-        <div className="space-y-2"><Label>Phone</Label><Input value={profile.emergency_contact_phone ?? ''} onChange={e => set('emergency_contact_phone', e.target.value)} /></div>
-        <div className="space-y-2"><Label>Relation</Label><Input placeholder="Spouse, parent…" value={profile.emergency_contact_relation ?? ''} onChange={e => set('emergency_contact_relation', e.target.value)} /></div>
-        <div className="space-y-2"><Label>Medical notes / allergies</Label><Input value={profile.medical_notes ?? ''} onChange={e => set('medical_notes', e.target.value)} /></div>
-        <div className="space-y-2"><Label>Second contact name</Label><Input value={profile.emergency_contact2_name ?? ''} onChange={e => set('emergency_contact2_name', e.target.value)} /></div>
-        <div className="space-y-2"><Label>Second contact phone</Label><Input value={profile.emergency_contact2_phone ?? ''} onChange={e => set('emergency_contact2_phone', e.target.value)} /></div>
+        <p className="md:col-span-2 text-xs text-muted-foreground">
+          Confidential. Only you and HR can see this information.
+        </p>
+        <div className="space-y-2"><Label>Name</Label><Input value={priv.emergency_contact_name ?? ''} onChange={e => setPrivate('emergency_contact_name', e.target.value)} /></div>
+        <div className="space-y-2"><Label>Phone</Label><Input value={priv.emergency_contact_phone ?? ''} onChange={e => setPrivate('emergency_contact_phone', e.target.value)} /></div>
+        <div className="space-y-2"><Label>Relation</Label><Input placeholder="Spouse, parent…" value={priv.emergency_contact_relation ?? ''} onChange={e => setPrivate('emergency_contact_relation', e.target.value)} /></div>
+        <div className="space-y-2"><Label>Medical notes / allergies</Label><Input value={priv.medical_notes ?? ''} onChange={e => setPrivate('medical_notes', e.target.value)} /></div>
+        <div className="space-y-2"><Label>Second contact name</Label><Input value={priv.emergency_contact2_name ?? ''} onChange={e => setPrivate('emergency_contact2_name', e.target.value)} /></div>
+        <div className="space-y-2"><Label>Second contact phone</Label><Input value={priv.emergency_contact2_phone ?? ''} onChange={e => setPrivate('emergency_contact2_phone', e.target.value)} /></div>
       </Section>
 
       <Section title="Work">
@@ -145,10 +148,11 @@ const ProfileEditor = () => {
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-2"><Label>Employment start date</Label><Input type="date" value={profile.employment_start_date ?? ''} onChange={e => set('employment_start_date', e.target.value)} /></div>
-        <div className="space-y-2"><Label>Driver's licence</Label><Input placeholder="B, C1E…" value={profile.drivers_license ?? ''} onChange={e => set('drivers_license', e.target.value)} /></div>
-        <div className="space-y-2"><Label>Clothing size</Label><Input value={profile.clothing_size ?? ''} onChange={e => set('clothing_size', e.target.value)} /></div>
-        <div className="space-y-2"><Label>Shoe size</Label><Input value={profile.shoe_size ?? ''} onChange={e => set('shoe_size', e.target.value)} /></div>
+        <div className="space-y-2"><Label>Employment start date</Label><Input type="date" value={priv.employment_start_date ?? ''} disabled /></div>
+        <div className="space-y-2"><Label>Driver's licence</Label><Input placeholder="B, C1E…" value={priv.drivers_license ?? ''} onChange={e => setPrivate('drivers_license', e.target.value)} /></div>
+        <div className="space-y-2"><Label>Clothing size</Label><Input value={priv.clothing_size ?? ''} onChange={e => setPrivate('clothing_size', e.target.value)} /></div>
+        <div className="space-y-2"><Label>Shoe size</Label><Input value={priv.shoe_size ?? ''} onChange={e => setPrivate('shoe_size', e.target.value)} /></div>
+
         <div className="space-y-2 md:col-span-2">
           <Label>Linked installer</Label>
           <Select value={profile.installer_id ?? 'none'} onValueChange={v => set('installer_id', v === 'none' ? null : v)}>
