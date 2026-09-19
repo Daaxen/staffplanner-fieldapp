@@ -20,34 +20,21 @@ export interface Profile {
   postal_code: string | null;
   city: string | null;
   country: string | null;
-  date_of_birth: string | null;
-  emergency_contact_name: string | null;
-  emergency_contact_phone: string | null;
-  emergency_contact_relation: string | null;
-  emergency_contact2_name: string | null;
-  emergency_contact2_phone: string | null;
   job_title: string | null;
   employment_type: string | null;
-  employment_start_date: string | null;
-  drivers_license: string | null;
-  medical_notes: string | null;
-  clothing_size: string | null;
-  shoe_size: string | null;
   avatar_url: string | null;
   installer_id: string | null;
 }
 
 export const PROFILE_EDITABLE_FIELDS = [
-  'full_name', 'phone', 'address', 'postal_code', 'city', 'country', 'date_of_birth',
-  'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relation',
-  'emergency_contact2_name', 'emergency_contact2_phone',
-  'job_title', 'employment_type', 'employment_start_date', 'drivers_license',
-  'medical_notes', 'clothing_size', 'shoe_size', 'installer_id',
+  'full_name', 'phone', 'address', 'postal_code', 'city', 'country',
+  'job_title', 'employment_type', 'installer_id',
 ] as const;
 
 const ProfileEditor = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [priv, setPriv] = useState<EmployeePrivate>(emptyEmployeePrivate());
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -56,9 +43,13 @@ const ProfileEditor = () => {
     supabase.from('profiles').select('*').eq('id', user.id).maybeSingle().then(({ data }) => {
       setProfile(data as unknown as Profile);
     });
+    loadEmployeePrivate(user.id, 'Own profile page').then(({ data }) => {
+      if (data) setPriv(data);
+    });
   }, [user]);
 
   const set = (k: keyof Profile, v: string | null) => profile && setProfile({ ...profile, [k]: v });
+  const setPrivate = (k: keyof EmployeePrivate, v: string | null) => setPriv(prev => ({ ...prev, [k]: v }));
 
   const save = async () => {
     if (!profile || !user) return;
@@ -69,8 +60,10 @@ const ProfileEditor = () => {
       payload[f] = v === '' ? null : v;
     });
     const { error } = await supabase.from('profiles').update(payload).eq('id', user.id);
+    if (error) { setBusy(false); return toast.error(error.message); }
+    const { error: privError } = await saveEmployeePrivate(user.id, priv, 'Own profile page');
     setBusy(false);
-    if (error) toast.error(error.message); else toast.success('Profile saved');
+    if (privError) toast.error(privError); else toast.success('Profile saved');
   };
 
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
