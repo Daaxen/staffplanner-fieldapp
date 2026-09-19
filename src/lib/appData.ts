@@ -326,6 +326,7 @@ async function deleteClientRow(ref: string) {
 }
 
 async function upsertProjectRow(p: Project) {
+  const time = (v?: string) => (v && /^\d{2}:\d{2}/.test(v) ? v : null);
   const { data, error } = await supabase
     .from('projects')
     .upsert(
@@ -340,6 +341,24 @@ async function upsertProjectRow(p: Project) {
         contact_name: p.contactName || null,
         contact_phone: p.contactPhone || null,
         contact_email: p.contactEmail || null,
+        project_number: p.projectNumber || null,
+        template_id: p.templateId || null,
+        client_ref: p.clientId || null,
+        client_name: p.client || null,
+        street: p.street || null,
+        postal_code: p.postalCode || null,
+        region: p.region || null,
+        location_lat: p.locationLat ?? null,
+        location_lng: p.locationLng ?? null,
+        start_time: time(p.startTime),
+        end_time: time(p.endTime),
+        estimated_hours: p.estimatedHours ?? null,
+        is_flex_order: p.isFlexOrder ?? false,
+        description: p.description || null,
+        hourly_rate: p.hourlyRate ?? null,
+        mileage_rate: p.mileageRate ?? null,
+        vehicle_type: p.vehicleType || null,
+        // full snapshot kept for compatibility — no key is ever removed
         data: p as unknown as Record<string, unknown>,
       } as never,
       { onConflict: 'ref' },
@@ -350,6 +369,27 @@ async function upsertProjectRow(p: Project) {
 
   const rowId = (data as { id: string } | null)?.id;
   if (!rowId) return;
+
+  // economy figures live in their own typed table (profitability + alerts)
+  const e = p.economy;
+  if (e && Object.values(e).some((v) => v != null)) {
+    await supabase.from('project_economy').upsert(
+      {
+        project_id: rowId,
+        fixed_price: e.fixedPrice ?? null,
+        additional_revenue: e.additionalRevenue ?? null,
+        budget_hours: e.budgetHours ?? null,
+        internal_hourly_cost: e.internalHourlyCost ?? null,
+        external_hourly_cost: e.externalHourlyCost ?? null,
+        external_cost_extra: e.externalCostExtra ?? null,
+        material_cost_extra: e.materialCostExtra ?? null,
+        travel_cost_extra: e.travelCostExtra ?? null,
+        external_budget: e.externalBudget ?? null,
+        target_margin_pct: e.targetMarginPct ?? null,
+      } as never,
+      { onConflict: 'project_id' },
+    );
+  }
 
   // keep assignment rows in sync so installers can see their own projects
   await supabase.from('project_assignees').delete().eq('project_id', rowId);
@@ -362,6 +402,7 @@ async function upsertProjectRow(p: Project) {
       .insert(valid.map((installer_id) => ({ project_id: rowId, installer_id })));
   }
 }
+
 
 async function deleteProjectRow(ref: string) {
   const { error } = await supabase.from('projects').delete().eq('ref' as never, ref as never);
