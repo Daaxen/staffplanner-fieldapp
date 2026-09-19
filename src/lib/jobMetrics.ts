@@ -25,8 +25,12 @@ export interface JobMetric {
   installerIds: string[];
   plannedHours: number | null;
   actualHours: number;
-  /** Reserved for future travel-time measurement — currently 0. */
+  /** Travel time reported on the order, summed from the time entries. */
   travelHours: number;
+  /** Work time + travel time. */
+  totalHours: number;
+  /** Deviation between planned and total actual time, in percent. */
+  variancePct: number | null;
   plannedInstallers: number;
   actualInstallers: number;
   plannedDate: string | null;
