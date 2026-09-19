@@ -118,6 +118,40 @@ interface BookableProject {
   assigneeIds: string[];
 }
 
+export interface BookingRow {
+  project_id: string;
+  installer_id: string;
+  planned_start_at: string;
+  planned_end_at: string;
+  assignment_status: BookingStatus;
+  override_reason: string | null;
+}
+
+/** The exact booking rows an order should have — one per installer, no duplicates. */
+export function bookingRowsFor(
+  project: BookableProject,
+  rowId: string,
+  overrideReason?: string,
+): BookingRow[] {
+  if (project.status === 'cancelled') return [];
+  const installerIds = Array.from(new Set(project.assigneeIds ?? [])).filter(Boolean);
+  if (!installerIds.length) return [];
+  const { start, end } = bookingWindow(
+    project.startDate,
+    project.endDate,
+    project.startTime,
+    project.endTime,
+  );
+  return installerIds.map(installerId => ({
+    project_id: rowId,
+    installer_id: installerId,
+    planned_start_at: start,
+    planned_end_at: end,
+    assignment_status: bookingStatusForProject(project.status),
+    override_reason: overrideReason?.trim() || null,
+  }));
+}
+
 /**
  * The one write path for bookings. Creating an order, moving it in the plan,
  * changing dates or times, swapping, adding or removing an installer and bulk
@@ -130,8 +164,8 @@ export async function syncProjectBookings(
   const rowId = opts.rowId ?? (await ensureProjectRowId(project.id));
   if (!rowId) return { ok: false, conflict: false, error: 'Order not found in the database' };
 
-  const cancelled = project.status === 'cancelled';
-  const installerIds = cancelled ? [] : Array.from(new Set(project.assigneeIds ?? [])).filter(Boolean);
+  const rows = bookingRowsFor(project, rowId, opts.overrideReason);
+  const installerIds = rows.map(r => r.installer_id);
 
   // Anything no longer on the order loses its booking — never leave orphans behind.
   const stale = supabase.from('assignments').delete().eq('project_id', rowId);
@@ -140,28 +174,14 @@ export async function syncProjectBookings(
     : await stale;
   if (delError) return { ok: false, conflict: false, error: delError.message };
 
-  if (!installerIds.length) return { ok: true, conflict: false };
+  if (!rows.length) return { ok: true, conflict: false };
 
-  const { start, end } = bookingWindow(
-    project.startDate,
-    project.endDate,
-    project.startTime,
-    project.endTime,
-  );
-  const reason = opts.overrideReason?.trim() || null;
+  const { error } = await supabase
+    .from('assignments')
+    .upsert(rows.map(r => ({ ...r, updated_at: new Date().toISOString() })), {
+      onConflict: 'project_id,installer_id',
+    });
 
-  const { error } = await supabase.from('assignments').upsert(
-    installerIds.map(installerId => ({
-      project_id: rowId,
-      installer_id: installerId,
-      planned_start_at: start,
-      planned_end_at: end,
-      assignment_status: bookingStatusForProject(project.status),
-      override_reason: reason,
-      updated_at: new Date().toISOString(),
-    })),
-    { onConflict: 'project_id,installer_id' },
-  );
 
   if (error) return { ok: false, conflict: isConflictError(error.message), error: error.message };
   return { ok: true, conflict: false };
