@@ -1,12 +1,13 @@
 import { useState, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { type Project, type Installer, type ProjectStatus, installers, projectTypeIcons } from '@/data/mockData';
-import { ArrowUpDown, Filter } from 'lucide-react';
+import { ArrowUpDown, Filter, Folder } from 'lucide-react';
 import GanttHeader from './GanttHeader';
 import GanttGrid from './GanttGrid';
 import DraggableBar from './DraggableBar';
 import DateChangeDialog from './DateChangeDialog';
 import { dayCount, dayOffset } from '@/lib/ganttDates';
+import { useProjectGroups, type ProjectGroup } from '@/lib/projectGroups';
 
 const statusColorMap: Record<ProjectStatus, string> = {
   'open': 'bg-status-open',
@@ -58,17 +59,24 @@ interface ProjectsViewProps {
   onUpdateProject: (projectId: string, updates: Partial<Project>) => void;
   activeStatuses: Set<ProjectStatus>;
   viewMode?: 'day' | 'week' | 'month';
+  /** When true, work orders are clustered under their project (project group). */
+  grouped?: boolean;
 }
 
 const rowHeight = 52;
 const headerHeight = 60;
 const labelWidth = 260;
 
-const ProjectsView = ({ projects, days, colWidth, startDate, todayStr, onSelectProject, onUpdateProject, activeStatuses, viewMode }: ProjectsViewProps) => {
+type BoardRow =
+  | { kind: 'group'; key: string; name: string; count: number }
+  | { kind: 'order'; key: string; project: Project };
+
+const ProjectsView = ({ projects, days, colWidth, startDate, todayStr, onSelectProject, onUpdateProject, activeStatuses, viewMode, grouped = false }: ProjectsViewProps) => {
   const [sortField, setSortField] = useState<SortField>('startDate');
   const [sortAsc, setSortAsc] = useState(true);
   const [filterInstaller, setFilterInstaller] = useState<string>('all');
   const [pendingChange, setPendingChange] = useState<{ projectId: string; newStart: string; newEnd: string } | null>(null);
+  const { groups } = useProjectGroups();
 
   const getInstaller = (id: string) => installers.find(i => i.id === id) ?? null;
   const getFirstInstaller = (p: Project) => p.assigneeIds.length > 0 ? getInstaller(p.assigneeIds[0]) : null;
@@ -102,6 +110,38 @@ const ProjectsView = ({ projects, days, colWidth, startDate, todayStr, onSelectP
 
     return result;
   }, [projects, activeStatuses, filterInstaller, sortField, sortAsc]);
+
+  // Flat list (Work Orders view) or clustered under each project (Projects view).
+  const rows = useMemo<BoardRow[]>(() => {
+    if (!grouped) {
+      return filteredAndSorted.map(p => ({ kind: 'order' as const, key: p.id, project: p }));
+    }
+    const byGroup = new Map<string, Project[]>();
+    const ungrouped: Project[] = [];
+    for (const p of filteredAndSorted) {
+      if (p.projectGroupId && groups.some(g => g.id === p.projectGroupId)) {
+        const list = byGroup.get(p.projectGroupId) ?? [];
+        list.push(p);
+        byGroup.set(p.projectGroupId, list);
+      } else {
+        ungrouped.push(p);
+      }
+    }
+    const sortedGroups = groups
+      .filter(g => byGroup.has(g.id))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    const out: BoardRow[] = [];
+    for (const g of sortedGroups) {
+      const orders = byGroup.get(g.id)!;
+      out.push({ kind: 'group', key: `g-${g.id}`, name: g.name, count: orders.length });
+      for (const p of orders) out.push({ kind: 'order', key: p.id, project: p });
+    }
+    if (ungrouped.length > 0) {
+      out.push({ kind: 'group', key: 'g-none', name: 'No project', count: ungrouped.length });
+      for (const p of ungrouped) out.push({ kind: 'order', key: p.id, project: p });
+    }
+    return out;
+  }, [grouped, filteredAndSorted, groups]);
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) setSortAsc(!sortAsc);
@@ -178,7 +218,9 @@ const ProjectsView = ({ projects, days, colWidth, startDate, todayStr, onSelectP
             <div className="sticky left-0 z-40 shrink-0 border-r border-border bg-gantt-header" style={{ width: labelWidth }}>
               <div className="border-b border-border bg-gantt-header" style={{ height: 24 }} />
               <div className="border-b border-border flex items-center px-4 bg-gantt-header" style={{ height: headerHeight - 24 }}>
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Project</span>
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  {grouped ? 'Project / Work order' : 'Work order'}
+                </span>
               </div>
             </div>
             <div className="flex-1">
@@ -190,14 +232,29 @@ const ProjectsView = ({ projects, days, colWidth, startDate, todayStr, onSelectP
           <div className="flex">
             {/* Labels */}
             <div className="sticky left-0 z-20 shrink-0 border-r border-border bg-card" style={{ width: labelWidth }}>
-              {filteredAndSorted.map((project, idx) => {
+              {rows.map((row, idx) => {
+                if (row.kind === 'group') {
+                  return (
+                    <div
+                      key={row.key}
+                      className="flex items-center gap-2 px-4 border-b border-border bg-secondary/60"
+                      style={{ height: rowHeight }}
+                    >
+                      <Folder className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <p className="text-sm font-semibold text-foreground truncate flex-1">{row.name}</p>
+                      <span className="text-[10px] text-muted-foreground shrink-0">{row.count} order{row.count !== 1 ? 's' : ''}</span>
+                    </div>
+                  );
+                }
+                const project = row.project;
                 const assignees = project.assigneeIds.map(id => getInstaller(id)).filter(Boolean) as Installer[];
                 return (
                   <div
-                    key={project.id}
+                    key={row.key}
                     onClick={() => onSelectProject(project)}
                     className={cn(
-                      "flex items-center gap-3 px-4 border-b border-border cursor-pointer transition-colors hover:bg-secondary/50",
+                      "flex items-center gap-3 border-b border-border cursor-pointer transition-colors hover:bg-secondary/50",
+                      grouped ? "pl-9 pr-4" : "px-4",
                       idx % 2 === 0 ? "bg-card" : "bg-muted/20"
                     )}
                     style={{ height: rowHeight }}
@@ -216,8 +273,18 @@ const ProjectsView = ({ projects, days, colWidth, startDate, todayStr, onSelectP
 
             {/* Timeline */}
             <div className="flex-1 relative">
-              <GanttGrid days={days} colWidth={colWidth} totalHeight={filteredAndSorted.length * rowHeight} todayStr={todayStr} />
-              {filteredAndSorted.map((project, idx) => {
+              <GanttGrid days={days} colWidth={colWidth} totalHeight={rows.length * rowHeight} todayStr={todayStr} />
+              {rows.map((row, idx) => {
+                if (row.kind === 'group') {
+                  return (
+                    <div
+                      key={row.key}
+                      className="relative border-b border-gantt-grid bg-secondary/30"
+                      style={{ height: rowHeight }}
+                    />
+                  );
+                }
+                const project = row.project;
                 const { left, width, overflowRight } = getBarPosition(project);
                 const assignees = project.assigneeIds.map(id => getInstaller(id)).filter(Boolean) as Installer[];
                 const instColor = assignees.length > 0 && assignees[0]
@@ -225,7 +292,7 @@ const ProjectsView = ({ projects, days, colWidth, startDate, todayStr, onSelectP
                   : statusBgMap[project.status];
                 return (
                   <div
-                    key={project.id}
+                    key={row.key}
                     className={cn("relative border-b border-gantt-grid", idx % 2 === 0 ? "" : "bg-muted/10")}
                     style={{ height: rowHeight }}
                   >
