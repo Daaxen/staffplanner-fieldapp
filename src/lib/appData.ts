@@ -50,7 +50,7 @@ async function loadClients() {
   const { data, error } = await supabase
     .from('clients')
     .select(
-      'ref,name,data,customer_number,street,postal_code,region,' +
+      'id,ref,name,data,customer_number,street,postal_code,region,' +
         'contact_name,contact_role,contact_phone,contact_email,' +
         'hourly_rate,overtime_rate,mileage_rate,vat_percent,' +
         'billing_name,billing_street,billing_postal_code,billing_city,billing_country,' +
@@ -63,9 +63,13 @@ async function loadClients() {
     const { data: safe } = await supabase.rpc('assigned_clients');
     rows = (safe ?? []) as Record<string, unknown>[];
   }
+  clientRowIdByRef.clear();
   replace(
     clientRegister,
     rows.map((r) => {
+      if (typeof r.ref === 'string' && typeof r.id === 'string') {
+        clientRowIdByRef.set(r.ref, r.id);
+      }
       const d = parseClientMetadata(r.data) as Partial<Client>;
       const col = <T,>(key: string, fallback: T | undefined): T | undefined =>
         (r[key] ?? undefined) !== undefined ? (r[key] as T) : fallback;
