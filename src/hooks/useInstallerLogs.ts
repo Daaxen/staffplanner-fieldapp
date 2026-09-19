@@ -124,7 +124,8 @@ export function useInstallerLogs(projects: Project[] = []) {
   }, [installerId, metaFor, projects, refresh]);
 
 
-  const stopTimer = useCallback(async () => {
+  /** Check out: stores start, finish, work time and travel time in one entry. */
+  const stopTimer = useCallback(async (travelHours = 0) => {
     if (!activeTimer || !installerId) return null;
     const started = new Date(activeTimer.startedAt);
     const ended = new Date();
