@@ -13,8 +13,10 @@ import {
 type Meta = { projectName?: string | null; clientName?: string | null };
 
 export function useInstallerLogs(projects: Project[] = []) {
-  const { user } = useAuth();
-  const installerId = user?.id ?? '';
+  // Operational records key on the installer record (public.installers.id),
+  // never on the auth user id.
+  const { installerId: myInstallerId } = useMyInstallerId();
+  const installerId = myInstallerId ?? '';
 
   const [time, setTime] = useState<TimeEntry[]>([]);
   const [expenses, setExpenses] = useState<ExpenseEntry[]>([]);
