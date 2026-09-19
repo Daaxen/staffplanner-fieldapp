@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { docCategoryLabels, docScopeLabels, docScopeHints, type DocCategory, type DocScope } from '@/data/documentsData';
-import { useDocuments, type DocDraft } from '@/hooks/useDocuments';
+import { useDocuments, listDocGrants, grantDocAccess, revokeDocAccess, type DocDraft, type DocGrant } from '@/hooks/useDocuments';
 import { useProjects, projectRowId, projectRefForRowId } from '@/lib/appData';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -55,6 +55,9 @@ const DocumentsManager = () => {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<DocDraft>(emptyDraft);
+  const [grants, setGrants] = useState<DocGrant[]>([]);
+  const [grantPerson, setGrantPerson] = useState('');
+  const [grantReason, setGrantReason] = useState('');
 
   useEffect(() => {
     void (async () => {
