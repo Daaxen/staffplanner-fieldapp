@@ -77,7 +77,8 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
         : [...checkedItems, id],
     });
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
+    if (!loaded) return;
     const blockers = missingRequirements(completionState, template);
     if (blockers.length > 0) {
       setTab('summary');
@@ -86,7 +87,10 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
       });
       return;
     }
+    // Queue the status with the report so it replays after an offline shift too.
+    await update({ pendingStatus: 'completed' });
     onStatusChange!(project.id, 'completed');
+    if (!online) toast.success('Saved on this phone — it uploads when you reconnect');
   };
 
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(project.location)}`;
