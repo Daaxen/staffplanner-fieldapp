@@ -8,6 +8,7 @@ import { sumActualTime } from '@/lib/timeVariance';
 import { toast } from 'sonner';
 import {
   timeEntrySchema, mileageEntrySchema, expenseEntrySchema, firstIssue, type ExpenseKind,
+  timeMismatch, timeMismatchMessage, type TimeMismatch,
 } from '@/lib/validation/reporting';
 
 
@@ -23,6 +24,8 @@ export function useInstallerLogs(projects: Project[] = []) {
   const [expenses, setExpenses] = useState<ExpenseEntry[]>([]);
   const [activeTimer, setActiveTimer] = useState<ActiveTimer | null>(null);
   const [loading, setLoading] = useState(true);
+  /** Set when typed hours disagree with the start and finish times. */
+  const [pendingMismatch, setPendingMismatch] = useState<TimeMismatch | null>(null);
 
   const metaFor = useCallback((projectId: string): Meta => {
     const p = projects.find(pr => pr.id === projectId);
@@ -234,11 +237,13 @@ export function useInstallerLogs(projects: Project[] = []) {
     [time],
   );
 
+  const clearMismatch = useCallback(() => setPendingMismatch(null), []);
+
   return {
     loading, refresh,
     timeFor, expensesFor, activeTimer, actualFor,
     startTimer, stopTimer, cancelTimer,
-    addTime, deleteTime,
+    addTime, deleteTime, pendingMismatch, clearMismatch,
     addExpense, addMileage, deleteExpense,
     rateFor, categories,
   };
