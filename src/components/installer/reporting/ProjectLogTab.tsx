@@ -165,6 +165,25 @@ const ProjectLogTab = ({ projectId, logs, plannedHours }: ProjectLogTabProps) =>
           {expenseEntries.map(entry => <div key={entry.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"><Wallet className="w-4 h-4 text-muted-foreground" /><div className="min-w-0 flex-1"><p className="text-sm font-medium text-foreground">{expenseCategoryLabels[entry.category]} · {money(entry.amount)}</p><p className="text-xs text-muted-foreground">{entry.date}{entry.km ? ` · ${entry.km} km` : ''}</p></div><Button variant="ghost" size="icon" aria-label="Delete cost entry" onClick={() => void logs.deleteExpense(entry.id)}><Trash2 className="w-4 h-4" /></Button></div>)}
         </section>
       )}
+
+      <Dialog open={checkoutOpen} onOpenChange={setCheckoutOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Check out</DialogTitle>
+            <DialogDescription>
+              Start time, finish time and work time are saved automatically. Add your travel time for this job.
+            </DialogDescription>
+          </DialogHeader>
+          <div>
+            <Label htmlFor="checkout-travel">Travel time (minutes)</Label>
+            <Input id="checkout-travel" inputMode="numeric" type="number" min="0" step="5" placeholder="0" value={checkoutTravel} onChange={e => setCheckoutTravel(e.target.value)} />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCheckoutOpen(false)}>Cancel</Button>
+            <Button disabled={saving} onClick={() => void confirmCheckout()}>Save and check out</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
