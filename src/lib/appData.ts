@@ -40,6 +40,17 @@ function replace<T>(target: T[], next: T[]) {
 /* Loading                                                             */
 /* ------------------------------------------------------------------ */
 
+/**
+ * clients.ref (the app-level customer id) -> clients.id (the database uuid the
+ * order rows, the customer portal and Customer 360 are linked by).
+ */
+const clientRowIdByRef = new Map<string, string>();
+
+/** The database id of a customer, used to link orders to the real record. */
+export function clientRowId(ref?: string | null): string | undefined {
+  return ref ? clientRowIdByRef.get(ref) : undefined;
+}
+
 async function loadClients() {
   // Admins can read the clients table directly. Installers are blocked by RLS
   // and instead get a restricted set (no rates, VAT, invoicing or internal
