@@ -172,7 +172,16 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
               <InfoRow icon={<Clock className="w-4 h-4" />} label="Start" value={`${project.startDate}${project.startTime ? ` at ${project.startTime}` : ''}`} />
               <InfoRow icon={<Clock className="w-4 h-4" />} label="End" value={`${project.endDate}${project.endTime ? ` at ${project.endTime}` : ''}`} />
               {project.estimatedHours && (
-                <InfoRow icon={<Clock className="w-4 h-4" />} label="Est. Hours" value={`${project.estimatedHours}h`} />
+                <InfoRow icon={<Clock className="w-4 h-4" />} label="Estimated hours (total)" value={`${project.estimatedHours}h`} />
+              )}
+            </Section>
+
+            {/* Work description — always visible so installers never miss instructions */}
+            <Section title="Work description">
+              {project.description ? (
+                <p className="text-sm text-foreground leading-relaxed">{project.description}</p>
+              ) : (
+                <p className="text-sm text-muted-foreground italic">No work description added</p>
               )}
             </Section>
 
@@ -280,12 +289,6 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
               </Section>
             )}
 
-            {/* Description */}
-            {project.description && (
-              <Section title="Description">
-                <p className="text-sm text-foreground leading-relaxed">{project.description}</p>
-              </Section>
-            )}
 
             {/* Route for transport */}
             {project.transportStops && project.transportStops.length > 0 && (

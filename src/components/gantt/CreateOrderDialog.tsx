@@ -718,8 +718,9 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
           <div className={cn("grid gap-3", projectType !== 'transport' ? "grid-cols-2" : "grid-cols-1")}>
             {projectType !== 'transport' && (
               <div className="grid gap-1.5">
-                <Label htmlFor="est-hours">Estimated Hours</Label>
+                <Label htmlFor="est-hours">Estimated hours (total for the work order)</Label>
                 <Input id="est-hours" type="number" min="0" step="0.5" placeholder="e.g. 8" value={estimatedHours} onChange={(e) => setEstimatedHours(e.target.value)} />
+                <p className="text-xs text-muted-foreground">Total for the whole work order, shared by all assigned installers.</p>
               </div>
             )}
             <div className="grid gap-1.5">
