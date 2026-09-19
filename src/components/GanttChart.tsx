@@ -444,11 +444,11 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
         />
       )}
 
-      {/* Detail panel */}
-      {selectedProject && (
+      {/* Detail panel — always shows the current state of the order */}
+      {panelProject && (
         <ProjectDetailPanel
-          project={selectedProject}
-          installer={getInstaller(selectedProject.assigneeIds[0] ?? null)}
+          project={panelProject}
+          installer={getInstaller(panelProject.assigneeIds[0] ?? null)}
           onClose={() => setSelectedProject(null)}
           onEdit={(p) => { setEditProject(p); setEditDialogOpen(true); }}
           onDispatch={handleDispatchProject}
