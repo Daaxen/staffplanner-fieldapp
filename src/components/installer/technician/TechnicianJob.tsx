@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -26,9 +26,8 @@ import {
   signOffsFor,
 } from '@/lib/completionRequirements';
 import { templateForProject } from '@/lib/projectTemplates';
-import { emptyWork, loadWork, saveWork, type FieldWork } from '@/lib/offline/fieldWork';
 import PhotoManager from '@/components/installer/PhotoManager';
-import { useOnlineStatus } from '@/hooks/useOffline';
+import { useFieldWork } from '@/hooks/useFieldWork';
 import DeviationForm from '@/components/installer/DeviationForm';
 
 interface TechnicianJobProps {
@@ -186,7 +185,7 @@ const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) 
               projectRef={project.id}
               projectName={project.name}
               work={work}
-              onWorkChange={setWork}
+              onWorkChange={replace}
               requiredShots={template?.photos}
               minPhotos={minPhotos}
             />
