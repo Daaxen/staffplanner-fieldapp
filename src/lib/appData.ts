@@ -11,6 +11,7 @@ import {
   type Project,
 } from '@/data/mockData';
 import { parseClientMetadata, parseProjectMetadata } from '@/lib/validation/appJson';
+import { bookingErrorMessage, syncProjectBookings } from '@/lib/bookings';
 
 
 /**
