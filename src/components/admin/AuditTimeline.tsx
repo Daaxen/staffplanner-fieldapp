@@ -224,6 +224,15 @@ export function AuditTimeline() {
             <SelectItem value="delete">Borttagen</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={actorType} onValueChange={setActorType}>
+          <SelectTrigger className="w-48"><SelectValue placeholder="Aktör" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alla aktörer</SelectItem>
+            {Object.entries(ACTOR_TYPE_LABELS).map(([k, v]) => (
+              <SelectItem key={k} value={k}>{v}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {loading ? (
