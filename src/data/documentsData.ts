@@ -1,19 +1,29 @@
 export type DocCategory = 'general' | 'guide' | 'safety' | 'link';
 
 /** What a document is for — this, not the sandbox flag, decides who may read it. */
-export type DocScope = 'global_internal' | 'project' | 'client' | 'installer_private';
+export type DocScope =
+  | 'global_internal'
+  | 'project'
+  | 'project_sensitive'
+  | 'client'
+  | 'hr'
+  | 'installer_private';
 
 export const docScopeLabels: Record<DocScope, string> = {
   global_internal: 'Global internal',
   project: 'Order document',
+  project_sensitive: 'Sensitive order document',
   client: 'Customer document',
+  hr: 'HR document',
   installer_private: 'Private (personal)',
 };
 
 export const docScopeHints: Record<DocScope, string> = {
   global_internal: 'Company-wide material. Only visible to field staff when explicitly published to them.',
   project: 'Belongs to one order. Visible to the people assigned to that order.',
+  project_sensitive: 'Belongs to one order, but only for named people. Being assigned to the order is not enough — each person needs an explicit grant with a reason.',
   client: 'Belongs to one customer. Admins only.',
+  hr: 'Personnel material. Visible only to HR and admins.',
   installer_private: 'Personal document. Visible only to the person it belongs to.',
 };
 
