@@ -299,6 +299,7 @@ export type Database = {
           installer_name: string | null
           occurred_at: string
           photo_paths: Json
+          project_id: string
           project_name: string | null
           project_ref: string
           resolution_note: string | null
@@ -316,6 +317,7 @@ export type Database = {
           installer_name?: string | null
           occurred_at?: string
           photo_paths?: Json
+          project_id: string
           project_name?: string | null
           project_ref: string
           resolution_note?: string | null
@@ -333,6 +335,7 @@ export type Database = {
           installer_name?: string | null
           occurred_at?: string
           photo_paths?: Json
+          project_id?: string
           project_name?: string | null
           project_ref?: string
           resolution_note?: string | null
@@ -347,6 +350,13 @@ export type Database = {
             columns: ["installer_id"]
             isOneToOne: false
             referencedRelation: "installers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deviations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
@@ -637,6 +647,7 @@ export type Database = {
           installer_id: string
           photo_meta: Json
           photo_paths: Json
+          project_id: string
           project_ref: string
           report_text: string | null
           sign_offs: Json
@@ -651,6 +662,7 @@ export type Database = {
           installer_id: string
           photo_meta?: Json
           photo_paths?: Json
+          project_id: string
           project_ref: string
           report_text?: string | null
           sign_offs?: Json
@@ -665,6 +677,7 @@ export type Database = {
           installer_id?: string
           photo_meta?: Json
           photo_paths?: Json
+          project_id?: string
           project_ref?: string
           report_text?: string | null
           sign_offs?: Json
@@ -678,6 +691,13 @@ export type Database = {
             columns: ["installer_id"]
             isOneToOne: false
             referencedRelation: "installers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "field_reports_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
@@ -1027,6 +1047,7 @@ export type Database = {
           from_status: string | null
           id: string
           note: string | null
+          project_id: string
           project_name: string | null
           project_ref: string
           to_status: string
@@ -1038,6 +1059,7 @@ export type Database = {
           from_status?: string | null
           id?: string
           note?: string | null
+          project_id: string
           project_name?: string | null
           project_ref: string
           to_status: string
@@ -1049,11 +1071,20 @@ export type Database = {
           from_status?: string | null
           id?: string
           note?: string | null
+          project_id?: string
           project_name?: string | null
           project_ref?: string
           to_status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "project_status_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       projects: {
         Row: {

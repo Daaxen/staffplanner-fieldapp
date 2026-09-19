@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { useClients, useProjects } from '@/lib/appData';
+import { useClients, useProjects, projectRefForRowId } from '@/lib/appData';
 import { useProfitabilityData } from '@/hooks/useProfitabilityData';
 import { useFieldReportStates } from '@/hooks/useFieldReportStates';
 import {
@@ -30,6 +30,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type DeviationRow = {
   id: string;
+  project_id: string;
   project_ref: string;
   project_name: string | null;
   category: string;
@@ -110,7 +111,7 @@ const Customer360 = () => {
     void (async () => {
       const { data } = await supabase
         .from('deviations')
-        .select('id,project_ref,project_name,category,severity,description,occurred_at,status')
+        .select('id,project_id,project_ref,project_name,category,severity,description,occurred_at,status')
         .order('occurred_at', { ascending: false });
       setDeviations((data ?? []) as DeviationRow[]);
     })();
@@ -163,7 +164,9 @@ const Customer360 = () => {
   const quotes = results.filter(r => QUOTE_STATUSES.includes(r.project.status));
   const invoices = results.filter(r => r.project.status === 'completed');
   const clientRefs = new Set(clientProjects.map(p => p.id));
-  const clientDeviations = deviations.filter(d => clientRefs.has(d.project_ref));
+  const clientDeviations = deviations.filter(d =>
+    clientRefs.has(projectRefForRowId(d.project_id) ?? d.project_ref),
+  );
 
   const attachments = clientProjects.flatMap(p =>
     (p.attachments ?? []).map(a => ({ ...a, projectName: p.name })),

@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { getMyInstallerId } from '@/lib/installerIdentity';
+import { ensureProjectRowId } from '@/lib/appData';
 import { idbAll, idbDel, idbGet, idbSet } from './idb';
 import type { Project } from '@/data/mockData';
 import { DEFAULT_PHOTO_CATEGORY, type PhotoCategory, type PhotoPosition } from '@/lib/photoMeta';
@@ -166,8 +167,11 @@ export async function syncFieldWork(): Promise<SyncResult> {
     for (const work of await pendingWork()) {
       try {
         const photos = await uploadPhotos(userId, work);
+        const projectId = await ensureProjectRowId(work.projectRef);
+        if (!projectId) throw new Error(`Unknown project ${work.projectRef}`);
         const { error } = await supabase.from('field_reports').upsert(
           {
+            project_id: projectId,
             project_ref: work.projectRef,
             installer_id: installerId,
             checked_items: work.checkedItems,
@@ -186,7 +190,7 @@ export async function syncFieldWork(): Promise<SyncResult> {
           })),
             submitted_at: work.reportSubmitted ? work.updatedAt : null,
           },
-          { onConflict: 'project_ref,installer_id' },
+          { onConflict: 'project_id,installer_id' },
         );
         if (error) throw error;
 

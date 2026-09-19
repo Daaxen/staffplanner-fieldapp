@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { projectRefForRowId } from '@/lib/appData';
 import type { FieldReportState } from '@/lib/operations';
 
 /** Loads the submitted state of field reports, keyed by project ref. */
@@ -11,7 +12,7 @@ export function useFieldReportStates() {
     setLoading(true);
     const { data, error } = await supabase
       .from('field_reports')
-      .select('project_ref,submitted_at,signature,photo_paths,sign_offs');
+      .select('project_id,project_ref,submitted_at,signature,photo_paths,sign_offs');
     if (error) {
       console.error('Failed to load field reports', error);
       setLoading(false);
@@ -19,7 +20,8 @@ export function useFieldReportStates() {
     }
     const map: Record<string, FieldReportState> = {};
     for (const row of data ?? []) {
-      const ref = row.project_ref as string;
+      // Joins go through project_id; project_ref is only a historical label.
+      const ref = projectRefForRowId(row.project_id as string) ?? (row.project_ref as string);
       const photos = Array.isArray(row.photo_paths) ? row.photo_paths.length : 0;
       const signOffs = (row.sign_offs ?? {}) as Record<string, unknown>;
       const hasSignature = !!row.signature || Object.values(signOffs).some(Boolean);

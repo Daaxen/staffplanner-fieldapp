@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { getMyInstallerId } from '@/lib/installerIdentity';
+import { ensureProjectRowId } from '@/lib/appData';
 import { idbAll, idbDel, idbGet, idbSet } from './offline/idb';
 
 export const DEVIATION_CATEGORIES = [
@@ -33,6 +34,8 @@ export const MIN_DEVIATION_DESCRIPTION = 10;
 
 export interface Deviation {
   id: string;
+  project_id: string;
+  /** Historical snapshot of the order reference at the time of the report. */
   project_ref: string;
   project_name: string | null;
   installer_id: string;
@@ -127,9 +130,13 @@ export async function syncDeviations(): Promise<{ synced: number; failed: number
           paths.push(path);
         }
 
+        const projectId = await ensureProjectRowId(draft.projectRef);
+        if (!projectId) throw new Error(`Unknown project ${draft.projectRef}`);
+
         const { data, error } = await supabase
           .from('deviations')
           .insert({
+            project_id: projectId,
             project_ref: draft.projectRef,
             project_name: draft.projectName ?? null,
             installer_id: installerId,
@@ -170,7 +177,11 @@ export async function fetchDeviations(opts: { projectRef?: string } = {}): Promi
     .from('deviations')
     .select('*')
     .order('occurred_at', { ascending: false });
-  if (opts.projectRef) q = q.eq('project_ref', opts.projectRef);
+  if (opts.projectRef) {
+    const projectId = await ensureProjectRowId(opts.projectRef);
+    if (!projectId) return [];
+    q = q.eq('project_id', projectId);
+  }
   const { data, error } = await q;
   if (error) throw error;
   return (data ?? []).map(d => ({
