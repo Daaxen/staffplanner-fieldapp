@@ -5,7 +5,10 @@ export type TimeEntry = {
   date: string; // YYYY-MM-DD
   startTime?: string; // HH:MM
   endTime?: string;
+  /** Work time on site. */
   hours: number;
+  /** Travel time to and from the job. Total time = hours + travelHours. */
+  travelHours?: number;
   note?: string;
   source: 'timer' | 'manual';
   createdAt: string;
