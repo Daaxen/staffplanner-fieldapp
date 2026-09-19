@@ -514,6 +514,38 @@ const OrdersRegister = () => {
       </div>
 
       {/* Mass update dialogs — configure → preview → apply */}
+      <Dialog open={massDialog === 'group'} onOpenChange={o => !o && closeMassDialog()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Assign to project</DialogTitle>
+            <DialogDescription>
+              Move {selected.size} selected work order(s) into a project, or make them standalone.
+            </DialogDescription>
+          </DialogHeader>
+          <Select value={massGroup} onValueChange={setMassGroup}>
+            <SelectTrigger><SelectValue placeholder="Pick project" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">No project (standalone)</SelectItem>
+              {projectGroups.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <DialogFooter>
+            <Button variant="outline" onClick={closeMassDialog}>Cancel</Button>
+            <Button
+              disabled={!massGroup}
+              onClick={() => {
+                const target = massGroup === 'none' ? undefined : massGroup;
+                setOrders(prev => prev.map(p => selected.has(p.id) ? { ...p, projectGroupId: target } : p));
+                toast.success(`Updated ${selected.size} work order(s)`);
+                closeMassDialog(); setSelected(new Set());
+              }}
+            >
+              Apply
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={massDialog === 'status'} onOpenChange={o => !o && closeMassDialog()}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
