@@ -9,6 +9,7 @@ import {
   ClipboardList,
   FileText,
   Flame,
+  FolderKanban,
   Gauge,
   LayoutDashboard,
   Percent,
