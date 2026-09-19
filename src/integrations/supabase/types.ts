@@ -974,6 +974,77 @@ export type Database = {
           },
         ]
       }
+      job_metrics: {
+        Row: {
+          actual_hours: number
+          actual_installers: number
+          category: string | null
+          city: string | null
+          completed_date: string
+          created_at: string
+          customer: string | null
+          id: string
+          installer_ids: string[]
+          job_value: number | null
+          material_cost: number
+          order_id: string | null
+          order_type: string | null
+          planned_date: string | null
+          planned_hours: number | null
+          planned_installers: number
+          project_id: string
+          travel_hours: number
+        }
+        Insert: {
+          actual_hours?: number
+          actual_installers?: number
+          category?: string | null
+          city?: string | null
+          completed_date?: string
+          created_at?: string
+          customer?: string | null
+          id?: string
+          installer_ids?: string[]
+          job_value?: number | null
+          material_cost?: number
+          order_id?: string | null
+          order_type?: string | null
+          planned_date?: string | null
+          planned_hours?: number | null
+          planned_installers?: number
+          project_id: string
+          travel_hours?: number
+        }
+        Update: {
+          actual_hours?: number
+          actual_installers?: number
+          category?: string | null
+          city?: string | null
+          completed_date?: string
+          created_at?: string
+          customer?: string | null
+          id?: string
+          installer_ids?: string[]
+          job_value?: number | null
+          material_cost?: number
+          order_id?: string | null
+          order_type?: string | null
+          planned_date?: string | null
+          planned_hours?: number | null
+          planned_installers?: number
+          project_id?: string
+          travel_hours?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_metrics_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_runs: {
         Row: {
           bucket: string
