@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { FileText, BookOpen, ShieldAlert, Link2, Plus, Search, Trash2, Download, ExternalLink, Pencil, Lock, Building2, Briefcase, Globe } from 'lucide-react';
+import { FileText, BookOpen, ShieldAlert, Link2, Plus, Search, Trash2, Download, ExternalLink, Pencil, Lock, Building2, Briefcase, Globe, UserCog } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -25,7 +25,9 @@ const categoryIcon: Record<DocCategory, typeof FileText> = {
 const scopeIcon: Record<DocScope, typeof FileText> = {
   global_internal: Globe,
   project: Briefcase,
+  project_sensitive: ShieldAlert,
   client: Building2,
+  hr: UserCog,
   installer_private: Lock,
 };
 
