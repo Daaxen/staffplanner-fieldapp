@@ -1,12 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertTriangle, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { type Project, type ProjectStatus, statusLabels } from '@/data/mockData';
-import { useClients } from '@/lib/appData';
+import { useClients, useInstallersList, useProjects } from '@/lib/appData';
+import { installerConflicts } from '@/lib/schedulingConflicts';
 import { toast } from 'sonner';
 
 const statuses: ProjectStatus[] = ['open', 'scheduled', 'in-progress', 'completed', 'on-hold', 'cancelled'];
@@ -24,6 +27,9 @@ interface Props {
  */
 const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => {
   const [clients] = useClients();
+  const installers = useInstallersList();
+  const [allProjects] = useProjects();
+  const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
   const [form, setForm] = useState({
     name: '',
     projectNumber: '',
@@ -43,6 +49,7 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
 
   useEffect(() => {
     if (!project || !open) return;
+    setAssigneeIds(project.assigneeIds ?? []);
     setForm({
       name: project.name ?? '',
       projectNumber: project.projectNumber ?? '',
@@ -62,6 +69,36 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
   }, [project, open]);
 
   const set = (key: keyof typeof form, value: string) => setForm(prev => ({ ...prev, [key]: value }));
+
+  const toggleInstaller = (id: string) =>
+    setAssigneeIds(prev => (prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]));
+
+  /** Conflicts (absence, overlap, travel) per selected installer for the edited dates. */
+  const conflictsByInstaller = useMemo(() => {
+    const map = new Map<string, string[]>();
+    if (!project || !form.startDate || !form.endDate) return map;
+    for (const id of assigneeIds) {
+      const inst = installers.find(i => i.id === id);
+      if (!inst) continue;
+      const found = installerConflicts(
+        inst,
+        {
+          projectId: project.id,
+          name: form.name || project.name,
+          startDate: form.startDate,
+          endDate: form.endDate,
+          startTime: form.startTime,
+          endTime: form.endTime,
+          location: form.location,
+          lat: project.locationLat,
+          lng: project.locationLng,
+        },
+        allProjects,
+      );
+      if (found.length > 0) map.set(id, found.map(c => c.title));
+    }
+    return map;
+  }, [project, assigneeIds, installers, allProjects, form.startDate, form.endDate, form.startTime, form.endTime, form.location, form.name]);
 
   const handleSave = () => {
     if (!project) return;
@@ -97,6 +134,7 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
       contactPhone: form.contactPhone.trim() || undefined,
       contactEmail: form.contactEmail.trim() || undefined,
       description: form.description.trim() || undefined,
+      assigneeIds,
     });
 
     toast.success('Work order updated');
@@ -177,6 +215,46 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
             <div className="col-span-2 space-y-1.5">
               <Label htmlFor="wo-desc">Description</Label>
               <Textarea id="wo-desc" rows={3} value={form.description} onChange={e => set('description', e.target.value)} />
+            </div>
+
+            <div className="col-span-2 space-y-1.5">
+              <Label>Assigned installers</Label>
+              {installers.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No installers available yet.</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {installers.map(inst => {
+                    const selected = assigneeIds.includes(inst.id);
+                    const issues = conflictsByInstaller.get(inst.id);
+                    return (
+                      <button
+                        key={inst.id}
+                        type="button"
+                        onClick={() => toggleInstaller(inst.id)}
+                        title={issues?.join(' · ')}
+                        className={cn(
+                          'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
+                          selected
+                            ? 'border-primary bg-primary/10 text-foreground'
+                            : 'border-border text-muted-foreground hover:bg-secondary',
+                        )}
+                      >
+                        {selected && <Check className="h-3 w-3" />}
+                        {inst.name}
+                        {selected && issues && <AlertTriangle className="h-3 w-3 text-destructive" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              {conflictsByInstaller.size > 0 && (
+                <p className="text-xs text-destructive">
+                  Scheduling conflict for {[...conflictsByInstaller.keys()]
+                    .map(id => installers.find(i => i.id === id)?.name)
+                    .filter(Boolean)
+                    .join(', ')}. Saving may be rejected by the booking rules.
+                </p>
+              )}
             </div>
           </div>
         </div>

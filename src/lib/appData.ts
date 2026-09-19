@@ -203,6 +203,7 @@ async function loadProjects() {
         'client_ref,client_name,street,postal_code,region,location_lat,location_lng,' +
         'start_time,end_time,estimated_hours,is_flex_order,description,' +
         'hourly_rate,mileage_rate,vehicle_type,project_group_id,' +
+        'project_assignees(installer_id),' +
         'project_economy(fixed_price,additional_revenue,budget_hours,internal_hourly_cost,' +
         'external_hourly_cost,external_cost_extra,material_cost_extra,travel_cost_extra,' +
         'external_budget,target_margin_pct)',
@@ -240,8 +241,18 @@ async function loadProjects() {
             }
           : d.economy;
 
+        // Assignment rows are authoritative for who is staffed on the order;
+        // the JSON snapshot is only a fallback for rows written before them.
+        const assigneeRows = (Array.isArray(r.project_assignees)
+          ? r.project_assignees
+          : []) as { installer_id: string }[];
+        const assigneeIds = assigneeRows.length > 0
+          ? Array.from(new Set(assigneeRows.map((a) => a.installer_id)))
+          : (d.assigneeIds ?? []);
+
         const project = {
           ...d,
+          assigneeIds,
           id: d.id ?? (r.ref as string) ?? '',
           name: (r.name as string) ?? d.name,
           projectType: col('project_type', d.projectType),
@@ -457,6 +468,7 @@ function diffAndPersist<T extends { id: string }>(
   next: T[],
   upsert: (item: T) => Promise<void>,
   remove: (id: string) => Promise<void>,
+  rollback?: (prev: T[]) => void,
 ) {
   const prevById = new Map(prev.map((i) => [i.id, i]));
   const nextIds = new Set(next.map((i) => i.id));
@@ -474,6 +486,9 @@ function diffAndPersist<T extends { id: string }>(
 
   Promise.all(tasks).catch((e) => {
     console.error('Failed to save changes', e);
+    // What the planner shows must match what the database accepted, otherwise
+    // an order can look staffed while no assignment was ever stored.
+    rollback?.(prev);
     const message = e instanceof Error ? e.message : String(e);
     toast.error(
       message.includes('Commercial status cannot go from')
@@ -525,7 +540,10 @@ export function useProjects(): [Project[], (next: Updater<Project>) => void] {
     const value = typeof next === 'function' ? next(prev) : next;
     replace(projectList, value);
     notify();
-    diffAndPersist(prev, value, upsertProjectRow, deleteProjectRow);
+    diffAndPersist(prev, value, upsertProjectRow, deleteProjectRow, (restore) => {
+      replace(projectList, restore);
+      notify();
+    });
   }, []);
   return [snapshot, setProjects];
 }
@@ -538,7 +556,10 @@ export function useClients(): [Client[], (next: Updater<Client>) => void] {
     const value = typeof next === 'function' ? next(prev) : next;
     replace(clientRegister, value);
     notify();
-    diffAndPersist(prev, value, upsertClientRow, deleteClientRow);
+    diffAndPersist(prev, value, upsertClientRow, deleteClientRow, (restore) => {
+      replace(clientRegister, restore);
+      notify();
+    });
   }, []);
   return [snapshot, setClients];
 }

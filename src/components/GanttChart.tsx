@@ -222,7 +222,9 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
   }, [trackChange]);
 
   /** Dispatch a single, already-created work order to its assigned installers. */
-  const handleDispatchProject = useCallback((project: Project) => {
+  const handleDispatchProject = useCallback((panelProject: Project) => {
+    // Always dispatch the current state of the order, not a stale panel copy.
+    const project = projectsList.find(p => p.id === panelProject.id) ?? panelProject;
     if (project.assigneeIds.length === 0) {
       toast.error('Assign an installer to this work order before dispatching');
       return;
@@ -239,7 +241,13 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
       toast.success(`📩 ${name}`, { description: `Work order ${project.name}`, duration: 5000 });
     });
     setPendingChanges(prev => prev.filter(c => c.projectId !== project.id));
-  }, [handleUpdateProject]);
+  }, [handleUpdateProject, projectsList]);
+
+  /** The open order panel follows the live list, so assignments never look stale. */
+  const panelProject = useMemo(
+    () => (selectedProject ? projectsList.find(p => p.id === selectedProject.id) ?? selectedProject : null),
+    [selectedProject, projectsList],
+  );
 
   const handleToggleStatus = useCallback((status: ProjectStatus) => {
     setActiveStatuses(prev => {
@@ -442,11 +450,11 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
         />
       )}
 
-      {/* Detail panel */}
-      {selectedProject && (
+      {/* Detail panel — always shows the current state of the order */}
+      {panelProject && (
         <ProjectDetailPanel
-          project={selectedProject}
-          installer={getInstaller(selectedProject.assigneeIds[0] ?? null)}
+          project={panelProject}
+          installer={getInstaller(panelProject.assigneeIds[0] ?? null)}
           onClose={() => setSelectedProject(null)}
           onEdit={(p) => { setEditProject(p); setEditDialogOpen(true); }}
           onDispatch={handleDispatchProject}
