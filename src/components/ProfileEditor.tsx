@@ -169,6 +169,7 @@ const ProfileEditor = () => {
 
       <Button onClick={save} disabled={busy}>{busy ? 'Saving…' : 'Save changes'}</Button>
     </div>
+    </div>
   );
 };
 
