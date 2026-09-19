@@ -2,6 +2,7 @@ import { MapPin, Clock, Users, Truck } from 'lucide-react';
 import { type Project, projectTypeIcons, statusLabels, installers } from '@/data/mockData';
 import { vehicles } from '@/data/fleetData';
 import { cn } from '@/lib/utils';
+import { formatHours, formatVariance, varianceClass, variancePct, varianceTone, type ActualTime } from '@/lib/timeVariance';
 
 const statusColorMap: Record<string, string> = {
   'scheduled': 'bg-status-scheduled/15 border-status-scheduled',
