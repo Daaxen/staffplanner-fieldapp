@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
 import {
   Activity,
+  Banknote,
   CalendarX2,
   CheckCircle2,
   FileWarning,
   Receipt,
+  TrendingUp,
 } from 'lucide-react';
 import {
   Bar,
@@ -24,6 +26,8 @@ import { useProjects } from '@/lib/appData';
 import { useFieldReportStates } from '@/hooks/useFieldReportStates';
 import { computeOperations, type OpsBucket } from '@/lib/operations';
 import { statusLabels, type ProjectStatus } from '@/data/mockData';
+import { computeCommercialMetrics, COMMERCIAL_STATUSES, commercialLabels } from '@/lib/commercial';
+import { sek } from '@/lib/profitability';
 
 const cards: {
   id: OpsBucket;
@@ -101,6 +105,15 @@ const OperationsDashboard = () => {
   const [selected, setSelected] = useState<OpsBucket>('in-progress');
 
   const summary = useMemo(() => computeOperations(projects, reports), [projects, reports]);
+  const commercial = useMemo(() => computeCommercialMetrics(projects), [projects]);
+
+  const commercialCards = [
+    { label: 'Pipeline value', icon: TrendingUp, value: sek(commercial.pipelineValue), hint: `${commercial.pipelineCount} quote(s) out` },
+    { label: 'Orders in production', icon: Activity, value: `${commercial.inProduction}`, hint: `${sek(commercial.inProductionValue)} in progress` },
+    { label: 'Ready for invoicing', icon: Receipt, value: `${commercial.readyForInvoice}`, hint: sek(commercial.readyForInvoiceValue) },
+    { label: 'Outstanding invoices', icon: Banknote, value: sek(commercial.outstandingValue), hint: `${commercial.outstanding} invoice(s) unpaid` },
+    { label: 'Paid orders', icon: CheckCircle2, value: `${commercial.paid}`, hint: sek(commercial.paidValue) },
+  ];
 
   const kpiChartData = cards.map(c => ({
     name: c.label,
@@ -150,6 +163,30 @@ const OperationsDashboard = () => {
               </button>
             );
           })}
+        </div>
+
+        <div>
+          <h3 className="text-sm font-semibold text-foreground mb-1">Commercial pipeline</h3>
+          <p className="text-xs text-muted-foreground mb-3">Sales and invoicing track, separate from the work status.</p>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+            {commercialCards.map(c => (
+              <div key={c.label} className="rounded-xl border border-border bg-card p-4">
+                <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  <c.icon className="w-4 h-4 text-primary" />
+                  <span className="truncate">{c.label}</span>
+                </div>
+                <p className="mt-2 text-2xl font-bold text-foreground">{c.value}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{c.hint}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {COMMERCIAL_STATUSES.map(s => (
+              <span key={s} className="text-xs rounded-full border border-border px-2.5 py-1 text-muted-foreground">
+                {commercialLabels[s]}: <span className="text-foreground font-medium">{commercial.byStatus[s].count}</span>
+              </span>
+            ))}
+          </div>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
