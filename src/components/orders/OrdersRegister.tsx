@@ -8,6 +8,7 @@ import {
 } from '@/lib/commercial';
 
 import { useProjects, registerBookingOverride } from '@/lib/appData';
+import { useProjectGroups } from '@/lib/projectGroups';
 import { detectConflicts } from '@/lib/schedulingConflicts';
 import { OVERRIDE_REASON_MIN } from '@/lib/bookings';
 import { Textarea } from '@/components/ui/textarea';
