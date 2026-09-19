@@ -32,7 +32,7 @@ interface Props {
   onDispatch?: (project: Project) => void;
 }
 
-const ProjectDetailPanel = ({ project, installer, onClose, onEdit }: Props) => {
+const ProjectDetailPanel = ({ project, installer, onClose, onEdit, onDispatch }: Props) => {
   const assignees = project.assigneeIds.map(id => installers.find(i => i.id === id)).filter(Boolean) as Installer[];
   const formatDate = (d: string) => new Date(d).toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' });
 
