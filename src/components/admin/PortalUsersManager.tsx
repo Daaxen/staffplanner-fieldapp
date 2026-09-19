@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useClients } from '@/lib/appData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,7 +30,7 @@ interface LogRow {
 }
 
 const PortalUsersManager = () => {
-  const clients = useClients();
+  const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
   const [rows, setRows] = useState<PortalUserRow[]>([]);
   const [log, setLog] = useState<LogRow[]>([]);
   const [email, setEmail] = useState('');
@@ -50,6 +49,8 @@ const PortalUsersManager = () => {
         .order('created_at', { ascending: false })
         .limit(200),
     ]);
+    const { data: clientRows } = await supabase.from('clients').select('id,name').order('name');
+    setClients((clientRows ?? []) as { id: string; name: string }[]);
     setRows((users ?? []) as unknown as PortalUserRow[]);
     setLog((entries ?? []) as unknown as LogRow[]);
   }, []);
@@ -126,11 +127,9 @@ const PortalUsersManager = () => {
                 <Select value={clientId} onValueChange={setClientId}>
                   <SelectTrigger><SelectValue placeholder="Select customer" /></SelectTrigger>
                   <SelectContent>
-                    {clients
-                      .filter(c => c.rowId)
-                      .map(c => (
-                        <SelectItem key={c.rowId as string} value={c.rowId as string}>{c.name}</SelectItem>
-                      ))}
+                    {clients.map(c => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
