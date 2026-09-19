@@ -348,6 +348,78 @@ export type Database = {
           },
         ]
       }
+      customer_portal_access_log: {
+        Row: {
+          action: string
+          client_id: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          metadata: Json
+          profile_id: string | null
+        }
+        Insert: {
+          action: string
+          client_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          metadata?: Json
+          profile_id?: string | null
+        }
+        Update: {
+          action?: string
+          client_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          metadata?: Json
+          profile_id?: string | null
+        }
+        Relationships: []
+      }
+      customer_portal_users: {
+        Row: {
+          client_id: string
+          created_at: string
+          invited_by: string | null
+          profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          invited_by?: string | null
+          profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          invited_by?: string | null
+          profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_portal_users_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_portal_users_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deviations: {
         Row: {
           category: string
@@ -1956,6 +2028,20 @@ export type Database = {
         Returns: undefined
       }
       is_project_member: { Args: { _project_id: string }; Returns: boolean }
+      log_portal_access: {
+        Args: {
+          _action: string
+          _entity_id?: string
+          _entity_type: string
+          _metadata?: Json
+        }
+        Returns: undefined
+      }
+      my_portal_client_id: { Args: never; Returns: string }
+      portal_can_view_project: {
+        Args: { _project_id: string }
+        Returns: boolean
+      }
       purge_expired_employee_private_details: { Args: never; Returns: number }
       schedule_reminders_scan: { Args: { _cron?: string }; Returns: string }
       shares_project_with_installer: {
