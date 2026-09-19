@@ -37,10 +37,11 @@ const ProjectLogTab = ({ projectId, logs, plannedHours }: ProjectLogTabProps) =>
   const timeEntries = logs.timeFor(projectId);
   const expenseEntries = logs.expensesFor(projectId);
   const isThisTimer = logs.activeTimer?.projectId === projectId;
+  const actual = useMemo(() => sumActualTime(timeEntries), [timeEntries]);
   const totals = useMemo(() => ({
-    hours: timeEntries.reduce((sum, entry) => sum + entry.hours, 0),
+    hours: actual.total,
     costs: expenseEntries.reduce((sum, entry) => sum + entry.amount, 0),
-  }), [timeEntries, expenseEntries]);
+  }), [actual, expenseEntries]);
 
   const submitTime = async () => {
     if (!startTime || !endTime) {
@@ -48,11 +49,23 @@ const ProjectLogTab = ({ projectId, logs, plannedHours }: ProjectLogTabProps) =>
       return;
     }
     setSaving(true);
-    const result = await logs.addTime({ projectId, date, startTime, endTime, note: timeNote });
+    const result = await logs.addTime({
+      projectId, date, startTime, endTime,
+      travelHours: minutesToHours(travelMinutes), note: timeNote,
+    });
     setSaving(false);
     if (!result) { toast.error('Time could not be saved'); return; }
-    setStartTime(''); setEndTime(''); setTimeNote('');
+    setStartTime(''); setEndTime(''); setTravelMinutes(''); setTimeNote('');
     toast.success('Time saved');
+  };
+
+  const confirmCheckout = async () => {
+    setSaving(true);
+    await logs.stopTimer(minutesToHours(checkoutTravel));
+    setSaving(false);
+    setCheckoutOpen(false);
+    setCheckoutTravel('');
+    toast.success('Checked out');
   };
 
   const submitMileage = async () => {
