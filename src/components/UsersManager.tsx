@@ -183,7 +183,7 @@ const UsersManager = () => {
   const set = (k: keyof EditForm, v: string) => setEditForm(prev => ({ ...prev, [k]: v }));
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Users</h1>
         <Dialog open={open} onOpenChange={setOpen}>
