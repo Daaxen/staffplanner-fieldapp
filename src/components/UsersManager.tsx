@@ -265,16 +265,12 @@ const UsersManager = () => {
               {expanded === r.id && (
                 <div className="px-6 pb-5 grid grid-cols-2 md:grid-cols-4 gap-4 bg-muted/30">
                   <Field label="Home address" value={[r.address, r.postal_code, r.city, r.country].filter(Boolean).join(', ')} />
-                  <Field label="Date of birth" value={r.date_of_birth} />
-                  <Field label="Employment" value={[r.employment_type, r.employment_start_date].filter(Boolean).join(' · ')} />
-                  <Field label="Driver's licence" value={r.drivers_license} />
-                  <Field label="Emergency contact" value={[r.emergency_contact_name, r.emergency_contact_relation].filter(Boolean).join(' · ')} />
-                  <Field label="Emergency phone" value={r.emergency_contact_phone} />
-                  <Field label="Second contact" value={r.emergency_contact2_name} />
-                  <Field label="Second phone" value={r.emergency_contact2_phone} />
-                  <Field label="Medical notes" value={r.medical_notes} />
-                  <Field label="Clothing size" value={r.clothing_size} />
-                  <Field label="Shoe size" value={r.shoe_size} />
+                  <Field label="Job title" value={r.job_title} />
+                  <Field label="Employment type" value={r.employment_type} />
+                  <Field label="Roles" value={r.roles.join(', ')} />
+                  <p className="col-span-2 md:col-span-4 text-xs text-muted-foreground flex items-center gap-1">
+                    <Lock className="w-3 h-3" /> Date of birth, emergency contacts, medical notes, sizes and employment dates are confidential and only available to HR.
+                  </p>
                 </div>
               )}
             </div>
