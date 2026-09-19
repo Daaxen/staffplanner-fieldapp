@@ -59,7 +59,7 @@ const UsersManager = () => {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ email: '', full_name: '', phone: '', role: 'installer' as Role });
+  const [form, setForm] = useState({ email: '', full_name: '', phone: '', roles: ['installer'] as Role[] });
   const [busy, setBusy] = useState(false);
   const [edit, setEdit] = useState<Row | null>(null);
   const [editForm, setEditForm] = useState<EditForm>(emptyForm());
@@ -122,7 +122,7 @@ const UsersManager = () => {
     }
     toast.success(`Invitation sent to ${form.email}`);
     setOpen(false);
-    setForm({ email: '', full_name: '', phone: '', role: 'installer' });
+    setForm({ email: '', full_name: '', phone: '', roles: ['installer'] });
     load();
   };
 
@@ -197,18 +197,31 @@ const UsersManager = () => {
               <div className="space-y-1"><Label>Full name</Label><Input value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} /></div>
               <div className="space-y-1"><Label>Phone</Label><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
               <div className="space-y-1">
-                <Label>Role</Label>
-                <Select value={form.role} onValueChange={(v: Role) => setForm({ ...form, role: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="installer">Installer</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label>Roles</Label>
+                <p className="text-xs text-muted-foreground">A user can have several roles at the same time.</p>
+                <div className="flex gap-2 pt-1">
+                  {(['installer', 'admin', 'hr'] as Role[]).map(role => {
+                    const on = form.roles.includes(role);
+                    return (
+                      <Button
+                        key={role}
+                        type="button"
+                        size="sm"
+                        variant={on ? 'default' : 'outline'}
+                        onClick={() => setForm({
+                          ...form,
+                          roles: on ? form.roles.filter(r => r !== role) : [...form.roles, role],
+                        })}
+                      >
+                        {role === 'installer' ? 'Installer' : role === 'admin' ? 'Admin' : 'HR'}
+                      </Button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
             <DialogFooter>
-              <Button onClick={invite} disabled={busy || !form.email}>{busy ? 'Sending…' : 'Send invite'}</Button>
+              <Button onClick={invite} disabled={busy || !form.email || form.roles.length === 0}>{busy ? 'Sending…' : 'Send invite'}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
