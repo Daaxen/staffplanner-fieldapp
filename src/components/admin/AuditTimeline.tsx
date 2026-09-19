@@ -126,7 +126,6 @@ const FIELD_LABELS: Record<string, string> = {
   description: 'Beskrivning',
   scope: 'Dokumenttyp',
   visible_to_installers: 'Publicerad till montörer',
-  profile_id: 'Person',
   document_id: 'Dokument',
   is_sensitive: 'Känsligt dokument',
   title: 'Titel',
