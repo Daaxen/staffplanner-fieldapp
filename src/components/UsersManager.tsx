@@ -287,7 +287,6 @@ const UsersManager = () => {
               <div className="space-y-1"><Label>Email</Label><Input type="email" value={editForm.email} onChange={e => set('email', e.target.value)} /></div>
               <div className="space-y-1"><Label>Full name</Label><Input value={editForm.full_name} onChange={e => set('full_name', e.target.value)} /></div>
               <div className="space-y-1"><Label>Phone</Label><Input value={editForm.phone} onChange={e => set('phone', e.target.value)} /></div>
-              <div className="space-y-1"><Label>Date of birth</Label><Input type="date" value={editForm.date_of_birth} onChange={e => set('date_of_birth', e.target.value)} /></div>
             </div>
 
             <div>
@@ -297,18 +296,6 @@ const UsersManager = () => {
                 <div className="space-y-1"><Label>Postal code</Label><Input value={editForm.postal_code} onChange={e => set('postal_code', e.target.value)} /></div>
                 <div className="space-y-1"><Label>City</Label><Input value={editForm.city} onChange={e => set('city', e.target.value)} /></div>
                 <div className="space-y-1"><Label>Country</Label><Input value={editForm.country} onChange={e => set('country', e.target.value)} /></div>
-              </div>
-            </div>
-
-            <div>
-              <p className="text-sm font-semibold mb-2">Emergency information</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="space-y-1"><Label>Contact name</Label><Input value={editForm.emergency_contact_name} onChange={e => set('emergency_contact_name', e.target.value)} /></div>
-                <div className="space-y-1"><Label>Contact phone</Label><Input value={editForm.emergency_contact_phone} onChange={e => set('emergency_contact_phone', e.target.value)} /></div>
-                <div className="space-y-1"><Label>Relation</Label><Input value={editForm.emergency_contact_relation} onChange={e => set('emergency_contact_relation', e.target.value)} /></div>
-                <div className="space-y-1"><Label>Medical notes / allergies</Label><Input value={editForm.medical_notes} onChange={e => set('medical_notes', e.target.value)} /></div>
-                <div className="space-y-1"><Label>Second contact name</Label><Input value={editForm.emergency_contact2_name} onChange={e => set('emergency_contact2_name', e.target.value)} /></div>
-                <div className="space-y-1"><Label>Second contact phone</Label><Input value={editForm.emergency_contact2_phone} onChange={e => set('emergency_contact2_phone', e.target.value)} /></div>
               </div>
             </div>
 
@@ -328,11 +315,50 @@ const UsersManager = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-1"><Label>Start date</Label><Input type="date" value={editForm.employment_start_date} onChange={e => set('employment_start_date', e.target.value)} /></div>
-                <div className="space-y-1"><Label>Driver's licence</Label><Input value={editForm.drivers_license} onChange={e => set('drivers_license', e.target.value)} /></div>
-                <div className="space-y-1"><Label>Clothing size</Label><Input value={editForm.clothing_size} onChange={e => set('clothing_size', e.target.value)} /></div>
-                <div className="space-y-1"><Label>Shoe size</Label><Input value={editForm.shoe_size} onChange={e => set('shoe_size', e.target.value)} /></div>
               </div>
+            </div>
+
+            <div className="rounded-lg border p-4 space-y-3">
+              <p className="text-sm font-semibold flex items-center gap-2">
+                <Lock className="w-4 h-4" /> Confidential personal details
+              </p>
+              {!isHr ? (
+                <p className="text-xs text-muted-foreground">
+                  Date of birth, emergency contacts, medical notes, sizes and employment dates are stored separately and
+                  can only be opened by someone with the HR role. Every access is logged.
+                </p>
+              ) : !privOpen ? (
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">Opening these details is recorded in the access log.</p>
+                  <Input placeholder="Reason for access (optional)" value={privReason} onChange={e => setPrivReason(e.target.value)} />
+                  <Button variant="outline" size="sm" disabled={privBusy} onClick={() => edit && revealPrivate(edit)}>
+                    <BriefcaseMedical className="w-4 h-4 mr-2" />{privBusy ? 'Opening…' : 'Show confidential details'}
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1"><Label>Date of birth</Label><Input type="date" value={priv.date_of_birth ?? ''} onChange={e => setPrivate('date_of_birth', e.target.value)} /></div>
+                    <div className="space-y-1"><Label>Driver's licence</Label><Input value={priv.drivers_license ?? ''} onChange={e => setPrivate('drivers_license', e.target.value)} /></div>
+                    <div className="space-y-1"><Label>Employment start date</Label><Input type="date" value={priv.employment_start_date ?? ''} onChange={e => setPrivate('employment_start_date', e.target.value)} /></div>
+                    <div className="space-y-1"><Label>Employment end date</Label><Input type="date" value={priv.employment_end_date ?? ''} onChange={e => setPrivate('employment_end_date', e.target.value)} /></div>
+                    <div className="space-y-1"><Label>Emergency contact name</Label><Input value={priv.emergency_contact_name ?? ''} onChange={e => setPrivate('emergency_contact_name', e.target.value)} /></div>
+                    <div className="space-y-1"><Label>Emergency contact phone</Label><Input value={priv.emergency_contact_phone ?? ''} onChange={e => setPrivate('emergency_contact_phone', e.target.value)} /></div>
+                    <div className="space-y-1"><Label>Relation</Label><Input value={priv.emergency_contact_relation ?? ''} onChange={e => setPrivate('emergency_contact_relation', e.target.value)} /></div>
+                    <div className="space-y-1"><Label>Medical notes / allergies</Label><Input value={priv.medical_notes ?? ''} onChange={e => setPrivate('medical_notes', e.target.value)} /></div>
+                    <div className="space-y-1"><Label>Second contact name</Label><Input value={priv.emergency_contact2_name ?? ''} onChange={e => setPrivate('emergency_contact2_name', e.target.value)} /></div>
+                    <div className="space-y-1"><Label>Second contact phone</Label><Input value={priv.emergency_contact2_phone ?? ''} onChange={e => setPrivate('emergency_contact2_phone', e.target.value)} /></div>
+                    <div className="space-y-1"><Label>Clothing size</Label><Input value={priv.clothing_size ?? ''} onChange={e => setPrivate('clothing_size', e.target.value)} /></div>
+                    <div className="space-y-1"><Label>Shoe size</Label><Input value={priv.shoe_size ?? ''} onChange={e => setPrivate('shoe_size', e.target.value)} /></div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Kept while employed and for 24 months after the employment end date, then deleted automatically.
+                  </p>
+                  <Button size="sm" onClick={savePrivate} disabled={privBusy}>
+                    {privBusy ? 'Saving…' : 'Save confidential details'}
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter className="gap-2">
