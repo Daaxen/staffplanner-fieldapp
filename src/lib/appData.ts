@@ -468,6 +468,7 @@ function diffAndPersist<T extends { id: string }>(
   next: T[],
   upsert: (item: T) => Promise<void>,
   remove: (id: string) => Promise<void>,
+  rollback?: (prev: T[]) => void,
 ) {
   const prevById = new Map(prev.map((i) => [i.id, i]));
   const nextIds = new Set(next.map((i) => i.id));
@@ -485,6 +486,9 @@ function diffAndPersist<T extends { id: string }>(
 
   Promise.all(tasks).catch((e) => {
     console.error('Failed to save changes', e);
+    // What the planner shows must match what the database accepted, otherwise
+    // an order can look staffed while no assignment was ever stored.
+    rollback?.(prev);
     const message = e instanceof Error ? e.message : String(e);
     toast.error(
       message.includes('Commercial status cannot go from')
