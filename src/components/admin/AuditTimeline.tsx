@@ -130,6 +130,7 @@ export function AuditTimeline() {
   const [loading, setLoading] = useState(true);
   const [entity, setEntity] = useState('all');
   const [action, setAction] = useState('all');
+  const [actorType, setActorType] = useState('all');
   const [search, setSearch] = useState('');
 
   const load = async () => {
