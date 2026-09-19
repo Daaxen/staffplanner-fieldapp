@@ -45,8 +45,11 @@ describe('document types', () => {
     expect(allMigrations).toMatch(/trg_audit_document_access[\s\S]{0,200}audit_row_change/);
   });
 
-  it('covers every document type in the RLS test', () => {
-    for (const s of scopes) expect(rlsTest).toContain(`'${s}'`);
+  it('covers every document type in the RLS tests', () => {
+    const clientRlsTest = readFileSync(join(process.cwd(), 'supabase/tests/documents_rls_test.sql'), 'utf8');
+    for (const s of scopes) {
+      expect(`${rlsTest}\n${clientRlsTest}`).toContain(`'${s}'`);
+    }
     expect(rlsTest).toContain('sensitive order document visible without a grant');
     expect(rlsTest).toContain('installers cannot grant document access');
     expect(rlsTest).toContain('HR cannot read HR documents');
