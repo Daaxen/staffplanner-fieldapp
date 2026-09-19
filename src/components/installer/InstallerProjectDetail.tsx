@@ -171,9 +171,9 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
             <Section title="Schedule">
               <InfoRow icon={<Clock className="w-4 h-4" />} label="Start" value={`${project.startDate}${project.startTime ? ` at ${project.startTime}` : ''}`} />
               <InfoRow icon={<Clock className="w-4 h-4" />} label="End" value={`${project.endDate}${project.endTime ? ` at ${project.endTime}` : ''}`} />
-              {project.estimatedHours && (
+              {project.estimatedHours ? (
                 <InfoRow icon={<Clock className="w-4 h-4" />} label="Estimated hours (total)" value={`${project.estimatedHours}h`} />
-              )}
+              ) : null}
             </Section>
 
             {/* Work description — always visible so installers never miss instructions */}
