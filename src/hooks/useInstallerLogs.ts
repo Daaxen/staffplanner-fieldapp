@@ -90,17 +90,19 @@ export function useInstallerLogs(projects: Project[] = []) {
   }, [installerId, metaFor]);
 
   const addTime = useCallback(async (entry: {
-    projectId: string; date: string; startTime?: string; endTime?: string; hours?: number; note?: string; source?: TimeEntry['source'];
+    projectId: string; date: string; startTime?: string; endTime?: string; hours?: number;
+    travelHours?: number; note?: string; source?: TimeEntry['source'];
   }) => {
     if (!installerId) return null;
     const bothTimes = Boolean(entry.startTime && entry.endTime);
     const hours = bothTimes
       ? computeHours(entry.startTime!, entry.endTime!)
       : (entry.hours || 0);
+    const travelHours = Math.round((entry.travelHours || 0) * 100) / 100;
 
     const check = timeEntrySchema.safeParse({
       projectId: entry.projectId, date: entry.date,
-      startTime: entry.startTime, endTime: entry.endTime, hours, note: entry.note,
+      startTime: entry.startTime, endTime: entry.endTime, hours, travelHours, note: entry.note,
     });
     const issue = firstIssue(check);
     if (issue) { toast.error(issue); return null; }
