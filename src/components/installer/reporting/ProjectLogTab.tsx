@@ -138,6 +138,7 @@ const ProjectLogTab = ({ projectId, logs, plannedHours }: ProjectLogTabProps) =>
           <div><Label htmlFor="start-time">Start</Label><Input id="start-time" type="time" value={startTime} onChange={e => setStartTime(e.target.value)} /></div>
           <div><Label htmlFor="end-time">Finish</Label><Input id="end-time" type="time" value={endTime} onChange={e => setEndTime(e.target.value)} /></div>
         </div>
+        <div><Label htmlFor="travel-minutes">Travel time (minutes)</Label><Input id="travel-minutes" inputMode="numeric" type="number" min="0" step="5" placeholder="0" value={travelMinutes} onChange={e => setTravelMinutes(e.target.value)} /></div>
         <Textarea aria-label="Time note" placeholder="Note (optional)" value={timeNote} onChange={e => setTimeNote(e.target.value)} />
         <Button className="w-full" disabled={saving} onClick={() => void submitTime()}>Save time</Button>
       </section>
