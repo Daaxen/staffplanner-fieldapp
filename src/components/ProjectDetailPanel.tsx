@@ -3,6 +3,7 @@ import { X, MapPin, User, Calendar, Tag, Phone, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { type Project, type Installer, statusLabels, type ProjectStatus, installers } from '@/data/mockData';
 import { motion, AnimatePresence } from 'framer-motion';
+import SimilarJobsPanel from '@/components/orders/SimilarJobsPanel';
 
 const statusColorMap: Record<ProjectStatus, string> = {
   'open': 'bg-status-open/15 text-status-open',
@@ -146,6 +147,10 @@ const ProjectDetailPanel = ({ project, installer, onClose }: Props) => {
               )}
             </div>
           )}
+
+          <div className="pt-4 border-t border-border">
+            <SimilarJobsPanel project={project} />
+          </div>
 
           {/* Action buttons */}
           <div className="space-y-2 pt-4 border-t border-border">
