@@ -83,6 +83,13 @@ export const timeEntrySchema = z
         message: `A single entry cannot exceed ${MAX_ENTRY_HOURS} hours`,
       });
     }
+    if (hours + (v.travelHours ?? 0) > MAX_TOTAL_HOURS) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['travelHours'],
+        message: `Work time plus travel time cannot exceed ${MAX_TOTAL_HOURS} hours`,
+      });
+    }
   });
 
 export const mileageEntrySchema = z.object({
