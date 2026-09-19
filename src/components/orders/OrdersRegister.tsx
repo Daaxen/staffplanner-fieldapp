@@ -7,7 +7,10 @@ import {
   commercialTransitionError, type CommercialStatus,
 } from '@/lib/commercial';
 
-import { useProjects } from '@/lib/appData';
+import { useProjects, registerBookingOverride } from '@/lib/appData';
+import { detectConflicts } from '@/lib/schedulingConflicts';
+import { OVERRIDE_REASON_MIN } from '@/lib/bookings';
+import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
