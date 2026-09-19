@@ -6,6 +6,7 @@ import GanttGrid from './GanttGrid';
 import { Package } from 'lucide-react';
 import DraggableBar from './DraggableBar';
 import DateChangeDialog from './DateChangeDialog';
+import { dayCount, dayOffset } from '@/lib/ganttDates';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -113,17 +114,15 @@ const InstallersView = ({
 
     sorted.forEach((project) => {
       const dates = getBarDates(project, installerId);
-      const pStart = new Date(dates.startDate);
-      const startDay = Math.floor((pStart.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-      
+      const startDay = dayOffset(dates.startDate, startDate);
+
       let lane = lanes.findIndex(l => l.endDay <= startDay);
       if (lane === -1) {
         lane = lanes.length;
         lanes.push({ endDay: 0 });
       }
-      
-      const pEnd = new Date(dates.endDate);
-      const endDay = Math.floor((pEnd.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+      const endDay = dayOffset(dates.endDate, startDate) + 1;
       lanes[lane].endDay = endDay;
       assignments.push(lane);
     });
@@ -144,10 +143,8 @@ const InstallersView = ({
 
   const getBarPosition = (project: Project, installerId?: string) => {
     const dates = getBarDates(project, installerId);
-    const pStart = new Date(dates.startDate);
-    const pEnd = new Date(dates.endDate);
-    const startDiff = Math.floor((pStart.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-    const duration = Math.floor((pEnd.getTime() - pStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const startDiff = dayOffset(dates.startDate, startDate);
+    const duration = dayCount(dates.startDate, dates.endDate);
     const rawLeft = startDiff * colWidth;
     const rawRight = rawLeft + duration * colWidth - 4;
     const clippedLeft = Math.max(rawLeft, 0);
@@ -157,10 +154,8 @@ const InstallersView = ({
   };
 
   const getAbsencePosition = (absStart: string, absEnd: string) => {
-    const aStart = new Date(absStart);
-    const aEnd = new Date(absEnd);
-    const startDiff = Math.floor((aStart.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-    const duration = Math.floor((aEnd.getTime() - aStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const startDiff = dayOffset(absStart, startDate);
+    const duration = dayCount(absStart, absEnd);
     return { left: startDiff * colWidth, width: duration * colWidth };
   };
 

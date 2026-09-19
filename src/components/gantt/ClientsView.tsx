@@ -5,6 +5,7 @@ import GanttHeader from './GanttHeader';
 import GanttGrid from './GanttGrid';
 import DraggableBar from './DraggableBar';
 import DateChangeDialog from './DateChangeDialog';
+import { dayCount, dayOffset } from '@/lib/ganttDates';
 
 const statusBorderMap: Record<ProjectStatus, string> = {
   'open': 'border-status-open',
@@ -116,10 +117,8 @@ const ClientsView = ({ projects, days, colWidth, startDate, todayStr, onSelectPr
   const totalGridWidth = days.length * colWidth;
 
   const getBarPosition = (project: Project) => {
-    const pStart = new Date(project.startDate);
-    const pEnd = new Date(project.endDate);
-    const startDiff = Math.floor((pStart.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-    const duration = Math.floor((pEnd.getTime() - pStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const startDiff = dayOffset(project.startDate, startDate);
+    const duration = dayCount(project.startDate, project.endDate);
     const rawLeft = startDiff * colWidth;
     const rawRight = rawLeft + duration * colWidth - 4;
     const clippedLeft = Math.max(rawLeft, 0);
