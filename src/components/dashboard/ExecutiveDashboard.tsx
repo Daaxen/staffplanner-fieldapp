@@ -16,7 +16,7 @@ import {
 } from 'recharts';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { useProjects, useInstallersList } from '@/lib/appData';
+import { useProjects, useInstallersList, projectRefForRowId } from '@/lib/appData';
 import { useProfitabilityData } from '@/hooks/useProfitabilityData';
 import { useFieldReportStates } from '@/hooks/useFieldReportStates';
 import { computeCapacity } from '@/lib/capacity';
