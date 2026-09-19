@@ -253,6 +253,9 @@ const UsersManager = () => {
                   <Button size="sm" variant={r.roles.includes('installer') ? 'default' : 'outline'} onClick={() => toggleRole(r.id, 'installer', r.roles.includes('installer'))}>
                     <UserIcon className="w-3 h-3 mr-1" />Installer
                   </Button>
+                  <Button size="sm" variant={r.roles.includes('hr') ? 'default' : 'outline'} title="May see confidential personnel data" onClick={() => toggleRole(r.id, 'hr', r.roles.includes('hr'))}>
+                    <Lock className="w-3 h-3 mr-1" />HR
+                  </Button>
                 </div>
                 <div className="flex gap-1">
                   <Button size="icon" variant="ghost" title="Edit user" onClick={() => openEdit(r)}><Pencil className="w-4 h-4" /></Button>
