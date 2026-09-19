@@ -320,7 +320,7 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
             >
               <Plus className="w-4 h-4" />
-              New Project
+              Create work order
             </button>
 
             <button
