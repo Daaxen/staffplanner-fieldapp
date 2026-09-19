@@ -189,6 +189,18 @@ const OrdersRegister = () => {
     (clientFilter !== 'all' ? 1 : 0) + (assigneeFilter !== 'all' ? 1 : 0) +
     (dateFrom ? 1 : 0) + (dateTo ? 1 : 0) + (historicalOnly ? 1 : 0);
 
+  const setCommercial = (orderId: string, next: CommercialStatus) => {
+    const order = orders.find(o => o.id === orderId);
+    if (!order) return;
+    const current = commercialStatusOf(order);
+    if (current === next) return;
+    const blocked = commercialTransitionError(current, next);
+    if (blocked) { toast.error(blocked); return; }
+    setOrders(prev => prev.map(p => p.id === orderId ? { ...p, commercialStatus: next } : p));
+    toast.success(`Commercial status set to ${commercialLabels[next]}`);
+  };
+
+
   const applyMassStatus = () => {
     const blockedCount = statusPreview.filter(r => r.blocked).length;
     const changedIds = new Set(statusPreview.filter(r => r.changed).map(r => r.id));
