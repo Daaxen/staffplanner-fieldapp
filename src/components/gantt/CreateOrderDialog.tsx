@@ -30,6 +30,7 @@ import RecommendedInstallers from '@/components/scheduling/RecommendedInstallers
 import { recommendInstallers } from '@/lib/assignmentRecommendations';
 import { projectDateRangeError } from '@/lib/validation/dates';
 import { saveBookings, findBookingConflicts, type BookingConflict } from '@/lib/bookings';
+import { registerBookingOverride } from '@/lib/appData';
 import BookingOverrideDialog from '@/components/scheduling/BookingOverrideDialog';
 
 interface CreateOrderDialogProps {
