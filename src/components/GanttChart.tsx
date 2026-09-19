@@ -207,9 +207,17 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
 
   const handleUpdateProject = useCallback((projectId: string, updates: Partial<Project>) => {
     setProjectsList(prev => {
-      const updated = prev.map(p =>
-        p.id === projectId ? { ...p, ...updates } : p
-      );
+      const updated = prev.map(p => {
+        if (p.id !== projectId) return p;
+        const next = { ...p, ...updates };
+        // Assigning an installer to an open order schedules it; removing the last
+        // installer puts it back to open (unless the status was changed explicitly).
+        if (updates.assigneeIds && updates.status === undefined) {
+          if (next.assigneeIds.length > 0 && next.status === 'open') next.status = 'scheduled';
+          else if (next.assigneeIds.length === 0 && next.status === 'scheduled') next.status = 'open';
+        }
+        return next;
+      });
       const project = updated.find(p => p.id === projectId);
       if (project && project.assigneeIds.length > 0) {
         const newStatus = updates.status;

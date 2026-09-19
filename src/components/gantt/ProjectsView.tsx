@@ -27,24 +27,15 @@ const statusBorderMap: Record<ProjectStatus, string> = {
   'cancelled': 'border-status-cancelled',
 };
 
-// Work orders without an installer are tinted by their status so every bar on
-// the board is readable at a glance.
+// In the work order / project views the bar colour always reflects the status,
+// never the installer, so the board reads the same way as the status filter.
 const statusBgMap: Record<ProjectStatus, string> = {
-  'open': 'bg-status-open/20',
-  'scheduled': 'bg-status-scheduled/20',
-  'in-progress': 'bg-status-in-progress/20',
-  'completed': 'bg-status-completed/20',
-  'on-hold': 'bg-status-on-hold/20',
-  'cancelled': 'bg-status-cancelled/20',
-};
-
-const installerBgMap: Record<number, string> = {
-  1: 'bg-installer-1/15',
-  2: 'bg-installer-2/15',
-  3: 'bg-installer-3/15',
-  4: 'bg-installer-4/15',
-  5: 'bg-installer-5/15',
-  6: 'bg-installer-6/15',
+  'open': 'bg-status-open/30',
+  'scheduled': 'bg-status-scheduled/30',
+  'in-progress': 'bg-status-in-progress/30',
+  'completed': 'bg-status-completed/30',
+  'on-hold': 'bg-status-on-hold/30',
+  'cancelled': 'bg-status-cancelled/30',
 };
 
 type SortField = 'name' | 'status' | 'startDate' | 'installer';
@@ -287,9 +278,7 @@ const ProjectsView = ({ projects, days, colWidth, startDate, todayStr, onSelectP
                 const project = row.project;
                 const { left, width, overflowRight } = getBarPosition(project);
                 const assignees = project.assigneeIds.map(id => getInstaller(id)).filter(Boolean) as Installer[];
-                const instColor = assignees.length > 0 && assignees[0]
-                  ? installerBgMap[assignees[0].color]
-                  : statusBgMap[project.status];
+                const instColor = statusBgMap[project.status];
                 return (
                   <div
                     key={row.key}
