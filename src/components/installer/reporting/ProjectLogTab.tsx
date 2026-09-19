@@ -121,11 +121,11 @@ const ProjectLogTab = ({ projectId, logs, plannedHours }: ProjectLogTabProps) =>
 
       <section className="rounded-lg border border-border bg-card p-3 space-y-3">
         <div className="flex items-center justify-between gap-3">
-          <div><h2 className="text-sm font-semibold text-foreground">Work timer</h2><p className="text-xs text-muted-foreground">Track time while working</p></div>
+          <div><h2 className="text-sm font-semibold text-foreground">Check in / check out</h2><p className="text-xs text-muted-foreground">Start and finish time are saved automatically</p></div>
           {isThisTimer ? (
-            <Button size="sm" variant="destructive" onClick={() => void logs.stopTimer()}><Square className="w-4 h-4 mr-1.5" />Stop</Button>
+            <Button size="sm" variant="destructive" onClick={() => setCheckoutOpen(true)}><Square className="w-4 h-4 mr-1.5" />Check out</Button>
           ) : (
-            <Button size="sm" disabled={Boolean(logs.activeTimer)} onClick={() => void logs.startTimer(projectId)}><Play className="w-4 h-4 mr-1.5" />Start</Button>
+            <Button size="sm" disabled={Boolean(logs.activeTimer)} onClick={() => void logs.startTimer(projectId)}><Play className="w-4 h-4 mr-1.5" />Check in</Button>
           )}
         </div>
         {logs.activeTimer && !isThisTimer && <p className="text-xs text-muted-foreground">A timer is already running for another project.</p>}
