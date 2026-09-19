@@ -134,6 +134,16 @@ const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) 
           </a>
         </div>
 
+        {/* Work description — always visible so instructions are never missed */}
+        <div className="rounded-2xl border border-border bg-card p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Work description</p>
+          {project.description ? (
+            <p className="mt-1.5 text-sm text-foreground leading-relaxed">{project.description}</p>
+          ) : (
+            <p className="mt-1.5 text-sm text-muted-foreground italic">No work description added</p>
+          )}
+        </div>
+
         {bigButton(
           'checklist',
           <CheckSquare className="w-6 h-6" />,

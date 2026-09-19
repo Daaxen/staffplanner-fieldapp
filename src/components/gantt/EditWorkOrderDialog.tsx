@@ -197,8 +197,9 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
               <Input id="wo-etime" type="time" value={form.endTime} onChange={e => set('endTime', e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="wo-hours">Estimated hours</Label>
+              <Label htmlFor="wo-hours">Estimated hours (total for the work order)</Label>
               <Input id="wo-hours" type="number" min="0" step="0.5" value={form.estimatedHours} onChange={e => set('estimatedHours', e.target.value)} />
+              <p className="text-xs text-muted-foreground">Total for the whole work order, shared by all assigned installers.</p>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="wo-contact">Contact</Label>
