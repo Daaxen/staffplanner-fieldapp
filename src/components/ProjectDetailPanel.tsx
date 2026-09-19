@@ -160,8 +160,11 @@ const ProjectDetailPanel = ({ project, installer, onClose, onEdit }: Props) => {
             <button className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">
               Dispatch Order
             </button>
-            <button className="w-full py-2.5 rounded-lg bg-secondary text-secondary-foreground text-sm font-medium hover:bg-secondary/80 transition-colors">
-              Edit Project
+            <button
+              onClick={() => onEdit?.(project)}
+              className="w-full py-2.5 rounded-lg bg-secondary text-secondary-foreground text-sm font-medium hover:bg-secondary/80 transition-colors"
+            >
+              Edit work order
             </button>
           </div>
         </div>
