@@ -255,8 +255,21 @@ export function AuditTimeline() {
                 </div>
 
                 <p className="text-xs text-muted-foreground">
-                  Av: {r.actor_id ? (actors[r.actor_id] ?? r.actor_id) : 'Systemet'}
+                  Av:{' '}
+                  {r.actor_id
+                    ? (actors[r.actor_id] ?? r.actor_name ?? r.actor_id)
+                    : (r.actor_name ?? ACTOR_TYPE_LABELS[r.actor_type] ?? 'Systemet')}
+                  {' · '}
+                  {ACTOR_TYPE_LABELS[r.actor_type] ?? r.actor_type}
+                  {r.source ? ` · ${r.source}` : ''}
                 </p>
+
+                {r.correlation_id && (
+                  <p className="text-xs text-muted-foreground">
+                    <span>Kopplings-ID: </span>
+                    <span className="font-mono">{r.correlation_id}</span>
+                  </p>
+                )}
 
                 {r.reason && (
                   <p className="text-sm">
