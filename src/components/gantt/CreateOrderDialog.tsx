@@ -37,6 +37,8 @@ interface CreateOrderDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreateOrder: (project: Project) => void;
+  /** Create the work order inside this project (optional grouping). */
+  projectGroupId?: string;
 }
 
 const generateProjectId = () => {
@@ -48,7 +50,7 @@ const generateStopId = () => `ts-${Math.random().toString(36).slice(2, 8)}`;
 const generateGoodsId = () => `gi-${Math.random().toString(36).slice(2, 8)}`;
 
 
-const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDialogProps) => {
+const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }: CreateOrderDialogProps) => {
   const projectId = useMemo(() => generateProjectId(), [open]);
   const [clientRows] = useClients();
   // Orders are linked to a customer record — only registered customers can be picked.
