@@ -239,14 +239,28 @@ const OrdersRegister = () => {
 
   const applyMassAssignee = () => {
     if (!massAssignee) return;
-    const changedIds = new Set(assigneePreview.filter(r => !r.already).map(r => r.id));
+    const reason = massOverrideReason.trim();
+    const hasReason = reason.length >= OVERRIDE_REASON_MIN;
+    const candidates = assigneePreview.filter(r => !r.already);
+    const blockedRows = candidates.filter(r => r.blocked);
+    if (blockedRows.length > 0 && !hasReason) {
+      toast.error(`${blockedRows.length} order(s) clash with another booking or an absence`, {
+        description: `Enter an override reason (min ${OVERRIDE_REASON_MIN} characters) to push them through — it is logged.`,
+      });
+      return;
+    }
+    const changedIds = new Set(candidates.map(r => r.id));
     if (changedIds.size === 0) { toast.error('All selected orders already have this installer'); return; }
+    if (hasReason) blockedRows.forEach(r => registerBookingOverride(r.id, reason));
     setOrders(prev => prev.map(p =>
       changedIds.has(p.id)
         ? { ...p, assigneeIds: Array.from(new Set([...p.assigneeIds, massAssignee])), status: p.status === 'open' ? 'scheduled' : p.status }
         : p
     ));
-    toast.success(`Assigned installer to ${changedIds.size} order(s)`);
+    toast.success(
+      `Assigned installer to ${changedIds.size} order(s)` +
+      (blockedRows.length && hasReason ? ` · ${blockedRows.length} overridden (logged)` : ''),
+    );
     closeMassDialog(); setSelected(new Set());
   };
   const applyMassDelete = () => {
