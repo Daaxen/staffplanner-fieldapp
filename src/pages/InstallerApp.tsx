@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { CalendarDays, Package, FolderKanban, User, BookOpen, Clock, Bell, LogOut, HardHat, MessageSquarePlus } from 'lucide-react';
+import { AlertTriangle, Bell, BookOpen, CalendarDays, CheckCircle2, ChevronRight, ClipboardPenLine, FolderKanban, HardHat, LogOut, MessageSquarePlus, MoreHorizontal, Package, User } from 'lucide-react';
 import FeedbackModule from '@/components/feedback/FeedbackModule';
 import { addDays, startOfWeek, format } from 'date-fns';
 import InstallerSchedule from '@/components/installer/InstallerSchedule';
@@ -25,6 +25,7 @@ import { useInstallerLogs } from '@/hooks/useInstallerLogs';
 import { useReminders } from '@/hooks/useReminders';
 import { usePushRegistration } from '@/hooks/usePushRegistration';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 
 const InstallerApp = () => {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -41,6 +42,8 @@ const InstallerApp = () => {
   const logs = useInstallerLogs(localProjects);
   const reminders = useReminders();
   const [tab, setTab] = useState<string>('schedule');
+  const [projectEntryTab, setProjectEntryTab] = useState<'info' | 'report' | 'log' | 'deviation' | 'summary'>('info');
+  const [moreView, setMoreView] = useState<'menu' | 'schedule' | 'orderbox' | 'reminders' | 'docs' | 'feedback' | 'profile'>('menu');
   const [technicianMode, setTechnicianMode] = useState<boolean>(
     () => localStorage.getItem('technicianMode') === '1',
   );
@@ -88,8 +91,13 @@ const InstallerApp = () => {
     return () => setStatusHandler(null);
   }, [setLocalProjects]);
 
-  const handleViewOrderDetail = (project: Project) => {
+  const handleViewOrderDetail = (project: Project, initialTab: typeof projectEntryTab = 'info') => {
+    setProjectEntryTab(initialTab);
     setSelectedProject(project);
+  };
+
+  const openProjectWorkflow = (project: Project, initialTab: typeof projectEntryTab) => {
+    handleViewOrderDetail(project, initialTab);
   };
 
   const filteredMyProjects = useMemo(() => {
@@ -149,6 +157,7 @@ const InstallerApp = () => {
         onBack={() => setSelectedProject(null)}
         onStatusChange={handleStatusChange}
         onPickUp={selectedProject.assigneeIds.length === 0 ? () => handlePickUp(selectedProject) : undefined}
+        initialTab={projectEntryTab}
       />
     );
   }
@@ -189,106 +198,106 @@ const InstallerApp = () => {
       <ReminderBanner
         level={reminders.highestLevel}
         count={reminders.reminders.length}
-        onClick={() => setTab('reminders')}
+        onClick={() => { setMoreView('reminders'); setTab('more'); }}
       />
 
       <Tabs value={tab} onValueChange={setTab} className="flex-1 flex flex-col overflow-hidden">
-        <TabsList className="shrink-0 w-full rounded-none border-b border-border bg-card h-11 p-0 justify-start gap-0">
-          <TabsTrigger value="schedule" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs h-full gap-1.5">
-            <CalendarDays className="w-3.5 h-3.5" />
-            Schedule
-          </TabsTrigger>
-          <TabsTrigger value="orderbox" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs h-full gap-1.5">
-            <Package className="w-3.5 h-3.5" />
-            OrderBox
-            {availableOrderCount > 0 && (
-              <span className="ml-0.5 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                {availableOrderCount}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="projects" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs h-full gap-1.5">
+        <TabsList className="shrink-0 order-last w-full rounded-none border-t border-border bg-card h-16 p-0 grid grid-cols-5 gap-0">
+          <TabsTrigger value="schedule" className="rounded-none data-[state=active]:bg-muted data-[state=active]:shadow-none text-[10px] h-full gap-1 flex-col">
             <FolderKanban className="w-3.5 h-3.5" />
-            Projects
+            Active jobs
           </TabsTrigger>
-          <TabsTrigger value="reminders" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs h-full gap-1.5">
-            <Bell className="w-3.5 h-3.5" />
-            Inbox
-            {reminders.reminders.length > 0 && (
-              <span className="ml-0.5 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                {reminders.reminders.length}
-              </span>
-            )}
+          <TabsTrigger value="reporting" className="rounded-none data-[state=active]:bg-muted data-[state=active]:shadow-none text-[10px] h-full gap-1 flex-col">
+            <ClipboardPenLine className="w-4 h-4" />
+            Reporting
           </TabsTrigger>
-          <TabsTrigger value="logs" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs h-full gap-1.5">
-            <Clock className="w-3.5 h-3.5" />
-            Time
+          <TabsTrigger value="deviations" className="rounded-none data-[state=active]:bg-muted data-[state=active]:shadow-none text-[10px] h-full gap-1 flex-col">
+            <AlertTriangle className="w-4 h-4" />
+            Deviations
           </TabsTrigger>
-          <TabsTrigger value="docs" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs h-full gap-1.5">
-            <BookOpen className="w-3.5 h-3.5" />
-            Docs
+          <TabsTrigger value="signoff" className="rounded-none data-[state=active]:bg-muted data-[state=active]:shadow-none text-[10px] h-full gap-1 flex-col">
+            <CheckCircle2 className="w-4 h-4" />
+            Sign-off
           </TabsTrigger>
-          <TabsTrigger value="profile" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs h-full gap-1.5">
-            <User className="w-3.5 h-3.5" />
-            Profile
-          </TabsTrigger>
-          <TabsTrigger value="feedback" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs h-full gap-1.5">
-            <MessageSquarePlus className="w-3.5 h-3.5" />
-            Feedback
+          <TabsTrigger value="more" className="rounded-none data-[state=active]:bg-muted data-[state=active]:shadow-none text-[10px] h-full gap-1 flex-col">
+            <MoreHorizontal className="w-4 h-4" />
+            More
           </TabsTrigger>
         </TabsList>
 
 
         <TabsContent value="schedule" className="flex-1 overflow-auto mt-0">
-          <InstallerSchedule
-            projects={myProjects}
-            installer={installer}
-            onSelectProject={setSelectedProject}
-          />
-        </TabsContent>
-
-        <TabsContent value="orderbox" className="flex-1 overflow-auto mt-0">
-          <div className="p-4">
-            <InstallerOrderBox projects={localProjects} onPickUp={handlePickUp} onViewDetail={handleViewOrderDetail} />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="projects" className="flex-1 overflow-auto mt-0">
           <ScheduleFilters filters={projectFilters} onChange={setProjectFilters} />
-          <div className="p-4 space-y-3">
-            <h2 className="text-base font-semibold text-foreground">Active ({activeProjects.length})</h2>
+          <div className="p-4 space-y-3 pb-20">
+            <h2 className="text-base font-semibold text-foreground">Active jobs ({activeProjects.length})</h2>
             {activeProjects.map(project => (
-              <ProjectCard key={project.id} project={project} onSelect={setSelectedProject} currentInstallerId={installer.id} actual={logs.actualFor(project.id)} />
+              <ProjectCard key={project.id} project={project} onSelect={project => openProjectWorkflow(project, 'info')} currentInstallerId={installer.id} actual={logs.actualFor(project.id)} />
             ))}
-            {completedProjects.length > 0 && (
-              <>
-                <h2 className="text-base font-semibold text-muted-foreground mt-4">Completed ({completedProjects.length})</h2>
-                {completedProjects.map(project => (
-                  <ProjectCard key={project.id} project={project} onSelect={setSelectedProject} currentInstallerId={installer.id} actual={logs.actualFor(project.id)} />
-                ))}
-              </>
-            )}
+            {activeProjects.length === 0 && <p className="text-sm text-muted-foreground py-8 text-center">No active jobs.</p>}
+            {completedProjects.length > 0 && <h2 className="text-sm font-semibold text-muted-foreground pt-2">Recently completed</h2>}
+            {completedProjects.map(project => (
+              <ProjectCard key={project.id} project={project} onSelect={project => openProjectWorkflow(project, 'info')} currentInstallerId={installer.id} actual={logs.actualFor(project.id)} />
+            ))}
           </div>
         </TabsContent>
 
-        <TabsContent value="reminders" className="flex-1 overflow-auto mt-0">
-          <RemindersInbox state={reminders} />
-        </TabsContent>
-
-        <TabsContent value="logs" className="flex-1 overflow-auto mt-0">
+        <TabsContent value="reporting" className="flex-1 overflow-auto mt-0">
           <LogsOverview logs={logs} projects={myProjects} />
         </TabsContent>
 
-        <TabsContent value="docs" className="flex-1 overflow-auto mt-0">
-          <InstallerDocuments />
+        <TabsContent value="deviations" className="flex-1 overflow-auto mt-0">
+          <div className="p-4 space-y-3 pb-20">
+            <h2 className="text-base font-semibold text-foreground">Choose job to report deviation</h2>
+            {activeProjects.map(project => (
+              <ProjectCard key={project.id} project={project} onSelect={project => openProjectWorkflow(project, 'deviation')} currentInstallerId={installer.id} />
+            ))}
+            {activeProjects.length === 0 && <p className="text-sm text-muted-foreground py-8 text-center">No active jobs.</p>}
+          </div>
         </TabsContent>
 
-        <TabsContent value="profile" className="flex-1 overflow-auto mt-0">
-          <InstallerProfile installer={installer} projectCount={myProjects.length} />
+        <TabsContent value="signoff" className="flex-1 overflow-auto mt-0">
+          <div className="p-4 space-y-3 pb-20">
+            <h2 className="text-base font-semibold text-foreground">Jobs awaiting sign-off</h2>
+            {activeProjects.map(project => (
+              <ProjectCard key={project.id} project={project} onSelect={project => openProjectWorkflow(project, 'summary')} currentInstallerId={installer.id} />
+            ))}
+            {activeProjects.length === 0 && <p className="text-sm text-muted-foreground py-8 text-center">No jobs awaiting sign-off.</p>}
+          </div>
         </TabsContent>
 
-        <TabsContent value="feedback" className="flex-1 overflow-hidden mt-0">
-          <FeedbackModule view="installer" compact />
+        <TabsContent value="more" className="flex-1 overflow-auto mt-0">
+          {moreView === 'menu' && (
+            <div className="p-4 grid grid-cols-2 gap-3 pb-20">
+              {[
+                { id: 'schedule' as const, label: 'Full schedule', icon: CalendarDays },
+                { id: 'orderbox' as const, label: 'Available jobs', icon: Package, badge: availableOrderCount },
+                { id: 'reminders' as const, label: 'Inbox', icon: Bell, badge: reminders.reminders.length },
+                { id: 'docs' as const, label: 'Documents', icon: BookOpen },
+                { id: 'feedback' as const, label: 'Feedback', icon: MessageSquarePlus },
+                { id: 'profile' as const, label: 'Profile', icon: User },
+              ].map(item => (
+                <button key={item.id} onClick={() => setMoreView(item.id)} className="min-h-24 rounded-md border border-border bg-card p-4 text-left flex flex-col justify-between">
+                  <div className="flex items-center justify-between"><item.icon className="w-5 h-5 text-primary" />{item.badge ? <span className="rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold px-2 py-0.5">{item.badge}</span> : null}</div>
+                  <span className="text-sm font-semibold text-foreground flex items-center justify-between">{item.label}<ChevronRight className="w-4 h-4 text-muted-foreground" /></span>
+                </button>
+              ))}
+              <Button variant="outline" className="col-span-2 h-12" onClick={() => toggleTechnicianMode(true)}><HardHat className="w-4 h-4 mr-2" />Field mode</Button>
+              <Button variant="ghost" className="col-span-2 h-12 text-destructive" onClick={signOut}><LogOut className="w-4 h-4 mr-2" />Sign out</Button>
+            </div>
+          )}
+          {moreView !== 'menu' && (
+            <div className="min-h-full flex flex-col">
+              <div className="shrink-0 border-b border-border p-3"><Button variant="ghost" size="sm" onClick={() => setMoreView('menu')}>← More</Button></div>
+              <div className="flex-1 overflow-auto">
+                {moreView === 'schedule' && <InstallerSchedule projects={myProjects} installer={installer} onSelectProject={project => openProjectWorkflow(project, 'info')} />}
+                {moreView === 'orderbox' && <div className="p-4"><InstallerOrderBox projects={localProjects} onPickUp={handlePickUp} onViewDetail={project => handleViewOrderDetail(project)} /></div>}
+                {moreView === 'reminders' && <RemindersInbox state={reminders} />}
+                {moreView === 'docs' && <InstallerDocuments />}
+                {moreView === 'feedback' && <FeedbackModule view="installer" compact />}
+                {moreView === 'profile' && <InstallerProfile installer={installer} projectCount={myProjects.length} />}
+              </div>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
 

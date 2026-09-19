@@ -1,4 +1,4 @@
-import { ArrowLeft, MapPin, Clock, Users, FileText, Phone, Camera, CheckSquare, ExternalLink, Info, Paperclip, ClipboardCheck, Mail, Receipt, AlertCircle, Check, X } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Users, FileText, Phone, Camera, CheckSquare, ExternalLink, Info, Paperclip, ClipboardCheck, Mail, Receipt, AlertCircle, AlertTriangle, Check, X } from 'lucide-react';
 import { type Project, type Installer, projectTypeIcons, projectTypeLabels, statusLabels, installers } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 import { useClients } from '@/lib/appData';
@@ -136,7 +136,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
       )}
 
       {/* Tabbed content */}
-      <Tabs value={tab} onValueChange={setTab} className="flex-1 flex flex-col overflow-hidden">
+      <Tabs value={tab} onValueChange={value => setTab(value as typeof tab)} className="flex-1 flex flex-col overflow-hidden">
         <TabsList className="shrink-0 w-full rounded-none border-b border-border bg-card h-10 p-0 justify-start gap-0">
           <TabsTrigger value="info" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-[11px] h-full gap-1">
             <Info className="w-3 h-3" />

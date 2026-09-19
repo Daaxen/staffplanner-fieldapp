@@ -2,8 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Navigate, useParams } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import InstallerApp from "./pages/InstallerApp";
 import CustomerPortal from "./pages/CustomerPortal";
@@ -17,12 +16,6 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { legacyViewPaths } from "@/lib/navigation";
 
 const queryClient = new QueryClient();
-
-const LegacyViewRedirect = () => {
-  const { legacyView } = useParams<{ legacyView: string }>();
-  const destination = legacyView ? legacyViewPaths[`/${legacyView}`] : undefined;
-  return <Navigate to={destination ?? "/"} replace />;
-};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -40,7 +33,9 @@ const App = () => (
             <Route path="/app/:view" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/portal" element={<ProtectedRoute><CustomerPortal /></ProtectedRoute>} />
             <Route path="/installer" element={<ProtectedRoute><InstallerApp /></ProtectedRoute>} />
-            <Route path="/:legacyView" element={<ProtectedRoute><LegacyViewRedirect /></ProtectedRoute>} />
+            {Object.entries(legacyViewPaths).map(([legacyPath, destination]) => (
+              <Route key={legacyPath} path={legacyPath} element={<ProtectedRoute><Navigate to={destination} replace /></ProtectedRoute>} />
+            ))}
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
