@@ -42,21 +42,73 @@ async function loadClients() {
   // Admins can read the clients table directly. Installers are blocked by RLS
   // and instead get a restricted set (no rates, VAT, invoicing or internal
   // references) for the clients behind orders assigned to them.
-  const { data, error } = await supabase.from('clients').select('ref,data,name').order('name');
+  //
+  // Business-critical fields live in typed columns; the `data` JSON is kept as
+  // a compatibility snapshot and read as a fallback for older rows.
+  const { data, error } = await supabase
+    .from('clients')
+    .select(
+      'ref,name,data,customer_number,street,postal_code,region,' +
+        'contact_name,contact_role,contact_phone,contact_email,' +
+        'hourly_rate,overtime_rate,mileage_rate,vat_percent,' +
+        'billing_name,billing_street,billing_postal_code,billing_city,billing_country,' +
+        'vat_number,org_number,invoice_email,payment_terms_days,invoice_reference',
+    )
+    .order('name');
   if (error) throw error;
-  let rows = (data ?? []) as { ref: string | null; data: unknown; name: string }[];
+  let rows = (data ?? []) as Record<string, unknown>[];
   if (rows.length === 0) {
     const { data: safe } = await supabase.rpc('assigned_clients');
-    rows = ((safe ?? []) as { ref: string | null; data: unknown; name: string }[]);
+    rows = (safe ?? []) as Record<string, unknown>[];
   }
   replace(
     clientRegister,
     rows.map((r) => {
-      const d = (r.data ?? {}) as Partial<Client>;
-      return { ...d, id: d.id ?? r.ref ?? '', name: d.name ?? r.name } as Client;
+      const d = parseClientMetadata(r.data) as Partial<Client>;
+      const col = <T,>(key: string, fallback: T | undefined): T | undefined =>
+        (r[key] ?? undefined) !== undefined ? (r[key] as T) : fallback;
+
+      const mainContact = {
+        name: col('contact_name', d.mainContact?.name),
+        role: col('contact_role', d.mainContact?.role),
+        phone: col('contact_phone', d.mainContact?.phone),
+        email: col('contact_email', d.mainContact?.email),
+      };
+      const invoicing = {
+        billingName: col('billing_name', d.invoicing?.billingName),
+        billingStreet: col('billing_street', d.invoicing?.billingStreet),
+        billingPostalCode: col('billing_postal_code', d.invoicing?.billingPostalCode),
+        billingCity: col('billing_city', d.invoicing?.billingCity),
+        billingCountry: col('billing_country', d.invoicing?.billingCountry),
+        vatNumber: col('vat_number', d.invoicing?.vatNumber),
+        orgNumber: col('org_number', d.invoicing?.orgNumber),
+        invoiceEmail: col('invoice_email', d.invoicing?.invoiceEmail),
+        paymentTermsDays: col('payment_terms_days', d.invoicing?.paymentTermsDays),
+        reference: col('invoice_reference', d.invoicing?.reference),
+      };
+      const rates = {
+        hourlyRate: col('hourly_rate', d.rates?.hourlyRate),
+        overtimeRate: col('overtime_rate', d.rates?.overtimeRate),
+        mileageRate: col('mileage_rate', d.rates?.mileageRate),
+        vatPercent: col('vat_percent', d.rates?.vatPercent),
+      };
+
+      return {
+        ...d,
+        id: d.id ?? (r.ref as string) ?? '',
+        name: (r.name as string) ?? d.name,
+        customerNumber: col('customer_number', d.customerNumber),
+        street: col('street', d.street),
+        postalCode: col('postal_code', d.postalCode),
+        region: col('region', d.region),
+        mainContact,
+        invoicing,
+        rates,
+      } as Client;
     }),
   );
 }
+
 
 async function loadInstallers() {
   const { data, error } = await supabase
