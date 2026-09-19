@@ -64,6 +64,31 @@ const UsersManager = () => {
   const [edit, setEdit] = useState<Row | null>(null);
   const [editForm, setEditForm] = useState<EditForm>(emptyForm());
   const [expanded, setExpanded] = useState<string | null>(null);
+  const { isHr } = useHrAccess();
+  const [priv, setPriv] = useState<EmployeePrivate>(emptyEmployeePrivate());
+  const [privOpen, setPrivOpen] = useState(false);
+  const [privBusy, setPrivBusy] = useState(false);
+  const [privReason, setPrivReason] = useState('');
+  const setPrivate = (k: keyof EmployeePrivate, v: string) =>
+    setPriv(prev => ({ ...prev, [k]: v === '' ? null : v }));
+
+  const revealPrivate = async (r: Row) => {
+    setPrivBusy(true);
+    const { data, error } = await loadEmployeePrivate(r.id, privReason || 'Personnel administration');
+    setPrivBusy(false);
+    if (error) return toast.error(error);
+    setPriv(data ?? emptyEmployeePrivate());
+    setPrivOpen(true);
+  };
+
+  const savePrivate = async () => {
+    if (!edit) return;
+    setPrivBusy(true);
+    const { error } = await saveEmployeePrivate(edit.id, priv, privReason || 'Personnel administration');
+    setPrivBusy(false);
+    if (error) return toast.error(error);
+    toast.success('Confidential details saved');
+  };
 
   const load = async () => {
     setLoading(true);
