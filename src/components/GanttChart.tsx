@@ -255,13 +255,23 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
           {/* Gantt mode toggle */}
           <div className="flex bg-secondary rounded-lg p-1">
             <button
+              onClick={() => setGanttMode('workorders')}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all",
+                ganttMode === 'workorders' ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <LayoutList className="w-3.5 h-3.5" />
+              Work Orders
+            </button>
+            <button
               onClick={() => setGanttMode('projects')}
               className={cn(
                 "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all",
                 ganttMode === 'projects' ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <LayoutList className="w-3.5 h-3.5" />
+              <Folder className="w-3.5 h-3.5" />
               Projects
             </button>
             <button
