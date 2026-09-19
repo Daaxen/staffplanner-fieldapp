@@ -7,6 +7,8 @@ import { z } from 'zod';
  */
 
 export const MAX_ENTRY_HOURS = 16;
+export const MAX_TRAVEL_HOURS = 12;
+export const MAX_TOTAL_HOURS = 20;
 export const MAX_ENTRY_KM = 2000;
 
 export type ExpenseRule = {
