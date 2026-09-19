@@ -55,14 +55,16 @@ const OrdersRegister = () => {
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [showFilters, setShowFilters] = useState(true);
-  const [massDialog, setMassDialog] = useState<null | 'status' | 'assignee' | 'delete'>(null);
+  const [massDialog, setMassDialog] = useState<null | 'status' | 'assignee' | 'delete' | 'group'>(null);
+  const [massGroup, setMassGroup] = useState<string>('');
+  const { groups: projectGroups } = useProjectGroups();
   const [massStep, setMassStep] = useState<'configure' | 'preview'>('configure');
   const [massStatus, setMassStatus] = useState<ProjectStatus>('scheduled');
   const [massAssignee, setMassAssignee] = useState<string>('');
   const [massOverrideReason, setMassOverrideReason] = useState('');
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
-  const openMassDialog = (kind: 'status' | 'assignee' | 'delete') => {
+  const openMassDialog = (kind: 'status' | 'assignee' | 'delete' | 'group') => {
     setMassStep('configure');
     setDeleteConfirmText('');
     setMassDialog(kind);
@@ -71,6 +73,7 @@ const OrdersRegister = () => {
     setMassDialog(null);
     setMassStep('configure');
     setMassAssignee('');
+    setMassGroup('');
     setMassOverrideReason('');
     setDeleteConfirmText('');
   };
