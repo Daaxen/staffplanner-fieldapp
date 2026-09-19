@@ -56,8 +56,9 @@ type DocRow = {
 const OPEN_STATUSES = ['open', 'scheduled', 'in-progress', 'on-hold'];
 const QUOTE_STATUSES = ['open', 'scheduled'];
 
-const belongsToClient = (p: Project, c: Client) =>
-  (c.id && p.clientId === c.id) || (!!c.name && p.client === c.name);
+// Linked customer wins; the stored name is only a historical snapshot and is
+// used as a fallback for orders created before the link existed.
+const belongsToClient = (p: Project, c: Client) => projectBelongsToClient(p, c);
 
 const Stat = ({ label, value, tone }: { label: string; value: string; tone?: string }) => (
   <div className="rounded-xl border border-border bg-card p-4">
