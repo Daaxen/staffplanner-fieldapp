@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import InstallerApp from "./pages/InstallerApp";
+import CustomerPortal from "./pages/CustomerPortal";
 import Auth from "./pages/Auth";
 import OAuthConsent from "./pages/OAuthConsent";
 import Privacy from "./pages/Privacy";
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/portal" element={<ProtectedRoute><CustomerPortal /></ProtectedRoute>} />
             <Route path="/installer" element={<ProtectedRoute><InstallerApp /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
