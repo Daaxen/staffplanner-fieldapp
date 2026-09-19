@@ -321,6 +321,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
       id: projectId,
       name,
       projectNumber: projectNumber || undefined,
+      projectGroupId: projectGroupId || undefined,
       projectType,
       templateId,
       clientId: clientRef,
@@ -462,7 +463,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
       <DialogContent className="sm:max-w-[540px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <DialogTitle className="text-lg font-semibold">New Project</DialogTitle>
+            <DialogTitle className="text-lg font-semibold">Create work order</DialogTitle>
             <span className="text-xs font-mono px-2 py-0.5 rounded bg-muted text-muted-foreground">{projectId}</span>
           </div>
         </DialogHeader>
