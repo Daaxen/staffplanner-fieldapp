@@ -434,9 +434,13 @@ function diffAndPersist<T extends { id: string }>(
   Promise.all(tasks).catch((e) => {
     console.error('Failed to save changes', e);
     const message = e instanceof Error ? e.message : String(e);
-    toast.error(message.includes('Status cannot go from')
-      ? message.replace('Status cannot go from', 'That status step is not allowed:')
-      : `Could not save changes: ${message}`);
+    toast.error(
+      message.includes('Commercial status cannot go from')
+        ? message.replace('Commercial status cannot go from', 'That commercial step is not allowed:')
+        : message.includes('Status cannot go from')
+          ? message.replace('Status cannot go from', 'That status step is not allowed:')
+          : `Could not save changes: ${message}`,
+    );
   });
 
 }
