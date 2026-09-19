@@ -13,6 +13,8 @@ import { useProjects } from '@/lib/appData';
 import { useProfitabilityData } from '@/hooks/useProfitabilityData';
 import { useFieldReportStates } from '@/hooks/useFieldReportStates';
 import { useOpenDeviations } from '@/hooks/useOpenDeviations';
+import { useProjectReceipts } from '@/hooks/useProjectReceipts';
+import ReceiptList from '@/components/admin/ReceiptList';
 import { emptyInput, sek } from '@/lib/profitability';
 import {
   buildInvoiceSuggestion, loadInvoiceSettings, saveInvoiceSettings, scoreLevel, scoreColor,
@@ -44,6 +46,7 @@ const InvoicePrepView = () => {
   const { inputs, loading, reload } = useProfitabilityData();
   const { reports, reload: reloadReports } = useFieldReportStates();
   const { counts, reload: reloadDeviations } = useOpenDeviations();
+  const { receipts, reload: reloadReceipts } = useProjectReceipts();
 
   const [settings, setSettings] = useState<InvoiceSettings>(loadInvoiceSettings);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -309,6 +312,8 @@ const InvoicePrepView = () => {
                   </ul>
                 )}
               </div>
+
+              <ReceiptList receipts={receipts[selected.project.id] ?? []} />
 
               <DialogFooter className="gap-2">
                 <Button
