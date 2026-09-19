@@ -12,6 +12,10 @@ import { ScrollText, RefreshCw } from 'lucide-react';
 interface AuditRow {
   id: string;
   actor_id: string | null;
+  actor_type: 'user' | 'admin' | 'service' | 'system' | 'cron' | 'migration';
+  actor_name: string | null;
+  source: string | null;
+  correlation_id: string | null;
   entity_type: string;
   entity_id: string;
   entity_label: string | null;
@@ -21,6 +25,15 @@ interface AuditRow {
   reason: string | null;
   created_at: string;
 }
+
+const ACTOR_TYPE_LABELS: Record<string, string> = {
+  user: 'Användare',
+  admin: 'Administratör',
+  service: 'Tjänst',
+  system: 'System',
+  cron: 'Schemalagt jobb',
+  migration: 'Migrering',
+};
 
 /** Svenska etiketter för typ av post. */
 const ENTITY_LABELS: Record<string, string> = {
