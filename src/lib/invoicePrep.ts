@@ -36,6 +36,7 @@ export interface InvoiceSettings {
   penaltyOpenDeviation: number;
   penaltyNoHours: number;
   penaltyLowMargin: number;
+  penaltyNegativeMargin: number;
   /** Minimum score before an order counts as ready to invoice. */
   readyThreshold: number;
 }
@@ -56,6 +57,7 @@ export const DEFAULT_INVOICE_SETTINGS: InvoiceSettings = {
   penaltyOpenDeviation: 20,
   penaltyNoHours: 30,
   penaltyLowMargin: 10,
+  penaltyNegativeMargin: 40,
   readyThreshold: 80,
 };
 
@@ -83,7 +85,7 @@ export interface InvoiceLine {
 }
 
 export interface InvoiceWarning {
-  code: 'missing-report' | 'missing-sign-off' | 'open-deviation' | 'no-hours' | 'low-margin';
+  code: 'missing-report' | 'missing-sign-off' | 'open-deviation' | 'no-hours' | 'low-margin' | 'negative-margin';
   label: string;
   penalty: number;
 }
@@ -96,6 +98,8 @@ export interface InvoiceSuggestion {
   internalCost: number;
   externalCost: number;
   mileageCost: number;
+  materialCost: number;
+  travelCost: number;
   expenseCost: number;
   totalCost: number;
   margin: number;
@@ -160,6 +164,8 @@ export function buildInvoiceSuggestion(
     input.externalHours * (eco.externalHourlyCost ?? settings.externalHourlyCost) + (eco.externalCostExtra ?? 0),
   );
   const mileageCost = round(input.mileageCost + (eco.travelCostExtra ?? 0));
+  const materialCost = round(input.materialExpenses + (eco.materialCostExtra ?? 0));
+  const travelCost = round(input.travelExpenses + mileageCost);
   const expenseCost = round(
     input.materialExpenses + input.travelExpenses + input.otherExpenses + (eco.materialCostExtra ?? 0),
   );
@@ -185,7 +191,13 @@ export function buildInvoiceSuggestion(
   if (hours === 0 && fixedPrice === 0) {
     warnings.push({ code: 'no-hours', label: 'No hours reported and no fixed price', penalty: settings.penaltyNoHours });
   }
-  if (revenue > 0 && marginPct < targetMargin) {
+  if (margin < 0) {
+    warnings.push({
+      code: 'negative-margin',
+      label: 'Negative margin — the order costs more than it brings in',
+      penalty: settings.penaltyNegativeMargin,
+    });
+  } else if (revenue > 0 && marginPct < targetMargin) {
     warnings.push({
       code: 'low-margin',
       label: `Margin ${marginPct.toFixed(1)} % is below the ${targetMargin} % target`,
@@ -203,6 +215,8 @@ export function buildInvoiceSuggestion(
     internalCost,
     externalCost,
     mileageCost,
+    materialCost,
+    travelCost,
     expenseCost,
     totalCost,
     margin,
