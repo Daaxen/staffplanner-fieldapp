@@ -47,6 +47,12 @@ const ENTITY_LABELS: Record<string, string> = {
   project_economy: 'Orderekonomi',
   installer: 'Personal',
   user_role: 'Behörighet',
+  deviation: 'Avvikelse',
+  field_report: 'Fältrapport',
+  document: 'Dokument',
+  absence: 'Frånvaro',
+  expense_rule: 'Utläggsregel',
+  status_transition: 'Statussteg',
 };
 
 const ACTION_LABELS: Record<string, string> = {
@@ -107,6 +113,26 @@ const FIELD_LABELS: Record<string, string> = {
   travel_cost_extra: 'Extra resekostnad',
   external_budget: 'Budget underleverantör',
   target_margin_pct: 'Målmarginal (%)',
+  submitted_at: 'Inskickad',
+  report_text: 'Rapporttext',
+  checked_items: 'Checklista',
+  sign_offs: 'Signeringar',
+  photo_meta: 'Bildinformation',
+  photo_paths: 'Bilder',
+  severity: 'Allvarlighet',
+  resolved_at: 'Löst',
+  resolution_note: 'Lösningsanteckning',
+  description: 'Beskrivning',
+  scope: 'Dokumenttyp',
+  visible_to_installers: 'Publicerad till montörer',
+  is_sensitive: 'Känsligt dokument',
+  title: 'Titel',
+  label: 'Beteckning',
+  requires_receipt: 'Kvitto krävs',
+  receipt_threshold: 'Kvittogräns',
+  max_amount: 'Maxbelopp',
+  from_status: 'Från status',
+  to_status: 'Till status',
 };
 
 const fieldLabel = (key: string) => FIELD_LABELS[key] ?? key;

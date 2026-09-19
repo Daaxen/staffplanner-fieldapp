@@ -1053,8 +1053,9 @@ export type Database = {
       }
       project_status_events: {
         Row: {
-          changed_by: string
+          changed_by: string | null
           changed_by_name: string | null
+          changed_by_type: string
           created_at: string
           from_status: string | null
           id: string
@@ -1065,8 +1066,9 @@ export type Database = {
           to_status: string
         }
         Insert: {
-          changed_by: string
+          changed_by?: string | null
           changed_by_name?: string | null
+          changed_by_type?: string
           created_at?: string
           from_status?: string | null
           id?: string
@@ -1077,8 +1079,9 @@ export type Database = {
           to_status: string
         }
         Update: {
-          changed_by?: string
+          changed_by?: string | null
           changed_by_name?: string | null
+          changed_by_type?: string
           created_at?: string
           from_status?: string | null
           id?: string
