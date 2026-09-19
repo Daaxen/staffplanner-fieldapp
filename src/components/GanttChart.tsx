@@ -21,7 +21,7 @@ interface DispatchChange {
 }
 
 type ViewMode = 'day' | 'week' | 'month';
-type GanttMode = 'projects' | 'installers' | 'clients';
+type GanttMode = 'workorders' | 'projects' | 'installers' | 'clients';
 
 const allStatuses: ProjectStatus[] = ['open', 'scheduled', 'in-progress', 'completed', 'on-hold', 'cancelled'];
 
@@ -39,7 +39,7 @@ interface GanttChartProps {
 
 const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
   const [viewMode, setViewMode] = useState<ViewMode>('week');
-  const [ganttMode, setGanttMode] = useState<GanttMode>('projects');
+  const [ganttMode, setGanttMode] = useState<GanttMode>('workorders');
   const [dateOffset, setDateOffset] = useState(0);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [projectsList, setProjectsList] = useProjects();
