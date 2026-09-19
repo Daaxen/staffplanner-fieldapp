@@ -361,6 +361,8 @@ async function upsertProjectRow(p: Project) {
         project_number: p.projectNumber || null,
         template_id: p.templateId || null,
         client_ref: p.clientId || null,
+        // the real relation; the name below is only a historical snapshot
+        client_id: clientRowIdByRef.get(p.clientId ?? '') ?? null,
         client_name: p.client || null,
         street: p.street || null,
         postal_code: p.postalCode || null,
