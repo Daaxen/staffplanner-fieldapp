@@ -221,6 +221,26 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
     setSelectedProject(prev => prev?.id === projectId ? { ...prev, ...updates } : prev);
   }, [trackChange]);
 
+  /** Dispatch a single, already-created work order to its assigned installers. */
+  const handleDispatchProject = useCallback((project: Project) => {
+    if (project.assigneeIds.length === 0) {
+      toast.error('Assign an installer to this work order before dispatching');
+      return;
+    }
+    const names = project.assigneeIds
+      .map(id => installers.find(i => i.id === id)?.name)
+      .filter(Boolean) as string[];
+
+    if (project.status === 'open') {
+      handleUpdateProject(project.id, { status: 'scheduled' as ProjectStatus });
+    }
+
+    names.forEach(name => {
+      toast.success(`📩 ${name}`, { description: `Work order ${project.name}`, duration: 5000 });
+    });
+    setPendingChanges(prev => prev.filter(c => c.projectId !== project.id));
+  }, [handleUpdateProject]);
+
   const handleToggleStatus = useCallback((status: ProjectStatus) => {
     setActiveStatuses(prev => {
       const next = new Set(prev);
@@ -429,6 +449,7 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
           installer={getInstaller(selectedProject.assigneeIds[0] ?? null)}
           onClose={() => setSelectedProject(null)}
           onEdit={(p) => { setEditProject(p); setEditDialogOpen(true); }}
+          onDispatch={handleDispatchProject}
         />
       )}
       <EditWorkOrderDialog

@@ -29,9 +29,10 @@ interface Props {
   installer: Installer | null;
   onClose: () => void;
   onEdit?: (project: Project) => void;
+  onDispatch?: (project: Project) => void;
 }
 
-const ProjectDetailPanel = ({ project, installer, onClose, onEdit }: Props) => {
+const ProjectDetailPanel = ({ project, installer, onClose, onEdit, onDispatch }: Props) => {
   const assignees = project.assigneeIds.map(id => installers.find(i => i.id === id)).filter(Boolean) as Installer[];
   const formatDate = (d: string) => new Date(d).toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' });
 
@@ -157,8 +158,11 @@ const ProjectDetailPanel = ({ project, installer, onClose, onEdit }: Props) => {
 
           {/* Action buttons */}
           <div className="space-y-2 pt-4 border-t border-border">
-            <button className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">
-              Dispatch Order
+            <button
+              onClick={() => onDispatch?.(project)}
+              className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+            >
+              Dispatch work order
             </button>
             <button
               onClick={() => onEdit?.(project)}
