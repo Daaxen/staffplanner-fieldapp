@@ -8,9 +8,13 @@ import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Trash2, UserPlus, Shield, User as UserIcon, Copy, Pencil, KeyRound, Mail, ChevronDown, ChevronRight } from 'lucide-react';
+import { Trash2, UserPlus, Shield, User as UserIcon, Copy, Pencil, KeyRound, Mail, ChevronDown, ChevronRight, Lock, BriefcaseMedical } from 'lucide-react';
+import {
+  EmployeePrivate, emptyEmployeePrivate,
+  loadEmployeePrivate, saveEmployeePrivate, useHrAccess,
+} from '@/lib/employeePrivate';
 
-type Role = 'admin' | 'installer';
+type Role = 'admin' | 'installer' | 'hr';
 
 interface Row {
   id: string;
@@ -22,29 +26,15 @@ interface Row {
   postal_code: string | null;
   city: string | null;
   country: string | null;
-  date_of_birth: string | null;
-  emergency_contact_name: string | null;
-  emergency_contact_phone: string | null;
-  emergency_contact_relation: string | null;
-  emergency_contact2_name: string | null;
-  emergency_contact2_phone: string | null;
   job_title: string | null;
   employment_type: string | null;
-  employment_start_date: string | null;
-  drivers_license: string | null;
-  medical_notes: string | null;
-  clothing_size: string | null;
-  shoe_size: string | null;
   roles: Role[];
   pending?: boolean;
 }
 
 const EDITABLE = [
-  'full_name', 'phone', 'address', 'postal_code', 'city', 'country', 'date_of_birth',
-  'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relation',
-  'emergency_contact2_name', 'emergency_contact2_phone',
-  'job_title', 'employment_type', 'employment_start_date', 'drivers_license',
-  'medical_notes', 'clothing_size', 'shoe_size',
+  'full_name', 'phone', 'address', 'postal_code', 'city', 'country',
+  'job_title', 'employment_type',
 ] as const;
 
 type EditForm = Record<(typeof EDITABLE)[number], string> & { email: string };
@@ -74,6 +64,31 @@ const UsersManager = () => {
   const [edit, setEdit] = useState<Row | null>(null);
   const [editForm, setEditForm] = useState<EditForm>(emptyForm());
   const [expanded, setExpanded] = useState<string | null>(null);
+  const { isHr } = useHrAccess();
+  const [priv, setPriv] = useState<EmployeePrivate>(emptyEmployeePrivate());
+  const [privOpen, setPrivOpen] = useState(false);
+  const [privBusy, setPrivBusy] = useState(false);
+  const [privReason, setPrivReason] = useState('');
+  const setPrivate = (k: keyof EmployeePrivate, v: string) =>
+    setPriv(prev => ({ ...prev, [k]: v === '' ? null : v }));
+
+  const revealPrivate = async (r: Row) => {
+    setPrivBusy(true);
+    const { data, error } = await loadEmployeePrivate(r.id, privReason || 'Personnel administration');
+    setPrivBusy(false);
+    if (error) return toast.error(error);
+    setPriv(data ?? emptyEmployeePrivate());
+    setPrivOpen(true);
+  };
+
+  const savePrivate = async () => {
+    if (!edit) return;
+    setPrivBusy(true);
+    const { error } = await saveEmployeePrivate(edit.id, priv, privReason || 'Personnel administration');
+    setPrivBusy(false);
+    if (error) return toast.error(error);
+    toast.success('Confidential details saved');
+  };
 
   const load = async () => {
     setLoading(true);
@@ -238,6 +253,9 @@ const UsersManager = () => {
                   <Button size="sm" variant={r.roles.includes('installer') ? 'default' : 'outline'} onClick={() => toggleRole(r.id, 'installer', r.roles.includes('installer'))}>
                     <UserIcon className="w-3 h-3 mr-1" />Installer
                   </Button>
+                  <Button size="sm" variant={r.roles.includes('hr') ? 'default' : 'outline'} title="May see confidential personnel data" onClick={() => toggleRole(r.id, 'hr', r.roles.includes('hr'))}>
+                    <Lock className="w-3 h-3 mr-1" />HR
+                  </Button>
                 </div>
                 <div className="flex gap-1">
                   <Button size="icon" variant="ghost" title="Edit user" onClick={() => openEdit(r)}><Pencil className="w-4 h-4" /></Button>
@@ -250,16 +268,12 @@ const UsersManager = () => {
               {expanded === r.id && (
                 <div className="px-6 pb-5 grid grid-cols-2 md:grid-cols-4 gap-4 bg-muted/30">
                   <Field label="Home address" value={[r.address, r.postal_code, r.city, r.country].filter(Boolean).join(', ')} />
-                  <Field label="Date of birth" value={r.date_of_birth} />
-                  <Field label="Employment" value={[r.employment_type, r.employment_start_date].filter(Boolean).join(' · ')} />
-                  <Field label="Driver's licence" value={r.drivers_license} />
-                  <Field label="Emergency contact" value={[r.emergency_contact_name, r.emergency_contact_relation].filter(Boolean).join(' · ')} />
-                  <Field label="Emergency phone" value={r.emergency_contact_phone} />
-                  <Field label="Second contact" value={r.emergency_contact2_name} />
-                  <Field label="Second phone" value={r.emergency_contact2_phone} />
-                  <Field label="Medical notes" value={r.medical_notes} />
-                  <Field label="Clothing size" value={r.clothing_size} />
-                  <Field label="Shoe size" value={r.shoe_size} />
+                  <Field label="Job title" value={r.job_title} />
+                  <Field label="Employment type" value={r.employment_type} />
+                  <Field label="Roles" value={r.roles.join(', ')} />
+                  <p className="col-span-2 md:col-span-4 text-xs text-muted-foreground flex items-center gap-1">
+                    <Lock className="w-3 h-3" /> Date of birth, emergency contacts, medical notes, sizes and employment dates are confidential and only available to HR.
+                  </p>
                 </div>
               )}
             </div>
@@ -268,7 +282,7 @@ const UsersManager = () => {
         </div>
       )}
 
-      <Dialog open={!!edit} onOpenChange={(o) => !o && setEdit(null)}>
+      <Dialog open={!!edit} onOpenChange={(o) => { if (!o) { setEdit(null); setPrivOpen(false); setPriv(emptyEmployeePrivate()); setPrivReason(''); } }}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Edit user</DialogTitle></DialogHeader>
           <div className="space-y-5">
@@ -276,7 +290,6 @@ const UsersManager = () => {
               <div className="space-y-1"><Label>Email</Label><Input type="email" value={editForm.email} onChange={e => set('email', e.target.value)} /></div>
               <div className="space-y-1"><Label>Full name</Label><Input value={editForm.full_name} onChange={e => set('full_name', e.target.value)} /></div>
               <div className="space-y-1"><Label>Phone</Label><Input value={editForm.phone} onChange={e => set('phone', e.target.value)} /></div>
-              <div className="space-y-1"><Label>Date of birth</Label><Input type="date" value={editForm.date_of_birth} onChange={e => set('date_of_birth', e.target.value)} /></div>
             </div>
 
             <div>
@@ -286,18 +299,6 @@ const UsersManager = () => {
                 <div className="space-y-1"><Label>Postal code</Label><Input value={editForm.postal_code} onChange={e => set('postal_code', e.target.value)} /></div>
                 <div className="space-y-1"><Label>City</Label><Input value={editForm.city} onChange={e => set('city', e.target.value)} /></div>
                 <div className="space-y-1"><Label>Country</Label><Input value={editForm.country} onChange={e => set('country', e.target.value)} /></div>
-              </div>
-            </div>
-
-            <div>
-              <p className="text-sm font-semibold mb-2">Emergency information</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="space-y-1"><Label>Contact name</Label><Input value={editForm.emergency_contact_name} onChange={e => set('emergency_contact_name', e.target.value)} /></div>
-                <div className="space-y-1"><Label>Contact phone</Label><Input value={editForm.emergency_contact_phone} onChange={e => set('emergency_contact_phone', e.target.value)} /></div>
-                <div className="space-y-1"><Label>Relation</Label><Input value={editForm.emergency_contact_relation} onChange={e => set('emergency_contact_relation', e.target.value)} /></div>
-                <div className="space-y-1"><Label>Medical notes / allergies</Label><Input value={editForm.medical_notes} onChange={e => set('medical_notes', e.target.value)} /></div>
-                <div className="space-y-1"><Label>Second contact name</Label><Input value={editForm.emergency_contact2_name} onChange={e => set('emergency_contact2_name', e.target.value)} /></div>
-                <div className="space-y-1"><Label>Second contact phone</Label><Input value={editForm.emergency_contact2_phone} onChange={e => set('emergency_contact2_phone', e.target.value)} /></div>
               </div>
             </div>
 
@@ -317,11 +318,50 @@ const UsersManager = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-1"><Label>Start date</Label><Input type="date" value={editForm.employment_start_date} onChange={e => set('employment_start_date', e.target.value)} /></div>
-                <div className="space-y-1"><Label>Driver's licence</Label><Input value={editForm.drivers_license} onChange={e => set('drivers_license', e.target.value)} /></div>
-                <div className="space-y-1"><Label>Clothing size</Label><Input value={editForm.clothing_size} onChange={e => set('clothing_size', e.target.value)} /></div>
-                <div className="space-y-1"><Label>Shoe size</Label><Input value={editForm.shoe_size} onChange={e => set('shoe_size', e.target.value)} /></div>
               </div>
+            </div>
+
+            <div className="rounded-lg border p-4 space-y-3">
+              <p className="text-sm font-semibold flex items-center gap-2">
+                <Lock className="w-4 h-4" /> Confidential personal details
+              </p>
+              {!isHr ? (
+                <p className="text-xs text-muted-foreground">
+                  Date of birth, emergency contacts, medical notes, sizes and employment dates are stored separately and
+                  can only be opened by someone with the HR role. Every access is logged.
+                </p>
+              ) : !privOpen ? (
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">Opening these details is recorded in the access log.</p>
+                  <Input placeholder="Reason for access (optional)" value={privReason} onChange={e => setPrivReason(e.target.value)} />
+                  <Button variant="outline" size="sm" disabled={privBusy} onClick={() => edit && revealPrivate(edit)}>
+                    <BriefcaseMedical className="w-4 h-4 mr-2" />{privBusy ? 'Opening…' : 'Show confidential details'}
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1"><Label>Date of birth</Label><Input type="date" value={priv.date_of_birth ?? ''} onChange={e => setPrivate('date_of_birth', e.target.value)} /></div>
+                    <div className="space-y-1"><Label>Driver's licence</Label><Input value={priv.drivers_license ?? ''} onChange={e => setPrivate('drivers_license', e.target.value)} /></div>
+                    <div className="space-y-1"><Label>Employment start date</Label><Input type="date" value={priv.employment_start_date ?? ''} onChange={e => setPrivate('employment_start_date', e.target.value)} /></div>
+                    <div className="space-y-1"><Label>Employment end date</Label><Input type="date" value={priv.employment_end_date ?? ''} onChange={e => setPrivate('employment_end_date', e.target.value)} /></div>
+                    <div className="space-y-1"><Label>Emergency contact name</Label><Input value={priv.emergency_contact_name ?? ''} onChange={e => setPrivate('emergency_contact_name', e.target.value)} /></div>
+                    <div className="space-y-1"><Label>Emergency contact phone</Label><Input value={priv.emergency_contact_phone ?? ''} onChange={e => setPrivate('emergency_contact_phone', e.target.value)} /></div>
+                    <div className="space-y-1"><Label>Relation</Label><Input value={priv.emergency_contact_relation ?? ''} onChange={e => setPrivate('emergency_contact_relation', e.target.value)} /></div>
+                    <div className="space-y-1"><Label>Medical notes / allergies</Label><Input value={priv.medical_notes ?? ''} onChange={e => setPrivate('medical_notes', e.target.value)} /></div>
+                    <div className="space-y-1"><Label>Second contact name</Label><Input value={priv.emergency_contact2_name ?? ''} onChange={e => setPrivate('emergency_contact2_name', e.target.value)} /></div>
+                    <div className="space-y-1"><Label>Second contact phone</Label><Input value={priv.emergency_contact2_phone ?? ''} onChange={e => setPrivate('emergency_contact2_phone', e.target.value)} /></div>
+                    <div className="space-y-1"><Label>Clothing size</Label><Input value={priv.clothing_size ?? ''} onChange={e => setPrivate('clothing_size', e.target.value)} /></div>
+                    <div className="space-y-1"><Label>Shoe size</Label><Input value={priv.shoe_size ?? ''} onChange={e => setPrivate('shoe_size', e.target.value)} /></div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Kept while employed and for 24 months after the employment end date, then deleted automatically.
+                  </p>
+                  <Button size="sm" onClick={savePrivate} disabled={privBusy}>
+                    {privBusy ? 'Saving…' : 'Save confidential details'}
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter className="gap-2">
