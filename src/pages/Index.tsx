@@ -71,9 +71,14 @@ const Index = () => {
     }
   }, [navigate, pendingNavTarget]);
 
+  const isMobileDevice = useMemo(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches,
+    [],
+  );
+
   useEffect(() => {
-    if (!view && (isAdmin || isHr)) navigate(canonicalViewPath(defaultView), { replace: true });
-  }, [defaultView, isAdmin, isHr, navigate, view]);
+    if (!view && (isAdmin || isHr) && !isMobileDevice) navigate(canonicalViewPath(defaultView), { replace: true });
+  }, [defaultView, isAdmin, isHr, navigate, view, isMobileDevice]);
 
   if (isInstaller && !isAdmin && !isHr) return <Navigate to="/installer" replace />;
   if (!allowedView && view) return <Navigate to={canonicalViewPath(defaultView)} replace />;
