@@ -243,6 +243,12 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
     setPendingChanges(prev => prev.filter(c => c.projectId !== project.id));
   }, [handleUpdateProject, projectsList]);
 
+  /** The open order panel follows the live list, so assignments never look stale. */
+  const panelProject = useMemo(
+    () => (selectedProject ? projectsList.find(p => p.id === selectedProject.id) ?? selectedProject : null),
+    [selectedProject, projectsList],
+  );
+
   const handleToggleStatus = useCallback((status: ProjectStatus) => {
     setActiveStatuses(prev => {
       const next = new Set(prev);
