@@ -93,9 +93,21 @@ export function useInstallerLogs(projects: Project[] = []) {
   const addTime = useCallback(async (entry: {
     projectId: string; date: string; startTime?: string; endTime?: string; hours?: number;
     travelHours?: number; note?: string; source?: TimeEntry['source'];
+    /** Set once the user has accepted the figure calculated from the times. */
+    acceptComputed?: boolean;
   }) => {
     if (!installerId) return null;
     const bothTimes = Boolean(entry.startTime && entry.endTime);
+
+    // The database recalculates hours from the times, so a disagreeing figure
+    // is never overwritten in silence — the user decides.
+    const mismatch = entry.acceptComputed ? null : timeMismatch(entry);
+    if (mismatch) {
+      setPendingMismatch(mismatch);
+      toast.error(timeMismatchMessage(mismatch));
+      return null;
+    }
+
     const hours = bothTimes
       ? computeHours(entry.startTime!, entry.endTime!)
       : (entry.hours || 0);
