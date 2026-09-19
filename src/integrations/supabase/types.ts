@@ -812,6 +812,98 @@ export type Database = {
         }
         Relationships: []
       }
+      feedback_items: {
+        Row: {
+          admin_note: string | null
+          attachments: Json
+          browser: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          device: string | null
+          id: string
+          order_number: string | null
+          page_path: string | null
+          priority: string
+          project_number: string | null
+          reporter_name: string | null
+          reporter_role: string | null
+          resolved_at: string | null
+          status: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          admin_note?: string | null
+          attachments?: Json
+          browser?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          device?: string | null
+          id?: string
+          order_number?: string | null
+          page_path?: string | null
+          priority?: string
+          project_number?: string | null
+          reporter_name?: string | null
+          reporter_role?: string | null
+          resolved_at?: string | null
+          status?: string
+          title: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_note?: string | null
+          attachments?: Json
+          browser?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          device?: string | null
+          id?: string
+          order_number?: string | null
+          page_path?: string | null
+          priority?: string
+          project_number?: string | null
+          reporter_name?: string | null
+          reporter_role?: string | null
+          resolved_at?: string | null
+          status?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      feedback_votes: {
+        Row: {
+          created_at: string
+          feedback_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feedback_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feedback_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_votes_feedback_id_fkey"
+            columns: ["feedback_id"]
+            isOneToOne: false
+            referencedRelation: "feedback_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       field_reports: {
         Row: {
           checked_items: Json

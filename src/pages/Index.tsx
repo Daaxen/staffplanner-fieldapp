@@ -22,6 +22,7 @@ import ResourcePlanningDashboard from '@/components/dashboard/ResourcePlanningDa
 import VarianceAnalysisDashboard from '@/components/dashboard/VarianceAnalysisDashboard';
 import PortalUsersManager from '@/components/admin/PortalUsersManager';
 import AuditTimeline from '@/components/admin/AuditTimeline';
+import FeedbackModule from '@/components/feedback/FeedbackModule';
 
 import { useProjects } from '@/lib/appData';
 import {
@@ -132,7 +133,10 @@ const Index = () => {
         {activeView === 'audit' && (
           <AuditTimeline />
         )}
-        {activeView !== 'planner' && activeView !== 'dashboard' && activeView !== 'operations' && activeView !== 'executive' && activeView !== 'fleet' && activeView !== 'installer-preview' && activeView !== 'documents' && activeView !== 'users' && activeView !== 'escalations' && activeView !== 'deviations' && activeView !== 'invoicing' && activeView !== 'invoice-prep' && activeView !== 'profitability' && activeView !== 'profile' && activeView !== 'orders' && activeView !== 'clients' && activeView !== 'customer360' && activeView !== 'audit' && activeView !== 'portal' && activeView !== 'resources' && activeView !== 'variance' && (
+        {activeView === 'feedback' && (
+          <FeedbackModule view="admin" />
+        )}
+        {activeView !== 'planner' && activeView !== 'dashboard' && activeView !== 'operations' && activeView !== 'executive' && activeView !== 'fleet' && activeView !== 'installer-preview' && activeView !== 'documents' && activeView !== 'users' && activeView !== 'escalations' && activeView !== 'deviations' && activeView !== 'invoicing' && activeView !== 'invoice-prep' && activeView !== 'profitability' && activeView !== 'profile' && activeView !== 'orders' && activeView !== 'clients' && activeView !== 'customer360' && activeView !== 'audit' && activeView !== 'portal' && activeView !== 'resources' && activeView !== 'variance' && activeView !== 'feedback' && (
 
           <div className="flex-1 flex items-center justify-center">
             <p className="text-muted-foreground">Module coming soon</p>

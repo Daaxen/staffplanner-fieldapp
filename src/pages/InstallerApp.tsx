@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
-import { CalendarDays, Package, FolderKanban, User, BookOpen, Clock, Bell, LogOut, HardHat } from 'lucide-react';
+import { CalendarDays, Package, FolderKanban, User, BookOpen, Clock, Bell, LogOut, HardHat, MessageSquarePlus } from 'lucide-react';
+import FeedbackModule from '@/components/feedback/FeedbackModule';
 import { addDays, startOfWeek, format } from 'date-fns';
 import InstallerSchedule from '@/components/installer/InstallerSchedule';
 import InstallerProjectDetail from '@/components/installer/InstallerProjectDetail';
@@ -231,6 +232,10 @@ const InstallerApp = () => {
             <User className="w-3.5 h-3.5" />
             Profile
           </TabsTrigger>
+          <TabsTrigger value="feedback" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs h-full gap-1.5">
+            <MessageSquarePlus className="w-3.5 h-3.5" />
+            Feedback
+          </TabsTrigger>
         </TabsList>
 
 
@@ -280,6 +285,10 @@ const InstallerApp = () => {
 
         <TabsContent value="profile" className="flex-1 overflow-auto mt-0">
           <InstallerProfile installer={installer} projectCount={myProjects.length} />
+        </TabsContent>
+
+        <TabsContent value="feedback" className="flex-1 overflow-hidden mt-0">
+          <FeedbackModule view="installer" compact />
         </TabsContent>
       </Tabs>
 
