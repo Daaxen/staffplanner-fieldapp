@@ -364,22 +364,30 @@ const Customer360 = () => {
 
       <div className="p-6 space-y-6">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Stat label="Projects" value={`${clientProjects.length}`} />
-          <Stat label="Open orders" value={`${openOrders.length}`} />
           <Stat label="Revenue" value={totals ? sek(totals.revenue) : '—'} />
           <Stat
             label="Gross margin"
             value={totals ? `${sek(totals.grossMargin)} (${pctLabel(totals.grossMarginPct)})` : '—'}
             tone={totals ? marginColor(marginLevel(totals.grossMarginPct)) : undefined}
           />
-          <Stat label="Outstanding invoices" value={sek(invoicedValue)} />
-          <Stat label="Paid" value={sek(paidValue)} />
+          <Stat
+            label="Customer profitability"
+            value={totals ? pctLabel(totals.contributionMarginPct) : '—'}
+            tone={totals ? marginColor(marginLevel(totals.contributionMarginPct)) : undefined}
+          />
+          <Stat label="Logged hours" value={totals ? `${Math.round(totals.actualHours)} h` : '—'} />
+          <Stat label="Active projects" value={`${openOrders.length}`} />
+          <Stat label="Historical projects" value={`${historical.length}`} />
           <Stat
             label="Open deviations"
             value={`${openDeviations.length}`}
             tone={openDeviations.length > 0 ? 'text-destructive' : undefined}
           />
-          <Stat label="Logged hours" value={totals ? `${Math.round(totals.actualHours)} h` : '—'} />
+          <Stat label="Field reports" value={`${fieldReports.length}`} />
+          <Stat label="Documents" value={`${clientDocs.length}`} />
+          <Stat label="Assigned installers" value={`${assignedInstallers.length}`} />
+          <Stat label="Outstanding invoices" value={sek(invoicedValue)} />
+          <Stat label="Paid" value={sek(paidValue)} />
         </div>
 
         <Tabs defaultValue="timeline">
