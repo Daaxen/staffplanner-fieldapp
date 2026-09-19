@@ -38,6 +38,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "active_timers_installer_id_fkey"
+            columns: ["installer_id"]
+            isOneToOne: true
+            referencedRelation: "installers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "active_timers_project_fk"
             columns: ["project_id"]
             isOneToOne: false
@@ -241,7 +248,15 @@ export type Database = {
           status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "deviations_installer_id_fkey"
+            columns: ["installer_id"]
+            isOneToOne: false
+            referencedRelation: "installers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       documents: {
         Row: {
@@ -479,6 +494,13 @@ export type Database = {
             referencedColumns: ["category"]
           },
           {
+            foreignKeyName: "expense_entries_installer_id_fkey"
+            columns: ["installer_id"]
+            isOneToOne: false
+            referencedRelation: "installers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "expense_entries_project_fk"
             columns: ["project_id"]
             isOneToOne: false
@@ -557,7 +579,15 @@ export type Database = {
           submitted_at?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "field_reports_installer_id_fkey"
+            columns: ["installer_id"]
+            isOneToOne: false
+            referencedRelation: "installers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       installer_absences: {
         Row: {
@@ -726,6 +756,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "mileage_entries_installer_id_fkey"
+            columns: ["installer_id"]
+            isOneToOne: false
+            referencedRelation: "installers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "mileage_entries_project_fk"
             columns: ["project_id"]
@@ -1277,6 +1314,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "reminders_installer_id_fkey"
+            columns: ["installer_id"]
+            isOneToOne: false
+            referencedRelation: "installers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "reminders_project_fk"
             columns: ["project_id"]
             isOneToOne: false
@@ -1359,6 +1403,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "time_entries_installer_id_fkey"
+            columns: ["installer_id"]
+            isOneToOne: false
+            referencedRelation: "installers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "time_entries_project_fk"
             columns: ["project_id"]
@@ -1460,6 +1511,7 @@ export type Database = {
           ref: string
         }[]
       }
+      current_installer_id: { Args: never; Returns: string }
       delete_employee_private_details: {
         Args: { _profile_id: string; _reason?: string }
         Returns: undefined
