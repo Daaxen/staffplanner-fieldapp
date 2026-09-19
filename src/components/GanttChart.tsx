@@ -222,7 +222,9 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
   }, [trackChange]);
 
   /** Dispatch a single, already-created work order to its assigned installers. */
-  const handleDispatchProject = useCallback((project: Project) => {
+  const handleDispatchProject = useCallback((panelProject: Project) => {
+    // Always dispatch the current state of the order, not a stale panel copy.
+    const project = projectsList.find(p => p.id === panelProject.id) ?? panelProject;
     if (project.assigneeIds.length === 0) {
       toast.error('Assign an installer to this work order before dispatching');
       return;
@@ -239,7 +241,7 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
       toast.success(`📩 ${name}`, { description: `Work order ${project.name}`, duration: 5000 });
     });
     setPendingChanges(prev => prev.filter(c => c.projectId !== project.id));
-  }, [handleUpdateProject]);
+  }, [handleUpdateProject, projectsList]);
 
   const handleToggleStatus = useCallback((status: ProjectStatus) => {
     setActiveStatuses(prev => {
