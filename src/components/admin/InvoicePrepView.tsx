@@ -138,7 +138,7 @@ const InvoicePrepView = () => {
     XLSX.writeFile(wb, `invoice-suggestions-${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
-  const refresh = () => { void reload(); void reloadReports(); void reloadDeviations(); };
+  const refresh = () => { void reload(); void reloadReports(); void reloadDeviations(); void reloadReceipts(); };
 
   return (
     <div className="flex-1 overflow-auto">
