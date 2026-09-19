@@ -66,12 +66,20 @@ const ProjectCard = ({ project, onSelect, currentInstallerId, actual }: ProjectC
           <Clock className="w-3 h-3" />
           {project.startDate}{project.startTime ? ` ${project.startTime}` : ''} → {project.endDate}{project.endTime ? ` ${project.endTime}` : ''}
         </span>
-        {project.estimatedHours && (
-          <span className="shrink-0 text-[10px] bg-muted px-1.5 py-0.5 rounded font-medium">
-            ~{project.estimatedHours}h
-          </span>
-        )}
       </div>
+
+      {/* Planned vs actual time */}
+      {(project.estimatedHours || (actual && actual.total > 0)) && (
+        <div className="mt-1.5 flex items-center gap-3 text-[10px]">
+          <span className="text-muted-foreground">
+            Planned <span className="font-semibold text-foreground">{project.estimatedHours ? formatHours(project.estimatedHours) : '—'}</span>
+          </span>
+          <span className="text-muted-foreground">
+            Actual <span className="font-semibold text-foreground">{formatHours(actual?.total ?? 0)}</span>
+          </span>
+          <span className={cn('font-semibold', varianceClass[varianceTone(pct)])}>{formatVariance(pct)}</span>
+        </div>
+      )}
 
       {/* Row 3: Client, City, Vehicle */}
       <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
