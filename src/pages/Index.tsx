@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import AppSidebar from '@/components/AppSidebar';
 import GanttChart from '@/components/GanttChart';
 import StatsBar from '@/components/StatsBar';
@@ -23,6 +24,8 @@ import VarianceAnalysisDashboard from '@/components/dashboard/VarianceAnalysisDa
 import PortalUsersManager from '@/components/admin/PortalUsersManager';
 import AuditTimeline from '@/components/admin/AuditTimeline';
 import FeedbackModule from '@/components/feedback/FeedbackModule';
+import { useAuth } from '@/hooks/useAuth';
+import { canAccessNavigationView, canonicalViewPath, type AppRole } from '@/lib/navigation';
 
 import { useProjects } from '@/lib/appData';
 import {
@@ -37,8 +40,17 @@ import {
 } from '@/components/ui/alert-dialog';
 
 const Index = () => {
+  const { view } = useParams<{ view?: string }>();
+  const navigate = useNavigate();
+  const { roles, isAdmin, isInstaller, isHr } = useAuth();
   const [projects] = useProjects();
-  const [activeView, setActiveView] = useState('planner');
+  const defaultView = isAdmin || isHr ? 'operations' : 'planner';
+  const requestedView = view ?? defaultView;
+  const allowedView = useMemo(
+    () => requestedView === 'feedback' || requestedView === 'profile' || canAccessNavigationView(requestedView, roles as AppRole[]),
+    [requestedView, roles],
+  );
+  const activeView = allowedView ? requestedView : defaultView;
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const [pendingNavTarget, setPendingNavTarget] = useState<string | null>(null);
@@ -48,15 +60,22 @@ const Index = () => {
       setPendingNavTarget(view);
       return;
     }
-    setActiveView(view);
-  }, [activeView, pendingCount]);
+    navigate(canonicalViewPath(view));
+  }, [activeView, navigate, pendingCount]);
 
   const confirmNavigation = useCallback(() => {
     if (pendingNavTarget) {
-      setActiveView(pendingNavTarget);
+      navigate(canonicalViewPath(pendingNavTarget));
       setPendingNavTarget(null);
     }
-  }, [pendingNavTarget]);
+  }, [navigate, pendingNavTarget]);
+
+  useEffect(() => {
+    if (!view && (isAdmin || isHr)) navigate(canonicalViewPath(defaultView), { replace: true });
+  }, [defaultView, isAdmin, isHr, navigate, view]);
+
+  if (isInstaller && !isAdmin && !isHr) return <Navigate to="/installer" replace />;
+  if (!allowedView && view) return <Navigate to={canonicalViewPath(defaultView)} replace />;
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -136,7 +155,7 @@ const Index = () => {
         {activeView === 'feedback' && (
           <FeedbackModule view="admin" />
         )}
-        {activeView !== 'planner' && activeView !== 'dashboard' && activeView !== 'operations' && activeView !== 'executive' && activeView !== 'fleet' && activeView !== 'installer-preview' && activeView !== 'documents' && activeView !== 'users' && activeView !== 'escalations' && activeView !== 'deviations' && activeView !== 'invoicing' && activeView !== 'invoice-prep' && activeView !== 'profitability' && activeView !== 'profile' && activeView !== 'orders' && activeView !== 'clients' && activeView !== 'customer360' && activeView !== 'audit' && activeView !== 'portal' && activeView !== 'resources' && activeView !== 'variance' && activeView !== 'feedback' && (
+        {activeView === 'reports' && (
 
           <div className="flex-1 flex items-center justify-center">
             <p className="text-muted-foreground">Module coming soon</p>
