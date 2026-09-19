@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { getMyInstallerId } from '@/lib/installerIdentity';
 import { idbAll, idbDel, idbGet, idbSet } from './idb';
 import type { Project } from '@/data/mockData';
 import { DEFAULT_PHOTO_CATEGORY, type PhotoCategory, type PhotoPosition } from '@/lib/photoMeta';
@@ -158,6 +159,9 @@ export async function syncFieldWork(): Promise<SyncResult> {
     const { data: auth } = await supabase.auth.getUser();
     const userId = auth.user?.id;
     if (!userId) return { synced: 0, failed: 0 };
+    // Operational rows key on the installer record, not the login account.
+    const installerId = await getMyInstallerId();
+    if (!installerId) return { synced: 0, failed: 0 };
 
     for (const work of await pendingWork()) {
       try {
@@ -165,7 +169,7 @@ export async function syncFieldWork(): Promise<SyncResult> {
         const { error } = await supabase.from('field_reports').upsert(
           {
             project_ref: work.projectRef,
-            installer_id: userId,
+            installer_id: installerId,
             checked_items: work.checkedItems,
             signature: work.signature || null,
             sign_offs: work.signOffs ?? {},

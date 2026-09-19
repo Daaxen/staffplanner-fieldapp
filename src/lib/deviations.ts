@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { getMyInstallerId } from '@/lib/installerIdentity';
 import { idbAll, idbDel, idbGet, idbSet } from './offline/idb';
 
 export const DEVIATION_CATEGORIES = [
@@ -106,6 +107,10 @@ export async function syncDeviations(): Promise<{ synced: number; failed: number
     const { data: auth } = await supabase.auth.getUser();
     const userId = auth.user?.id;
     if (!userId) return { synced: 0, failed: 0 };
+    // Photos are stored under the login account; the record itself keys on the
+    // installer record (public.installers.id).
+    const installerId = await getMyInstallerId();
+    if (!installerId) return { synced: 0, failed: 0 };
 
     for (const draft of await pendingDeviations()) {
       try {
@@ -127,7 +132,7 @@ export async function syncDeviations(): Promise<{ synced: number; failed: number
           .insert({
             project_ref: draft.projectRef,
             project_name: draft.projectName ?? null,
-            installer_id: userId,
+            installer_id: installerId,
             installer_name: draft.installerName ?? null,
             category: draft.category,
             severity: draft.severity,
