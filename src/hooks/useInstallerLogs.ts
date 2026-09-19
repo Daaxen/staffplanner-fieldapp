@@ -138,7 +138,7 @@ export function useInstallerLogs(projects: Project[] = []) {
       date: started.toISOString().slice(0, 10),
       startTime: sameDay ? hm(started) : undefined,
       endTime: sameDay ? hm(ended) : undefined,
-      hours, source: 'timer',
+      hours, travelHours, source: 'timer',
     });
 
     await supabase.from('active_timers').delete().eq('installer_id', installerId);
