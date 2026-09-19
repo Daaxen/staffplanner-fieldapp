@@ -49,6 +49,11 @@ export const timeEntrySchema = z
     startTime: timeOfDay.optional(),
     endTime: timeOfDay.optional(),
     hours: z.number().min(0, 'Hours cannot be negative').max(MAX_ENTRY_HOURS).optional(),
+    travelHours: z
+      .number()
+      .min(0, 'Travel time cannot be negative')
+      .max(MAX_TRAVEL_HOURS, `Travel time cannot exceed ${MAX_TRAVEL_HOURS} hours`)
+      .optional(),
     note: z.string().max(1000).optional(),
   })
   .superRefine((v, ctx) => {
