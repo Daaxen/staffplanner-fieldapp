@@ -4,4 +4,4 @@
 - [x] Improve role-based navigation visibility for Admin, Installer, and HR
 - [x] Replace installer navigation with Active jobs, Reporting, Deviations, Sign-off, and More
 - [x] Preserve direct links and redirect legacy navigation URLs
-- [ ] Verify all destinations remain accessible on desktop and mobile
+- [x] Verify all destinations remain accessible on desktop and mobile
