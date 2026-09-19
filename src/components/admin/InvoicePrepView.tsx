@@ -365,6 +365,7 @@ const InvoicePrepView = () => {
                 {numberField('Open deviation', settings.penaltyOpenDeviation, v => update({ penaltyOpenDeviation: v }))}
                 {numberField('No hours reported', settings.penaltyNoHours, v => update({ penaltyNoHours: v }))}
                 {numberField('Margin below target', settings.penaltyLowMargin, v => update({ penaltyLowMargin: v }))}
+                {numberField('Negative margin', settings.penaltyNegativeMargin, v => update({ penaltyNegativeMargin: v }))}
               </div>
             </div>
           </div>
