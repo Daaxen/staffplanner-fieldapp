@@ -71,6 +71,7 @@ const OrdersRegister = () => {
     setMassDialog(null);
     setMassStep('configure');
     setMassAssignee('');
+    setMassOverrideReason('');
     setDeleteConfirmText('');
   };
 
