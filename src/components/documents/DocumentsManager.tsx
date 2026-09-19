@@ -90,7 +90,7 @@ const DocumentsManager = () => {
     return c;
   }, [docs]);
 
-  const openCreate = () => { setEditingId(null); setDraft(emptyDraft); setOpen(true); };
+  const openCreate = () => { setEditingId(null); setDraft(emptyDraft); setGrants([]); setOpen(true); };
 
   const openEdit = (id: string) => {
     const doc = docs.find(d => d.id === id);
@@ -109,6 +109,10 @@ const DocumentsManager = () => {
       clientId: doc.clientId,
       ownerId: doc.ownerId,
     });
+    setGrants([]); setGrantPerson(''); setGrantReason('');
+    if (doc.scope === 'project_sensitive') {
+      void listDocGrants(id).then(setGrants).catch(() => setGrants([]));
+    }
     setOpen(true);
   };
 
