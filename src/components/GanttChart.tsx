@@ -380,7 +380,7 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
       />
 
       {/* Gantt body */}
-      {ganttMode === 'projects' ? (
+      {ganttMode === 'workorders' || ganttMode === 'projects' ? (
         <ProjectsView
           projects={projectsList}
           days={days}
@@ -391,6 +391,7 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
           onUpdateProject={handleUpdateProject}
           activeStatuses={activeStatuses}
           viewMode={viewMode}
+          grouped={ganttMode === 'projects'}
         />
       ) : ganttMode === 'clients' ? (
         <ClientsView
