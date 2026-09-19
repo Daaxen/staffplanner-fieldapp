@@ -205,40 +205,16 @@ export async function saveBookings(params: {
   status?: BookingStatus;
   overrideReason?: string;
 }): Promise<SaveBookingsResult> {
-  const rowId = await ensureProjectRowId(params.projectRef);
-  if (!rowId) return { ok: false, conflict: false, error: 'Order not found in the database' };
-
-  const { start, end } = bookingWindow(
-    params.startDate,
-    params.endDate,
-    params.startTime,
-    params.endTime,
+  return syncProjectBookings(
+    {
+      id: params.projectRef,
+      status: params.status === 'in_progress' ? 'in-progress' : 'scheduled',
+      startDate: params.startDate,
+      endDate: params.endDate,
+      startTime: params.startTime,
+      endTime: params.endTime,
+      assigneeIds: params.installerIds,
+    },
+    { overrideReason: params.overrideReason },
   );
-  const reason = params.overrideReason?.trim() || null;
-
-  await supabase.from('assignments').delete().eq('project_id', rowId);
-
-  if (!params.installerIds.length) return { ok: true, conflict: false };
-
-  const { error } = await supabase.from('assignments').insert(
-    params.installerIds.map(installerId => ({
-      project_id: rowId,
-      installer_id: installerId,
-      planned_start_at: start,
-      planned_end_at: end,
-      assignment_status: params.status ?? 'planned',
-      override_reason: reason,
-    })),
-  );
-
-  if (error) {
-    const msg = error.message || '';
-    const conflict =
-      msg.includes('assignments_no_overlap') ||
-      msg.toLowerCase().includes('conflict') ||
-      msg.includes('override reason');
-    return { ok: false, conflict, error: msg };
-  }
-
-  return { ok: true, conflict: false };
 }
