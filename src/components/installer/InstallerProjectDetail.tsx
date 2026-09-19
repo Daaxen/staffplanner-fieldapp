@@ -22,6 +22,7 @@ import ProjectLogTab from '@/components/installer/reporting/ProjectLogTab';
 import type { InstallerLogs } from '@/hooks/useInstallerLogs';
 import MiniMap from '@/components/maps/MiniMap';
 import PhotoManager from '@/components/installer/PhotoManager';
+import { useFieldWork } from '@/hooks/useFieldWork';
 
 interface InstallerProjectDetailProps {
   project: Project;
@@ -62,13 +63,6 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
   const minPhotos = minPhotosFor(template);
   const templateSignOffs = signOffsFor(template);
 
-  const completionState = {
-    photoCount,
-    checkedItems,
-    signature,
-    reportSubmitted,
-    signOffs,
-  };
   const requirements = useMemo(
     () => completionRequirements(completionState, template),
     [photoCount, checkedItems, signature, reportSubmitted, signOffs, template],
@@ -77,7 +71,11 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
   const readyToComplete = missing.length === 0;
 
   const toggleCheck = (id: string) =>
-    setCheckedItems(prev => (prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]));
+    void update({
+      checkedItems: checkedItems.includes(id)
+        ? checkedItems.filter(c => c !== id)
+        : [...checkedItems, id],
+    });
 
   const handleComplete = () => {
     const blockers = missingRequirements(completionState, template);
@@ -332,7 +330,8 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
               <PhotoManager
                 projectRef={project.id}
                 projectName={project.name}
-                onCountChange={setPhotoCount}
+                work={work}
+                onWorkChange={replace}
                 requiredShots={template?.photos}
                 minPhotos={minPhotos}
               />
@@ -357,10 +356,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
               <Textarea
                 value={reportText}
                 maxLength={2000}
-                onChange={e => {
-                  setReportText(e.target.value);
-                  setReportSubmitted(false);
-                }}
+                onChange={e => void update({ reportText: e.target.value, reportSubmitted: false })}
                 placeholder="Describe the work performed, deviations and any follow-up needed…"
                 className="min-h-[110px] text-sm"
               />
@@ -372,8 +368,12 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
                   size="sm"
                   disabled={reportText.trim().length < 10 || reportSubmitted}
                   onClick={() => {
-                    setReportSubmitted(true);
-                    toast.success('Installation report submitted');
+                    void update({ reportSubmitted: true });
+                    toast.success(
+                      online
+                        ? 'Installation report submitted'
+                        : 'Report saved on this phone — it uploads when you reconnect',
+                    );
                   }}
                 >
                   Submit report
@@ -446,8 +446,8 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
                   const value = so.id === 'customer' ? signature : signOffs[so.id] ?? '';
                   const setValue = (v: string) =>
                     so.id === 'customer'
-                      ? setSignature(v)
-                      : setSignOffs(prev => ({ ...prev, [so.id]: v }));
+                      ? void update({ signature: v })
+                      : void update({ signOffs: { ...signOffs, [so.id]: v } });
                   return (
                     <div key={so.id} className="rounded-lg border border-border p-3">
                       <p className="text-xs font-semibold text-foreground mb-1">{so.label}</p>
