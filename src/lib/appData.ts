@@ -58,7 +58,7 @@ async function loadClients() {
     )
     .order('name');
   if (error) throw error;
-  let rows = (data ?? []) as Record<string, unknown>[];
+  let rows = (data ?? []) as unknown as Record<string, unknown>[];
   if (rows.length === 0) {
     const { data: safe } = await supabase.rpc('assigned_clients');
     rows = (safe ?? []) as Record<string, unknown>[];
