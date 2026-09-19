@@ -1,4 +1,5 @@
-import { Calendar, Users, LayoutDashboard, ClipboardList, FileText, Settings, PanelLeftClose, PanelLeft, Car, Smartphone, BookOpen, UserCog, LogOut, User as UserIcon, Flame, Building2, Receipt, AlertTriangle, TrendingUp, Activity, ScrollText } from 'lucide-react';
+import {
+  Gauge, Calendar, Users, LayoutDashboard, ClipboardList, FileText, Settings, PanelLeftClose, PanelLeft, Car, Smartphone, BookOpen, UserCog, LogOut, User as UserIcon, Flame, Building2, Receipt, AlertTriangle, TrendingUp, Activity, ScrollText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { installers } from '@/data/mockData';
 import { useAuth } from '@/hooks/useAuth';
@@ -43,6 +44,7 @@ const AppSidebar = ({ activeView, onViewChange, collapsed = false, onToggleColla
     ...(isAdmin ? [{ id: 'deviations', label: 'Deviations', icon: AlertTriangle }] : []),
     ...(isAdmin ? [{ id: 'profitability', label: 'Profitability', icon: TrendingUp }] : []),
     ...(isAdmin ? [{ id: 'invoice-prep', label: 'Invoice prep', icon: Receipt }] : []),
+    { id: 'resources', label: 'Resource planning', icon: Gauge },
     ...(isAdmin ? [{ id: 'portal', label: 'Customer portal', icon: Users }] : []),
     ...(isAdmin ? [{ id: 'invoicing', label: 'Invoicing', icon: Receipt }] : []),
     ...(isAdmin ? [{ id: 'escalations', label: 'Escalations', icon: Flame, badge: escalated.length }] : []),

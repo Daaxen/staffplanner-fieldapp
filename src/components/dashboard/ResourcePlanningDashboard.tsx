@@ -210,7 +210,7 @@ const ResourcePlanningDashboard = () => {
             <ul className="space-y-2">
               {overrides.slice(0, 10).map(o => {
                 const person = installers.find(i => i.id === o.installerId);
-                const project = projects.find(p => p.id === o.projectId || p.ref === o.projectId);
+                const project = projects.find(p => p.id === o.projectId);
                 return (
                   <li key={o.id} className="rounded-md border border-border p-3 text-sm">
                     <div className="flex items-center justify-between gap-2">
