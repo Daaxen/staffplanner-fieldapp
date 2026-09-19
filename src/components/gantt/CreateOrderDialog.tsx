@@ -237,19 +237,23 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
 
   const handleClientChange = (value: string) => {
     setClient(value);
+    // typing again clears the link until a customer is picked from the register
+    setClientRef('');
     setHighlightedIndex(-1);
-    const filtered = value.trim()
-      ? clients.filter(c => {
-          const q = value.toLowerCase();
-          return c.toLowerCase().includes(q) || (clientExtra.get(c) ?? '').toLowerCase().includes(q);
-        })
+    const q = value.trim().toLowerCase();
+    const filtered = q
+      ? clients.filter(
+          c =>
+            c.name.toLowerCase().includes(q) || clientLabel(c).toLowerCase().includes(q),
+        )
       : clients;
     setClientSuggestions(filtered);
     setShowClientSuggestions(filtered.length > 0);
   };
 
-  const selectClient = (c: string) => {
-    setClient(c);
+  const selectClient = (c: (typeof clientRows)[number]) => {
+    setClient(c.name);
+    setClientRef(c.id);
     setShowClientSuggestions(false);
     setHighlightedIndex(-1);
   };
