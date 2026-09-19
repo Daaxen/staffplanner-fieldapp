@@ -156,42 +156,96 @@ export type Database = {
       }
       clients: {
         Row: {
+          billing_city: string | null
+          billing_country: string | null
+          billing_name: string | null
+          billing_postal_code: string | null
+          billing_street: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          contact_role: string | null
           created_at: string
+          customer_number: string | null
           data: Json
           hourly_rate: number | null
           id: string
+          invoice_email: string | null
+          invoice_reference: string | null
           mileage_rate: number | null
           name: string
+          org_number: string | null
           overtime_rate: number | null
+          payment_terms_days: number | null
+          postal_code: string | null
           ref: string | null
+          region: string | null
           sandbox: boolean
+          street: string | null
           updated_at: string
+          vat_number: string | null
           vat_percent: number
         }
         Insert: {
+          billing_city?: string | null
+          billing_country?: string | null
+          billing_name?: string | null
+          billing_postal_code?: string | null
+          billing_street?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          contact_role?: string | null
           created_at?: string
+          customer_number?: string | null
           data?: Json
           hourly_rate?: number | null
           id?: string
+          invoice_email?: string | null
+          invoice_reference?: string | null
           mileage_rate?: number | null
           name: string
+          org_number?: string | null
           overtime_rate?: number | null
+          payment_terms_days?: number | null
+          postal_code?: string | null
           ref?: string | null
+          region?: string | null
           sandbox?: boolean
+          street?: string | null
           updated_at?: string
+          vat_number?: string | null
           vat_percent?: number
         }
         Update: {
+          billing_city?: string | null
+          billing_country?: string | null
+          billing_name?: string | null
+          billing_postal_code?: string | null
+          billing_street?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          contact_role?: string | null
           created_at?: string
+          customer_number?: string | null
           data?: Json
           hourly_rate?: number | null
           id?: string
+          invoice_email?: string | null
+          invoice_reference?: string | null
           mileage_rate?: number | null
           name?: string
+          org_number?: string | null
           overtime_rate?: number | null
+          payment_terms_days?: number | null
+          postal_code?: string | null
           ref?: string | null
+          region?: string | null
           sandbox?: boolean
+          street?: string | null
           updated_at?: string
+          vat_number?: string | null
           vat_percent?: number
         }
         Relationships: []
@@ -870,6 +924,62 @@ export type Database = {
           },
         ]
       }
+      project_economy: {
+        Row: {
+          additional_revenue: number | null
+          budget_hours: number | null
+          created_at: string
+          external_budget: number | null
+          external_cost_extra: number | null
+          external_hourly_cost: number | null
+          fixed_price: number | null
+          internal_hourly_cost: number | null
+          material_cost_extra: number | null
+          project_id: string
+          target_margin_pct: number | null
+          travel_cost_extra: number | null
+          updated_at: string
+        }
+        Insert: {
+          additional_revenue?: number | null
+          budget_hours?: number | null
+          created_at?: string
+          external_budget?: number | null
+          external_cost_extra?: number | null
+          external_hourly_cost?: number | null
+          fixed_price?: number | null
+          internal_hourly_cost?: number | null
+          material_cost_extra?: number | null
+          project_id: string
+          target_margin_pct?: number | null
+          travel_cost_extra?: number | null
+          updated_at?: string
+        }
+        Update: {
+          additional_revenue?: number | null
+          budget_hours?: number | null
+          created_at?: string
+          external_budget?: number | null
+          external_cost_extra?: number | null
+          external_hourly_cost?: number | null
+          fixed_price?: number | null
+          internal_hourly_cost?: number | null
+          material_cost_extra?: number | null
+          project_id?: string
+          target_margin_pct?: number | null
+          travel_cost_extra?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_economy_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_status_events: {
         Row: {
           changed_by: string
@@ -909,57 +1019,108 @@ export type Database = {
       projects: {
         Row: {
           client_id: string | null
+          client_name: string | null
+          client_ref: string | null
           contact_email: string | null
           contact_name: string | null
           contact_phone: string | null
           created_at: string
           data: Json
+          description: string | null
           end_date: string | null
+          end_time: string | null
+          estimated_hours: number | null
+          hourly_rate: number | null
           id: string
+          is_flex_order: boolean
           location: string | null
+          location_lat: number | null
+          location_lng: number | null
+          mileage_rate: number | null
           name: string
+          postal_code: string | null
+          project_number: string | null
           project_type: string
           ref: string | null
+          region: string | null
           sandbox: boolean
           start_date: string | null
+          start_time: string | null
           status: string
+          street: string | null
+          template_id: string | null
           updated_at: string
+          vehicle_type: string | null
         }
         Insert: {
           client_id?: string | null
+          client_name?: string | null
+          client_ref?: string | null
           contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
           created_at?: string
           data?: Json
+          description?: string | null
           end_date?: string | null
+          end_time?: string | null
+          estimated_hours?: number | null
+          hourly_rate?: number | null
           id?: string
+          is_flex_order?: boolean
           location?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
+          mileage_rate?: number | null
           name: string
+          postal_code?: string | null
+          project_number?: string | null
           project_type?: string
           ref?: string | null
+          region?: string | null
           sandbox?: boolean
           start_date?: string | null
+          start_time?: string | null
           status?: string
+          street?: string | null
+          template_id?: string | null
           updated_at?: string
+          vehicle_type?: string | null
         }
         Update: {
           client_id?: string | null
+          client_name?: string | null
+          client_ref?: string | null
           contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
           created_at?: string
           data?: Json
+          description?: string | null
           end_date?: string | null
+          end_time?: string | null
+          estimated_hours?: number | null
+          hourly_rate?: number | null
           id?: string
+          is_flex_order?: boolean
           location?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
+          mileage_rate?: number | null
           name?: string
+          postal_code?: string | null
+          project_number?: string | null
           project_type?: string
           ref?: string | null
+          region?: string | null
           sandbox?: boolean
           start_date?: string | null
+          start_time?: string | null
           status?: string
+          street?: string | null
+          template_id?: string | null
           updated_at?: string
+          vehicle_type?: string | null
         }
         Relationships: [
           {
