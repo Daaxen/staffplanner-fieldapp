@@ -9,6 +9,7 @@ import InstallersView from './gantt/InstallersView';
 import ClientsView from './gantt/ClientsView';
 import StatusFilter from './gantt/StatusFilter';
 import CreateOrderDialog from './gantt/CreateOrderDialog';
+import EditWorkOrderDialog from './gantt/EditWorkOrderDialog';
 import { toast } from 'sonner';
 import { installerConflicts } from '@/lib/schedulingConflicts';
 
@@ -44,6 +45,8 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
   const [projectsList, setProjectsList] = useProjects();
   const [activeStatuses, setActiveStatuses] = useState<Set<ProjectStatus>>(new Set(allStatuses));
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editProject, setEditProject] = useState<Project | null>(null);
   const [pendingChanges, setPendingChanges] = useState<DispatchChange[]>([]);
   const lastDispatchedState = useRef<string>('');
 
