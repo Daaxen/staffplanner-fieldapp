@@ -47,6 +47,12 @@ const ENTITY_LABELS: Record<string, string> = {
   project_economy: 'Orderekonomi',
   installer: 'Personal',
   user_role: 'Behörighet',
+  deviation: 'Avvikelse',
+  field_report: 'Fältrapport',
+  document: 'Dokument',
+  absence: 'Frånvaro',
+  expense_rule: 'Utläggsregel',
+  status_transition: 'Statussteg',
 };
 
 const ACTION_LABELS: Record<string, string> = {
