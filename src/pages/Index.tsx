@@ -15,6 +15,7 @@ import CapacityDashboard from '@/components/dashboard/CapacityDashboard';
 import OperationsDashboard from '@/components/dashboard/OperationsDashboard';
 import ExecutiveDashboard from '@/components/dashboard/ExecutiveDashboard';
 import InvoicingView from '@/components/admin/InvoicingView';
+import InvoicePrepView from '@/components/admin/InvoicePrepView';
 import DeviationsView from '@/components/admin/DeviationsView';
 import ProfitabilityView from '@/components/admin/ProfitabilityView';
 import AuditTimeline from '@/components/admin/AuditTimeline';
@@ -104,6 +105,9 @@ const Index = () => {
         {activeView === 'invoicing' && (
           <InvoicingView />
         )}
+        {activeView === 'invoice-prep' && (
+          <InvoicePrepView />
+        )}
         {activeView === 'deviations' && (
           <DeviationsView />
         )}
@@ -116,7 +120,7 @@ const Index = () => {
         {activeView === 'audit' && (
           <AuditTimeline />
         )}
-        {activeView !== 'planner' && activeView !== 'dashboard' && activeView !== 'operations' && activeView !== 'executive' && activeView !== 'fleet' && activeView !== 'installer-preview' && activeView !== 'documents' && activeView !== 'users' && activeView !== 'escalations' && activeView !== 'deviations' && activeView !== 'invoicing' && activeView !== 'profitability' && activeView !== 'profile' && activeView !== 'orders' && activeView !== 'clients' && activeView !== 'customer360' && activeView !== 'audit' && (
+        {activeView !== 'planner' && activeView !== 'dashboard' && activeView !== 'operations' && activeView !== 'executive' && activeView !== 'fleet' && activeView !== 'installer-preview' && activeView !== 'documents' && activeView !== 'users' && activeView !== 'escalations' && activeView !== 'deviations' && activeView !== 'invoicing' && activeView !== 'invoice-prep' && activeView !== 'profitability' && activeView !== 'profile' && activeView !== 'orders' && activeView !== 'clients' && activeView !== 'customer360' && activeView !== 'audit' && (
 
           <div className="flex-1 flex items-center justify-center">
             <p className="text-muted-foreground">Module coming soon</p>
