@@ -75,11 +75,19 @@ Deno.serve(async (req) => {
       : 'Reminder: close order & log time';
     const body = `Project ${reminder.project_id} needs completion + time/mileage/cost logged.`;
 
-    // Installer push
-    const { data: subs } = await supabase
-      .from('push_subscriptions')
-      .select('fcm_token')
-      .eq('user_id', reminder.installer_id);
+    // Installer push: reminders key on the installer register, push
+    // subscriptions key on the login account, so resolve profile_id first.
+    const { data: installer } = await supabase
+      .from('installers')
+      .select('profile_id')
+      .eq('id', reminder.installer_id)
+      .maybeSingle();
+    const { data: subs } = installer?.profile_id
+      ? await supabase
+          .from('push_subscriptions')
+          .select('fcm_token')
+          .eq('user_id', installer.profile_id)
+      : { data: [] as { fcm_token: string }[] };
     const tokens = (subs ?? []).map(s => s.fcm_token);
     const push = await sendFcm(tokens, title, body, { reminder_id, project_id: reminder.project_id, level: lvl });
 

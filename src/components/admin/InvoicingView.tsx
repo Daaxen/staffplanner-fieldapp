@@ -44,11 +44,12 @@ const InvoicingView = () => {
       supabase.from('time_entries').select('*'),
       supabase.from('expense_entries').select('*'),
       supabase.from('mileage_entries').select('*'),
-      supabase.from('profiles').select('id, full_name, email'),
+      supabase.from('installers').select('id, name'),
     ]);
+    // Reporting rows reference the installer register, not the login account.
     const nameOf = (id: string) => {
       const p = (profs.data ?? []).find(x => x.id === id);
-      return p?.full_name || p?.email || id.slice(0, 8);
+      return p?.name || id.slice(0, 8);
     };
     // Current names always come from the order itself (project_id -> projects);
     // the stored snapshot_* labels are only a historical fallback.
