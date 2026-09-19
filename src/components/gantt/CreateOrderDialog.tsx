@@ -105,6 +105,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
     setName('');
     setProjectNumber('');
     setClient('');
+    setClientRef('');
     setLocation('');
     setDescription('');
     setStartDate(undefined);
@@ -300,7 +301,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
   };
 
   const handleSubmit = () => {
-    if (!name || !client || !startDate || !endDate) return;
+    if (!name || !clientRef || !startDate || !endDate) return;
     if (hasBlocking(conflicts)) {
       toast.error('Scheduling conflict', {
         description: 'Resolve the blocking conflicts before assigning these resources.',
@@ -317,6 +318,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
       projectNumber: projectNumber || undefined,
       projectType,
       templateId,
+      clientId: clientRef,
       client,
       location: projectType === 'transport' ? transportStops[0]?.address || '' : location,
       ...(projectType !== 'transport' && locationCoords
@@ -424,7 +426,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
 
   const fieldValues: Record<TemplateFieldId, boolean> = {
     name: !!name.trim(),
-    client: !!client.trim(),
+    client: !!clientRef,
     projectNumber: !!projectNumber.trim(),
     location: !!(projectType === 'transport' ? transportStops[0]?.address?.trim() : location.trim()),
     startDate: !!startDate,
@@ -441,7 +443,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
   );
 
   const isValid =
-    name.trim() && client.trim() && startDate && endDate && !dateRangeError && missingFields.length === 0;
+    name.trim() && !!clientRef && startDate && endDate && !dateRangeError && missingFields.length === 0;
 
   const typeButtons: { value: ProjectType; icon: string }[] = [
     { value: 'installation', icon: '🔧' },
