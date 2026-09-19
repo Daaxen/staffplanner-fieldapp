@@ -1,6 +1,8 @@
 import { ArrowLeft, MapPin, Clock, Users, FileText, Phone, Camera, CheckSquare, ExternalLink, Info, Paperclip, ClipboardCheck, Mail, Receipt, AlertCircle, Check, X } from 'lucide-react';
 import { type Project, type Installer, projectTypeIcons, projectTypeLabels, statusLabels, installers } from '@/data/mockData';
 import { cn } from '@/lib/utils';
+import { useClients } from '@/lib/appData';
+import { customerFieldInfo } from '@/lib/customerLink';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
@@ -48,6 +50,12 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
   const [reportSubmitted, setReportSubmitted] = useState(false);
   const [signature, setSignature] = useState('');
   const [signOffs, setSignOffs] = useState<Record<string, string>>({});
+
+  const [clientRows] = useClients();
+  const customer = useMemo(
+    () => customerFieldInfo(project, clientRows),
+    [project.clientId, project.client, clientRows],
+  );
 
   const template = useMemo(() => templateForProject(project), [project.templateId, project.projectType]);
   const checklist = checklistFor(template);
