@@ -277,6 +277,8 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
   };
 
   const persistBookings = async (project: Project, overrideReason?: string) => {
+    // the reason also travels with any follow-up save of the same order
+    if (overrideReason) registerBookingOverride(project.id, overrideReason);
     const res = await saveBookings({
       projectRef: project.id,
       installerIds: project.assigneeIds,
