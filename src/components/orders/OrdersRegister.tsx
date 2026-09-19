@@ -59,6 +59,7 @@ const OrdersRegister = () => {
   const [massStep, setMassStep] = useState<'configure' | 'preview'>('configure');
   const [massStatus, setMassStatus] = useState<ProjectStatus>('scheduled');
   const [massAssignee, setMassAssignee] = useState<string>('');
+  const [massOverrideReason, setMassOverrideReason] = useState('');
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   const openMassDialog = (kind: 'status' | 'assignee' | 'delete') => {
