@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Trash2, UserPlus, Shield, User as UserIcon, Copy, Pencil, KeyRound, Mail, ChevronDown, ChevronRight, Lock, BriefcaseMedical } from 'lucide-react';
 import {
-  EmployeePrivate, EMPLOYEE_PRIVATE_FIELDS, emptyEmployeePrivate,
+  EmployeePrivate, emptyEmployeePrivate,
   loadEmployeePrivate, saveEmployeePrivate, useHrAccess,
 } from '@/lib/employeePrivate';
 
