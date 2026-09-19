@@ -29,6 +29,7 @@ interface Props {
   installer: Installer | null;
   onClose: () => void;
   onEdit?: (project: Project) => void;
+  onDispatch?: (project: Project) => void;
 }
 
 const ProjectDetailPanel = ({ project, installer, onClose, onEdit }: Props) => {
