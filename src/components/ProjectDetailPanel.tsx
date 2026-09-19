@@ -147,6 +147,10 @@ const ProjectDetailPanel = ({ project, installer, onClose }: Props) => {
             </div>
           )}
 
+          <div className="pt-4 border-t border-border">
+            <SimilarJobsPanel project={project} />
+          </div>
+
           {/* Action buttons */}
           <div className="space-y-2 pt-4 border-t border-border">
             <button className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">
