@@ -177,26 +177,91 @@ export async function ensureProjectRowId(ref: string): Promise<string | null> {
 }
 
 async function loadProjects() {
+  // Typed columns are authoritative; `data` is a compatibility snapshot used
+  // as a fallback for rows written before the fields were normalised.
   const { data, error } = await supabase
     .from('projects')
-    .select('id,ref,data,name,status,start_date,end_date')
+    .select(
+      'id,ref,data,name,status,start_date,end_date,project_type,location,' +
+        'contact_name,contact_phone,contact_email,project_number,template_id,' +
+        'client_ref,client_name,street,postal_code,region,location_lat,location_lng,' +
+        'start_time,end_time,estimated_hours,is_flex_order,description,' +
+        'hourly_rate,mileage_rate,vehicle_type,' +
+        'project_economy(fixed_price,additional_revenue,budget_hours,internal_hourly_cost,' +
+        'external_hourly_cost,external_cost_extra,material_cost_extra,travel_cost_extra,' +
+        'external_budget,target_margin_pct)',
+    )
     .order('start_date', { ascending: false });
   if (error) throw error;
-  const rows = (data ?? []) as { id: string; ref: string | null; data: unknown; name: string }[];
+  const rows = (data ?? []) as unknown as Record<string, unknown>[];
   rowIdByRef.clear();
   refByRowId.clear();
   replace(
     projectList,
     rows
       .map((r) => {
-        const d = (r.data ?? {}) as Partial<Project>;
-        const project = { ...d, id: d.id ?? r.ref ?? '', name: d.name ?? r.name } as Project;
-        rememberProjectKey(project.id, r.id);
+        const d = parseProjectMetadata(r.data) as Partial<Project>;
+        const col = <T,>(key: string, fallback: T | undefined): T | undefined =>
+          (r[key] ?? undefined) !== undefined ? (r[key] as T) : fallback;
+        const trim = (v: unknown) =>
+          typeof v === 'string' ? v.slice(0, 5) : undefined; // "08:00:00" -> "08:00"
+
+        const econRow = (Array.isArray(r.project_economy)
+          ? r.project_economy[0]
+          : r.project_economy) as Record<string, number | null> | null | undefined;
+        const economy = econRow
+          ? {
+              fixedPrice: econRow.fixed_price ?? undefined,
+              additionalRevenue: econRow.additional_revenue ?? undefined,
+              budgetHours: econRow.budget_hours ?? undefined,
+              internalHourlyCost: econRow.internal_hourly_cost ?? undefined,
+              externalHourlyCost: econRow.external_hourly_cost ?? undefined,
+              externalCostExtra: econRow.external_cost_extra ?? undefined,
+              materialCostExtra: econRow.material_cost_extra ?? undefined,
+              travelCostExtra: econRow.travel_cost_extra ?? undefined,
+              externalBudget: econRow.external_budget ?? undefined,
+              targetMarginPct: econRow.target_margin_pct ?? undefined,
+            }
+          : d.economy;
+
+        const project = {
+          ...d,
+          id: d.id ?? (r.ref as string) ?? '',
+          name: (r.name as string) ?? d.name,
+          projectType: col('project_type', d.projectType),
+          status: col('status', d.status),
+          location: col('location', d.location) ?? '',
+          startDate: col('start_date', d.startDate) ?? '',
+          endDate: col('end_date', d.endDate) ?? '',
+          contactName: col('contact_name', d.contactName),
+          contactPhone: col('contact_phone', d.contactPhone),
+          contactEmail: col('contact_email', d.contactEmail),
+          projectNumber: col('project_number', d.projectNumber),
+          templateId: col('template_id', d.templateId),
+          clientId: col('client_ref', d.clientId),
+          client: col('client_name', d.client) ?? '',
+          street: col('street', d.street),
+          postalCode: col('postal_code', d.postalCode),
+          region: col('region', d.region),
+          locationLat: col('location_lat', d.locationLat),
+          locationLng: col('location_lng', d.locationLng),
+          startTime: trim(r.start_time) ?? d.startTime,
+          endTime: trim(r.end_time) ?? d.endTime,
+          estimatedHours: col('estimated_hours', d.estimatedHours),
+          isFlexOrder: col('is_flex_order', d.isFlexOrder),
+          description: col('description', d.description),
+          hourlyRate: col('hourly_rate', d.hourlyRate),
+          mileageRate: col('mileage_rate', d.mileageRate),
+          vehicleType: col('vehicle_type', d.vehicleType),
+          economy,
+        } as Project;
+        rememberProjectKey(project.id, r.id as string);
         return project;
       })
       .filter((p) => p.id),
   );
 }
+
 
 
 export async function loadAppData(): Promise<void> {
