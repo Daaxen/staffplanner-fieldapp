@@ -278,9 +278,7 @@ const ProjectsView = ({ projects, days, colWidth, startDate, todayStr, onSelectP
                 const project = row.project;
                 const { left, width, overflowRight } = getBarPosition(project);
                 const assignees = project.assigneeIds.map(id => getInstaller(id)).filter(Boolean) as Installer[];
-                const instColor = assignees.length > 0 && assignees[0]
-                  ? installerBgMap[assignees[0].color]
-                  : statusBgMap[project.status];
+                const instColor = statusBgMap[project.status];
                 return (
                   <div
                     key={row.key}
