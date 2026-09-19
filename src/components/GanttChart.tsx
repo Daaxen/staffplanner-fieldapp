@@ -449,6 +449,7 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
           installer={getInstaller(selectedProject.assigneeIds[0] ?? null)}
           onClose={() => setSelectedProject(null)}
           onEdit={(p) => { setEditProject(p); setEditDialogOpen(true); }}
+          onDispatch={handleDispatchProject}
         />
       )}
       <EditWorkOrderDialog
