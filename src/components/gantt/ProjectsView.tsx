@@ -7,7 +7,7 @@ import GanttGrid from './GanttGrid';
 import DraggableBar from './DraggableBar';
 import DateChangeDialog from './DateChangeDialog';
 import { dayCount, dayOffset } from '@/lib/ganttDates';
-import { useProjectGroups, type ProjectGroup } from '@/lib/projectGroups';
+import { useProjectGroups } from '@/lib/projectGroups';
 
 const statusColorMap: Record<ProjectStatus, string> = {
   'open': 'bg-status-open',
