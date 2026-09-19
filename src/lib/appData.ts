@@ -289,7 +289,26 @@ async function upsertClientRow(c: Client) {
       {
         ref: c.id,
         name: c.name,
+        // full snapshot kept for compatibility — no key is ever removed
         data: c as unknown as Record<string, unknown>,
+        customer_number: c.customerNumber || null,
+        street: c.street || null,
+        postal_code: c.postalCode || null,
+        region: c.region || null,
+        contact_name: c.mainContact?.name || null,
+        contact_role: c.mainContact?.role || null,
+        contact_phone: c.mainContact?.phone || null,
+        contact_email: c.mainContact?.email || null,
+        billing_name: c.invoicing?.billingName || null,
+        billing_street: c.invoicing?.billingStreet || null,
+        billing_postal_code: c.invoicing?.billingPostalCode || null,
+        billing_city: c.invoicing?.billingCity || null,
+        billing_country: c.invoicing?.billingCountry || null,
+        vat_number: c.invoicing?.vatNumber || null,
+        org_number: c.invoicing?.orgNumber || null,
+        invoice_email: c.invoicing?.invoiceEmail || null,
+        payment_terms_days: c.invoicing?.paymentTermsDays ?? null,
+        invoice_reference: c.invoicing?.reference || null,
         hourly_rate: c.rates?.hourlyRate ?? null,
         overtime_rate: c.rates?.overtimeRate ?? null,
         mileage_rate: c.rates?.mileageRate ?? null,
@@ -299,6 +318,7 @@ async function upsertClientRow(c: Client) {
     );
   if (error) throw error;
 }
+
 
 async function deleteClientRow(ref: string) {
   const { error } = await supabase.from('clients').delete().eq('ref' as never, ref as never);
