@@ -313,7 +313,7 @@ const OrdersRegister = () => {
       <div className="shrink-0 border-b border-border bg-card">
         <div className="px-6 py-4 flex flex-wrap items-center gap-3">
           <div>
-            <h1 className="text-xl font-semibold text-foreground">Orders</h1>
+            <h1 className="text-xl font-semibold text-foreground">Work orders</h1>
             <p className="text-xs text-muted-foreground">
               {filtered.length} of {orders.length} shown{selected.size > 0 ? ` · ${selected.size} selected` : ''}
             </p>
@@ -412,6 +412,9 @@ const OrdersRegister = () => {
             <Button size="sm" variant="outline" onClick={() => openMassDialog('status')}>Change status</Button>
             <Button size="sm" variant="outline" onClick={() => openMassDialog('assignee')}>
               <UsersIcon className="w-3.5 h-3.5 mr-1" /> Assign installer
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => openMassDialog('group')}>
+              Assign to project
             </Button>
             <Button size="sm" variant="outline" onClick={() => openMassDialog('delete')}>
               <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete
