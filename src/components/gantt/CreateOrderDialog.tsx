@@ -540,18 +540,26 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
               <Label htmlFor="order-client">Client *</Label>
               <Input
                 id="order-client"
-                placeholder="Start typing..."
+                placeholder="Search the customer register..."
                 value={client}
                 onChange={(e) => handleClientChange(e.target.value)}
                 onFocus={() => handleClientChange(client)}
                 onKeyDown={handleClientKeyDown}
                 autoComplete="off"
+                aria-invalid={!!client.trim() && !clientRef}
               />
+              {!clientRef && (
+                <p className="text-xs text-muted-foreground">
+                  {client.trim()
+                    ? 'Pick the customer from the register — free text is not linked to a customer.'
+                    : 'Pick a customer from the register.'}
+                </p>
+              )}
               {showClientSuggestions && clientSuggestions.length > 0 && (
                 <div className="absolute top-full left-0 right-0 z-50 mt-1 border border-border rounded-md bg-popover shadow-md max-h-[140px] overflow-y-auto">
                   {clientSuggestions.map((c, idx) => (
                     <button
-                      key={c}
+                      key={c.id}
                       type="button"
                       className={cn(
                         "w-full text-left px-3 py-1.5 text-sm transition-colors",
@@ -560,9 +568,9 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
                       onClick={() => selectClient(c)}
                       onMouseEnter={() => setHighlightedIndex(idx)}
                     >
-                      {c}
-                      {clientExtra.get(c) && (
-                        <span className="block text-xs text-muted-foreground">{clientExtra.get(c)}</span>
+                      {c.name}
+                      {clientLabel(c) && (
+                        <span className="block text-xs text-muted-foreground">{clientLabel(c)}</span>
                       )}
                     </button>
                   ))}
