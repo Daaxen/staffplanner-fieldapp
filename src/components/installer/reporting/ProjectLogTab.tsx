@@ -18,6 +18,11 @@ interface ProjectLogTabProps {
 
 const today = () => new Date().toISOString().slice(0, 10);
 const money = (amount: number) => `${amount.toLocaleString('sv-SE')} SEK`;
+const minutesToHours = (value: string) => {
+  const minutes = Number(value);
+  if (!Number.isFinite(minutes) || minutes <= 0) return 0;
+  return Math.round((minutes / 60) * 100) / 100;
+};
 
 const ProjectLogTab = ({ projectId, logs, plannedHours }: ProjectLogTabProps) => {
   const [date, setDate] = useState(today);
