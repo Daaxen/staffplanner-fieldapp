@@ -43,13 +43,13 @@ const statusDotMap: Record<string, string> = {
 
 const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChange, onPickUp }: InstallerProjectDetailProps) => {
   
-  const [photoCount, setPhotoCount] = useState(0);
   const [tab, setTab] = useState('info');
-  const [checkedItems, setCheckedItems] = useState<string[]>([]);
-  const [reportText, setReportText] = useState('');
-  const [reportSubmitted, setReportSubmitted] = useState(false);
-  const [signature, setSignature] = useState('');
-  const [signOffs, setSignOffs] = useState<Record<string, string>>({});
+  // Same saved field report, offline queue and sync as technician mode.
+  const { work, state: completionState, update, replace, loaded, online } = useFieldWork(project.id, project.name);
+  const { checkedItems, reportText, reportSubmitted, signature } = work;
+  const signOffs = work.signOffs ?? {};
+  const photoCount = work.photos.length;
+
 
   const [clientRows] = useClients();
   const customer = useMemo(
