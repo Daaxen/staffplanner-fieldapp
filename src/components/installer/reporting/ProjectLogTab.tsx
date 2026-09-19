@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
-import { Clock, MapPin, Play, Square, Trash2, Wallet } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
+import { Camera, Clock, MapPin, Paperclip, Play, Receipt, Square, Trash2, Wallet, X } from 'lucide-react';
+import { missingReceiptMessage, receiptRequired, uploadReceipt, RECEIPT_ACCEPT } from '@/lib/receipts';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,6 +41,11 @@ const ProjectLogTab = ({ projectId, logs, plannedHours }: ProjectLogTabProps) =>
   const [category, setCategory] = useState<ExpenseCategory>('materials');
   const [amount, setAmount] = useState('');
   const [expenseNote, setExpenseNote] = useState('');
+  const [receiptPath, setReceiptPath] = useState('');
+  const [receiptLabel, setReceiptLabel] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const cameraInput = useRef<HTMLInputElement>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
 
   const timeEntries = logs.timeFor(projectId);
@@ -90,18 +96,35 @@ const ProjectLogTab = ({ projectId, logs, plannedHours }: ProjectLogTabProps) =>
     toast.success('Mileage saved');
   };
 
+  const pickReceipt = async (file?: File | null) => {
+    if (!file) return;
+    setUploading(true);
+    const result = await uploadReceipt(file);
+    setUploading(false);
+    if ('error' in result) { toast.error(result.error); return; }
+    setReceiptPath(result.path);
+    setReceiptLabel(file.name);
+    toast.success('Kvitto bifogat');
+  };
+
   const submitExpense = async () => {
     const value = Number(amount);
     if (!Number.isFinite(value) || value <= 0) {
-      toast.error('Enter a valid amount');
+      toast.error('Ange ett giltigt belopp');
+      return;
+    }
+    if (receiptRequired(category, value) && !receiptPath) {
+      toast.error(missingReceiptMessage(category));
       return;
     }
     setSaving(true);
-    const result = await logs.addExpense({ projectId, date, category, amount: value, note: expenseNote });
+    const result = await logs.addExpense({
+      projectId, date, category, amount: value, note: expenseNote, receiptName: receiptPath || undefined,
+    });
     setSaving(false);
-    if (!result) { toast.error('Cost could not be saved'); return; }
-    setAmount(''); setExpenseNote('');
-    toast.success('Cost saved');
+    if (!result) { toast.error('Kostnaden kunde inte sparas'); return; }
+    setAmount(''); setExpenseNote(''); setReceiptPath(''); setReceiptLabel('');
+    toast.success('Kostnad sparad');
   };
 
   return (
@@ -155,7 +178,55 @@ const ProjectLogTab = ({ projectId, logs, plannedHours }: ProjectLogTabProps) =>
         <div><Label>Category</Label><Select value={category} onValueChange={value => setCategory(value as ExpenseCategory)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{logs.categories.map(item => <SelectItem key={item} value={item}>{expenseCategoryLabels[item]}</SelectItem>)}</SelectContent></Select></div>
         <div><Label htmlFor="cost-amount">Amount (SEK)</Label><Input id="cost-amount" inputMode="decimal" type="number" min="0" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} /></div>
         <Textarea aria-label="Cost note" placeholder="What was purchased?" value={expenseNote} onChange={e => setExpenseNote(e.target.value)} />
-        <Button variant="outline" className="w-full" disabled={saving} onClick={() => void submitExpense()}>Save cost</Button>
+
+        <div className="space-y-2">
+          <Label>Kvitto{receiptRequired(category, Number(amount) || 0) ? ' *' : ''}</Label>
+          {receiptPath ? (
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 p-2">
+              <Receipt className="w-4 h-4 text-muted-foreground shrink-0" />
+              <span className="text-xs text-foreground truncate flex-1">{receiptLabel}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Ta bort kvitto"
+                onClick={() => { setReceiptPath(''); setReceiptLabel(''); }}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" disabled={uploading} onClick={() => cameraInput.current?.click()}>
+                <Camera className="w-4 h-4 mr-1.5" />Fota kvitto
+              </Button>
+              <Button variant="outline" disabled={uploading} onClick={() => fileInput.current?.click()}>
+                <Paperclip className="w-4 h-4 mr-1.5" />Bifoga fil
+              </Button>
+            </div>
+          )}
+          {!receiptPath && receiptRequired(category, Number(amount) || 0) && (
+            <p className="text-xs text-destructive">{missingReceiptMessage(category)}</p>
+          )}
+          <input
+            ref={cameraInput}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            aria-label="Fota kvitto"
+            onChange={e => { void pickReceipt(e.target.files?.[0]); e.target.value = ''; }}
+          />
+          <input
+            ref={fileInput}
+            type="file"
+            accept={RECEIPT_ACCEPT}
+            className="hidden"
+            aria-label="Bifoga kvitto"
+            onChange={e => { void pickReceipt(e.target.files?.[0]); e.target.value = ''; }}
+          />
+        </div>
+
+        <Button variant="outline" className="w-full" disabled={saving || uploading} onClick={() => void submitExpense()}>Save cost</Button>
       </section>
 
       {(timeEntries.length > 0 || expenseEntries.length > 0) && (

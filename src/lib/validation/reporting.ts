@@ -141,8 +141,8 @@ export const expenseEntrySchema = z
         path: ['receiptName'],
         message:
           rule.receiptThreshold > 0
-            ? `A receipt is required above ${rule.receiptThreshold} SEK`
-            : 'A receipt is required for this category',
+            ? `Kvitto krävs för belopp över ${rule.receiptThreshold} kr. Fota eller bifoga kvittot innan du sparar.`
+            : 'Kvitto krävs för den här kostnadstypen. Fota eller bifoga kvittot innan du sparar.',
       });
     }
   });
