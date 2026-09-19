@@ -1,12 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertTriangle, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { type Project, type ProjectStatus, statusLabels } from '@/data/mockData';
-import { useClients } from '@/lib/appData';
+import { useClients, useInstallersList, useProjects } from '@/lib/appData';
+import { installerConflicts } from '@/lib/schedulingConflicts';
 import { toast } from 'sonner';
 
 const statuses: ProjectStatus[] = ['open', 'scheduled', 'in-progress', 'completed', 'on-hold', 'cancelled'];
