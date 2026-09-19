@@ -45,6 +45,8 @@ const AppSidebar = ({ activeView, onViewChange, collapsed = false, onToggleColla
     ...(isAdmin ? [{ id: 'invoicing', label: 'Invoicing', icon: Receipt }] : []),
     ...(isAdmin ? [{ id: 'escalations', label: 'Escalations', icon: Flame, badge: escalated.length }] : []),
     ...(isAdmin ? [{ id: 'users', label: 'Users', icon: UserCog }] : []),
+    ...(isAdmin ? [{ id: 'audit', label: 'Ändringslogg', icon: ScrollText }] : []),
+
     { id: 'profile', label: 'My Profile', icon: UserIcon },
   ] as Array<{ id: string; label: string; icon: typeof Flame; badge?: number }>;
   return (
