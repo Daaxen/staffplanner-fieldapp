@@ -50,27 +50,21 @@ const generateGoodsId = () => `gi-${Math.random().toString(36).slice(2, 8)}`;
 const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDialogProps) => {
   const projectId = useMemo(() => generateProjectId(), [open]);
   const [clientRows] = useClients();
-  const clients = useMemo(() => {
-    const names = new Set<string>();
-    clientRows.forEach((c) => c.name && names.add(c.name));
-    projects.forEach((p) => p.client && names.add(p.client));
-    return Array.from(names).sort((a, b) => a.localeCompare(b));
-  }, [clientRows]);
-  const clientExtra = useMemo(() => {
-    const map = new Map<string, string>();
-    clientRows.forEach((c) => {
-      const label = [c.customerNumber, c.id, c.region].filter(Boolean).join(' · ');
-      if (c.name) map.set(c.name, label);
-    });
-    return map;
-  }, [clientRows]);
+  // Orders are linked to a customer record — only registered customers can be picked.
+  const clients = useMemo(
+    () => [...clientRows].filter((c) => c.name).sort((a, b) => a.name.localeCompare(b.name)),
+    [clientRows],
+  );
+  const clientLabel = (c: (typeof clientRows)[number]) =>
+    [c.customerNumber, c.id, c.region].filter(Boolean).join(' · ');
   const [templateId, setTemplateId] = useState<string>(DEFAULT_TEMPLATE_ID);
   const template = useMemo(() => getTemplate(templateId), [templateId]);
   const [projectType, setProjectType] = useState<ProjectType>('installation');
   const [name, setName] = useState('');
   const [projectNumber, setProjectNumber] = useState('');
   const [client, setClient] = useState('');
-  const [clientSuggestions, setClientSuggestions] = useState<string[]>([]);
+  const [clientRef, setClientRef] = useState('');
+  const [clientSuggestions, setClientSuggestions] = useState<typeof clientRows>([]);
   const [showClientSuggestions, setShowClientSuggestions] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [location, setLocation] = useState('');
