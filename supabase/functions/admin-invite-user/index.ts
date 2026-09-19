@@ -26,24 +26,31 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { email, full_name, role, phone } = body as { email: string; full_name?: string; role: 'admin' | 'installer'; phone?: string };
-    if (!email || !role) {
-      return new Response(JSON.stringify({ error: 'email and role required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const { email, full_name, role, roles, phone } = body as {
+      email: string; full_name?: string; role?: string; roles?: string[]; phone?: string;
+    };
+    const allowed = ['admin', 'installer', 'hr'];
+    const wanted = Array.from(new Set((roles && roles.length ? roles : role ? [role] : []).filter(r => allowed.includes(r))));
+    if (!email || wanted.length === 0) {
+      return new Response(JSON.stringify({ error: 'email and at least one role required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const redirectTo = req.headers.get('origin') ? `${req.headers.get('origin')}/auth` : undefined;
     const { data: invited, error: inviteErr } = await admin.auth.admin.inviteUserByEmail(email, {
-      data: { full_name, phone, role },
+      data: { full_name, phone },
       redirectTo,
     });
     if (inviteErr) {
       return new Response(JSON.stringify({ error: inviteErr.message }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // handle_new_user trigger assigns default 'installer'; override role if admin was requested
-    if (invited.user && role === 'admin') {
-      await admin.from('user_roles').upsert({ user_id: invited.user.id, role: 'admin' }, { onConflict: 'user_id,role' });
-      await admin.from('user_roles').delete().eq('user_id', invited.user.id).eq('role', 'installer');
+    // handle_new_user trigger assigns a default role; replace it with exactly the requested set
+    if (invited.user) {
+      await admin.from('user_roles').upsert(
+        wanted.map(r => ({ user_id: invited.user!.id, role: r })),
+        { onConflict: 'user_id,role' },
+      );
+      await admin.from('user_roles').delete().eq('user_id', invited.user.id).not('role', 'in', `(${wanted.join(',')})`);
     }
 
     return new Response(JSON.stringify({ user: invited.user }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
