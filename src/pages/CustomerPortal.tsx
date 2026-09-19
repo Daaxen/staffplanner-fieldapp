@@ -170,7 +170,7 @@ const CustomerPortal = () => {
                 </p>
                 <p className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-muted-foreground" />
-                  {project.location ?? [project.street, project.postalCode, project.region].filter(Boolean).join(', ') || '—'}
+                  {project.location ?? ([project.street, project.postalCode, project.region].filter(Boolean).join(', ') || '—')}
                 </p>
                 <p className="flex items-center gap-2 md:col-span-2">
                   <Users className="h-4 w-4 text-muted-foreground" />
