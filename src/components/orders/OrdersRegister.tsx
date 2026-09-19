@@ -437,6 +437,7 @@ const OrdersRegister = () => {
               <th className="px-3 py-2 text-left"><SortHeader k="name" label="Order" /></th>
               <th className="px-3 py-2 text-left"><SortHeader k="projectType" label="Type" /></th>
               <th className="px-3 py-2 text-left"><SortHeader k="client" label="Client" /></th>
+              <th className="px-3 py-2 text-left">Project</th>
               <th className="px-3 py-2 text-left">Location</th>
               <th className="px-3 py-2 text-left"><SortHeader k="status" label="Status" /></th>
               <th className="px-3 py-2 text-left">Commercial</th>
@@ -464,6 +465,9 @@ const OrdersRegister = () => {
                   <span className="text-xs">{projectTypeIcons[o.projectType]} {projectTypeLabels[o.projectType]}</span>
                 </td>
                 <td className="px-3 py-2">{o.client}</td>
+                <td className="px-3 py-2 text-xs text-muted-foreground">
+                  {projectGroups.find(g => g.id === o.projectGroupId)?.name ?? <span className="italic">Standalone</span>}
+                </td>
                 <td className="px-3 py-2 text-muted-foreground">{o.location}</td>
                 <td className="px-3 py-2">
                   <span className="inline-flex items-center gap-1.5 text-xs">
@@ -503,7 +507,7 @@ const OrdersRegister = () => {
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={10} className="text-center py-12 text-muted-foreground text-sm">No orders match the current filters.</td></tr>
+              <tr><td colSpan={12} className="text-center py-12 text-muted-foreground text-sm">No work orders match the current filters.</td></tr>
             )}
           </tbody>
         </table>
