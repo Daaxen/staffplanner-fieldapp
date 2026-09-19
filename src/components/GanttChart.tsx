@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, LayoutList, Users, Building2, Plus, Send } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LayoutList, Users, Building2, Plus, Send, Folder } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { installers, type Project, type ProjectStatus } from '@/data/mockData';
 import { useProjects } from '@/lib/appData';
