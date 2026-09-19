@@ -11,6 +11,7 @@ import { expenseCategoryLabels, type ExpenseCategory } from '@/data/logsData';
 import type { InstallerLogs } from '@/hooks/useInstallerLogs';
 import { sumActualTime } from '@/lib/timeVariance';
 import TimeVarianceCard from '@/components/installer/reporting/TimeVarianceCard';
+import { hoursBetween, timeMismatchMessage } from '@/lib/validation/reporting';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface ProjectLogTabProps {
@@ -32,6 +33,7 @@ const ProjectLogTab = ({ projectId, logs, plannedHours }: ProjectLogTabProps) =>
   const [date, setDate] = useState(today);
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
+  const [hoursInput, setHoursInput] = useState('');
   const [travelMinutes, setTravelMinutes] = useState('');
   const [timeNote, setTimeNote] = useState('');
   const [checkoutOpen, setCheckoutOpen] = useState(false);
@@ -57,20 +59,35 @@ const ProjectLogTab = ({ projectId, logs, plannedHours }: ProjectLogTabProps) =>
     costs: expenseEntries.reduce((sum, entry) => sum + entry.amount, 0),
   }), [actual, expenseEntries]);
 
-  const submitTime = async () => {
-    if (!startTime || !endTime) {
-      toast.error('Enter a start and finish time');
-      return;
-    }
+  const computedHours = startTime && endTime ? hoursBetween(startTime, endTime) : null;
+  const statedHours = hoursInput.trim() ? Number(hoursInput.replace(',', '.')) : undefined;
+
+  const saveTime = async (acceptComputed: boolean) => {
     setSaving(true);
     const result = await logs.addTime({
       projectId, date, startTime, endTime,
+      hours: acceptComputed ? undefined : (Number.isFinite(statedHours) ? statedHours : undefined),
+      acceptComputed,
       travelHours: minutesToHours(travelMinutes), note: timeNote,
     });
     setSaving(false);
-    if (!result) { toast.error('Time could not be saved'); return; }
-    setStartTime(''); setEndTime(''); setTravelMinutes(''); setTimeNote('');
-    toast.success('Time saved');
+    if (!result) return false;
+    setStartTime(''); setEndTime(''); setHoursInput(''); setTravelMinutes(''); setTimeNote('');
+    toast.success('Tiden är sparad');
+    return true;
+  };
+
+  const submitTime = async () => {
+    if (!startTime || !endTime) {
+      toast.error('Ange start- och sluttid');
+      return;
+    }
+    await saveTime(false);
+  };
+
+  const acceptComputed = async () => {
+    logs.clearMismatch();
+    await saveTime(true);
   };
 
   const confirmCheckout = async () => {
@@ -161,10 +178,38 @@ const ProjectLogTab = ({ projectId, logs, plannedHours }: ProjectLogTabProps) =>
           <div><Label htmlFor="start-time">Start</Label><Input id="start-time" type="time" value={startTime} onChange={e => setStartTime(e.target.value)} /></div>
           <div><Label htmlFor="end-time">Finish</Label><Input id="end-time" type="time" value={endTime} onChange={e => setEndTime(e.target.value)} /></div>
         </div>
+        <div>
+          <Label htmlFor="stated-hours">Timmar (valfritt)</Label>
+          <Input id="stated-hours" inputMode="decimal" type="number" min="0" step="0.25"
+            placeholder={computedHours != null ? computedHours.toFixed(2) : '0'}
+            value={hoursInput} onChange={e => setHoursInput(e.target.value)} />
+          {computedHours != null && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Tiderna ger {computedHours.toFixed(2).replace('.', ',')} h. Lämnas fältet tomt sparas den beräknade tiden.
+            </p>
+          )}
+        </div>
         <div><Label htmlFor="travel-minutes">Travel time (minutes)</Label><Input id="travel-minutes" inputMode="numeric" type="number" min="0" step="5" placeholder="0" value={travelMinutes} onChange={e => setTravelMinutes(e.target.value)} /></div>
         <Textarea aria-label="Time note" placeholder="Note (optional)" value={timeNote} onChange={e => setTimeNote(e.target.value)} />
         <Button className="w-full" disabled={saving} onClick={() => void submitTime()}>Save time</Button>
       </section>
+
+      <Dialog open={Boolean(logs.pendingMismatch)} onOpenChange={open => { if (!open) logs.clearMismatch(); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Tiderna stämmer inte med timmarna</DialogTitle>
+            <DialogDescription>
+              {logs.pendingMismatch ? timeMismatchMessage(logs.pendingMismatch) : ''}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => logs.clearMismatch()}>Ändra tiderna</Button>
+            <Button disabled={saving} onClick={() => void acceptComputed()}>
+              Godkänn {logs.pendingMismatch ? logs.pendingMismatch.computed.toFixed(2).replace('.', ',') : ''} h
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <section className="rounded-lg border border-border bg-card p-3 space-y-3">
         <h2 className="text-sm font-semibold text-foreground flex items-center gap-2"><MapPin className="w-4 h-4" />Mileage</h2>

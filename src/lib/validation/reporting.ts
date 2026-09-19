@@ -44,6 +44,39 @@ export function hoursBetween(start: string, end: string): number {
   return Math.round(((toMinutes(end) - toMinutes(start)) / 60) * 100) / 100;
 }
 
+/** Rounding tolerance before a typed hour figure counts as a mismatch. */
+export const HOURS_TOLERANCE = 0.01;
+
+export interface TimeMismatch {
+  computed: number;
+  stated: number;
+}
+
+/**
+ * The database always recalculates hours from start and finish, so a typed
+ * figure that disagrees must be resolved by the user instead of overwritten.
+ */
+export function timeMismatch(input: {
+  startTime?: string;
+  endTime?: string;
+  hours?: number;
+}): TimeMismatch | null {
+  if (!input.startTime || !input.endTime) return null;
+  if (input.hours == null) return null;
+  const computed = hoursBetween(input.startTime, input.endTime);
+  if (Math.abs(computed - input.hours) <= HOURS_TOLERANCE) return null;
+  return { computed, stated: input.hours };
+}
+
+const hh = (value: number) => value.toFixed(2).replace('.', ',');
+
+export function timeMismatchMessage(m: TimeMismatch): string {
+  return (
+    `Tiderna ger ${hh(m.computed)} h, men du har angett ${hh(m.stated)} h. ` +
+    'Godkänn den beräknade tiden eller ändra start- och sluttid.'
+  );
+}
+
 export const timeEntrySchema = z
   .object({
     projectId: z.string().min(1, 'Pick an order'),

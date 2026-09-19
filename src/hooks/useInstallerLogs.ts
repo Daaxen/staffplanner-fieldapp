@@ -8,6 +8,7 @@ import { sumActualTime } from '@/lib/timeVariance';
 import { toast } from 'sonner';
 import {
   timeEntrySchema, mileageEntrySchema, expenseEntrySchema, firstIssue, type ExpenseKind,
+  timeMismatch, timeMismatchMessage, type TimeMismatch,
 } from '@/lib/validation/reporting';
 
 
@@ -23,6 +24,8 @@ export function useInstallerLogs(projects: Project[] = []) {
   const [expenses, setExpenses] = useState<ExpenseEntry[]>([]);
   const [activeTimer, setActiveTimer] = useState<ActiveTimer | null>(null);
   const [loading, setLoading] = useState(true);
+  /** Set when typed hours disagree with the start and finish times. */
+  const [pendingMismatch, setPendingMismatch] = useState<TimeMismatch | null>(null);
 
   const metaFor = useCallback((projectId: string): Meta => {
     const p = projects.find(pr => pr.id === projectId);
@@ -93,9 +96,21 @@ export function useInstallerLogs(projects: Project[] = []) {
   const addTime = useCallback(async (entry: {
     projectId: string; date: string; startTime?: string; endTime?: string; hours?: number;
     travelHours?: number; note?: string; source?: TimeEntry['source'];
+    /** Set once the user has accepted the figure calculated from the times. */
+    acceptComputed?: boolean;
   }) => {
     if (!installerId) return null;
     const bothTimes = Boolean(entry.startTime && entry.endTime);
+
+    // The database recalculates hours from the times, so a disagreeing figure
+    // is never overwritten in silence — the user decides.
+    const mismatch = entry.acceptComputed ? null : timeMismatch(entry);
+    if (mismatch) {
+      setPendingMismatch(mismatch);
+      toast.error(timeMismatchMessage(mismatch));
+      return null;
+    }
+
     const hours = bothTimes
       ? computeHours(entry.startTime!, entry.endTime!)
       : (entry.hours || 0);
@@ -222,11 +237,13 @@ export function useInstallerLogs(projects: Project[] = []) {
     [time],
   );
 
+  const clearMismatch = useCallback(() => setPendingMismatch(null), []);
+
   return {
     loading, refresh,
     timeFor, expensesFor, activeTimer, actualFor,
     startTimer, stopTimer, cancelTimer,
-    addTime, deleteTime,
+    addTime, deleteTime, pendingMismatch, clearMismatch,
     addExpense, addMileage, deleteExpense,
     rateFor, categories,
   };
