@@ -189,7 +189,7 @@ export function buildInvoiceSuggestion(
     });
   }
   if (hours === 0 && fixedPrice === 0) {
-    warnings.push({ code: 'no-hours', label: 'No hours reported and no fixed price', penalty: settings.penaltyNoHours });
+    warnings.push({ code: 'no-hours', label: 'Incomplete time reporting — no hours logged and no fixed price', penalty: settings.penaltyNoHours });
   }
   if (margin < 0) {
     warnings.push({
