@@ -8,6 +8,7 @@ import {
 } from '@/lib/commercial';
 
 import { useProjects, registerBookingOverride } from '@/lib/appData';
+import { useProjectGroups } from '@/lib/projectGroups';
 import { detectConflicts } from '@/lib/schedulingConflicts';
 import { OVERRIDE_REASON_MIN } from '@/lib/bookings';
 import { Textarea } from '@/components/ui/textarea';
@@ -55,14 +56,16 @@ const OrdersRegister = () => {
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [showFilters, setShowFilters] = useState(true);
-  const [massDialog, setMassDialog] = useState<null | 'status' | 'assignee' | 'delete'>(null);
+  const [massDialog, setMassDialog] = useState<null | 'status' | 'assignee' | 'delete' | 'group'>(null);
+  const [massGroup, setMassGroup] = useState<string>('');
+  const { groups: projectGroups } = useProjectGroups();
   const [massStep, setMassStep] = useState<'configure' | 'preview'>('configure');
   const [massStatus, setMassStatus] = useState<ProjectStatus>('scheduled');
   const [massAssignee, setMassAssignee] = useState<string>('');
   const [massOverrideReason, setMassOverrideReason] = useState('');
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
-  const openMassDialog = (kind: 'status' | 'assignee' | 'delete') => {
+  const openMassDialog = (kind: 'status' | 'assignee' | 'delete' | 'group') => {
     setMassStep('configure');
     setDeleteConfirmText('');
     setMassDialog(kind);
@@ -71,6 +74,7 @@ const OrdersRegister = () => {
     setMassDialog(null);
     setMassStep('configure');
     setMassAssignee('');
+    setMassGroup('');
     setMassOverrideReason('');
     setDeleteConfirmText('');
   };
@@ -309,7 +313,7 @@ const OrdersRegister = () => {
       <div className="shrink-0 border-b border-border bg-card">
         <div className="px-6 py-4 flex flex-wrap items-center gap-3">
           <div>
-            <h1 className="text-xl font-semibold text-foreground">Orders</h1>
+            <h1 className="text-xl font-semibold text-foreground">Work orders</h1>
             <p className="text-xs text-muted-foreground">
               {filtered.length} of {orders.length} shown{selected.size > 0 ? ` · ${selected.size} selected` : ''}
             </p>
@@ -409,6 +413,9 @@ const OrdersRegister = () => {
             <Button size="sm" variant="outline" onClick={() => openMassDialog('assignee')}>
               <UsersIcon className="w-3.5 h-3.5 mr-1" /> Assign installer
             </Button>
+            <Button size="sm" variant="outline" onClick={() => openMassDialog('group')}>
+              Assign to project
+            </Button>
             <Button size="sm" variant="outline" onClick={() => openMassDialog('delete')}>
               <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete
             </Button>
@@ -430,6 +437,7 @@ const OrdersRegister = () => {
               <th className="px-3 py-2 text-left"><SortHeader k="name" label="Order" /></th>
               <th className="px-3 py-2 text-left"><SortHeader k="projectType" label="Type" /></th>
               <th className="px-3 py-2 text-left"><SortHeader k="client" label="Client" /></th>
+              <th className="px-3 py-2 text-left">Project</th>
               <th className="px-3 py-2 text-left">Location</th>
               <th className="px-3 py-2 text-left"><SortHeader k="status" label="Status" /></th>
               <th className="px-3 py-2 text-left">Commercial</th>
@@ -457,6 +465,9 @@ const OrdersRegister = () => {
                   <span className="text-xs">{projectTypeIcons[o.projectType]} {projectTypeLabels[o.projectType]}</span>
                 </td>
                 <td className="px-3 py-2">{o.client}</td>
+                <td className="px-3 py-2 text-xs text-muted-foreground">
+                  {projectGroups.find(g => g.id === o.projectGroupId)?.name ?? <span className="italic">Standalone</span>}
+                </td>
                 <td className="px-3 py-2 text-muted-foreground">{o.location}</td>
                 <td className="px-3 py-2">
                   <span className="inline-flex items-center gap-1.5 text-xs">
@@ -496,13 +507,45 @@ const OrdersRegister = () => {
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={10} className="text-center py-12 text-muted-foreground text-sm">No orders match the current filters.</td></tr>
+              <tr><td colSpan={12} className="text-center py-12 text-muted-foreground text-sm">No work orders match the current filters.</td></tr>
             )}
           </tbody>
         </table>
       </div>
 
       {/* Mass update dialogs — configure → preview → apply */}
+      <Dialog open={massDialog === 'group'} onOpenChange={o => !o && closeMassDialog()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Assign to project</DialogTitle>
+            <DialogDescription>
+              Move {selected.size} selected work order(s) into a project, or make them standalone.
+            </DialogDescription>
+          </DialogHeader>
+          <Select value={massGroup} onValueChange={setMassGroup}>
+            <SelectTrigger><SelectValue placeholder="Pick project" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">No project (standalone)</SelectItem>
+              {projectGroups.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <DialogFooter>
+            <Button variant="outline" onClick={closeMassDialog}>Cancel</Button>
+            <Button
+              disabled={!massGroup}
+              onClick={() => {
+                const target = massGroup === 'none' ? undefined : massGroup;
+                setOrders(prev => prev.map(p => selected.has(p.id) ? { ...p, projectGroupId: target } : p));
+                toast.success(`Updated ${selected.size} work order(s)`);
+                closeMassDialog(); setSelected(new Set());
+              }}
+            >
+              Apply
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={massDialog === 'status'} onOpenChange={o => !o && closeMassDialog()}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>

@@ -102,10 +102,16 @@ export interface ProjectEconomyOverrides {
   targetMarginPct?: number;
 }
 
+/**
+ * A work order: the schedulable, assignable, reportable and invoiceable unit.
+ * It may belong to one project (see ProjectGroup) or stand alone.
+ */
 export interface Project {
   id: string;
   name: string;
   projectNumber?: string;
+  /** Optional parent project (public.project_groups.id). */
+  projectGroupId?: string;
   projectType: ProjectType;
   /** Project template that defines required fields, checklist, photos and sign-offs. */
   templateId?: string;

@@ -1375,6 +1375,56 @@ export type Database = {
           },
         ]
       }
+      project_groups: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_date: string | null
+          id: string
+          name: string
+          project_number: string | null
+          start_date: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          name: string
+          project_number?: string | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          name?: string
+          project_number?: string | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_groups_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_status_events: {
         Row: {
           changed_by: string | null
@@ -1449,6 +1499,7 @@ export type Database = {
           mileage_rate: number | null
           name: string
           postal_code: string | null
+          project_group_id: string | null
           project_number: string | null
           project_type: string
           ref: string | null
@@ -1485,6 +1536,7 @@ export type Database = {
           mileage_rate?: number | null
           name: string
           postal_code?: string | null
+          project_group_id?: string | null
           project_number?: string | null
           project_type?: string
           ref?: string | null
@@ -1521,6 +1573,7 @@ export type Database = {
           mileage_rate?: number | null
           name?: string
           postal_code?: string | null
+          project_group_id?: string | null
           project_number?: string | null
           project_type?: string
           ref?: string | null
@@ -1548,6 +1601,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "ref_commercial_status"
             referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "projects_project_group_id_fkey"
+            columns: ["project_group_id"]
+            isOneToOne: false
+            referencedRelation: "project_groups"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "projects_status_fk"
