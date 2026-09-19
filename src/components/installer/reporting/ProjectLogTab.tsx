@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
-import { Clock, MapPin, Play, Square, Trash2, Wallet } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
+import { Camera, Clock, MapPin, Paperclip, Play, Receipt, Square, Trash2, Wallet, X } from 'lucide-react';
+import { missingReceiptMessage, receiptRequired, uploadReceipt, RECEIPT_ACCEPT } from '@/lib/receipts';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,6 +41,11 @@ const ProjectLogTab = ({ projectId, logs, plannedHours }: ProjectLogTabProps) =>
   const [category, setCategory] = useState<ExpenseCategory>('materials');
   const [amount, setAmount] = useState('');
   const [expenseNote, setExpenseNote] = useState('');
+  const [receiptPath, setReceiptPath] = useState('');
+  const [receiptLabel, setReceiptLabel] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const cameraInput = useRef<HTMLInputElement>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
 
   const timeEntries = logs.timeFor(projectId);
@@ -90,18 +96,35 @@ const ProjectLogTab = ({ projectId, logs, plannedHours }: ProjectLogTabProps) =>
     toast.success('Mileage saved');
   };
 
+  const pickReceipt = async (file?: File | null) => {
+    if (!file) return;
+    setUploading(true);
+    const result = await uploadReceipt(file);
+    setUploading(false);
+    if ('error' in result) { toast.error(result.error); return; }
+    setReceiptPath(result.path);
+    setReceiptLabel(file.name);
+    toast.success('Kvitto bifogat');
+  };
+
   const submitExpense = async () => {
     const value = Number(amount);
     if (!Number.isFinite(value) || value <= 0) {
-      toast.error('Enter a valid amount');
+      toast.error('Ange ett giltigt belopp');
+      return;
+    }
+    if (receiptRequired(category, value) && !receiptPath) {
+      toast.error(missingReceiptMessage(category));
       return;
     }
     setSaving(true);
-    const result = await logs.addExpense({ projectId, date, category, amount: value, note: expenseNote });
+    const result = await logs.addExpense({
+      projectId, date, category, amount: value, note: expenseNote, receiptName: receiptPath || undefined,
+    });
     setSaving(false);
-    if (!result) { toast.error('Cost could not be saved'); return; }
-    setAmount(''); setExpenseNote('');
-    toast.success('Cost saved');
+    if (!result) { toast.error('Kostnaden kunde inte sparas'); return; }
+    setAmount(''); setExpenseNote(''); setReceiptPath(''); setReceiptLabel('');
+    toast.success('Kostnad sparad');
   };
 
   return (
