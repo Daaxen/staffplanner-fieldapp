@@ -13,7 +13,7 @@ import {
 const priorityTone: Record<string, string> = {
   low: 'bg-muted text-muted-foreground',
   medium: 'bg-secondary text-secondary-foreground',
-  high: 'bg-warning/15 text-warning-foreground',
+  high: 'bg-primary/15 text-primary',
   critical: 'bg-destructive/15 text-destructive',
 };
 
