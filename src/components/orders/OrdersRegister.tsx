@@ -7,7 +7,10 @@ import {
   commercialTransitionError, type CommercialStatus,
 } from '@/lib/commercial';
 
-import { useProjects } from '@/lib/appData';
+import { useProjects, registerBookingOverride } from '@/lib/appData';
+import { detectConflicts } from '@/lib/schedulingConflicts';
+import { OVERRIDE_REASON_MIN } from '@/lib/bookings';
+import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,6 +59,7 @@ const OrdersRegister = () => {
   const [massStep, setMassStep] = useState<'configure' | 'preview'>('configure');
   const [massStatus, setMassStatus] = useState<ProjectStatus>('scheduled');
   const [massAssignee, setMassAssignee] = useState<string>('');
+  const [massOverrideReason, setMassOverrideReason] = useState('');
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   const openMassDialog = (kind: 'status' | 'assignee' | 'delete') => {
@@ -67,6 +71,7 @@ const OrdersRegister = () => {
     setMassDialog(null);
     setMassStep('configure');
     setMassAssignee('');
+    setMassOverrideReason('');
     setDeleteConfirmText('');
   };
 
@@ -98,11 +103,27 @@ const OrdersRegister = () => {
   }, [selectedOrders, massStatus]);
 
 
+  // Bulk assignment runs the same conflict and absence checks as every other path.
   const assigneePreview = useMemo(() => {
     return selectedOrders.map(o => {
       const already = !!massAssignee && o.assigneeIds.includes(massAssignee);
       const nextIds = already ? o.assigneeIds : Array.from(new Set([...o.assigneeIds, massAssignee]));
       const statusChange = !already && o.status === 'open' ? 'scheduled' as ProjectStatus : undefined;
+      const conflicts = already || !massAssignee
+        ? []
+        : detectConflicts({
+            installerIds: [massAssignee],
+            draft: {
+              projectId: o.id,
+              startDate: o.startDate,
+              endDate: o.endDate,
+              startTime: o.startTime,
+              endTime: o.endTime,
+            },
+            installers,
+            projects: orders,
+          });
+      const blockers = conflicts.filter(c => c.severity === 'blocking');
       return {
         id: o.id,
         name: o.name,
@@ -111,9 +132,11 @@ const OrdersRegister = () => {
         next: nextIds,
         already,
         statusChange,
+        blocked: blockers.length > 0,
+        blockDetail: blockers[0]?.detail,
       };
     });
-  }, [selectedOrders, massAssignee]);
+  }, [selectedOrders, massAssignee, orders]);
 
   const deletePreview = useMemo(() => {
     return selectedOrders.map(o => ({
@@ -218,14 +241,28 @@ const OrdersRegister = () => {
 
   const applyMassAssignee = () => {
     if (!massAssignee) return;
-    const changedIds = new Set(assigneePreview.filter(r => !r.already).map(r => r.id));
+    const reason = massOverrideReason.trim();
+    const hasReason = reason.length >= OVERRIDE_REASON_MIN;
+    const candidates = assigneePreview.filter(r => !r.already);
+    const blockedRows = candidates.filter(r => r.blocked);
+    if (blockedRows.length > 0 && !hasReason) {
+      toast.error(`${blockedRows.length} order(s) clash with another booking or an absence`, {
+        description: `Enter an override reason (min ${OVERRIDE_REASON_MIN} characters) to push them through — it is logged.`,
+      });
+      return;
+    }
+    const changedIds = new Set(candidates.map(r => r.id));
     if (changedIds.size === 0) { toast.error('All selected orders already have this installer'); return; }
+    if (hasReason) blockedRows.forEach(r => registerBookingOverride(r.id, reason));
     setOrders(prev => prev.map(p =>
       changedIds.has(p.id)
         ? { ...p, assigneeIds: Array.from(new Set([...p.assigneeIds, massAssignee])), status: p.status === 'open' ? 'scheduled' : p.status }
         : p
     ));
-    toast.success(`Assigned installer to ${changedIds.size} order(s)`);
+    toast.success(
+      `Assigned installer to ${changedIds.size} order(s)` +
+      (blockedRows.length && hasReason ? ` · ${blockedRows.length} overridden (logged)` : ''),
+    );
     closeMassDialog(); setSelected(new Set());
   };
   const applyMassDelete = () => {
@@ -564,6 +601,10 @@ const OrdersRegister = () => {
                   <div className="w-36 text-right">
                     {r.already ? (
                       <span className="text-xs text-muted-foreground">Already assigned</span>
+                    ) : r.blocked ? (
+                      <span className="text-xs text-destructive inline-flex items-center gap-1" title={r.blockDetail}>
+                        <AlertTriangle className="w-3 h-3" />Conflict
+                      </span>
                     ) : (
                       <span className="text-xs text-emerald-600 inline-flex items-center gap-1">
                         <Check className="w-3 h-3" />Add{r.statusChange ? ' + Scheduled' : ''}
@@ -572,6 +613,21 @@ const OrdersRegister = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {massStep === 'preview' && assigneePreview.some(r => !r.already && r.blocked) && (
+            <div className="space-y-2">
+              <p className="text-xs text-destructive">
+                Some orders clash with another booking or a planned absence. An admin may push them
+                through with a reason — it is stored on the booking and logged.
+              </p>
+              <Textarea
+                value={massOverrideReason}
+                onChange={e => setMassOverrideReason(e.target.value)}
+                placeholder={`Reason for the override (min ${OVERRIDE_REASON_MIN} characters)`}
+                rows={2}
+              />
             </div>
           )}
 

@@ -30,6 +30,7 @@ import RecommendedInstallers from '@/components/scheduling/RecommendedInstallers
 import { recommendInstallers } from '@/lib/assignmentRecommendations';
 import { projectDateRangeError } from '@/lib/validation/dates';
 import { saveBookings, findBookingConflicts, type BookingConflict } from '@/lib/bookings';
+import { registerBookingOverride } from '@/lib/appData';
 import BookingOverrideDialog from '@/components/scheduling/BookingOverrideDialog';
 
 interface CreateOrderDialogProps {
@@ -277,6 +278,8 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder }: CreateOrderDia
   };
 
   const persistBookings = async (project: Project, overrideReason?: string) => {
+    // the reason also travels with any follow-up save of the same order
+    if (overrideReason) registerBookingOverride(project.id, overrideReason);
     const res = await saveBookings({
       projectRef: project.id,
       installerIds: project.assigneeIds,

@@ -97,6 +97,120 @@ export interface SaveBookingsResult {
   error?: string;
 }
 
+/** Orders in these states hold no resource booking. */
+export const NON_BOOKING_STATUSES = ['cancelled', 'completed', 'open'] as const;
+
+/** Booking state mirrors where the order itself is. */
+export function bookingStatusForProject(status: string): BookingStatus {
+  if (status === 'in-progress') return 'in_progress';
+  if (status === 'completed') return 'completed';
+  if (status === 'cancelled') return 'cancelled';
+  return 'planned';
+}
+
+interface BookableProject {
+  id: string;
+  status: string;
+  startDate: string;
+  endDate: string;
+  startTime?: string;
+  endTime?: string;
+  assigneeIds: string[];
+}
+
+export interface BookingRow {
+  project_id: string;
+  installer_id: string;
+  planned_start_at: string;
+  planned_end_at: string;
+  assignment_status: BookingStatus;
+  override_reason: string | null;
+}
+
+/** The exact booking rows an order should have — one per installer, no duplicates. */
+export function bookingRowsFor(
+  project: BookableProject,
+  rowId: string,
+  overrideReason?: string,
+): BookingRow[] {
+  if (project.status === 'cancelled') return [];
+  const installerIds = Array.from(new Set(project.assigneeIds ?? [])).filter(Boolean);
+  if (!installerIds.length) return [];
+  const { start, end } = bookingWindow(
+    project.startDate,
+    project.endDate,
+    project.startTime,
+    project.endTime,
+  );
+  return installerIds.map(installerId => ({
+    project_id: rowId,
+    installer_id: installerId,
+    planned_start_at: start,
+    planned_end_at: end,
+    assignment_status: bookingStatusForProject(project.status),
+    override_reason: overrideReason?.trim() || null,
+  }));
+}
+
+/**
+ * The one write path for bookings. Creating an order, moving it in the plan,
+ * changing dates or times, swapping, adding or removing an installer and bulk
+ * assignment all end up here, so assignments always match the order.
+ */
+export async function syncProjectBookings(
+  project: BookableProject,
+  opts: { rowId?: string; overrideReason?: string } = {},
+): Promise<SaveBookingsResult> {
+  const rowId = opts.rowId ?? (await ensureProjectRowId(project.id));
+  if (!rowId) return { ok: false, conflict: false, error: 'Order not found in the database' };
+
+  const rows = bookingRowsFor(project, rowId, opts.overrideReason);
+  const installerIds = rows.map(r => r.installer_id);
+
+  // Anything no longer on the order loses its booking — never leave orphans behind.
+  const stale = supabase.from('assignments').delete().eq('project_id', rowId);
+  const { error: delError } = installerIds.length
+    ? await stale.not('installer_id', 'in', `(${installerIds.join(',')})`)
+    : await stale;
+  if (delError) return { ok: false, conflict: false, error: delError.message };
+
+  if (!rows.length) return { ok: true, conflict: false };
+
+  const { error } = await supabase
+    .from('assignments')
+    .upsert(rows.map(r => ({ ...r, updated_at: new Date().toISOString() })), {
+      onConflict: 'project_id,installer_id',
+    });
+
+
+  if (error) return { ok: false, conflict: isConflictError(error.message), error: error.message };
+  return { ok: true, conflict: false };
+}
+
+/** True when the database refused the booking because of a clash or absence. */
+export function isConflictError(message: string | undefined | null): boolean {
+  const msg = (message ?? '').toLowerCase();
+  return (
+    msg.includes('assignments_no_overlap') ||
+    msg.includes('conflict') ||
+    msg.includes('override reason') ||
+    msg.includes('absence')
+  );
+}
+
+/** Friendly Swedish wording for a refused booking. */
+export function bookingErrorMessage(message: string | undefined | null): string {
+  if (isConflictError(message)) {
+    return 'Bokningen krockar med en annan order eller planerad frånvaro. Ange en orsak för att gå vidare som administratör.';
+  }
+  return `Bokningen kunde inte sparas: ${message ?? 'okänt fel'}`;
+}
+
+/** Removes every booking for an order (used when the order itself is removed). */
+export async function deleteProjectBookings(rowId: string): Promise<void> {
+  await supabase.from('assignments').delete().eq('project_id', rowId);
+}
+
 /**
  * Replaces the bookings for an order. A conflicting booking is only written
  * when an admin supplies an override reason (audited in assignment_overrides).
@@ -111,40 +225,16 @@ export async function saveBookings(params: {
   status?: BookingStatus;
   overrideReason?: string;
 }): Promise<SaveBookingsResult> {
-  const rowId = await ensureProjectRowId(params.projectRef);
-  if (!rowId) return { ok: false, conflict: false, error: 'Order not found in the database' };
-
-  const { start, end } = bookingWindow(
-    params.startDate,
-    params.endDate,
-    params.startTime,
-    params.endTime,
+  return syncProjectBookings(
+    {
+      id: params.projectRef,
+      status: params.status === 'in_progress' ? 'in-progress' : 'scheduled',
+      startDate: params.startDate,
+      endDate: params.endDate,
+      startTime: params.startTime,
+      endTime: params.endTime,
+      assigneeIds: params.installerIds,
+    },
+    { overrideReason: params.overrideReason },
   );
-  const reason = params.overrideReason?.trim() || null;
-
-  await supabase.from('assignments').delete().eq('project_id', rowId);
-
-  if (!params.installerIds.length) return { ok: true, conflict: false };
-
-  const { error } = await supabase.from('assignments').insert(
-    params.installerIds.map(installerId => ({
-      project_id: rowId,
-      installer_id: installerId,
-      planned_start_at: start,
-      planned_end_at: end,
-      assignment_status: params.status ?? 'planned',
-      override_reason: reason,
-    })),
-  );
-
-  if (error) {
-    const msg = error.message || '';
-    const conflict =
-      msg.includes('assignments_no_overlap') ||
-      msg.toLowerCase().includes('conflict') ||
-      msg.includes('override reason');
-    return { ok: false, conflict, error: msg };
-  }
-
-  return { ok: true, conflict: false };
 }
