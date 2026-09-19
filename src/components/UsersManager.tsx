@@ -59,7 +59,7 @@ const UsersManager = () => {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ email: '', full_name: '', phone: '', role: 'installer' as Role });
+  const [form, setForm] = useState({ email: '', full_name: '', phone: '', roles: ['installer'] as Role[] });
   const [busy, setBusy] = useState(false);
   const [edit, setEdit] = useState<Row | null>(null);
   const [editForm, setEditForm] = useState<EditForm>(emptyForm());
@@ -122,7 +122,7 @@ const UsersManager = () => {
     }
     toast.success(`Invitation sent to ${form.email}`);
     setOpen(false);
-    setForm({ email: '', full_name: '', phone: '', role: 'installer' });
+    setForm({ email: '', full_name: '', phone: '', roles: ['installer'] });
     load();
   };
 
