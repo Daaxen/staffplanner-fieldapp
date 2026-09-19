@@ -420,6 +420,27 @@ async function upsertProjectRow(p: Project) {
       .from('project_assignees')
       .insert(valid.map((installer_id) => ({ project_id: rowId, installer_id })));
   }
+
+  // Bookings follow every change to the order: dates, times, team and status.
+  const booking = await syncProjectBookings(
+    { ...p, assigneeIds: valid, overrideReason: undefined } as never,
+    { rowId, overrideReason: pendingOverrideReason(p.id) },
+  );
+  if (!booking.ok) throw new Error(bookingErrorMessage(booking.error));
+}
+
+/**
+ * An admin can push a conflicting change through by registering a reason first;
+ * the reason is stored on the booking and audited in assignment_overrides.
+ */
+const overrideReasons = new Map<string, string>();
+export function registerBookingOverride(projectRef: string, reason: string) {
+  overrideReasons.set(projectRef, reason);
+}
+function pendingOverrideReason(projectRef: string): string | undefined {
+  const reason = overrideReasons.get(projectRef);
+  overrideReasons.delete(projectRef);
+  return reason;
 }
 
 
