@@ -282,7 +282,7 @@ const UsersManager = () => {
         </div>
       )}
 
-      <Dialog open={!!edit} onOpenChange={(o) => !o && setEdit(null)}>
+      <Dialog open={!!edit} onOpenChange={(o) => { if (!o) { setEdit(null); setPrivOpen(false); setPriv(emptyEmployeePrivate()); setPrivReason(''); } }}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Edit user</DialogTitle></DialogHeader>
           <div className="space-y-5">
