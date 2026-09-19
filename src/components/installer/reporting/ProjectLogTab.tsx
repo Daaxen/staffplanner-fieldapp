@@ -19,11 +19,14 @@ interface ProjectLogTabProps {
 const today = () => new Date().toISOString().slice(0, 10);
 const money = (amount: number) => `${amount.toLocaleString('sv-SE')} SEK`;
 
-const ProjectLogTab = ({ projectId, logs }: ProjectLogTabProps) => {
+const ProjectLogTab = ({ projectId, logs, plannedHours }: ProjectLogTabProps) => {
   const [date, setDate] = useState(today);
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
+  const [travelMinutes, setTravelMinutes] = useState('');
   const [timeNote, setTimeNote] = useState('');
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [checkoutTravel, setCheckoutTravel] = useState('');
   const [km, setKm] = useState('');
   const [mileageNote, setMileageNote] = useState('');
   const [category, setCategory] = useState<ExpenseCategory>('materials');
