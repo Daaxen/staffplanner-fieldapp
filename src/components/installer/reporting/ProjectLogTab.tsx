@@ -12,6 +12,8 @@ import type { InstallerLogs } from '@/hooks/useInstallerLogs';
 interface ProjectLogTabProps {
   projectId: string;
   logs: InstallerLogs;
+  /** Estimated hours for the order, used for the deviation figure. */
+  plannedHours?: number;
 }
 
 const today = () => new Date().toISOString().slice(0, 10);
