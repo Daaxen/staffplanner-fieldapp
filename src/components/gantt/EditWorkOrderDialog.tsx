@@ -134,6 +134,7 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
       contactPhone: form.contactPhone.trim() || undefined,
       contactEmail: form.contactEmail.trim() || undefined,
       description: form.description.trim() || undefined,
+      assigneeIds,
     });
 
     toast.success('Work order updated');
