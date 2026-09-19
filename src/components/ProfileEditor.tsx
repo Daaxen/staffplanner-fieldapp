@@ -10,6 +10,7 @@ import { installers } from '@/data/mockData';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Upload } from 'lucide-react';
+import { EmployeePrivate, emptyEmployeePrivate, loadEmployeePrivate, saveEmployeePrivate } from '@/lib/employeePrivate';
 
 export interface Profile {
   id: string;
