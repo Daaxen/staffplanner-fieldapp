@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.validate_commercial_status_change() FROM PUBLIC, anon, authenticated;

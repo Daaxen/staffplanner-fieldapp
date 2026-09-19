@@ -301,6 +301,53 @@ export type Database = {
         }
         Relationships: []
       }
+      commercial_status_events: {
+        Row: {
+          changed_by: string | null
+          changed_by_name: string | null
+          changed_by_type: string
+          created_at: string
+          from_status: string | null
+          id: string
+          note: string | null
+          project_id: string
+          project_name: string | null
+          to_status: string
+        }
+        Insert: {
+          changed_by?: string | null
+          changed_by_name?: string | null
+          changed_by_type?: string
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          note?: string | null
+          project_id: string
+          project_name?: string | null
+          to_status: string
+        }
+        Update: {
+          changed_by?: string | null
+          changed_by_name?: string | null
+          changed_by_type?: string
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          note?: string | null
+          project_id?: string
+          project_name?: string | null
+          to_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commercial_status_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deviations: {
         Row: {
           category: string
@@ -1148,6 +1195,7 @@ export type Database = {
           client_id: string | null
           client_name: string | null
           client_ref: string | null
+          commercial_status: string
           contact_email: string | null
           contact_name: string | null
           contact_phone: string | null
@@ -1183,6 +1231,7 @@ export type Database = {
           client_id?: string | null
           client_name?: string | null
           client_ref?: string | null
+          commercial_status?: string
           contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
@@ -1218,6 +1267,7 @@ export type Database = {
           client_id?: string | null
           client_name?: string | null
           client_ref?: string | null
+          commercial_status?: string
           contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
@@ -1256,6 +1306,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "clients"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_commercial_status_fkey"
+            columns: ["commercial_status"]
+            isOneToOne: false
+            referencedRelation: "ref_commercial_status"
+            referencedColumns: ["code"]
           },
           {
             foreignKeyName: "projects_status_fk"
@@ -1326,6 +1383,60 @@ export type Database = {
           sort_order?: number
         }
         Relationships: []
+      }
+      ref_commercial_status: {
+        Row: {
+          code: string
+          created_at: string
+          is_approved: boolean
+          label: string
+          sort_order: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          is_approved?: boolean
+          label: string
+          sort_order?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          is_approved?: boolean
+          label?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      ref_commercial_status_transition: {
+        Row: {
+          from_status: string
+          to_status: string
+        }
+        Insert: {
+          from_status: string
+          to_status: string
+        }
+        Update: {
+          from_status?: string
+          to_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ref_commercial_status_transition_from_status_fkey"
+            columns: ["from_status"]
+            isOneToOne: false
+            referencedRelation: "ref_commercial_status"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "ref_commercial_status_transition_to_status_fkey"
+            columns: ["to_status"]
+            isOneToOne: false
+            referencedRelation: "ref_commercial_status"
+            referencedColumns: ["code"]
+          },
+        ]
       }
       ref_document_scope: {
         Row: {

@@ -54,6 +54,7 @@ const ENTITY_LABELS: Record<string, string> = {
   absence: 'Frånvaro',
   expense_rule: 'Utläggsregel',
   status_transition: 'Statussteg',
+  commercial_status: 'Affärsstatus',
 };
 
 const ACTION_LABELS: Record<string, string> = {

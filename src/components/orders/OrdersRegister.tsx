@@ -2,6 +2,10 @@ import { useMemo, useState } from 'react';
 import { Search, Filter, X, CheckSquare, Square, Download, History, Users as UsersIcon, Trash2, ArrowRight, AlertTriangle, Check } from 'lucide-react';
 import { installers, type Project, type ProjectStatus, type ProjectType, statusLabels, projectTypeLabels, projectTypeIcons } from '@/data/mockData';
 import { transitionError } from '@/lib/validation/controlledValues';
+import {
+  COMMERCIAL_STATUSES, commercialLabels, commercialStatusOf, canTransitionCommercial,
+  commercialTransitionError, type CommercialStatus,
+} from '@/lib/commercial';
 
 import { useProjects } from '@/lib/appData';
 import { cn } from '@/lib/utils';
@@ -184,6 +188,18 @@ const OrdersRegister = () => {
     (search ? 1 : 0) + statusFilter.length + typeFilter.length +
     (clientFilter !== 'all' ? 1 : 0) + (assigneeFilter !== 'all' ? 1 : 0) +
     (dateFrom ? 1 : 0) + (dateTo ? 1 : 0) + (historicalOnly ? 1 : 0);
+
+  const setCommercial = (orderId: string, next: CommercialStatus) => {
+    const order = orders.find(o => o.id === orderId);
+    if (!order) return;
+    const current = commercialStatusOf(order);
+    if (current === next) return;
+    const blocked = commercialTransitionError(current, next);
+    if (blocked) { toast.error(blocked); return; }
+    setOrders(prev => prev.map(p => p.id === orderId ? { ...p, commercialStatus: next } : p));
+    toast.success(`Commercial status set to ${commercialLabels[next]}`);
+  };
+
 
   const applyMassStatus = () => {
     const blockedCount = statusPreview.filter(r => r.blocked).length;
@@ -379,6 +395,7 @@ const OrdersRegister = () => {
               <th className="px-3 py-2 text-left"><SortHeader k="client" label="Client" /></th>
               <th className="px-3 py-2 text-left">Location</th>
               <th className="px-3 py-2 text-left"><SortHeader k="status" label="Status" /></th>
+              <th className="px-3 py-2 text-left">Commercial</th>
               <th className="px-3 py-2 text-left"><SortHeader k="startDate" label="Start" /></th>
               <th className="px-3 py-2 text-left"><SortHeader k="endDate" label="End" /></th>
               <th className="px-3 py-2 text-left">Assignees</th>
@@ -409,6 +426,24 @@ const OrdersRegister = () => {
                     <span className={cn("w-2 h-2 rounded-full", statusDot[o.status])} />
                     {statusLabels[o.status]}
                   </span>
+                </td>
+                <td className="px-3 py-2">
+                  <Select
+                    value={commercialStatusOf(o)}
+                    onValueChange={v => setCommercial(o.id, v as CommercialStatus)}
+                  >
+                    <SelectTrigger className="h-7 text-xs w-40"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {COMMERCIAL_STATUSES.map(s => {
+                        const blocked = !canTransitionCommercial(commercialStatusOf(o), s);
+                        return (
+                          <SelectItem key={s} value={s} disabled={blocked}>
+                            {commercialLabels[s]}{blocked ? ' — not allowed yet' : ''}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
                 </td>
                 <td className="px-3 py-2 whitespace-nowrap text-muted-foreground">{o.startDate}</td>
                 <td className="px-3 py-2 whitespace-nowrap text-muted-foreground">{o.endDate}</td>
