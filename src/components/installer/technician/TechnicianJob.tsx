@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -26,9 +26,8 @@ import {
   signOffsFor,
 } from '@/lib/completionRequirements';
 import { templateForProject } from '@/lib/projectTemplates';
-import { emptyWork, loadWork, saveWork, type FieldWork } from '@/lib/offline/fieldWork';
 import PhotoManager from '@/components/installer/PhotoManager';
-import { useOnlineStatus } from '@/hooks/useOffline';
+import { useFieldWork } from '@/hooks/useFieldWork';
 import DeviationForm from '@/components/installer/DeviationForm';
 
 interface TechnicianJobProps {
@@ -41,35 +40,11 @@ type Panel = 'checklist' | 'photos' | 'signature' | 'deviation' | 'issue' | null
 
 const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) => {
   const [panel, setPanel] = useState<Panel>(null);
-  const [work, setWork] = useState<FieldWork>(() => emptyWork(project.id, project.name));
-  const online = useOnlineStatus();
+  const { work, state: completionState, update, replace, online } = useFieldWork(project.id, project.name);
   const template = useMemo(() => templateForProject(project), [project.templateId, project.projectType]);
   const checklist = checklistFor(template);
   const minPhotos = minPhotosFor(template);
   const signOffs = signOffsFor(template);
-
-  useEffect(() => {
-    let active = true;
-    loadWork(project.id, project.name).then(w => {
-      if (active) setWork(w);
-    });
-    return () => {
-      active = false;
-    };
-  }, [project.id, project.name]);
-
-  const update = async (patch: Partial<FieldWork>) => {
-    const next = await saveWork({ ...work, ...patch });
-    setWork(next);
-  };
-
-  const completionState = {
-    photoCount: work.photos.length,
-    checkedItems: work.checkedItems,
-    signature: work.signature,
-    reportSubmitted: work.reportSubmitted,
-    signOffs: work.signOffs,
-  };
   const requirements = useMemo(
     () => completionRequirements(completionState, template),
     [work.photos.length, work.checkedItems, work.signature, work.reportSubmitted, work.signOffs, template],
@@ -210,7 +185,7 @@ const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) 
               projectRef={project.id}
               projectName={project.name}
               work={work}
-              onWorkChange={setWork}
+              onWorkChange={replace}
               requiredShots={template?.photos}
               minPhotos={minPhotos}
             />

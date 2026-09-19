@@ -60,6 +60,79 @@ export async function loadWork(projectRef: string, projectName?: string): Promis
   };
 }
 
+interface RemotePhotoMeta {
+  path?: string | null;
+  category?: PhotoCategory | null;
+  comment?: string | null;
+  captured_at?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+  accuracy?: number | null;
+}
+
+/**
+ * Reads the saved report for this installer back from the server so the work
+ * survives a new device, a logout or a cleared browser cache. Local work that
+ * has not been synced yet always wins — it is the newer copy.
+ */
+export async function hydrateWork(projectRef: string, projectName?: string): Promise<FieldWork> {
+  const local = await loadWork(projectRef, projectName);
+  if (local.dirty || !navigator.onLine) return local;
+  try {
+    const installerId = await getMyInstallerId();
+    if (!installerId) return local;
+    const projectId = await ensureProjectRowId(projectRef);
+    if (!projectId) return local;
+    const { data, error } = await supabase
+      .from('field_reports')
+      .select('checked_items, signature, sign_offs, report_text, photo_paths, photo_meta, submitted_at')
+      .eq('project_id', projectId)
+      .eq('installer_id', installerId)
+      .maybeSingle();
+    if (error || !data) return local;
+
+    const meta = (Array.isArray(data.photo_meta) ? data.photo_meta : []) as RemotePhotoMeta[];
+    const paths = (Array.isArray(data.photo_paths) ? data.photo_paths : []) as string[];
+    const remotePhotos: OfflinePhoto[] = paths.map((path, i) => {
+      const m = meta.find(x => x?.path === path) ?? meta[i] ?? {};
+      return {
+        id: path,
+        path,
+        capturedAt: m.captured_at ?? new Date().toISOString(),
+        category: (m.category as PhotoCategory) ?? DEFAULT_PHOTO_CATEGORY,
+        comment: m.comment ?? undefined,
+        position:
+          typeof m.lat === 'number' && typeof m.lng === 'number'
+            ? { lat: m.lat, lng: m.lng, accuracy: m.accuracy ?? undefined }
+            : null,
+      };
+    });
+    // Keep any local photo that is not on the server yet.
+    const localOnly = local.photos.filter(p => !p.path || !paths.includes(p.path));
+
+    const merged: FieldWork = {
+      ...local,
+      checkedItems: (data.checked_items as string[] | null) ?? local.checkedItems,
+      signature: data.signature ?? local.signature,
+      signOffs: (data.sign_offs as Record<string, string> | null) ?? local.signOffs ?? {},
+      reportText: data.report_text ?? local.reportText,
+      reportSubmitted: Boolean(data.submitted_at) || local.reportSubmitted,
+      photos: [...remotePhotos, ...localOnly],
+      dirty: false,
+    };
+    await idbSet('work', projectRef, merged);
+    return merged;
+  } catch {
+    return local;
+  }
+}
+
+/** Short-lived link to a photo that has already been uploaded. */
+export async function uploadedPhotoUrl(path: string): Promise<string | null> {
+  const { data } = await supabase.storage.from('field-photos').createSignedUrl(path, 600);
+  return data?.signedUrl ?? null;
+}
+
 export async function saveWork(work: FieldWork): Promise<FieldWork> {
   const next: FieldWork = { ...work, updatedAt: new Date().toISOString(), dirty: true };
   await idbSet('work', next.projectRef, next);

@@ -17,11 +17,12 @@ import {
 import {
   addPhoto,
   emptyWork,
-  loadWork,
+  hydrateWork,
   photoUrl,
   removePhoto,
   saveWork,
   updatePhoto,
+  uploadedPhotoUrl,
   type FieldWork,
   type OfflinePhoto,
 } from '@/lib/offline/fieldWork';
@@ -61,7 +62,7 @@ const PhotoManager = ({
   useEffect(() => {
     if (controlledWork) return;
     let active = true;
-    loadWork(projectRef, projectName).then(w => {
+    hydrateWork(projectRef, projectName).then(w => {
       if (active) setLocalWork(w);
     });
     return () => {
@@ -74,7 +75,11 @@ const PhotoManager = ({
     Promise.all(
       work.photos
         .filter(p => !previews[p.id])
-        .map(async p => ({ id: p.id, url: await photoUrl(p.id) })),
+        .map(async p => ({
+          id: p.id,
+          // Photos already uploaded are read back from storage with a short-lived link.
+          url: (await photoUrl(p.id)) ?? (p.path ? await uploadedPhotoUrl(p.path) : null),
+        })),
     ).then(results => {
       if (!active) return;
       const next: Record<string, string> = {};
