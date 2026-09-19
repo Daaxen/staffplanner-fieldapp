@@ -158,18 +158,22 @@ export function AuditTimeline() {
     return rows.filter((r) => {
       if (entity !== 'all' && r.entity_type !== entity) return false;
       if (action !== 'all' && r.action !== action) return false;
+      if (actorType !== 'all' && r.actor_type !== actorType) return false;
       if (!q) return true;
       const hay = [
         r.entity_label ?? '',
         r.entity_id,
         actors[r.actor_id ?? ''] ?? '',
+        r.actor_name ?? '',
+        r.source ?? '',
+        r.correlation_id ?? '',
         r.reason ?? '',
         JSON.stringify(r.new_values ?? {}),
         JSON.stringify(r.old_values ?? {}),
       ].join(' ').toLowerCase();
       return hay.includes(q);
     });
-  }, [rows, entity, action, search, actors]);
+  }, [rows, entity, action, actorType, search, actors]);
 
   const changes = (r: AuditRow) => {
     const keys = new Set([
