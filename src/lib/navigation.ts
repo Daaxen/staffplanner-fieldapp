@@ -57,11 +57,12 @@ export const navigationGroups: NavigationGroup[] = [
   },
   {
     id: 'orders',
-    label: 'Orders',
+    label: 'Orders/Projects',
     icon: ClipboardList,
     defaultView: 'orders',
     items: [
-      { id: 'orders', label: 'Order register', icon: ClipboardList, roles: admin },
+      { id: 'orders', label: 'Work orders', icon: ClipboardList, roles: admin },
+      { id: 'project-groups', label: 'Projects', icon: FolderKanban, roles: admin },
     ],
   },
   {
