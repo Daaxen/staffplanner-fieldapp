@@ -33,7 +33,9 @@ Deno.serve(async (req) => {
 
     const { data: dev, error } = await supabase
       .from('deviations')
-      .select('id, project_ref, project_name, category, severity, description, installer_name')
+      .select(
+        'id, project_id, project_ref, category, severity, description, installer_name, projects(name)',
+      )
       .eq('id', deviation_id)
       .single();
     if (error || !dev) throw error ?? new Error('deviation not found');
@@ -50,9 +52,12 @@ Deno.serve(async (req) => {
     }
 
     const title = `${dev.severity.toUpperCase()} deviation: ${dev.category.replace(/-/g, ' ')}`;
-    const body = `${dev.project_name ?? dev.project_ref}${dev.installer_name ? ` · ${dev.installer_name}` : ''} — ${String(dev.description).slice(0, 120)}`;
+    // Current name comes from the order itself; project_ref is only a snapshot.
+    const projectName = (dev as { projects?: { name?: string } }).projects?.name ?? dev.project_ref;
+    const body = `${projectName}${dev.installer_name ? ` · ${dev.installer_name}` : ''} — ${String(dev.description).slice(0, 120)}`;
     const push = await sendFcm(tokens, title, body, {
       deviation_id: dev.id,
+      project_id: dev.project_id,
       project_ref: dev.project_ref,
       severity: dev.severity,
     });
