@@ -77,6 +77,8 @@ function mapRow(r: Row): JobMetric {
     materialCost: r.material_cost,
     jobValue: r.job_value,
     createdAt: r.created_at,
+    totalHours: Math.round((Number(r.actual_hours ?? 0) + Number(r.travel_hours ?? 0)) * 100) / 100,
+    variancePct: variancePct(r.planned_hours, Number(r.actual_hours ?? 0) + Number(r.travel_hours ?? 0)),
   };
 }
 
