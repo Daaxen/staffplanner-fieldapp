@@ -14,6 +14,7 @@ import {
   User,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { projectBelongsToClient } from '@/lib/customerLink';
 import { supabase } from '@/integrations/supabase/client';
 import { useClients, useProjects, useInstallersList, projectRefForRowId, projectRowId } from '@/lib/appData';
 import { useProfitabilityData } from '@/hooks/useProfitabilityData';
