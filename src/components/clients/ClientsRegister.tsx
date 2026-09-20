@@ -278,13 +278,29 @@ const ClientsRegister = () => {
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-muted-foreground">
               <tr>
-                <th className="text-left px-4 py-2 font-medium">Client</th>
-                <th className="text-left px-4 py-2 font-medium">ID</th>
-                <th className="text-left px-4 py-2 font-medium">Customer #</th>
-                <th className="text-left px-4 py-2 font-medium">Office Address</th>
-                <th className="text-left px-4 py-2 font-medium">Main Contact</th>
-                <th className="text-right px-4 py-2 font-medium">Projects</th>
-                <th className="text-right px-4 py-2 font-medium">Active</th>
+                {([
+                  { key: 'name', label: 'Client', align: 'text-left' },
+                  { key: 'id', label: 'ID', align: 'text-left' },
+                  { key: 'customerNumber', label: 'Customer #', align: 'text-left' },
+                  { key: 'address', label: 'Office Address', align: 'text-left' },
+                  { key: 'contact', label: 'Main Contact', align: 'text-left' },
+                  { key: 'projectCount', label: 'Projects', align: 'text-right' },
+                  { key: 'activeCount', label: 'Active', align: 'text-right' },
+                ] as { key: SortKey; label: string; align: string }[]).map((col) => {
+                  const active = sort?.key === col.key;
+                  const Icon = !active ? ArrowUpDown : sort!.dir === 'asc' ? ArrowUp : ArrowDown;
+                  return (
+                    <th key={col.key} className={`${col.align} px-4 py-2 font-medium`}>
+                      <button
+                        onClick={() => toggleSort(col.key)}
+                        className={`inline-flex items-center gap-1 hover:text-foreground transition-colors ${active ? 'text-foreground' : ''}`}
+                      >
+                        {col.label}
+                        <Icon className={`w-3.5 h-3.5 ${active ? '' : 'opacity-40'}`} />
+                      </button>
+                    </th>
+                  );
+                })}
                 <th className="px-2 py-2" />
               </tr>
             </thead>
