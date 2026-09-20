@@ -173,9 +173,16 @@ const ClientsRegister = () => {
               reference: String(r['Invoice Reference'] ?? '').trim() || undefined,
             },
           };
-          const idx = idIn ? next.findIndex((c) => c.id === idIn) : -1;
-          if (idx >= 0) { next[idx] = { ...next[idx], ...payload }; updated++; }
-          else { next.push(payload); created++; }
+          // Match on Client ID, otherwise on Customer Number so imports don't duplicate clients
+          const idx = idIn
+            ? next.findIndex((c) => c.id === idIn)
+            : payload.customerNumber
+              ? next.findIndex((c) => (c.customerNumber ?? '') === payload.customerNumber)
+              : -1;
+          if (idx >= 0) {
+            next[idx] = { ...next[idx], ...payload, id: next[idx].id };
+            updated++;
+          } else { next.push(payload); created++; }
         }
         return next;
       });
