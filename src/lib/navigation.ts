@@ -14,6 +14,7 @@ import {
   LayoutDashboard,
   Percent,
   Receipt,
+  Repeat,
   ScrollText,
   Settings,
   Smartphone,
@@ -64,6 +65,7 @@ export const navigationGroups: NavigationGroup[] = [
     items: [
       { id: 'orders', label: 'Work orders', icon: ClipboardList, roles: admin },
       { id: 'project-groups', label: 'Projects', icon: FolderKanban, roles: admin },
+      { id: 'recurring-orders', label: 'Recurring orders', icon: Repeat, roles: admin },
     ],
   },
   {
