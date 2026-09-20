@@ -458,7 +458,12 @@ const OrdersRegister = () => {
                   <Checkbox checked={selected.has(o.id)} onCheckedChange={() => toggleOne(o.id)} />
                 </td>
                 <td className="px-3 py-2">
-                  <div className="font-medium text-foreground">{o.name}</div>
+                  <div className="font-medium text-foreground flex items-center gap-1.5">
+                    {o.recurrenceSeriesId && (
+                      <Repeat className="w-3.5 h-3.5 text-muted-foreground shrink-0" aria-label="Recurring order" />
+                    )}
+                    {o.name}
+                  </div>
                   <div className="text-[11px] text-muted-foreground">{o.id}</div>
                 </td>
                 <td className="px-3 py-2">
