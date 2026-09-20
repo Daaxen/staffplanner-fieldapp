@@ -10,10 +10,14 @@ import {
 import { Label } from '@/components/ui/label';
 import {
   Building2, Search, MapPin, Copy, Download, Upload, Plus, Pencil, User, Receipt,
+  ArrowUp, ArrowDown, ArrowUpDown,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import AddressAutocomplete from '@/components/maps/AddressAutocomplete';
 import MiniMap from '@/components/maps/MiniMap';
+
+type SortKey = 'name' | 'id' | 'customerNumber' | 'address' | 'contact' | 'projectCount' | 'activeCount';
+type SortDir = 'asc' | 'desc';
 
 // Numeric-only auto-id generator
 function nextId(existing: Client[]): string {
@@ -41,11 +45,33 @@ const ClientsRegister = () => {
   const [clients, setClients] = useClients();
   const [query, setQuery] = useState('');
   const [editing, setEditing] = useState<Client | null>(null);
+  const [sort, setSort] = useState<{ key: SortKey; dir: SortDir } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const sortValue = (c: Client & { projectCount: number; activeCount: number }): string | number => {
+    switch (sort?.key) {
+      case 'name': return (c.name ?? '').toLowerCase();
+      case 'id': return isNaN(parseInt(c.id, 10)) ? (c.id ?? '').toLowerCase() : parseInt(c.id, 10);
+      case 'customerNumber': return (c.customerNumber ?? '').toLowerCase();
+      case 'address': return [c.street, c.postalCode, c.region].filter(Boolean).join(' ').toLowerCase();
+      case 'contact': return (c.mainContact?.name ?? '').toLowerCase();
+      case 'projectCount': return c.projectCount;
+      case 'activeCount': return c.activeCount;
+      default: return '';
+    }
+  };
+
+  const toggleSort = (key: SortKey) => {
+    setSort((prev) =>
+      !prev || prev.key !== key
+        ? { key, dir: 'asc' }
+        : prev.dir === 'asc' ? { key, dir: 'desc' } : null
+    );
+  };
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return clients
+    const list = clients
       .map((c) => {
         const cp = projects.filter((p) => p.clientId === c.id);
         return {
@@ -63,7 +89,17 @@ const ClientsRegister = () => {
         (c.postalCode ?? '').toLowerCase().includes(q) ||
         (c.region ?? '').toLowerCase().includes(q)
       );
-  }, [query, clients]);
+    if (!sort) return list;
+    const sorted = [...list].sort((a, b) => {
+      const va = sortValue(a);
+      const vb = sortValue(b);
+      let cmp: number;
+      if (typeof va === 'number' && typeof vb === 'number') cmp = va - vb;
+      else cmp = String(va).localeCompare(String(vb), 'sv');
+      return sort.dir === 'asc' ? cmp : -cmp;
+    });
+    return sorted;
+  }, [query, clients, sort]);
 
   const copyId = (id: string) => {
     navigator.clipboard.writeText(id);
