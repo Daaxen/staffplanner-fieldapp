@@ -20,6 +20,22 @@ export function dayOffset(dateStr: string, gridStart: Date): number {
   return utcDay(y, m - 1, d) - utcDay(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate());
 }
 
+/** True when an inclusive date range overlaps the visible window (also inclusive). */
+export function overlapsRange(
+  startStr: string,
+  endStr: string,
+  rangeStart: Date,
+  rangeEnd: Date,
+): boolean {
+  const startIdx = dayOffset(startStr, rangeStart);
+  const endIdx = dayOffset(endStr || startStr, rangeStart);
+  const lastIdx = dayOffset(
+    `${rangeEnd.getFullYear()}-${String(rangeEnd.getMonth() + 1).padStart(2, '0')}-${String(rangeEnd.getDate()).padStart(2, '0')}`,
+    rangeStart,
+  );
+  return endIdx >= 0 && startIdx <= lastIdx;
+}
+
 /** Whole days covered by an inclusive date range. */
 export function dayCount(startStr: string, endStr: string): number {
   const [y1, m1, d1] = startStr.split('-').map(Number);

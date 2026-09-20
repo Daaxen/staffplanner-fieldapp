@@ -12,6 +12,7 @@ import CreateOrderDialog from './gantt/CreateOrderDialog';
 import EditWorkOrderDialog from './gantt/EditWorkOrderDialog';
 import { toast } from 'sonner';
 import { installerConflicts } from '@/lib/schedulingConflicts';
+import { overlapsRange } from '@/lib/ganttDates';
 
 interface DispatchChange {
   projectId: string;
@@ -124,6 +125,15 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
 
     return { days: daysArr, startDate: start };
   }, [viewMode, dateOffset]);
+
+  // The board only shows work orders that fall inside the selected period.
+  // Widening to week/month (or paging) brings the next orders into view.
+  const visibleProjects = useMemo(() => {
+    if (days.length === 0) return projectsList;
+    const first = days[0];
+    const last = days[days.length - 1];
+    return projectsList.filter(p => overlapsRange(p.startDate, p.endDate, first, last));
+  }, [projectsList, days]);
 
   const todayStr = new Date().toISOString().split('T')[0];
   const colWidth = viewMode === 'day' ? 200 : viewMode === 'week' ? 80 : 50;
@@ -284,7 +294,9 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
         <div className="flex items-center gap-4">
           <div>
             <h2 className="text-lg font-semibold text-foreground">Installation Planner</h2>
-            <p className="text-sm text-muted-foreground">{viewLabel}</p>
+            <p className="text-sm text-muted-foreground">
+              {viewLabel} · {visibleProjects.length} work order{visibleProjects.length === 1 ? '' : 's'} in view
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -418,7 +430,7 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
       {/* Gantt body */}
       {ganttMode === 'workorders' || ganttMode === 'projects' ? (
         <ProjectsView
-          projects={projectsList}
+          projects={visibleProjects}
           days={days}
           colWidth={colWidth}
           startDate={startDate}
@@ -431,7 +443,7 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
         />
       ) : ganttMode === 'clients' ? (
         <ClientsView
-          projects={projectsList}
+          projects={visibleProjects}
           days={days}
           colWidth={colWidth}
           startDate={startDate}
@@ -443,7 +455,7 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
         />
       ) : (
         <InstallersView
-          projects={projectsList}
+          projects={visibleProjects}
           installers={installers}
           days={days}
           colWidth={colWidth}
