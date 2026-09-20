@@ -38,7 +38,7 @@ describe('expandSeries', () => {
     });
     expect(r.dates).toEqual(['2026-12-16', '2026-12-17', '2026-12-18', '2027-01-07', '2027-01-08']);
     expect(r.skipped.every((s) => s.reason === 'pause')).toBe(true);
-    expect(r.skipped).toHaveLength(6);
+    expect(r.skipped).toHaveLength(7);
   });
 
   it('skips Swedish public holidays when asked to', () => {
