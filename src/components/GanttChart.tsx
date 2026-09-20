@@ -430,7 +430,7 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
       {/* Gantt body */}
       {ganttMode === 'workorders' || ganttMode === 'projects' ? (
         <ProjectsView
-          projects={projectsList}
+          projects={visibleProjects}
           days={days}
           colWidth={colWidth}
           startDate={startDate}
@@ -443,7 +443,7 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
         />
       ) : ganttMode === 'clients' ? (
         <ClientsView
-          projects={projectsList}
+          projects={visibleProjects}
           days={days}
           colWidth={colWidth}
           startDate={startDate}
@@ -455,7 +455,7 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
         />
       ) : (
         <InstallersView
-          projects={projectsList}
+          projects={visibleProjects}
           installers={installers}
           days={days}
           colWidth={colWidth}
