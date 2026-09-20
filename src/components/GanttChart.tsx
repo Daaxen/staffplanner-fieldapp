@@ -12,6 +12,7 @@ import CreateOrderDialog from './gantt/CreateOrderDialog';
 import EditWorkOrderDialog from './gantt/EditWorkOrderDialog';
 import { toast } from 'sonner';
 import { installerConflicts } from '@/lib/schedulingConflicts';
+import { overlapsRange } from '@/lib/ganttDates';
 
 interface DispatchChange {
   projectId: string;
