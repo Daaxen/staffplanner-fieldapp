@@ -209,7 +209,7 @@ async function loadProjects() {
         'contact_name,contact_phone,contact_email,project_number,template_id,' +
         'client_ref,client_name,street,postal_code,region,location_lat,location_lng,' +
         'start_time,end_time,estimated_hours,is_flex_order,description,' +
-        'hourly_rate,mileage_rate,vehicle_type,project_group_id,' +
+        'hourly_rate,mileage_rate,vehicle_type,project_group_id,recurrence_series_id,' +
         'project_assignees(installer_id),' +
         'project_economy(fixed_price,additional_revenue,budget_hours,internal_hourly_cost,' +
         'external_hourly_cost,external_cost_extra,material_cost_extra,travel_cost_extra,' +
