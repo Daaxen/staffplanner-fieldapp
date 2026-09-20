@@ -294,7 +294,9 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
         <div className="flex items-center gap-4">
           <div>
             <h2 className="text-lg font-semibold text-foreground">Installation Planner</h2>
-            <p className="text-sm text-muted-foreground">{viewLabel}</p>
+            <p className="text-sm text-muted-foreground">
+              {viewLabel} · {visibleProjects.length} work order{visibleProjects.length === 1 ? '' : 's'} in view
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
