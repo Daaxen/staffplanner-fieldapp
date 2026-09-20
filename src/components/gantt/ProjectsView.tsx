@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { type Project, type Installer, type ProjectStatus, installers, projectTypeIcons } from '@/data/mockData';
-import { ArrowUpDown, Filter, Folder } from 'lucide-react';
+import { ArrowUpDown, Filter, Folder, Repeat } from 'lucide-react';
 import GanttHeader from './GanttHeader';
 import GanttGrid from './GanttGrid';
 import DraggableBar from './DraggableBar';
@@ -252,7 +252,12 @@ const ProjectsView = ({ projects, days, colWidth, startDate, todayStr, onSelectP
                   >
                     <div className={cn("w-1 h-8 rounded-full", statusColorMap[project.status])} />
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-foreground truncate">{project.name}</p>
+                      <p className="text-sm font-medium text-foreground truncate flex items-center gap-1.5">
+                        {project.recurrenceSeriesId && (
+                          <Repeat className="w-3 h-3 text-muted-foreground shrink-0" aria-label="Recurring order" />
+                        )}
+                        {project.name}
+                      </p>
                       <p className="text-xs text-muted-foreground truncate">
                         {assignees.length > 0 ? assignees.map(a => a.name).join(', ') : '— Unassigned —'}
                       </p>
