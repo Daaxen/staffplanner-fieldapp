@@ -273,6 +273,7 @@ async function loadProjects() {
           contactEmail: col('contact_email', d.contactEmail),
           projectNumber: col('project_number', d.projectNumber),
           projectGroupId: col('project_group_id', d.projectGroupId) ?? undefined,
+          recurrenceSeriesId: col('recurrence_series_id', d.recurrenceSeriesId) ?? undefined,
           templateId: col('template_id', d.templateId),
           clientId: col('client_ref', d.clientId),
           client: col('client_name', d.client) ?? '',
@@ -380,6 +381,7 @@ async function upsertProjectRow(p: Project) {
         contact_email: p.contactEmail || null,
         project_number: p.projectNumber || null,
         project_group_id: p.projectGroupId || null,
+        recurrence_series_id: p.recurrenceSeriesId || null,
         template_id: p.templateId || null,
         client_ref: p.clientId || null,
         // the real relation; the name below is only a historical snapshot
