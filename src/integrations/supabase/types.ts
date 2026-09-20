@@ -1502,6 +1502,7 @@ export type Database = {
           project_group_id: string | null
           project_number: string | null
           project_type: string
+          recurrence_series_id: string | null
           ref: string | null
           region: string | null
           sandbox: boolean
@@ -1539,6 +1540,7 @@ export type Database = {
           project_group_id?: string | null
           project_number?: string | null
           project_type?: string
+          recurrence_series_id?: string | null
           ref?: string | null
           region?: string | null
           sandbox?: boolean
@@ -1576,6 +1578,7 @@ export type Database = {
           project_group_id?: string | null
           project_number?: string | null
           project_type?: string
+          recurrence_series_id?: string | null
           ref?: string | null
           region?: string | null
           sandbox?: boolean
@@ -1607,6 +1610,13 @@ export type Database = {
             columns: ["project_group_id"]
             isOneToOne: false
             referencedRelation: "project_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_recurrence_series_id_fkey"
+            columns: ["recurrence_series_id"]
+            isOneToOne: false
+            referencedRelation: "recurring_order_series"
             referencedColumns: ["id"]
           },
           {
@@ -1654,6 +1664,133 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      recurring_order_series: {
+        Row: {
+          active: boolean
+          client_id: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_time: string | null
+          estimated_hours: number | null
+          hourly_rate: number | null
+          id: string
+          interval_weeks: number
+          location: string | null
+          location_lat: number | null
+          location_lng: number | null
+          mileage_rate: number | null
+          name: string
+          pauses: Json
+          postal_code: string | null
+          project_group_id: string | null
+          project_type: string
+          region: string | null
+          series_end: string
+          series_start: string
+          skip_holidays: boolean
+          start_time: string | null
+          street: string | null
+          template_id: string | null
+          updated_at: string
+          vehicle_type: string | null
+          weekdays: number[]
+        }
+        Insert: {
+          active?: boolean
+          client_id?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_time?: string | null
+          estimated_hours?: number | null
+          hourly_rate?: number | null
+          id?: string
+          interval_weeks?: number
+          location?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
+          mileage_rate?: number | null
+          name: string
+          pauses?: Json
+          postal_code?: string | null
+          project_group_id?: string | null
+          project_type?: string
+          region?: string | null
+          series_end: string
+          series_start: string
+          skip_holidays?: boolean
+          start_time?: string | null
+          street?: string | null
+          template_id?: string | null
+          updated_at?: string
+          vehicle_type?: string | null
+          weekdays?: number[]
+        }
+        Update: {
+          active?: boolean
+          client_id?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_time?: string | null
+          estimated_hours?: number | null
+          hourly_rate?: number | null
+          id?: string
+          interval_weeks?: number
+          location?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
+          mileage_rate?: number | null
+          name?: string
+          pauses?: Json
+          postal_code?: string | null
+          project_group_id?: string | null
+          project_type?: string
+          region?: string | null
+          series_end?: string
+          series_start?: string
+          skip_holidays?: boolean
+          start_time?: string | null
+          street?: string | null
+          template_id?: string | null
+          updated_at?: string
+          vehicle_type?: string | null
+          weekdays?: number[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_order_series_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_order_series_project_group_id_fkey"
+            columns: ["project_group_id"]
+            isOneToOne: false
+            referencedRelation: "project_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_order_series_project_type_fkey"
+            columns: ["project_type"]
+            isOneToOne: false
+            referencedRelation: "ref_project_type"
+            referencedColumns: ["code"]
+          },
+        ]
       }
       ref_absence_type: {
         Row: {
