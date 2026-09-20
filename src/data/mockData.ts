@@ -112,6 +112,8 @@ export interface Project {
   projectNumber?: string;
   /** Optional parent project (public.project_groups.id). */
   projectGroupId?: string;
+  /** Set when the order was generated from a standing (recurring) series. */
+  recurrenceSeriesId?: string;
   projectType: ProjectType;
   /** Project template that defines required fields, checklist, photos and sign-offs. */
   templateId?: string;

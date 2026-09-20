@@ -52,6 +52,13 @@ export function clientRowId(ref?: string | null): string | undefined {
   return ref ? clientRowIdByRef.get(ref) : undefined;
 }
 
+/** The app-level customer id (clients.ref) behind a database uuid. */
+export function clientRefForRowId(id?: string | null): string | undefined {
+  if (!id) return undefined;
+  for (const [ref, rowId] of clientRowIdByRef) if (rowId === id) return ref;
+  return undefined;
+}
+
 async function loadClients() {
   // Admins can read the clients table directly. Installers are blocked by RLS
   // and instead get a restricted set (no rates, VAT, invoicing or internal
