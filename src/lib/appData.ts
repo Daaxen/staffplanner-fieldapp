@@ -52,6 +52,13 @@ export function clientRowId(ref?: string | null): string | undefined {
   return ref ? clientRowIdByRef.get(ref) : undefined;
 }
 
+/** The app-level customer id (clients.ref) behind a database uuid. */
+export function clientRefForRowId(id?: string | null): string | undefined {
+  if (!id) return undefined;
+  for (const [ref, rowId] of clientRowIdByRef) if (rowId === id) return ref;
+  return undefined;
+}
+
 async function loadClients() {
   // Admins can read the clients table directly. Installers are blocked by RLS
   // and instead get a restricted set (no rates, VAT, invoicing or internal
@@ -202,7 +209,7 @@ async function loadProjects() {
         'contact_name,contact_phone,contact_email,project_number,template_id,' +
         'client_ref,client_name,street,postal_code,region,location_lat,location_lng,' +
         'start_time,end_time,estimated_hours,is_flex_order,description,' +
-        'hourly_rate,mileage_rate,vehicle_type,project_group_id,' +
+        'hourly_rate,mileage_rate,vehicle_type,project_group_id,recurrence_series_id,' +
         'project_assignees(installer_id),' +
         'project_economy(fixed_price,additional_revenue,budget_hours,internal_hourly_cost,' +
         'external_hourly_cost,external_cost_extra,material_cost_extra,travel_cost_extra,' +
@@ -266,6 +273,7 @@ async function loadProjects() {
           contactEmail: col('contact_email', d.contactEmail),
           projectNumber: col('project_number', d.projectNumber),
           projectGroupId: col('project_group_id', d.projectGroupId) ?? undefined,
+          recurrenceSeriesId: col('recurrence_series_id', d.recurrenceSeriesId) ?? undefined,
           templateId: col('template_id', d.templateId),
           clientId: col('client_ref', d.clientId),
           client: col('client_name', d.client) ?? '',
@@ -373,6 +381,7 @@ async function upsertProjectRow(p: Project) {
         contact_email: p.contactEmail || null,
         project_number: p.projectNumber || null,
         project_group_id: p.projectGroupId || null,
+        recurrence_series_id: p.recurrenceSeriesId || null,
         template_id: p.templateId || null,
         client_ref: p.clientId || null,
         // the real relation; the name below is only a historical snapshot
