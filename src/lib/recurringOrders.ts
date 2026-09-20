@@ -111,7 +111,7 @@ export async function fetchRecurringSeries(): Promise<RecurringSeries[]> {
     .select(COLUMNS)
     .order('created_at', { ascending: false });
   if (error) throw error;
-  return ((data ?? []) as Row[]).map(fromRow);
+  return ((data ?? []) as unknown as Row[]).map(fromRow);
 }
 
 export async function createRecurringSeries(
@@ -124,7 +124,7 @@ export async function createRecurringSeries(
     .select(COLUMNS)
     .single();
   if (error) throw error;
-  return fromRow(data as Row);
+  return fromRow(data as unknown as Row);
 }
 
 export async function updateRecurringSeries(
