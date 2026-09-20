@@ -125,6 +125,15 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
     return { days: daysArr, startDate: start };
   }, [viewMode, dateOffset]);
 
+  // The board only shows work orders that fall inside the selected period.
+  // Widening to week/month (or paging) brings the next orders into view.
+  const visibleProjects = useMemo(() => {
+    if (days.length === 0) return projectsList;
+    const first = days[0];
+    const last = days[days.length - 1];
+    return projectsList.filter(p => overlapsRange(p.startDate, p.endDate, first, last));
+  }, [projectsList, days]);
+
   const todayStr = new Date().toISOString().split('T')[0];
   const colWidth = viewMode === 'day' ? 200 : viewMode === 'week' ? 80 : 50;
 
