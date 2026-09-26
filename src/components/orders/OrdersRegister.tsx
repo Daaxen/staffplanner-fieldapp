@@ -775,6 +775,14 @@ const OrdersRegister = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CancelWorkOrderDialog
+        open={cancelDialogOpen}
+        onOpenChange={setCancelDialogOpen}
+        orderNames={cancellableOrders.map(o => o.name)}
+        affectedInstallers={new Set(cancellableOrders.flatMap(o => o.assigneeIds)).size}
+        onConfirm={applyMassCancel}
+      />
     </div>
   );
 };
