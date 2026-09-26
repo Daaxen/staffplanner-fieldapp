@@ -1,10 +1,11 @@
-import { useEffect } from 'react';
-import { X, MapPin, User, Calendar, Tag, Phone, Mail } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { X, MapPin, User, Calendar, Tag, Phone, Mail, Ban } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { type Project, type Installer, statusLabels, type ProjectStatus, installers } from '@/data/mockData';
 import { motion, AnimatePresence } from 'framer-motion';
 import SimilarJobsPanel from '@/components/orders/SimilarJobsPanel';
 import HistoricalEstimateCard from '@/components/orders/HistoricalEstimateCard';
+import CancelWorkOrderDialog from '@/components/gantt/CancelWorkOrderDialog';
 
 const statusColorMap: Record<ProjectStatus, string> = {
   'open': 'bg-status-open/15 text-status-open',
