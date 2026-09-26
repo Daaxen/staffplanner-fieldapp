@@ -85,7 +85,7 @@ export function validateRow(
   return null;
 }
 
-export function sumBy<T>(rows: T[], key: (r: T) => string, hours: (r: T) => number) {
+export function sumBy<T>(rows: T[], key: (r: NoInfer<T>) => string, hours: (r: NoInfer<T>) => number) {
   const m = new Map<string, number>();
   rows.forEach(r => m.set(key(r), (m.get(key(r)) ?? 0) + hours(r)));
   return [...m.entries()].map(([k, h]) => ({ key: k, hours: Math.round(h * 100) / 100 })).sort((a, b) => b.hours - a.hours);
