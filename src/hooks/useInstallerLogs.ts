@@ -144,18 +144,22 @@ export function useInstallerLogs(projects: Project[] = []) {
   const stopTimer = useCallback(async (travelHours = 0) => {
     if (!activeTimer || !installerId) return null;
     const started = new Date(activeTimer.startedAt);
-    const ended = new Date();
+    const now = new Date();
+    // The clock is per day: a timer left running past midnight stops at 23:59 on its start day.
+    const dayEnd = new Date(started); dayEnd.setHours(23, 59, 0, 0);
+    const ended = now > dayEnd ? dayEnd : now;
     const hours = Math.max(0, Math.round(((ended.getTime() - started.getTime()) / 3_600_000) * 100) / 100);
     const pad = (n: number) => n.toString().padStart(2, '0');
     const hm = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    const sameDay = started.toDateString() === ended.toDateString();
+    const localDate = `${started.getFullYear()}-${pad(started.getMonth() + 1)}-${pad(started.getDate())}`;
     await addTime({
       projectId: activeTimer.projectId,
-      date: started.toISOString().slice(0, 10),
-      startTime: sameDay ? hm(started) : undefined,
-      endTime: sameDay ? hm(ended) : undefined,
+      date: localDate,
+      startTime: hm(started),
+      endTime: hm(ended),
       hours, travelHours, source: 'timer',
     });
+    if (ended !== now) toast.warning('Klockan stoppades vid midnatt – kontrollera sluttiden');
 
     await supabase.from('active_timers').delete().eq('installer_id', installerId);
     setActiveTimer(null);

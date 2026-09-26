@@ -19,25 +19,50 @@ interface ProjectLogTabProps {
   logs: InstallerLogs;
   /** Estimated hours for the order, used for the deviation figure. */
   plannedHours?: number;
+  startDate?: string;
+  endDate?: string;
 }
 
-const today = () => new Date().toISOString().slice(0, 10);
+const pad = (n: number) => n.toString().padStart(2, '0');
+const isoLocal = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const today = () => isoLocal(new Date());
 const money = (amount: number) => `${amount.toLocaleString('sv-SE')} SEK`;
-const minutesToHours = (value: string) => {
-  const minutes = Number(value);
-  if (!Number.isFinite(minutes) || minutes <= 0) return 0;
-  return Math.round((minutes / 60) * 100) / 100;
+/** Parses travel time in hours; accepts comma or dot. */
+const parseHours = (value: string) => {
+  const hours = Number(value.replace(',', '.'));
+  if (!Number.isFinite(hours) || hours <= 0) return 0;
+  return Math.min(12, Math.round(hours * 100) / 100);
+};
+const fmtH = (h: number) => h.toFixed(2).replace(/\.?0+$/, '').replace('.', ',');
+const WEEKDAYS = ['Sön', 'Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör'];
+
+const orderDays = (start?: string, end?: string) => {
+  if (!start) return [] as string[];
+  const s = new Date(`${start.slice(0, 10)}T12:00:00`);
+  const e = new Date(`${(end || start).slice(0, 10)}T12:00:00`);
+  const out: string[] = [];
+  for (let d = new Date(s); d <= e && out.length < 14; d.setDate(d.getDate() + 1)) out.push(isoLocal(d));
+  return out;
 };
 
-const ProjectLogTab = ({ projectId, logs, plannedHours }: ProjectLogTabProps) => {
+const TravelQuick = ({ onPick }: { onPick: (v: string) => void }) => (
+  <div className="flex gap-2 mt-2">
+    {['0,5', '1', '1,5', '2'].map(v => (
+      <Button key={v} type="button" size="sm" variant="outline" className="flex-1" onClick={() => onPick(v)}>{v} h</Button>
+    ))}
+  </div>
+);
+
+const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate }: ProjectLogTabProps) => {
   const [date, setDate] = useState(today);
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [hoursInput, setHoursInput] = useState('');
-  const [travelMinutes, setTravelMinutes] = useState('');
+  const [travelHoursInput, setTravelHoursInput] = useState('');
   const [timeNote, setTimeNote] = useState('');
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [checkoutTravel, setCheckoutTravel] = useState('');
+  const [otherDay, setOtherDay] = useState(false);
   const [km, setKm] = useState('');
   const [mileageNote, setMileageNote] = useState('');
   const [category, setCategory] = useState<ExpenseCategory>('materials');
@@ -59,6 +84,23 @@ const ProjectLogTab = ({ projectId, logs, plannedHours }: ProjectLogTabProps) =>
     costs: expenseEntries.reduce((sum, entry) => sum + entry.amount, 0),
   }), [actual, expenseEntries]);
 
+  const days = useMemo(() => {
+    const list = orderDays(startDate, endDate);
+    const t = today();
+    return list.includes(t) || list.length === 0 ? list : list;
+  }, [startDate, endDate]);
+  const dayTotals = useMemo(() => {
+    const onDay = timeEntries.filter(e => e.date === date);
+    return {
+      work: onDay.reduce((s, e) => s + e.hours, 0),
+      travel: onDay.reduce((s, e) => s + (e.travelHours || 0), 0),
+      count: onDay.length,
+    };
+  }, [timeEntries, date]);
+  const timerSince = logs.activeTimer && isThisTimer
+    ? new Date(logs.activeTimer.startedAt).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })
+    : null;
+
   const computedHours = startTime && endTime ? hoursBetween(startTime, endTime) : null;
   const statedHours = hoursInput.trim() ? Number(hoursInput.replace(',', '.')) : undefined;
 
@@ -68,11 +110,11 @@ const ProjectLogTab = ({ projectId, logs, plannedHours }: ProjectLogTabProps) =>
       projectId, date, startTime, endTime,
       hours: acceptComputed ? undefined : (Number.isFinite(statedHours) ? statedHours : undefined),
       acceptComputed,
-      travelHours: minutesToHours(travelMinutes), note: timeNote,
+      travelHours: parseHours(travelHoursInput), note: timeNote,
     });
     setSaving(false);
     if (!result) return false;
-    setStartTime(''); setEndTime(''); setHoursInput(''); setTravelMinutes(''); setTimeNote('');
+    setStartTime(''); setEndTime(''); setHoursInput(''); setTravelHoursInput(''); setTimeNote('');
     toast.success('Tiden är sparad');
     return true;
   };
@@ -92,11 +134,11 @@ const ProjectLogTab = ({ projectId, logs, plannedHours }: ProjectLogTabProps) =>
 
   const confirmCheckout = async () => {
     setSaving(true);
-    await logs.stopTimer(minutesToHours(checkoutTravel));
+    await logs.stopTimer(parseHours(checkoutTravel));
     setSaving(false);
     setCheckoutOpen(false);
     setCheckoutTravel('');
-    toast.success('Checked out');
+    toast.success('Utcheckad');
   };
 
   const submitMileage = async () => {
@@ -160,38 +202,69 @@ const ProjectLogTab = ({ projectId, logs, plannedHours }: ProjectLogTabProps) =>
       </div>
 
       <section className="rounded-lg border border-border bg-card p-3 space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <div><h2 className="text-sm font-semibold text-foreground">Check in / check out</h2><p className="text-xs text-muted-foreground">Start and finish time are saved automatically</p></div>
-          {isThisTimer ? (
-            <Button size="sm" variant="destructive" onClick={() => setCheckoutOpen(true)}><Square className="w-4 h-4 mr-1.5" />Check out</Button>
-          ) : (
-            <Button size="sm" disabled={Boolean(logs.activeTimer)} onClick={() => void logs.startTimer(projectId)}><Play className="w-4 h-4 mr-1.5" />Check in</Button>
-          )}
+        <h2 className="text-sm font-semibold text-foreground flex items-center gap-2"><Clock className="w-4 h-4" />Välj dag</h2>
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {days.map(d => {
+            const dt = new Date(`${d}T12:00:00`);
+            const active = d === date && !otherDay;
+            return (
+              <Button key={d} type="button" size="sm" variant={active ? 'default' : 'outline'} className="shrink-0 flex-col h-auto py-1.5"
+                onClick={() => { setDate(d); setOtherDay(false); }}>
+                <span className="text-[10px] leading-none">{d === today() ? 'Idag' : WEEKDAYS[dt.getDay()]}</span>
+                <span className="text-sm font-semibold leading-tight">{dt.getDate()}/{dt.getMonth() + 1}</span>
+              </Button>
+            );
+          })}
+          <Button type="button" size="sm" variant={otherDay || !days.includes(date) ? 'default' : 'outline'} className="shrink-0 h-auto" onClick={() => setOtherDay(true)}>Annan dag</Button>
         </div>
-        {logs.activeTimer && !isThisTimer && <p className="text-xs text-muted-foreground">A timer is already running for another project.</p>}
+        {(otherDay || !days.includes(date)) && (
+          <Input aria-label="Datum" type="date" value={date} onChange={e => setDate(e.target.value)} />
+        )}
+        <p className="text-xs text-muted-foreground">
+          {dayTotals.count ? `Redovisat ${date}: ${fmtH(dayTotals.work)} h${dayTotals.travel ? ` + ${fmtH(dayTotals.travel)} h restid` : ''}` : `Inget redovisat ${date} ännu`}
+        </p>
       </section>
 
       <section className="rounded-lg border border-border bg-card p-3 space-y-3">
-        <h2 className="text-sm font-semibold text-foreground flex items-center gap-2"><Clock className="w-4 h-4" />Add time manually</h2>
-        <div><Label htmlFor="log-date">Date</Label><Input id="log-date" type="date" value={date} onChange={e => setDate(e.target.value)} /></div>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">Start / stopp idag</h2>
+            <p className="text-xs text-muted-foreground">{timerSince ? `Incheckad sedan ${timerSince} idag` : 'Klockan gäller en dag – stoppas automatiskt vid midnatt'}</p>
+          </div>
+          {isThisTimer ? (
+            <Button size="sm" variant="destructive" onClick={() => setCheckoutOpen(true)}><Square className="w-4 h-4 mr-1.5" />Stopp</Button>
+          ) : (
+            <Button size="sm" disabled={Boolean(logs.activeTimer) || date !== today()} onClick={() => void logs.startTimer(projectId)}><Play className="w-4 h-4 mr-1.5" />Start</Button>
+          )}
+        </div>
+        {!isThisTimer && date !== today() && <p className="text-xs text-muted-foreground">Klockan kan bara startas idag. Använd manuell inmatning för andra dagar.</p>}
+        {logs.activeTimer && !isThisTimer && <p className="text-xs text-muted-foreground">En klocka är redan igång på en annan order.</p>}
+      </section>
+
+      <section className="rounded-lg border border-border bg-card p-3 space-y-3">
+        <h2 className="text-sm font-semibold text-foreground flex items-center gap-2"><Clock className="w-4 h-4" />Lägg till tid manuellt</h2>
         <div className="grid grid-cols-2 gap-3">
           <div><Label htmlFor="start-time">Start</Label><Input id="start-time" type="time" value={startTime} onChange={e => setStartTime(e.target.value)} /></div>
-          <div><Label htmlFor="end-time">Finish</Label><Input id="end-time" type="time" value={endTime} onChange={e => setEndTime(e.target.value)} /></div>
+          <div><Label htmlFor="end-time">Slut</Label><Input id="end-time" type="time" value={endTime} onChange={e => setEndTime(e.target.value)} /></div>
         </div>
         <div>
-          <Label htmlFor="stated-hours">Timmar (valfritt)</Label>
-          <Input id="stated-hours" inputMode="decimal" type="number" min="0" step="0.25"
-            placeholder={computedHours != null ? computedHours.toFixed(2) : '0'}
+          <Label htmlFor="stated-hours">Arbetstimmar</Label>
+          <Input id="stated-hours" inputMode="decimal" type="text"
+            placeholder={computedHours != null ? fmtH(computedHours) : '0'}
             value={hoursInput} onChange={e => setHoursInput(e.target.value)} />
           {computedHours != null && (
             <p className="mt-1 text-xs text-muted-foreground">
-              Tiderna ger {computedHours.toFixed(2).replace('.', ',')} h. Lämnas fältet tomt sparas den beräknade tiden.
+              Tiderna ger {fmtH(computedHours)} h. Lämnas fältet tomt sparas den beräknade tiden.
             </p>
           )}
         </div>
-        <div><Label htmlFor="travel-minutes">Travel time (minutes)</Label><Input id="travel-minutes" inputMode="numeric" type="number" min="0" step="5" placeholder="0" value={travelMinutes} onChange={e => setTravelMinutes(e.target.value)} /></div>
-        <Textarea aria-label="Time note" placeholder="Note (optional)" value={timeNote} onChange={e => setTimeNote(e.target.value)} />
-        <Button className="w-full" disabled={saving} onClick={() => void submitTime()}>Save time</Button>
+        <div>
+          <Label htmlFor="travel-hours">Restid (timmar)</Label>
+          <Input id="travel-hours" inputMode="decimal" type="text" placeholder="0" value={travelHoursInput} onChange={e => setTravelHoursInput(e.target.value)} />
+          <TravelQuick onPick={setTravelHoursInput} />
+        </div>
+        <Textarea aria-label="Anteckning" placeholder="Anteckning (valfritt)" value={timeNote} onChange={e => setTimeNote(e.target.value)} />
+        <Button className="w-full" disabled={saving} onClick={() => void submitTime()}>Spara tid för {date}</Button>
       </section>
 
       <Dialog open={Boolean(logs.pendingMismatch)} onOpenChange={open => { if (!open) logs.clearMismatch(); }}>
@@ -277,7 +350,7 @@ const ProjectLogTab = ({ projectId, logs, plannedHours }: ProjectLogTabProps) =>
       {(timeEntries.length > 0 || expenseEntries.length > 0) && (
         <section className="space-y-2">
           <h2 className="text-sm font-semibold text-foreground">Reported entries</h2>
-          {timeEntries.map(entry => <div key={entry.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"><Clock className="w-4 h-4 text-muted-foreground" /><div className="min-w-0 flex-1"><p className="text-sm font-medium text-foreground">{entry.hours.toFixed(2)} h{entry.travelHours ? ` + ${entry.travelHours.toFixed(2)} h travel` : ''}</p><p className="text-xs text-muted-foreground">{entry.date}{entry.startTime ? ` · ${entry.startTime}–${entry.endTime}` : ''}</p></div><Button variant="ghost" size="icon" aria-label="Delete time entry" onClick={() => void logs.deleteTime(entry.id)}><Trash2 className="w-4 h-4" /></Button></div>)}
+          {timeEntries.map(entry => <div key={entry.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"><Clock className="w-4 h-4 text-muted-foreground" /><div className="min-w-0 flex-1"><p className="text-sm font-medium text-foreground">{entry.hours.toFixed(2)} h{entry.travelHours ? ` + ${entry.travelHours.toFixed(2)} h restid` : ''}</p><p className="text-xs text-muted-foreground">{entry.date}{entry.startTime ? ` · ${entry.startTime}–${entry.endTime}` : ''}</p></div><Button variant="ghost" size="icon" aria-label="Delete time entry" onClick={() => void logs.deleteTime(entry.id)}><Trash2 className="w-4 h-4" /></Button></div>)}
           {expenseEntries.map(entry => <div key={entry.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"><Wallet className="w-4 h-4 text-muted-foreground" /><div className="min-w-0 flex-1"><p className="text-sm font-medium text-foreground">{expenseCategoryLabels[entry.category]} · {money(entry.amount)}</p><p className="text-xs text-muted-foreground">{entry.date}{entry.km ? ` · ${entry.km} km` : ''}</p></div><Button variant="ghost" size="icon" aria-label="Delete cost entry" onClick={() => void logs.deleteExpense(entry.id)}><Trash2 className="w-4 h-4" /></Button></div>)}
         </section>
       )}
@@ -285,18 +358,19 @@ const ProjectLogTab = ({ projectId, logs, plannedHours }: ProjectLogTabProps) =>
       <Dialog open={checkoutOpen} onOpenChange={setCheckoutOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Check out</DialogTitle>
+            <DialogTitle>Stoppa klockan</DialogTitle>
             <DialogDescription>
-              Start time, finish time and work time are saved automatically. Add your travel time for this job.
+              Start, slut och arbetstid sparas automatiskt för dagen. Ange restid i timmar.
             </DialogDescription>
           </DialogHeader>
           <div>
-            <Label htmlFor="checkout-travel">Travel time (minutes)</Label>
-            <Input id="checkout-travel" inputMode="numeric" type="number" min="0" step="5" placeholder="0" value={checkoutTravel} onChange={e => setCheckoutTravel(e.target.value)} />
+            <Label htmlFor="checkout-travel">Restid (timmar)</Label>
+            <Input id="checkout-travel" inputMode="decimal" type="text" placeholder="0" value={checkoutTravel} onChange={e => setCheckoutTravel(e.target.value)} />
+            <TravelQuick onPick={setCheckoutTravel} />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCheckoutOpen(false)}>Cancel</Button>
-            <Button disabled={saving} onClick={() => void confirmCheckout()}>Save and check out</Button>
+            <Button variant="outline" onClick={() => setCheckoutOpen(false)}>Avbryt</Button>
+            <Button disabled={saving} onClick={() => void confirmCheckout()}>Spara och stoppa</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
