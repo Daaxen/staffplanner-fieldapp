@@ -84,6 +84,23 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate }: Pr
     costs: expenseEntries.reduce((sum, entry) => sum + entry.amount, 0),
   }), [actual, expenseEntries]);
 
+  const days = useMemo(() => {
+    const list = orderDays(startDate, endDate);
+    const t = today();
+    return list.includes(t) || list.length === 0 ? list : list;
+  }, [startDate, endDate]);
+  const dayTotals = useMemo(() => {
+    const onDay = timeEntries.filter(e => e.date === date);
+    return {
+      work: onDay.reduce((s, e) => s + e.hours, 0),
+      travel: onDay.reduce((s, e) => s + (e.travelHours || 0), 0),
+      count: onDay.length,
+    };
+  }, [timeEntries, date]);
+  const timerSince = logs.activeTimer && isThisTimer
+    ? new Date(logs.activeTimer.startedAt).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })
+    : null;
+
   const computedHours = startTime && endTime ? hoursBetween(startTime, endTime) : null;
   const statedHours = hoursInput.trim() ? Number(hoursInput.replace(',', '.')) : undefined;
 
@@ -93,11 +110,11 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate }: Pr
       projectId, date, startTime, endTime,
       hours: acceptComputed ? undefined : (Number.isFinite(statedHours) ? statedHours : undefined),
       acceptComputed,
-      travelHours: minutesToHours(travelMinutes), note: timeNote,
+      travelHours: parseHours(travelHoursInput), note: timeNote,
     });
     setSaving(false);
     if (!result) return false;
-    setStartTime(''); setEndTime(''); setHoursInput(''); setTravelMinutes(''); setTimeNote('');
+    setStartTime(''); setEndTime(''); setHoursInput(''); setTravelHoursInput(''); setTimeNote('');
     toast.success('Tiden är sparad');
     return true;
   };
@@ -117,11 +134,11 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate }: Pr
 
   const confirmCheckout = async () => {
     setSaving(true);
-    await logs.stopTimer(minutesToHours(checkoutTravel));
+    await logs.stopTimer(parseHours(checkoutTravel));
     setSaving(false);
     setCheckoutOpen(false);
     setCheckoutTravel('');
-    toast.success('Checked out');
+    toast.success('Utcheckad');
   };
 
   const submitMileage = async () => {
