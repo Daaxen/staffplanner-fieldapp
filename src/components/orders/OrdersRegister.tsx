@@ -281,7 +281,7 @@ const OrdersRegister = () => {
   /** Selected orders that may be cancelled (completed/cancelled stay untouched). */
   const cancellableOrders = useMemo(
     () => selectedOrders.filter(o => o.status !== 'cancelled' && o.status !== 'completed'
-      && !transitionError(o.status, 'cancelled')),
+      && !transitionError(o.status, 'cancelled', statusLabels)),
     [selectedOrders],
   );
 
