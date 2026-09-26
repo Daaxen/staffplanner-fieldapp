@@ -202,38 +202,69 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate }: Pr
       </div>
 
       <section className="rounded-lg border border-border bg-card p-3 space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <div><h2 className="text-sm font-semibold text-foreground">Check in / check out</h2><p className="text-xs text-muted-foreground">Start and finish time are saved automatically</p></div>
-          {isThisTimer ? (
-            <Button size="sm" variant="destructive" onClick={() => setCheckoutOpen(true)}><Square className="w-4 h-4 mr-1.5" />Check out</Button>
-          ) : (
-            <Button size="sm" disabled={Boolean(logs.activeTimer)} onClick={() => void logs.startTimer(projectId)}><Play className="w-4 h-4 mr-1.5" />Check in</Button>
-          )}
+        <h2 className="text-sm font-semibold text-foreground flex items-center gap-2"><Clock className="w-4 h-4" />Välj dag</h2>
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {days.map(d => {
+            const dt = new Date(`${d}T12:00:00`);
+            const active = d === date && !otherDay;
+            return (
+              <Button key={d} type="button" size="sm" variant={active ? 'default' : 'outline'} className="shrink-0 flex-col h-auto py-1.5"
+                onClick={() => { setDate(d); setOtherDay(false); }}>
+                <span className="text-[10px] leading-none">{d === today() ? 'Idag' : WEEKDAYS[dt.getDay()]}</span>
+                <span className="text-sm font-semibold leading-tight">{dt.getDate()}/{dt.getMonth() + 1}</span>
+              </Button>
+            );
+          })}
+          <Button type="button" size="sm" variant={otherDay || !days.includes(date) ? 'default' : 'outline'} className="shrink-0 h-auto" onClick={() => setOtherDay(true)}>Annan dag</Button>
         </div>
-        {logs.activeTimer && !isThisTimer && <p className="text-xs text-muted-foreground">A timer is already running for another project.</p>}
+        {(otherDay || !days.includes(date)) && (
+          <Input aria-label="Datum" type="date" value={date} onChange={e => setDate(e.target.value)} />
+        )}
+        <p className="text-xs text-muted-foreground">
+          {dayTotals.count ? `Redovisat ${date}: ${fmtH(dayTotals.work)} h${dayTotals.travel ? ` + ${fmtH(dayTotals.travel)} h restid` : ''}` : `Inget redovisat ${date} ännu`}
+        </p>
       </section>
 
       <section className="rounded-lg border border-border bg-card p-3 space-y-3">
-        <h2 className="text-sm font-semibold text-foreground flex items-center gap-2"><Clock className="w-4 h-4" />Add time manually</h2>
-        <div><Label htmlFor="log-date">Date</Label><Input id="log-date" type="date" value={date} onChange={e => setDate(e.target.value)} /></div>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">Start / stopp idag</h2>
+            <p className="text-xs text-muted-foreground">{timerSince ? `Incheckad sedan ${timerSince} idag` : 'Klockan gäller en dag – stoppas automatiskt vid midnatt'}</p>
+          </div>
+          {isThisTimer ? (
+            <Button size="sm" variant="destructive" onClick={() => setCheckoutOpen(true)}><Square className="w-4 h-4 mr-1.5" />Stopp</Button>
+          ) : (
+            <Button size="sm" disabled={Boolean(logs.activeTimer) || date !== today()} onClick={() => void logs.startTimer(projectId)}><Play className="w-4 h-4 mr-1.5" />Start</Button>
+          )}
+        </div>
+        {!isThisTimer && date !== today() && <p className="text-xs text-muted-foreground">Klockan kan bara startas idag. Använd manuell inmatning för andra dagar.</p>}
+        {logs.activeTimer && !isThisTimer && <p className="text-xs text-muted-foreground">En klocka är redan igång på en annan order.</p>}
+      </section>
+
+      <section className="rounded-lg border border-border bg-card p-3 space-y-3">
+        <h2 className="text-sm font-semibold text-foreground flex items-center gap-2"><Clock className="w-4 h-4" />Lägg till tid manuellt</h2>
         <div className="grid grid-cols-2 gap-3">
           <div><Label htmlFor="start-time">Start</Label><Input id="start-time" type="time" value={startTime} onChange={e => setStartTime(e.target.value)} /></div>
-          <div><Label htmlFor="end-time">Finish</Label><Input id="end-time" type="time" value={endTime} onChange={e => setEndTime(e.target.value)} /></div>
+          <div><Label htmlFor="end-time">Slut</Label><Input id="end-time" type="time" value={endTime} onChange={e => setEndTime(e.target.value)} /></div>
         </div>
         <div>
-          <Label htmlFor="stated-hours">Timmar (valfritt)</Label>
-          <Input id="stated-hours" inputMode="decimal" type="number" min="0" step="0.25"
-            placeholder={computedHours != null ? computedHours.toFixed(2) : '0'}
+          <Label htmlFor="stated-hours">Arbetstimmar</Label>
+          <Input id="stated-hours" inputMode="decimal" type="text"
+            placeholder={computedHours != null ? fmtH(computedHours) : '0'}
             value={hoursInput} onChange={e => setHoursInput(e.target.value)} />
           {computedHours != null && (
             <p className="mt-1 text-xs text-muted-foreground">
-              Tiderna ger {computedHours.toFixed(2).replace('.', ',')} h. Lämnas fältet tomt sparas den beräknade tiden.
+              Tiderna ger {fmtH(computedHours)} h. Lämnas fältet tomt sparas den beräknade tiden.
             </p>
           )}
         </div>
-        <div><Label htmlFor="travel-minutes">Travel time (minutes)</Label><Input id="travel-minutes" inputMode="numeric" type="number" min="0" step="5" placeholder="0" value={travelMinutes} onChange={e => setTravelMinutes(e.target.value)} /></div>
-        <Textarea aria-label="Time note" placeholder="Note (optional)" value={timeNote} onChange={e => setTimeNote(e.target.value)} />
-        <Button className="w-full" disabled={saving} onClick={() => void submitTime()}>Save time</Button>
+        <div>
+          <Label htmlFor="travel-hours">Restid (timmar)</Label>
+          <Input id="travel-hours" inputMode="decimal" type="text" placeholder="0" value={travelHoursInput} onChange={e => setTravelHoursInput(e.target.value)} />
+          <TravelQuick onPick={setTravelHoursInput} />
+        </div>
+        <Textarea aria-label="Anteckning" placeholder="Anteckning (valfritt)" value={timeNote} onChange={e => setTimeNote(e.target.value)} />
+        <Button className="w-full" disabled={saving} onClick={() => void submitTime()}>Spara tid för {date}</Button>
       </section>
 
       <Dialog open={Boolean(logs.pendingMismatch)} onOpenChange={open => { if (!open) logs.clearMismatch(); }}>
