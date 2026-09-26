@@ -31,10 +31,13 @@ interface Props {
   onClose: () => void;
   onEdit?: (project: Project) => void;
   onDispatch?: (project: Project) => void;
+  onCancel?: (project: Project, reason: string) => void;
 }
 
-const ProjectDetailPanel = ({ project, installer, onClose, onEdit, onDispatch }: Props) => {
+const ProjectDetailPanel = ({ project, installer, onClose, onEdit, onDispatch, onCancel }: Props) => {
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const assignees = project.assigneeIds.map(id => installers.find(i => i.id === id)).filter(Boolean) as Installer[];
+  const canCancel = onCancel && project.status !== 'cancelled' && project.status !== 'completed';
   const formatDate = (d: string) => new Date(d).toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' });
 
   useEffect(() => {
@@ -171,8 +174,24 @@ const ProjectDetailPanel = ({ project, installer, onClose, onEdit, onDispatch }:
             >
               Edit work order
             </button>
+            {canCancel && (
+              <button
+                onClick={() => setCancelDialogOpen(true)}
+                className="w-full py-2.5 rounded-lg border border-destructive/40 text-destructive text-sm font-medium hover:bg-destructive/10 transition-colors flex items-center justify-center gap-2"
+              >
+                <Ban className="w-4 h-4" />
+                Cancel work order
+              </button>
+            )}
           </div>
         </div>
+        <CancelWorkOrderDialog
+          open={cancelDialogOpen}
+          onOpenChange={setCancelDialogOpen}
+          orderNames={[project.name]}
+          affectedInstallers={assignees.length}
+          onConfirm={(reason) => onCancel?.(project, reason)}
+        />
       </motion.div>
     </AnimatePresence>
   );
