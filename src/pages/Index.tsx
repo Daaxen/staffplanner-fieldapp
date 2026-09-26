@@ -25,6 +25,8 @@ import ResourcePlanningDashboard from '@/components/dashboard/ResourcePlanningDa
 import VarianceAnalysisDashboard from '@/components/dashboard/VarianceAnalysisDashboard';
 import PortalUsersManager from '@/components/admin/PortalUsersManager';
 import AuditTimeline from '@/components/admin/AuditTimeline';
+import MyTime from '@/components/timereporting/MyTime';
+import TimeOverview from '@/components/timereporting/TimeOverview';
 import FeedbackModule from '@/components/feedback/FeedbackModule';
 import { useAuth } from '@/hooks/useAuth';
 import { canAccessNavigationView, canonicalViewPath, type AppRole } from '@/lib/navigation';
@@ -165,6 +167,9 @@ const Index = () => {
         {activeView === 'audit' && (
           <AuditTimeline />
         )}
+        {activeView === 'my-time' && <MyTime />}
+        {activeView === 'time-overview' && <TimeOverview />}
+        {activeView === 'time-export' && <TimeOverview exportMode />}
         {activeView === 'feedback' && (
           <FeedbackModule view="admin" />
         )}

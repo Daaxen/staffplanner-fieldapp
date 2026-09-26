@@ -2184,9 +2184,39 @@ export type Database = {
         }
         Relationships: []
       }
+      time_activity_types: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       time_entries: {
         Row: {
+          activity_type_id: string | null
+          client_id: string | null
           created_at: string
+          description: string | null
           end_time: string | null
           entry_date: string
           hourly_rate: number | null
@@ -2194,16 +2224,21 @@ export type Database = {
           id: string
           installer_id: string
           note: string | null
-          project_id: string
+          project_group_id: string | null
+          project_id: string | null
           snapshot_client_name: string | null
           snapshot_project_name: string | null
           source: string
+          source_assignment_id: string | null
           start_time: string | null
           travel_hours: number
           updated_at: string
         }
         Insert: {
+          activity_type_id?: string | null
+          client_id?: string | null
           created_at?: string
+          description?: string | null
           end_time?: string | null
           entry_date: string
           hourly_rate?: number | null
@@ -2211,16 +2246,21 @@ export type Database = {
           id?: string
           installer_id: string
           note?: string | null
-          project_id: string
+          project_group_id?: string | null
+          project_id?: string | null
           snapshot_client_name?: string | null
           snapshot_project_name?: string | null
           source?: string
+          source_assignment_id?: string | null
           start_time?: string | null
           travel_hours?: number
           updated_at?: string
         }
         Update: {
+          activity_type_id?: string | null
+          client_id?: string | null
           created_at?: string
+          description?: string | null
           end_time?: string | null
           entry_date?: string
           hourly_rate?: number | null
@@ -2228,15 +2268,31 @@ export type Database = {
           id?: string
           installer_id?: string
           note?: string | null
-          project_id?: string
+          project_group_id?: string | null
+          project_id?: string | null
           snapshot_client_name?: string | null
           snapshot_project_name?: string | null
           source?: string
+          source_assignment_id?: string | null
           start_time?: string | null
           travel_hours?: number
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "time_entries_activity_type_id_fkey"
+            columns: ["activity_type_id"]
+            isOneToOne: false
+            referencedRelation: "time_activity_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "time_entries_installer_id_fkey"
             columns: ["installer_id"]
@@ -2249,6 +2305,20 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_project_group_id_fkey"
+            columns: ["project_group_id"]
+            isOneToOne: false
+            referencedRelation: "project_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_source_assignment_id_fkey"
+            columns: ["source_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "assignments"
             referencedColumns: ["id"]
           },
           {
@@ -2417,6 +2487,14 @@ export type Database = {
       shares_project_with_installer: {
         Args: { _installer_id: string }
         Returns: boolean
+      }
+      time_report_clients: {
+        Args: never
+        Returns: {
+          customer_number: string
+          id: string
+          name: string
+        }[]
       }
       upsert_employee_private_details: {
         Args: {

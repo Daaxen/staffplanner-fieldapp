@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { AlertTriangle, Bell, BookOpen, CalendarDays, CheckCircle2, ChevronRight, ClipboardPenLine, FolderKanban, HardHat, LogOut, MessageSquarePlus, MoreHorizontal, Package, User } from 'lucide-react';
+import { AlertTriangle, Clock, Bell, BookOpen, CalendarDays, CheckCircle2, ChevronRight, ClipboardPenLine, FolderKanban, HardHat, LogOut, MessageSquarePlus, MoreHorizontal, Package, User } from 'lucide-react';
 import FeedbackModule from '@/components/feedback/FeedbackModule';
 import { addDays, startOfWeek, format } from 'date-fns';
 import InstallerSchedule from '@/components/installer/InstallerSchedule';
@@ -13,6 +13,7 @@ import ScheduleFilters, { type FilterState } from '@/components/installer/schedu
 import LogsOverview from '@/components/installer/reporting/LogsOverview';
 import RemindersInbox from '@/components/installer/reminders/RemindersInbox';
 import ReminderBanner from '@/components/installer/reminders/ReminderBanner';
+import MyTime from '@/components/timereporting/MyTime';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { type Project } from '@/data/mockData';
 import { useProjects, useAppDataLoaded } from '@/lib/appData';
@@ -43,7 +44,7 @@ const InstallerApp = () => {
   const reminders = useReminders();
   const [tab, setTab] = useState<string>('schedule');
   const [projectEntryTab, setProjectEntryTab] = useState<'info' | 'report' | 'log' | 'deviation' | 'summary'>('info');
-  const [moreView, setMoreView] = useState<'menu' | 'schedule' | 'orderbox' | 'reminders' | 'docs' | 'feedback' | 'profile'>('menu');
+  const [moreView, setMoreView] = useState<'menu' | 'schedule' | 'orderbox' | 'reminders' | 'docs' | 'feedback' | 'profile' | 'mytime'>('menu');
   const [technicianMode, setTechnicianMode] = useState<boolean>(
     () => localStorage.getItem('technicianMode') === '1',
   );
@@ -276,6 +277,7 @@ const InstallerApp = () => {
           {moreView === 'menu' && (
             <div className="p-4 grid grid-cols-2 gap-3 pb-20">
               {[
+                { id: 'mytime' as const, label: 'Min tid', icon: Clock },
                 { id: 'schedule' as const, label: 'Full schedule', icon: CalendarDays },
                 { id: 'orderbox' as const, label: 'Available jobs', icon: Package, badge: availableOrderCount },
                 { id: 'reminders' as const, label: 'Inbox', icon: Bell, badge: reminders.reminders.length },
@@ -296,6 +298,7 @@ const InstallerApp = () => {
             <div className="min-h-full flex flex-col">
               <div className="shrink-0 border-b border-border p-3"><Button variant="ghost" size="sm" onClick={() => setMoreView('menu')}>← More</Button></div>
               <div className="flex-1 overflow-auto">
+                {moreView === 'mytime' && <MyTime />}
                 {moreView === 'schedule' && <InstallerSchedule projects={myProjects} installer={installer} onSelectProject={project => openProjectWorkflow(project, 'info')} />}
                 {moreView === 'orderbox' && <div className="p-4"><InstallerOrderBox projects={localProjects} onPickUp={handlePickUp} onViewDetail={project => handleViewOrderDetail(project)} /></div>}
                 {moreView === 'reminders' && <RemindersInbox state={reminders} />}

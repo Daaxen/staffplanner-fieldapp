@@ -18,7 +18,7 @@ describe('workflow navigation', () => {
 
   it('shows all workflow groups to admins', () => {
     expect(navigationForRoles(['admin']).map(group => group.id)).toEqual([
-      'dashboard', 'orders', 'planning', 'field-operations', 'finance', 'customers', 'resources', 'reports', 'administration',
+      'dashboard', 'orders', 'planning', 'field-operations', 'time-reporting', 'finance', 'customers', 'resources', 'reports', 'administration',
     ]);
   });
 
@@ -29,8 +29,8 @@ describe('workflow navigation', () => {
     expect(canAccessNavigationView('clients', ['hr'])).toBe(false);
   });
 
-  it('does not expose the desktop workflow menu to installer-only users', () => {
-    expect(navigationForRoles(['installer'])).toEqual([]);
+  it('only exposes time reporting to installer-only users', () => {
+    expect(navigationForRoles(['installer']).map(g => g.id)).toEqual(['time-reporting']);
   });
 
   it('maps legacy destinations to stable app URLs', () => {
