@@ -350,7 +350,7 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate }: Pr
       {(timeEntries.length > 0 || expenseEntries.length > 0) && (
         <section className="space-y-2">
           <h2 className="text-sm font-semibold text-foreground">Reported entries</h2>
-          {timeEntries.map(entry => <div key={entry.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"><Clock className="w-4 h-4 text-muted-foreground" /><div className="min-w-0 flex-1"><p className="text-sm font-medium text-foreground">{entry.hours.toFixed(2)} h{entry.travelHours ? ` + ${entry.travelHours.toFixed(2)} h travel` : ''}</p><p className="text-xs text-muted-foreground">{entry.date}{entry.startTime ? ` · ${entry.startTime}–${entry.endTime}` : ''}</p></div><Button variant="ghost" size="icon" aria-label="Delete time entry" onClick={() => void logs.deleteTime(entry.id)}><Trash2 className="w-4 h-4" /></Button></div>)}
+          {timeEntries.map(entry => <div key={entry.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"><Clock className="w-4 h-4 text-muted-foreground" /><div className="min-w-0 flex-1"><p className="text-sm font-medium text-foreground">{entry.hours.toFixed(2)} h{entry.travelHours ? ` + ${entry.travelHours.toFixed(2)} h restid` : ''}</p><p className="text-xs text-muted-foreground">{entry.date}{entry.startTime ? ` · ${entry.startTime}–${entry.endTime}` : ''}</p></div><Button variant="ghost" size="icon" aria-label="Delete time entry" onClick={() => void logs.deleteTime(entry.id)}><Trash2 className="w-4 h-4" /></Button></div>)}
           {expenseEntries.map(entry => <div key={entry.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"><Wallet className="w-4 h-4 text-muted-foreground" /><div className="min-w-0 flex-1"><p className="text-sm font-medium text-foreground">{expenseCategoryLabels[entry.category]} · {money(entry.amount)}</p><p className="text-xs text-muted-foreground">{entry.date}{entry.km ? ` · ${entry.km} km` : ''}</p></div><Button variant="ghost" size="icon" aria-label="Delete cost entry" onClick={() => void logs.deleteExpense(entry.id)}><Trash2 className="w-4 h-4" /></Button></div>)}
         </section>
       )}
@@ -358,18 +358,19 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate }: Pr
       <Dialog open={checkoutOpen} onOpenChange={setCheckoutOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Check out</DialogTitle>
+            <DialogTitle>Stoppa klockan</DialogTitle>
             <DialogDescription>
-              Start time, finish time and work time are saved automatically. Add your travel time for this job.
+              Start, slut och arbetstid sparas automatiskt för dagen. Ange restid i timmar.
             </DialogDescription>
           </DialogHeader>
           <div>
-            <Label htmlFor="checkout-travel">Travel time (minutes)</Label>
-            <Input id="checkout-travel" inputMode="numeric" type="number" min="0" step="5" placeholder="0" value={checkoutTravel} onChange={e => setCheckoutTravel(e.target.value)} />
+            <Label htmlFor="checkout-travel">Restid (timmar)</Label>
+            <Input id="checkout-travel" inputMode="decimal" type="text" placeholder="0" value={checkoutTravel} onChange={e => setCheckoutTravel(e.target.value)} />
+            <TravelQuick onPick={setCheckoutTravel} />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCheckoutOpen(false)}>Cancel</Button>
-            <Button disabled={saving} onClick={() => void confirmCheckout()}>Save and check out</Button>
+            <Button variant="outline" onClick={() => setCheckoutOpen(false)}>Avbryt</Button>
+            <Button disabled={saving} onClick={() => void confirmCheckout()}>Spara och stoppa</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
