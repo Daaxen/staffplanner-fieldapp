@@ -19,25 +19,50 @@ interface ProjectLogTabProps {
   logs: InstallerLogs;
   /** Estimated hours for the order, used for the deviation figure. */
   plannedHours?: number;
+  startDate?: string;
+  endDate?: string;
 }
 
-const today = () => new Date().toISOString().slice(0, 10);
+const pad = (n: number) => n.toString().padStart(2, '0');
+const isoLocal = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const today = () => isoLocal(new Date());
 const money = (amount: number) => `${amount.toLocaleString('sv-SE')} SEK`;
-const minutesToHours = (value: string) => {
-  const minutes = Number(value);
-  if (!Number.isFinite(minutes) || minutes <= 0) return 0;
-  return Math.round((minutes / 60) * 100) / 100;
+/** Parses travel time in hours; accepts comma or dot. */
+const parseHours = (value: string) => {
+  const hours = Number(value.replace(',', '.'));
+  if (!Number.isFinite(hours) || hours <= 0) return 0;
+  return Math.min(12, Math.round(hours * 100) / 100);
+};
+const fmtH = (h: number) => h.toFixed(2).replace(/\.?0+$/, '').replace('.', ',');
+const WEEKDAYS = ['Sön', 'Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör'];
+
+const orderDays = (start?: string, end?: string) => {
+  if (!start) return [] as string[];
+  const s = new Date(`${start.slice(0, 10)}T12:00:00`);
+  const e = new Date(`${(end || start).slice(0, 10)}T12:00:00`);
+  const out: string[] = [];
+  for (let d = new Date(s); d <= e && out.length < 14; d.setDate(d.getDate() + 1)) out.push(isoLocal(d));
+  return out;
 };
 
-const ProjectLogTab = ({ projectId, logs, plannedHours }: ProjectLogTabProps) => {
+const TravelQuick = ({ onPick }: { onPick: (v: string) => void }) => (
+  <div className="flex gap-2 mt-2">
+    {['0,5', '1', '1,5', '2'].map(v => (
+      <Button key={v} type="button" size="sm" variant="outline" className="flex-1" onClick={() => onPick(v)}>{v} h</Button>
+    ))}
+  </div>
+);
+
+const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate }: ProjectLogTabProps) => {
   const [date, setDate] = useState(today);
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [hoursInput, setHoursInput] = useState('');
-  const [travelMinutes, setTravelMinutes] = useState('');
+  const [travelHoursInput, setTravelHoursInput] = useState('');
   const [timeNote, setTimeNote] = useState('');
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [checkoutTravel, setCheckoutTravel] = useState('');
+  const [otherDay, setOtherDay] = useState(false);
   const [km, setKm] = useState('');
   const [mileageNote, setMileageNote] = useState('');
   const [category, setCategory] = useState<ExpenseCategory>('materials');
