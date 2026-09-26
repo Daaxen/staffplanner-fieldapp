@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Search, Filter, X, CheckSquare, Square, Download, History, Users as UsersIcon, Trash2, ArrowRight, AlertTriangle, Check, Repeat } from 'lucide-react';
+import { Search, Filter, X, CheckSquare, Square, Download, History, Users as UsersIcon, Trash2, ArrowRight, AlertTriangle, Check, Repeat, Ban } from 'lucide-react';
+import CancelWorkOrderDialog from '@/components/gantt/CancelWorkOrderDialog';
 import { installers, type Project, type ProjectStatus, type ProjectType, statusLabels, projectTypeLabels, projectTypeIcons } from '@/data/mockData';
 import { transitionError } from '@/lib/validation/controlledValues';
 import {
@@ -57,6 +58,7 @@ const OrdersRegister = () => {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [showFilters, setShowFilters] = useState(true);
   const [massDialog, setMassDialog] = useState<null | 'status' | 'assignee' | 'delete' | 'group'>(null);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [massGroup, setMassGroup] = useState<string>('');
   const { groups: projectGroups } = useProjectGroups();
   const [massStep, setMassStep] = useState<'configure' | 'preview'>('configure');
