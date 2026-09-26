@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Search, Filter, X, CheckSquare, Square, Download, History, Users as UsersIcon, Trash2, ArrowRight, AlertTriangle, Check, Repeat } from 'lucide-react';
+import { Search, Filter, X, CheckSquare, Square, Download, History, Users as UsersIcon, Trash2, ArrowRight, AlertTriangle, Check, Repeat, Ban } from 'lucide-react';
+import CancelWorkOrderDialog from '@/components/gantt/CancelWorkOrderDialog';
 import { installers, type Project, type ProjectStatus, type ProjectType, statusLabels, projectTypeLabels, projectTypeIcons } from '@/data/mockData';
 import { transitionError } from '@/lib/validation/controlledValues';
 import {
@@ -57,6 +58,7 @@ const OrdersRegister = () => {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [showFilters, setShowFilters] = useState(true);
   const [massDialog, setMassDialog] = useState<null | 'status' | 'assignee' | 'delete' | 'group'>(null);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [massGroup, setMassGroup] = useState<string>('');
   const { groups: projectGroups } = useProjectGroups();
   const [massStep, setMassStep] = useState<'configure' | 'preview'>('configure');
@@ -276,6 +278,27 @@ const OrdersRegister = () => {
     closeMassDialog(); setSelected(new Set());
   };
 
+  /** Selected orders that may be cancelled (completed/cancelled stay untouched). */
+  const cancellableOrders = useMemo(
+    () => selectedOrders.filter(o => o.status !== 'cancelled' && o.status !== 'completed'
+      && !transitionError(o.status, 'cancelled', statusLabels)),
+    [selectedOrders],
+  );
+
+  const applyMassCancel = (reason: string) => {
+    const ids = new Set(cancellableOrders.map(o => o.id));
+    if (ids.size === 0) { toast.error('None of the selected orders can be cancelled'); return; }
+    const note = reason ? `\n\n[Cancelled ${todayStr}] ${reason}` : '';
+    setOrders(prev => prev.map(p => ids.has(p.id)
+      ? { ...p, status: 'cancelled' as ProjectStatus, description: (p.description ?? '') + note || undefined }
+      : p));
+    const skipped = selected.size - ids.size;
+    toast.success(
+      `Cancelled ${ids.size} order(s)` + (skipped ? ` · ${skipped} skipped (already completed/cancelled)` : ''),
+    );
+    setSelected(new Set());
+  };
+
   const exportCsv = () => {
     const rows = filtered.length ? filtered : orders;
     const header = ['ID', 'Name', 'Type', 'Client', 'Location', 'Status', 'Start', 'End', 'Assignees', 'Contact', 'Phone', 'Email'];
@@ -415,6 +438,9 @@ const OrdersRegister = () => {
             </Button>
             <Button size="sm" variant="outline" onClick={() => openMassDialog('group')}>
               Assign to project
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setCancelDialogOpen(true)}>
+              <Ban className="w-3.5 h-3.5 mr-1" /> Cancel
             </Button>
             <Button size="sm" variant="outline" onClick={() => openMassDialog('delete')}>
               <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete
@@ -749,6 +775,14 @@ const OrdersRegister = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CancelWorkOrderDialog
+        open={cancelDialogOpen}
+        onOpenChange={setCancelDialogOpen}
+        orderNames={cancellableOrders.map(o => o.name)}
+        affectedInstallers={new Set(cancellableOrders.flatMap(o => o.assigneeIds)).size}
+        onConfirm={applyMassCancel}
+      />
     </div>
   );
 };
