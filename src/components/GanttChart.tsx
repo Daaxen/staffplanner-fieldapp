@@ -261,6 +261,18 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
     setPendingChanges(prev => prev.filter(c => c.projectId !== project.id));
   }, [handleUpdateProject, projectsList]);
 
+  /** Cancel a work order: status -> cancelled (bookings release automatically),
+   *  the optional reason is appended to the description for the record. */
+  const handleCancelProject = useCallback((panelProject: Project, reason: string) => {
+    const project = projectsList.find(p => p.id === panelProject.id) ?? panelProject;
+    const note = reason ? `\n\n[Cancelled ${new Date().toISOString().slice(0, 10)}] ${reason}` : '';
+    handleUpdateProject(project.id, {
+      status: 'cancelled' as ProjectStatus,
+      description: (project.description ?? '') + note || undefined,
+    });
+    toast.success(`Work order ${project.name} cancelled`);
+  }, [handleUpdateProject, projectsList]);
+
   /** The open order panel follows the live list, so assignments never look stale. */
   const panelProject = useMemo(
     () => (selectedProject ? projectsList.find(p => p.id === selectedProject.id) ?? selectedProject : null),
@@ -478,6 +490,7 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
           onClose={() => setSelectedProject(null)}
           onEdit={(p) => { setEditProject(p); setEditDialogOpen(true); }}
           onDispatch={handleDispatchProject}
+          onCancel={handleCancelProject}
         />
       )}
       <EditWorkOrderDialog
