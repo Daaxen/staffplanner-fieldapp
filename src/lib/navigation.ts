@@ -6,6 +6,9 @@ import {
   Building2,
   Calendar,
   Car,
+  Clock,
+  Download,
+  Timer,
   ClipboardList,
   FileText,
   Flame,
@@ -86,6 +89,17 @@ export const navigationGroups: NavigationGroup[] = [
     items: [
       { id: 'installer-preview', label: 'Active jobs', icon: Smartphone, roles: admin },
       { id: 'deviations', label: 'Field deviations', icon: AlertTriangle, roles: admin },
+    ],
+  },
+  {
+    id: 'time-reporting',
+    label: 'Tidsrapportering',
+    icon: Clock,
+    defaultView: 'my-time',
+    items: [
+      { id: 'my-time', label: 'Min tid', icon: Timer, roles: ['admin', 'hr', 'installer'] },
+      { id: 'time-overview', label: 'Tidsöversikt', icon: Clock, roles: admin },
+      { id: 'time-export', label: 'Export', icon: Download, roles: admin },
     ],
   },
   {
