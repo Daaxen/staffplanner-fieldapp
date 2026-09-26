@@ -278,6 +278,27 @@ const OrdersRegister = () => {
     closeMassDialog(); setSelected(new Set());
   };
 
+  /** Selected orders that may be cancelled (completed/cancelled stay untouched). */
+  const cancellableOrders = useMemo(
+    () => selectedOrders.filter(o => o.status !== 'cancelled' && o.status !== 'completed'
+      && !transitionError(o.status, 'cancelled')),
+    [selectedOrders],
+  );
+
+  const applyMassCancel = (reason: string) => {
+    const ids = new Set(cancellableOrders.map(o => o.id));
+    if (ids.size === 0) { toast.error('None of the selected orders can be cancelled'); return; }
+    const note = reason ? `\n\n[Cancelled ${todayStr}] ${reason}` : '';
+    setOrders(prev => prev.map(p => ids.has(p.id)
+      ? { ...p, status: 'cancelled' as ProjectStatus, description: (p.description ?? '') + note || undefined }
+      : p));
+    const skipped = selected.size - ids.size;
+    toast.success(
+      `Cancelled ${ids.size} order(s)` + (skipped ? ` · ${skipped} skipped (already completed/cancelled)` : ''),
+    );
+    setSelected(new Set());
+  };
+
   const exportCsv = () => {
     const rows = filtered.length ? filtered : orders;
     const header = ['ID', 'Name', 'Type', 'Client', 'Location', 'Status', 'Start', 'End', 'Assignees', 'Contact', 'Phone', 'Email'];
@@ -417,6 +438,9 @@ const OrdersRegister = () => {
             </Button>
             <Button size="sm" variant="outline" onClick={() => openMassDialog('group')}>
               Assign to project
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setCancelDialogOpen(true)}>
+              <Ban className="w-3.5 h-3.5 mr-1" /> Cancel
             </Button>
             <Button size="sm" variant="outline" onClick={() => openMassDialog('delete')}>
               <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete
