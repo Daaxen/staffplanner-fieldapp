@@ -2488,6 +2488,14 @@ export type Database = {
         Args: { _installer_id: string }
         Returns: boolean
       }
+      time_report_clients: {
+        Args: never
+        Returns: {
+          customer_number: string
+          id: string
+          name: string
+        }[]
+      }
       upsert_employee_private_details: {
         Args: {
           _clothing_size?: string
