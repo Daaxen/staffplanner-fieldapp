@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { getDocUrl, uploadDoc, useDocuments } from '@/hooks/useDocuments';
 import { useAuth } from '@/hooks/useAuth';
 import { docScopeLabels, type DocRecord } from '@/data/documentsData';
+import type { DocRecord } from '@/hooks/useDocuments';
 import { toast } from 'sonner';
 
 interface Props {
