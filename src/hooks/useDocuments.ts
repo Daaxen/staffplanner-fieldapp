@@ -127,20 +127,25 @@ export const MAX_DOC_FILE_SIZE = 25 * 1024 * 1024; // 25 MB — same as the buck
 
 const extensionOf = (name: string) => name.split('.').pop()?.toLowerCase() ?? '';
 
-/** Uploads a real file into the private documents bucket and saves the document
- *  row in one go. The uploaded file is removed again if saving the row fails. */
-export const uploadDoc = async (file: File, draft: Omit<DocDraft, 'fileType' | 'url' | 'storagePath'>) => {
+/** Uploads a file into the private documents bucket and returns the storage path. */
+export const uploadDocFile = async (file: File): Promise<string> => {
   if (file.size > MAX_DOC_FILE_SIZE) throw new Error('The file is larger than 25 MB');
   const { data: auth } = await supabase.auth.getUser();
   const userId = auth.user?.id;
   if (!userId) throw new Error('Sign in to upload files');
-  const docId = crypto.randomUUID();
   const safeName = file.name.replace(/[^\w.\-() åäöÅÄÖ]/g, '_');
-  const path = `${userId}/${docId}/${safeName}`;
-  const { error: uploadError } = await supabase.storage
+  const path = `${userId}/${crypto.randomUUID()}/${safeName}`;
+  const { error } = await supabase.storage
     .from('documents')
     .upload(path, file, { contentType: file.type || 'application/octet-stream' });
-  if (uploadError) throw uploadError;
+  if (error) throw error;
+  return path;
+};
+
+/** Uploads a real file into the private documents bucket and saves the document
+ *  row in one go. The uploaded file is removed again if saving the row fails. */
+export const uploadDoc = async (file: File, draft: Omit<DocDraft, 'fileType' | 'url' | 'storagePath'>) => {
+  const path = await uploadDocFile(file);
   const row = toRow({
     ...draft,
     url: undefined,

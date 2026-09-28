@@ -1,7 +1,7 @@
 import { ArrowLeft, MapPin, Clock, Users, FileText, Phone, Camera, CheckSquare, ExternalLink, Info, Paperclip, ClipboardCheck, Mail, Receipt, AlertCircle, AlertTriangle, Check, X } from 'lucide-react';
 import { type Project, type Installer, projectTypeIcons, projectTypeLabels, statusLabels, installers } from '@/data/mockData';
 import { cn } from '@/lib/utils';
-import { useClients } from '@/lib/appData';
+import { useClients, projectRowId } from '@/lib/appData';
 import { customerFieldInfo } from '@/lib/customerLink';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -24,6 +24,7 @@ import MiniMap from '@/components/maps/MiniMap';
 import PhotoManager from '@/components/installer/PhotoManager';
 import { useFieldWork } from '@/hooks/useFieldWork';
 import DeviationForm from '@/components/installer/DeviationForm';
+import OrderDocumentsSection from '@/components/documents/OrderDocumentsSection';
 
 interface InstallerProjectDetailProps {
   project: Project;
@@ -317,19 +318,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
         {/* DOCS & PICS TAB */}
         <TabsContent value="docs" className="flex-1 overflow-auto mt-0">
           <div className="p-4 space-y-4">
-            <Section title="Pictures & Documentation">
-              {project.attachments && project.attachments.length > 0 ? (
-                project.attachments.map(att => (
-                  <div key={att.id} className="flex items-center gap-2 py-1.5">
-                    <FileText className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm text-foreground flex-1">{att.name}</span>
-                    <span className="text-xs text-muted-foreground">{(att.size / 1024).toFixed(0)} KB</span>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground py-4 text-center">No documents attached</p>
-              )}
-            </Section>
+            <OrderDocumentsSection projectId={projectRowId(project.id) ?? ''} />
           </div>
         </TabsContent>
 
