@@ -548,6 +548,7 @@ export type Database = {
           project_id: string | null
           sandbox: boolean
           scope: string
+          storage_path: string | null
           title: string
           updated_at: string
           url: string | null
@@ -566,6 +567,7 @@ export type Database = {
           project_id?: string | null
           sandbox?: boolean
           scope?: string
+          storage_path?: string | null
           title: string
           updated_at?: string
           url?: string | null
@@ -584,6 +586,7 @@ export type Database = {
           project_id?: string | null
           sandbox?: boolean
           scope?: string
+          storage_path?: string | null
           title?: string
           updated_at?: string
           url?: string | null

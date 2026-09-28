@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { FileText, BookOpen, ShieldAlert, Link2, Plus, Search, Trash2, Download, ExternalLink, Pencil, Lock, Building2, Briefcase, Globe, UserCog } from 'lucide-react';
+import { FileText, BookOpen, ShieldAlert, Link2, Plus, Search, Trash2, Download, ExternalLink, Pencil, Lock, Building2, Briefcase, Globe, UserCog, FileUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { docCategoryLabels, docScopeLabels, docScopeHints, type DocCategory, type DocScope } from '@/data/documentsData';
-import { useDocuments, listDocGrants, grantDocAccess, revokeDocAccess, type DocDraft, type DocGrant } from '@/hooks/useDocuments';
+import { useDocuments, listDocGrants, grantDocAccess, revokeDocAccess, uploadDocFile, getDocUrl, type DocDraft, type DocGrant } from '@/hooks/useDocuments';
 import { useProjects, projectRowId, projectRefForRowId } from '@/lib/appData';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -58,6 +58,7 @@ const DocumentsManager = () => {
   const [grants, setGrants] = useState<DocGrant[]>([]);
   const [grantPerson, setGrantPerson] = useState('');
   const [grantReason, setGrantReason] = useState('');
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -90,7 +91,7 @@ const DocumentsManager = () => {
     return c;
   }, [docs]);
 
-  const openCreate = () => { setEditingId(null); setDraft(emptyDraft); setGrants([]); setOpen(true); };
+  const openCreate = () => { setEditingId(null); setDraft(emptyDraft); setGrants([]); setPendingFile(null); setOpen(true); };
 
   const openEdit = (id: string) => {
     const doc = docs.find(d => d.id === id);
@@ -109,7 +110,7 @@ const DocumentsManager = () => {
       clientId: doc.clientId,
       ownerId: doc.ownerId,
     });
-    setGrants([]); setGrantPerson(''); setGrantReason('');
+    setGrants([]); setGrantPerson(''); setGrantReason(''); setPendingFile(null);
     if (doc.scope === 'project_sensitive') {
       void listDocGrants(id).then(setGrants).catch(() => setGrants([]));
     }
@@ -122,7 +123,26 @@ const DocumentsManager = () => {
     if (draft.scope === 'client' && !draft.clientId) { toast.error('Pick the customer this document belongs to'); return; }
     if (draft.scope === 'installer_private' && !draft.ownerId) { toast.error('Pick who this private document belongs to'); return; }
     try {
-      if (editingId) { await updateDoc(editingId, draft); toast.success('Document updated'); }
+      if (pendingFile) {
+        const path = await uploadDocFile(pendingFile);
+        const withFile: DocDraft = {
+          ...draft,
+          fileType: pendingFile.name.split('.').pop()?.toLowerCase() || 'file',
+          url: undefined,
+          storagePath: path,
+        };
+        if (editingId) {
+          await updateDoc(editingId, withFile);
+          const old = docs.find(d => d.id === editingId);
+          if (old?.storagePath && old.storagePath !== path) {
+            await supabase.storage.from('documents').remove([old.storagePath]);
+          }
+          toast.success('Document updated');
+        } else {
+          await createDoc(withFile);
+          toast.success('Document added');
+        }
+      } else if (editingId) { await updateDoc(editingId, draft); toast.success('Document updated'); }
       else { await createDoc(draft); toast.success('Document added'); }
       setOpen(false);
     } catch (e) {
@@ -133,6 +153,18 @@ const DocumentsManager = () => {
   const remove = async (id: string) => {
     try { await deleteDoc(id); toast.success('Document removed'); }
     catch (e) { toast.error((e as Error).message ?? 'Could not remove the document'); }
+  };
+
+  const openDoc = async (id: string) => {
+    const doc = docs.find(d => d.id === id);
+    if (!doc) return;
+    if (doc.storagePath) {
+      const url = await getDocUrl(doc.storagePath);
+      if (url) window.open(url, '_blank', 'noreferrer');
+      else toast.error('Could not open the file');
+    } else if (doc.url) {
+      window.open(doc.url, '_blank', 'noreferrer');
+    }
   };
 
   const addGrant = async () => {
@@ -205,7 +237,7 @@ const DocumentsManager = () => {
                 {filtered.map(doc => {
                   const Icon = categoryIcon[doc.category] ?? FileText;
                   const ScopeIcon = scopeIcon[doc.scope];
-                  const isLink = !!doc.url;
+                  const hasFile = !!doc.url || !!doc.storagePath;
                   return (
                     <div key={doc.id} className="border border-border rounded-lg p-4 bg-card hover:shadow-sm transition-shadow flex flex-col gap-3">
                       <div className="flex items-start gap-3">
@@ -226,9 +258,9 @@ const DocumentsManager = () => {
                       </div>
                       <p className="text-[11px] text-muted-foreground truncate">{ownerLabel(doc)}</p>
                       <div className="flex items-center gap-1 pt-1 border-t border-border">
-                        {isLink ? (
-                          <Button size="sm" variant="ghost" className="h-8 text-xs" asChild>
-                            <a href={doc.url ?? '#'} target="_blank" rel="noreferrer"><ExternalLink className="w-3.5 h-3.5" /> Open</a>
+                        {hasFile ? (
+                          <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => void openDoc(doc.id)}>
+                            <Download className="w-3.5 h-3.5" /> Open
                           </Button>
                         ) : (
                           <Button size="sm" variant="ghost" className="h-8 text-xs" disabled><Download className="w-3.5 h-3.5" /> No file link</Button>
@@ -403,6 +435,22 @@ const DocumentsManager = () => {
             <div>
               <Label>Link</Label>
               <Input value={draft.url ?? ''} onChange={e => setDraft({ ...draft, url: e.target.value })} placeholder="https://…" />
+            </div>
+
+            <div className="rounded-lg border border-dashed border-border p-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <FileUp className="w-4 h-4 text-muted-foreground" />
+                <Label className="text-sm">Or upload a file</Label>
+                {pendingFile && <span className="text-xs text-muted-foreground truncate">{pendingFile.name}</span>}
+              </div>
+              <input
+                type="file"
+                className="text-xs text-muted-foreground file:mr-2 file:rounded-md file:border-0 file:bg-secondary file:px-2 file:py-1 file:text-xs file:text-secondary-foreground"
+                onChange={e => setPendingFile(e.target.files?.[0] ?? null)}
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Up to 25 MB. Saving a file replaces the link, and the file type comes from the file name.
+              </p>
             </div>
           </div>
           <DialogFooter>

@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import SimilarJobsPanel from '@/components/orders/SimilarJobsPanel';
 import HistoricalEstimateCard from '@/components/orders/HistoricalEstimateCard';
 import CancelWorkOrderDialog from '@/components/gantt/CancelWorkOrderDialog';
+import OrderDocumentsSection from '@/components/documents/OrderDocumentsSection';
+import { projectRowId } from '@/lib/appData';
 
 const statusColorMap: Record<ProjectStatus, string> = {
   'open': 'bg-status-open/15 text-status-open',
@@ -38,6 +40,7 @@ const ProjectDetailPanel = ({ project, installer, onClose, onEdit, onDispatch, o
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const assignees = project.assigneeIds.map(id => installers.find(i => i.id === id)).filter(Boolean) as Installer[];
   const canCancel = onCancel && project.status !== 'cancelled' && project.status !== 'completed';
+  const orderRowId = projectRowId(project.id);
   const formatDate = (d: string) => new Date(d).toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' });
 
   useEffect(() => {
@@ -159,6 +162,8 @@ const ProjectDetailPanel = ({ project, installer, onClose, onEdit, onDispatch, o
             <HistoricalEstimateCard project={project} />
             <SimilarJobsPanel project={project} />
           </div>
+
+          {orderRowId && <OrderDocumentsSection projectId={orderRowId} />}
 
           {/* Action buttons */}
           <div className="space-y-2 pt-4 border-t border-border">
