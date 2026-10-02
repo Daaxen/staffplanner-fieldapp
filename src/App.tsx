@@ -12,6 +12,7 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "@/hooks/useAuth";
+import BookingConflictPrompt from "@/components/scheduling/BookingConflictPrompt";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { legacyViewPaths } from "@/lib/navigation";
 
@@ -24,6 +25,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <BookingConflictPrompt />
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />

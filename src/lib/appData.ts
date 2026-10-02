@@ -457,6 +457,18 @@ async function upsertProjectRow(p: Project) {
  * the reason is stored on the booking and audited in assignment_overrides.
  */
 const overrideReasons = new Map<string, string>();
+
+/** A refused booking that an admin may push through with a reason. */
+export interface PendingBookingConflict { message: string; retry: (reason: string) => Promise<void>; }
+const conflictListeners = new Set<(c: PendingBookingConflict) => void>();
+export function onBookingConflict(fn: (c: PendingBookingConflict) => void) {
+  conflictListeners.add(fn);
+  return () => { conflictListeners.delete(fn); };
+}
+function emitBookingConflict(c: PendingBookingConflict) {
+  if (conflictListeners.size === 0) { toast.error(c.message); return; }
+  conflictListeners.forEach((fn) => fn(c));
+}
 export function registerBookingOverride(projectRef: string, reason: string) {
   overrideReasons.set(projectRef, reason);
 }
@@ -478,6 +490,7 @@ function diffAndPersist<T extends { id: string }>(
   upsert: (item: T) => Promise<void>,
   remove: (id: string) => Promise<void>,
   rollback?: (prev: T[]) => void,
+  retried?: (item: T) => void,
 ) {
   const prevById = new Map(prev.map((i) => [i.id, i]));
   const nextIds = new Set(next.map((i) => i.id));
@@ -486,7 +499,11 @@ function diffAndPersist<T extends { id: string }>(
   for (const item of next) {
     const before = prevById.get(item.id);
     if (!before || JSON.stringify(before) !== JSON.stringify(item)) {
-      tasks.push(upsert(item));
+      tasks.push(
+        upsert(item).catch((e) => {
+          throw Object.assign(e instanceof Error ? e : new Error(String(e)), { item });
+        }),
+      );
     }
   }
   for (const item of prev) {
@@ -499,6 +516,18 @@ function diffAndPersist<T extends { id: string }>(
     // an order can look staffed while no assignment was ever stored.
     rollback?.(prev);
     const message = e instanceof Error ? e.message : String(e);
+    const failed = (e as { item?: T })?.item;
+    if (failed && message.startsWith('Bokningskrock')) {
+      emitBookingConflict({
+        message,
+        retry: async (reason: string) => {
+          registerBookingOverride(failed.id, reason);
+          await upsert(failed);
+          retried?.(failed);
+        },
+      });
+      return;
+    }
     toast.error(
       message.includes('Commercial status cannot go from')
         ? message.replace('Commercial status cannot go from', 'That commercial step is not allowed:')
@@ -551,6 +580,9 @@ export function useProjects(): [Project[], (next: Updater<Project>) => void] {
     notify();
     diffAndPersist(prev, value, upsertProjectRow, deleteProjectRow, (restore) => {
       replace(projectList, restore);
+      notify();
+    }, (saved) => {
+      replace(projectList, projectList.map((p) => (p.id === saved.id ? saved : p)));
       notify();
     });
   }, []);
