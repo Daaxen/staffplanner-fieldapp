@@ -201,7 +201,10 @@ export function isConflictError(message: string | undefined | null): boolean {
 /** Friendly Swedish wording for a refused booking. */
 export function bookingErrorMessage(message: string | undefined | null): string {
   if (isConflictError(message)) {
-    return 'Bokningen krockar med en annan order eller planerad frånvaro. Ange en orsak för att gå vidare som administratör.';
+    const m = /Bokningskrock: (.*?)(?:\. En admin|$)/.exec(message ?? '');
+    return m
+      ? `Bokningskrock: ${m[1]}.`
+      : 'Bokningen krockar med en annan order eller planerad frånvaro.';
   }
   return `Bokningen kunde inte sparas: ${message ?? 'okänt fel'}`;
 }
