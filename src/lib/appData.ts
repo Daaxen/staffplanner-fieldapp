@@ -581,6 +581,9 @@ export function useProjects(): [Project[], (next: Updater<Project>) => void] {
     diffAndPersist(prev, value, upsertProjectRow, deleteProjectRow, (restore) => {
       replace(projectList, restore);
       notify();
+    }, (saved) => {
+      replace(projectList, projectList.map((p) => (p.id === saved.id ? saved : p)));
+      notify();
     });
   }, []);
   return [snapshot, setProjects];
