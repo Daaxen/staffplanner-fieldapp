@@ -575,7 +575,15 @@ export function useProjects(): [Project[], (next: Updater<Project>) => void] {
   const snapshot = useMemo(() => [...projectList], [v]);
   const setProjects = useCallback((next: Updater<Project>) => {
     const prev = [...projectList];
-    const value = typeof next === 'function' ? next(prev) : next;
+    const raw = typeof next === 'function' ? next(prev) : next;
+    // Staffing drives the work status everywhere (drag, edit, bulk, create):
+    // an open order with installers is scheduled; a scheduled one without is open.
+    const value = raw.map((p) => {
+      const staffed = (p.assigneeIds ?? []).length > 0;
+      if (staffed && p.status === 'open') return { ...p, status: 'scheduled' as Project['status'] };
+      if (!staffed && p.status === 'scheduled') return { ...p, status: 'open' as Project['status'] };
+      return p;
+    });
     replace(projectList, value);
     notify();
     diffAndPersist(prev, value, upsertProjectRow, deleteProjectRow, (restore) => {
