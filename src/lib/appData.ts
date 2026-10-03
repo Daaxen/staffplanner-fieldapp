@@ -517,7 +517,7 @@ function diffAndPersist<T extends { id: string }>(
     rollback?.(prev);
     const message = e instanceof Error ? e.message : String(e);
     const failed = (e as { item?: T })?.item;
-    if (failed && message.startsWith('Bokningskrock')) {
+    if (failed && message.includes('Bokningskrock')) {
       emitBookingConflict({
         message,
         retry: async (reason: string) => {
