@@ -194,7 +194,8 @@ export function isConflictError(message: string | undefined | null): boolean {
     msg.includes('assignments_no_overlap') ||
     msg.includes('conflict') ||
     msg.includes('override reason') ||
-    msg.includes('absence')
+    msg.includes('absence') ||
+    msg.includes('bokningskrock')
   );
 }
 
