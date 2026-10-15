@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useReminders } from '@/hooks/useReminders';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { setViewMode } from '@/lib/viewAs';
 import { navigationForRoles, type AppRole, type NavigationGroup } from '@/lib/navigation';
 
 interface AppSidebarProps {
@@ -14,7 +15,7 @@ interface AppSidebarProps {
 }
 
 const AppSidebar = ({ activeView, onViewChange, collapsed = false, onToggleCollapse }: AppSidebarProps) => {
-  const { roles, signOut, user } = useAuth();
+  const { roles, signOut, user, isSuperuser } = useAuth();
   const { escalated } = useReminders({ adminScope: true });
   const groups = useMemo(() => navigationForRoles(roles as AppRole[]), [roles]);
   const activeGroup = groups.find(group => group.items.some(item => item.id === activeView))?.id;

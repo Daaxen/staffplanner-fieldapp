@@ -15,7 +15,7 @@ import {
   loadEmployeePrivate, saveEmployeePrivate, useHrAccess,
 } from '@/lib/employeePrivate';
 
-type Role = 'admin' | 'installer' | 'hr';
+type Role = 'admin' | 'installer' | 'hr' | 'superuser';
 
 interface Row {
   id: string;
