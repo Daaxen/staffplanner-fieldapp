@@ -1,3 +1,4 @@
+import { useViewAs } from '@/lib/viewAs';
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -51,7 +52,9 @@ export function useInstallers() {
 
 /** The installer record belonging to the signed-in user, if any. */
 export function useCurrentInstaller() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isSuperuser } = useAuth();
+  const viewAs = useViewAs();
+  const viewAsId = isSuperuser ? viewAs.installerId : null;
   const [installer, setInstaller] = useState<(Installer & { profileId: string | null }) | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -67,7 +70,7 @@ export function useCurrentInstaller() {
     supabase
       .from('installers')
       .select('id,name,color,type,base_location,profile_id')
-      .eq('profile_id', user.id)
+      .eq(viewAsId ? 'id' : 'profile_id', viewAsId ?? user.id)
       .maybeSingle()
       .then(({ data }) => {
         if (cancelled) return;
@@ -77,7 +80,8 @@ export function useCurrentInstaller() {
     return () => {
       cancelled = true;
     };
-  }, [user, authLoading]);
+  }, [user, authLoading, viewAsId]);
 
-  return { installer, loading: loading || authLoading };
+  // Viewing as another installer is look-only.
+  return { installer, loading: loading || authLoading, readOnly: !!viewAsId };
 }

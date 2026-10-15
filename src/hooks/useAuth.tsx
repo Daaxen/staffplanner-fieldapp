@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { supabase } from '@/integrations/supabase/client';
 import type { Session, User } from '@supabase/supabase-js';
 
-export type Role = 'admin' | 'installer' | 'hr';
+export type Role = 'admin' | 'installer' | 'hr' | 'superuser';
 
 interface AuthCtx {
   user: User | null;
@@ -12,6 +12,7 @@ interface AuthCtx {
   isAdmin: boolean;
   isInstaller: boolean;
   isHr: boolean;
+  isSuperuser: boolean;
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
 }
@@ -57,9 +58,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   return (
     <Ctx.Provider value={{
       user, session, roles, loading,
-      isAdmin: roles.includes('admin'),
+      // Superuser inherits admin and HR everywhere.
+      isAdmin: roles.includes('admin') || roles.includes('superuser'),
       isInstaller: roles.includes('installer'),
-      isHr: roles.includes('hr'),
+      isHr: roles.includes('hr') || roles.includes('superuser'),
+      isSuperuser: roles.includes('superuser'),
       signIn, signOut,
     }}>{children}</Ctx.Provider>
   );
