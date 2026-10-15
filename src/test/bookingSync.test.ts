@@ -6,6 +6,8 @@ import {
   isConflictError,
   bookingErrorMessage,
   OVERRIDE_REASON_MIN,
+  isValidInstallerRange,
+  shiftInstallerOverrides,
 } from '@/lib/bookings';
 
 const base = {
@@ -72,5 +74,31 @@ describe('booking sync', () => {
     expect(isConflictError('network down')).toBe(false);
     expect(bookingErrorMessage('assignments_no_overlap')).toContain('krockar');
     expect(bookingErrorMessage('network down')).toContain('kunde inte sparas');
+  });
+});
+
+describe('installers on part of an order', () => {
+  const order = { ...base, startDate: '2026-10-05', endDate: '2026-10-09', assigneeIds: ['felix', 'thea'],
+    installerDateOverrides: { thea: { startDate: '2026-10-06', endDate: '2026-10-07' } } };
+
+  it('books an installer with own days only on those days, others on the whole order', () => {
+    const rows = bookingRowsFor(order, 'row-1');
+    const thea = rows.find(r => r.installer_id === 'thea')!;
+    const felix = rows.find(r => r.installer_id === 'felix')!;
+    expect(thea.planned_start_at).toBe(bookingWindow('2026-10-06', '2026-10-06', '08:00', '16:00').start);
+    expect(thea.planned_end_at).toBe(bookingWindow('2026-10-07', '2026-10-07', '08:00', '16:00').end);
+    expect(felix.planned_start_at).toBe(bookingWindow('2026-10-05', '2026-10-05', '08:00', '16:00').start);
+    expect(felix.planned_end_at).toBe(bookingWindow('2026-10-09', '2026-10-09', '08:00', '16:00').end);
+  });
+
+  it('rejects own days outside the order period', () => {
+    expect(isValidInstallerRange('2026-10-05', '2026-10-09', { startDate: '2026-10-04', endDate: '2026-10-06' })).toBe(false);
+    expect(isValidInstallerRange('2026-10-05', '2026-10-09', { startDate: '2026-10-08', endDate: '2026-10-10' })).toBe(false);
+    expect(isValidInstallerRange('2026-10-05', '2026-10-09', { startDate: '2026-10-06', endDate: '2026-10-07' })).toBe(true);
+  });
+
+  it('moves own days by the same number of days when the order moves', () => {
+    const shifted = shiftInstallerOverrides(order.installerDateOverrides, '2026-10-05', '2026-10-12', '2026-10-16');
+    expect(shifted.thea).toEqual({ startDate: '2026-10-13', endDate: '2026-10-14' });
   });
 });

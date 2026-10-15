@@ -111,7 +111,10 @@ export const installerConflicts = (
   const theirs = activeProjects(projects, draft).filter(p => p.assigneeIds.includes(installer.id));
 
   // 2. Project overlap (double booking)
-  theirs.forEach(p => {
+  theirs.forEach(p0 => {
+    // Only the days this installer actually works on the other order count.
+    const own = p0.installerDateOverrides?.[installer.id];
+    const p = own ? { ...p0, startDate: own.startDate, endDate: own.endDate } : p0;
     if (bookingsClash(draft, p)) {
       out.push({
         id: `overlap-${installer.id}-${p.id}`,
