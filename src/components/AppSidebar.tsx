@@ -20,6 +20,11 @@ const AppSidebar = ({ activeView, onViewChange, collapsed = false, onToggleColla
   const groups = useMemo(() => navigationForRoles(roles as AppRole[]), [roles]);
   const activeGroup = groups.find(group => group.items.some(item => item.id === activeView))?.id;
   const [openGroups, setOpenGroups] = useState<string[]>(() => activeGroup ? [activeGroup] : ['dashboard']);
+  const dailyGroups = groups.filter(group => group.section === 'daily');
+  const adminGroups = groups.filter(group => group.section === 'admin');
+  const adminActive = adminGroups.some(group => group.id === activeGroup);
+  const [adminOpen, setAdminOpen] = useState(adminActive);
+  useEffect(() => { if (adminActive) setAdminOpen(true); }, [adminActive]);
 
   useEffect(() => {
     if (activeGroup) setOpenGroups(current => current.includes(activeGroup) ? current : [...current, activeGroup]);
@@ -48,6 +53,47 @@ const AppSidebar = ({ activeView, onViewChange, collapsed = false, onToggleColla
         <group.icon className="w-4 h-4" />
       </button>
     );
+  };
+
+  const renderGroup = (group: NavigationGroup) => {
+
+          const open = openGroups.includes(group.id);
+          const groupActive = group.items.some(item => item.id === activeView);
+          return (
+            <Collapsible key={group.id} open={open} onOpenChange={next => toggleGroup(group.id, next)}>
+              <CollapsibleTrigger className={cn(
+                'w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-semibold transition-colors',
+                groupActive ? 'text-sidebar-accent-foreground' : 'text-sidebar-foreground/75 hover:bg-sidebar-accent/40',
+              )}>
+                <group.icon className="w-4 h-4 shrink-0" />
+                <span className="flex-1 text-left">{group.label}</span>
+                <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', open && 'rotate-180')} />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pb-1">
+                {group.items.map(item => {
+                  const badge = itemBadge(item.badge);
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => onViewChange(item.id)}
+                      className={cn(
+                        'w-full flex items-center gap-3 pl-10 pr-3 py-2 rounded-md text-[13px] transition-colors',
+                        activeView === item.id
+                          ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
+                          : 'text-sidebar-foreground/65 hover:bg-sidebar-accent/40 hover:text-sidebar-accent-foreground',
+                      )}
+                    >
+                      <item.icon className="w-3.5 h-3.5 shrink-0" />
+                      <span className="flex-1 text-left">{item.label}</span>
+                      {badge > 0 && (
+                        <span className="bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full min-w-5 h-5 px-1.5 flex items-center justify-center">{badge}</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </CollapsibleContent>
+            </Collapsible>
+          );
   };
 
   return (
@@ -90,46 +136,19 @@ const AppSidebar = ({ activeView, onViewChange, collapsed = false, onToggleColla
 
       {/* Navigation */}
       <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-        {!collapsed && <p className="text-xs font-medium text-sidebar-foreground/40 uppercase tracking-wider mb-2 px-3">Workflows</p>}
-        {collapsed ? groups.map(renderCollapsedGroup) : groups.map(group => {
-          const open = openGroups.includes(group.id);
-          const groupActive = group.items.some(item => item.id === activeView);
-          return (
-            <Collapsible key={group.id} open={open} onOpenChange={next => toggleGroup(group.id, next)}>
-              <CollapsibleTrigger className={cn(
-                'w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-semibold transition-colors',
-                groupActive ? 'text-sidebar-accent-foreground' : 'text-sidebar-foreground/75 hover:bg-sidebar-accent/40',
-              )}>
-                <group.icon className="w-4 h-4 shrink-0" />
-                <span className="flex-1 text-left">{group.label}</span>
-                <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', open && 'rotate-180')} />
-              </CollapsibleTrigger>
-              <CollapsibleContent className="pb-1">
-                {group.items.map(item => {
-                  const badge = itemBadge(item.badge);
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => onViewChange(item.id)}
-                      className={cn(
-                        'w-full flex items-center gap-3 pl-10 pr-3 py-2 rounded-md text-[13px] transition-colors',
-                        activeView === item.id
-                          ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
-                          : 'text-sidebar-foreground/65 hover:bg-sidebar-accent/40 hover:text-sidebar-accent-foreground',
-                      )}
-                    >
-                      <item.icon className="w-3.5 h-3.5 shrink-0" />
-                      <span className="flex-1 text-left">{item.label}</span>
-                      {badge > 0 && (
-                        <span className="bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full min-w-5 h-5 px-1.5 flex items-center justify-center">{badge}</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </CollapsibleContent>
-            </Collapsible>
-          );
-        })}
+        {!collapsed && <p className="text-xs font-medium text-sidebar-foreground/40 uppercase tracking-wider mb-2 px-3">Dagligt arbete</p>}
+        {collapsed ? dailyGroups.map(renderCollapsedGroup) : dailyGroups.map(group => renderGroup(group))}
+        {adminGroups.length > 0 && (collapsed ? (
+          <div className="pt-2 mt-2 border-t border-sidebar-border space-y-1">{adminGroups.map(renderCollapsedGroup)}</div>
+        ) : (
+          <Collapsible open={adminOpen} onOpenChange={setAdminOpen} className="pt-2 mt-2 border-t border-sidebar-border">
+            <CollapsibleTrigger className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium uppercase tracking-wider text-sidebar-foreground/50 hover:text-sidebar-foreground/80">
+              <span className="flex-1 text-left">Admin & ekonomi</span>
+              <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', adminOpen && 'rotate-180')} />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-1">{adminGroups.map(group => renderGroup(group))}</CollapsibleContent>
+          </Collapsible>
+        ))}
       </nav>
 
       {/* Footer */}

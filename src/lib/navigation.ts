@@ -41,6 +41,8 @@ export interface NavigationGroup {
   label: string;
   icon: LucideIcon;
   defaultView: string;
+  /** 'daily' = top of menu; 'admin' = folded into the admin & finance submenu */
+  section: 'daily' | 'admin';
   items: NavigationItem[];
 }
 
@@ -50,6 +52,7 @@ const adminHr: AppRole[] = ['admin', 'hr'];
 export const navigationGroups: NavigationGroup[] = [
   {
     id: 'dashboard',
+    section: 'daily',
     label: 'Dashboard',
     icon: LayoutDashboard,
     defaultView: 'operations',
@@ -62,6 +65,7 @@ export const navigationGroups: NavigationGroup[] = [
   },
   {
     id: 'orders',
+    section: 'daily',
     label: 'Orders/Projects',
     icon: ClipboardList,
     defaultView: 'orders',
@@ -73,6 +77,7 @@ export const navigationGroups: NavigationGroup[] = [
   },
   {
     id: 'planning',
+    section: 'daily',
     label: 'Planning',
     icon: Calendar,
     defaultView: 'planner',
@@ -83,6 +88,7 @@ export const navigationGroups: NavigationGroup[] = [
   },
   {
     id: 'field-operations',
+    section: 'daily',
     label: 'Field Operations',
     icon: Smartphone,
     defaultView: 'installer-preview',
@@ -93,6 +99,7 @@ export const navigationGroups: NavigationGroup[] = [
   },
   {
     id: 'time-reporting',
+    section: 'daily',
     label: 'Tidsrapportering',
     icon: Clock,
     defaultView: 'my-time',
@@ -104,6 +111,7 @@ export const navigationGroups: NavigationGroup[] = [
   },
   {
     id: 'finance',
+    section: 'admin',
     label: 'Finance',
     icon: Receipt,
     defaultView: 'invoice-prep',
@@ -115,6 +123,7 @@ export const navigationGroups: NavigationGroup[] = [
   },
   {
     id: 'customers',
+    section: 'admin',
     label: 'Customers',
     icon: Building2,
     defaultView: 'clients',
@@ -126,6 +135,7 @@ export const navigationGroups: NavigationGroup[] = [
   },
   {
     id: 'resources',
+    section: 'admin',
     label: 'Resources',
     icon: Users,
     defaultView: 'users',
@@ -136,6 +146,7 @@ export const navigationGroups: NavigationGroup[] = [
   },
   {
     id: 'reports',
+    section: 'admin',
     label: 'Reports',
     icon: FileText,
     defaultView: 'reports',
@@ -146,6 +157,7 @@ export const navigationGroups: NavigationGroup[] = [
   },
   {
     id: 'administration',
+    section: 'admin',
     label: 'Administration',
     icon: Settings,
     defaultView: 'documents',
