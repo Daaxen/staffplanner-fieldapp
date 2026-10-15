@@ -1,3 +1,4 @@
+import { useAuth } from '@/hooks/useAuth';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -56,6 +57,7 @@ const Field = ({ label, value }: { label: string; value?: string | null }) => (
 );
 
 const UsersManager = () => {
+  const { isSuperuser } = useAuth();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
