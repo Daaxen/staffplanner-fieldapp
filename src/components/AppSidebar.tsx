@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useReminders } from '@/hooks/useReminders';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { setViewMode } from '@/lib/viewAs';
 import { navigationForRoles, type AppRole, type NavigationGroup } from '@/lib/navigation';
 
 interface AppSidebarProps {
@@ -14,7 +15,7 @@ interface AppSidebarProps {
 }
 
 const AppSidebar = ({ activeView, onViewChange, collapsed = false, onToggleCollapse }: AppSidebarProps) => {
-  const { roles, signOut, user } = useAuth();
+  const { roles, signOut, user, isSuperuser } = useAuth();
   const { escalated } = useReminders({ adminScope: true });
   const groups = useMemo(() => navigationForRoles(roles as AppRole[]), [roles]);
   const activeGroup = groups.find(group => group.items.some(item => item.id === activeView))?.id;
@@ -73,6 +74,19 @@ const AppSidebar = ({ activeView, onViewChange, collapsed = false, onToggleColla
           </button>
         )}
       </div>
+
+      {isSuperuser && !collapsed && (
+        <div className="p-2 border-b border-sidebar-border">
+          <p className="text-[10px] font-medium text-sidebar-foreground/40 uppercase tracking-wider px-1 mb-1">Superuser · vy</p>
+          <div className="grid grid-cols-2 gap-1">
+            <span className="text-center text-xs rounded-md py-1.5 bg-sidebar-accent text-sidebar-accent-foreground">Admin-vy</span>
+            <button
+              onClick={() => { setViewMode('installer'); window.location.assign('/installer'); }}
+              className="text-xs rounded-md py-1.5 text-sidebar-foreground/70 hover:bg-sidebar-accent/50"
+            >Montörsvy</button>
+          </div>
+        </div>
+      )}
 
       {/* Navigation */}
       <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
