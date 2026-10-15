@@ -27,7 +27,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const loadRoles = async (uid: string) => {
     const { data } = await supabase.from('user_roles').select('role').eq('user_id', uid);
-    setRoles((data ?? []).map((r: { role: Role }) => r.role));
+    const raw = (data ?? []).map((r: { role: Role }) => r.role);
+    // A superuser holds every admin and HR right; expand so all role checks see it.
+    setRoles(raw.includes('superuser') ? Array.from(new Set<Role>([...raw, 'admin', 'hr'])) : raw);
   };
 
   useEffect(() => {
