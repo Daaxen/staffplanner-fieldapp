@@ -11,7 +11,7 @@ import {
   type Project,
 } from '@/data/mockData';
 import { parseClientMetadata, parseProjectMetadata } from '@/lib/validation/appJson';
-import { bookingErrorMessage, syncProjectBookings } from '@/lib/bookings';
+import { bookingErrorMessage, shiftInstallerOverrides, syncProjectBookings } from '@/lib/bookings';
 
 
 /**
@@ -578,7 +578,25 @@ export function useProjects(): [Project[], (next: Updater<Project>) => void] {
     const raw = typeof next === 'function' ? next(prev) : next;
     // Staffing drives the work status everywhere (drag, edit, bulk, create):
     // an open order with installers is scheduled; a scheduled one without is open.
-    const value = raw.map((p) => {
+    const before = new Map(prev.map((p) => [p.id, p]));
+    const value = raw.map((p0) => {
+      let p = p0;
+      // Installers on part of the order: move their own days with the order,
+      // keep them inside its period and forget installers no longer on it.
+      const old = before.get(p.id);
+      if (p.installerDateOverrides && Object.keys(p.installerDateOverrides).length) {
+        const moved = old && old.startDate !== p.startDate && old.installerDateOverrides === p.installerDateOverrides;
+        const shifted = shiftInstallerOverrides(
+          p.installerDateOverrides,
+          moved ? old!.startDate : p.startDate,
+          p.startDate,
+          p.endDate,
+        );
+        const kept = Object.fromEntries(
+          Object.entries(shifted).filter(([id]) => (p.assigneeIds ?? []).includes(id)),
+        );
+        p = { ...p, installerDateOverrides: kept };
+      }
       const staffed = (p.assigneeIds ?? []).length > 0;
       if (staffed && p.status === 'open') return { ...p, status: 'scheduled' as Project['status'] };
       if (!staffed && p.status === 'scheduled') return { ...p, status: 'open' as Project['status'] };

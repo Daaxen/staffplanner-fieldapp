@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { installerDatesFor } from '@/lib/bookings';
 import { AlertTriangle, Clock, Bell, BookOpen, CalendarDays, CheckCircle2, ChevronRight, ClipboardPenLine, FolderKanban, HardHat, LogOut, MessageSquarePlus, MoreHorizontal, Package, User } from 'lucide-react';
 import FeedbackModule from '@/components/feedback/FeedbackModule';
 import { addDays, startOfWeek, format } from 'date-fns';
@@ -39,7 +40,10 @@ const InstallerApp = () => {
   const { installer, loading: installerLoading } = useCurrentInstaller();
   const { signOut } = useAuth();
   const currentInstallerId = installer?.id ?? '';
-  const myProjects = localProjects.filter(p => currentInstallerId && p.assigneeIds.includes(currentInstallerId));
+  // Each installer sees the order only on their own days (part of the order).
+  const myProjects = localProjects
+    .filter(p => currentInstallerId && p.assigneeIds.includes(currentInstallerId))
+    .map(p => ({ ...p, ...installerDatesFor(p, currentInstallerId) }));
   const logs = useInstallerLogs(localProjects);
   const reminders = useReminders();
   const [tab, setTab] = useState<string>('schedule');

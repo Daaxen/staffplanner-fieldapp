@@ -108,6 +108,8 @@ export function bookingStatusForProject(status: string): BookingStatus {
   return 'planned';
 }
 
+export interface InstallerDates { startDate: string; endDate: string }
+
 interface BookableProject {
   id: string;
   status: string;
@@ -116,6 +118,58 @@ interface BookableProject {
   startTime?: string;
   endTime?: string;
   assigneeIds: string[];
+  installerDateOverrides?: Record<string, InstallerDates>;
+}
+
+/**
+ * The days one installer works on an order. Own days (a part of the order)
+ * win over the order period, but are always clamped inside it.
+ */
+export function installerDatesFor(
+  project: Pick<BookableProject, 'startDate' | 'endDate' | 'installerDateOverrides'>,
+  installerId: string,
+): InstallerDates {
+  const o = project.installerDateOverrides?.[installerId];
+  if (!o?.startDate || !o?.endDate) return { startDate: project.startDate, endDate: project.endDate };
+  let s = o.startDate < project.startDate ? project.startDate : o.startDate;
+  let e = o.endDate > project.endDate ? project.endDate : o.endDate;
+  if (s > project.endDate || e < project.startDate || e < s) {
+    s = project.startDate; e = project.endDate;
+  }
+  return { startDate: s, endDate: e };
+}
+
+/** True when own days lie inside the order period and end ≥ start. */
+export function isValidInstallerRange(orderStart: string, orderEnd: string, d: InstallerDates): boolean {
+  return !!d.startDate && !!d.endDate && d.startDate <= d.endDate && d.startDate >= orderStart && d.endDate <= orderEnd;
+}
+
+const addDays = (date: string, n: number) => {
+  const d = new Date(`${date}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+};
+const diffDays = (a: string, b: string) =>
+  Math.round((new Date(`${b}T12:00:00Z`).getTime() - new Date(`${a}T12:00:00Z`).getTime()) / 86400000);
+
+/**
+ * When the order moves, own days move by the same number of days and are then
+ * clamped to the new order period. Overrides equal to the whole order are dropped.
+ */
+export function shiftInstallerOverrides(
+  overrides: Record<string, InstallerDates> | undefined,
+  oldStart: string,
+  newStart: string,
+  newEnd: string,
+): Record<string, InstallerDates> {
+  const shift = diffDays(oldStart, newStart);
+  const out: Record<string, InstallerDates> = {};
+  for (const [id, o] of Object.entries(overrides ?? {})) {
+    const moved = { startDate: addDays(o.startDate, shift), endDate: addDays(o.endDate, shift) };
+    const d = installerDatesFor({ startDate: newStart, endDate: newEnd, installerDateOverrides: { [id]: moved } }, id);
+    if (d.startDate !== newStart || d.endDate !== newEnd) out[id] = d;
+  }
+  return out;
 }
 
 export interface BookingRow {
@@ -127,7 +181,7 @@ export interface BookingRow {
   override_reason: string | null;
 }
 
-/** The exact booking rows an order should have — one per installer, no duplicates. */
+/** The exact booking rows an order should have — one per installer, on that installer's days. */
 export function bookingRowsFor(
   project: BookableProject,
   rowId: string,
@@ -136,20 +190,18 @@ export function bookingRowsFor(
   if (project.status === 'cancelled') return [];
   const installerIds = Array.from(new Set(project.assigneeIds ?? [])).filter(Boolean);
   if (!installerIds.length) return [];
-  const { start, end } = bookingWindow(
-    project.startDate,
-    project.endDate,
-    project.startTime,
-    project.endTime,
-  );
-  return installerIds.map(installerId => ({
-    project_id: rowId,
-    installer_id: installerId,
-    planned_start_at: start,
-    planned_end_at: end,
-    assignment_status: bookingStatusForProject(project.status),
-    override_reason: overrideReason?.trim() || null,
-  }));
+  return installerIds.map(installerId => {
+    const d = installerDatesFor(project, installerId);
+    const { start, end } = bookingWindow(d.startDate, d.endDate, project.startTime, project.endTime);
+    return {
+      project_id: rowId,
+      installer_id: installerId,
+      planned_start_at: start,
+      planned_end_at: end,
+      assignment_status: bookingStatusForProject(project.status),
+      override_reason: overrideReason?.trim() || null,
+    };
+  });
 }
 
 /**
