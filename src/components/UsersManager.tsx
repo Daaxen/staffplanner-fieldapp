@@ -269,6 +269,11 @@ const UsersManager = () => {
                   <Button size="sm" variant={r.roles.includes('hr') ? 'default' : 'outline'} title="May see confidential personnel data" onClick={() => toggleRole(r.id, 'hr', r.roles.includes('hr'))}>
                     <Lock className="w-3 h-3 mr-1" />HR
                   </Button>
+                  {isSuperuser && (
+                    <Button size="sm" variant={r.roles.includes('superuser') ? 'default' : 'outline'} title="Access to everything, can switch views and look as any installer" onClick={() => toggleRole(r.id, 'superuser', r.roles.includes('superuser'))}>
+                      <Shield className="w-3 h-3 mr-1" />Superuser
+                    </Button>
+                  )}
                 </div>
                 <div className="flex gap-1">
                   <Button size="icon" variant="ghost" title="Edit user" onClick={() => openEdit(r)}><Pencil className="w-4 h-4" /></Button>
