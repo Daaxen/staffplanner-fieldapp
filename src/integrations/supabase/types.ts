@@ -2480,6 +2480,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      log_view_as: { Args: { _installer_id: string }; Returns: undefined }
       my_portal_client_id: { Args: never; Returns: string }
       portal_can_view_project: {
         Args: { _project_id: string }
