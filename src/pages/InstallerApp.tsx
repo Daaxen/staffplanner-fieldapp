@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { installerDatesFor } from '@/lib/bookings';
 import { AlertTriangle, Clock, Bell, BookOpen, CalendarDays, CheckCircle2, ChevronRight, ClipboardPenLine, FolderKanban, HardHat, LogOut, MessageSquarePlus, MoreHorizontal, Package, User } from 'lucide-react';
 import FeedbackModule from '@/components/feedback/FeedbackModule';
 import { addDays, startOfWeek, format } from 'date-fns';
