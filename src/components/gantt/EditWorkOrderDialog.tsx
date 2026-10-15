@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { type Project, type ProjectStatus, statusLabels } from '@/data/mockData';
 import { useClients, useInstallersList, useProjects } from '@/lib/appData';
 import { installerConflicts } from '@/lib/schedulingConflicts';
+import { isValidInstallerRange, type InstallerDates } from '@/lib/bookings';
 import { toast } from 'sonner';
 
 const statuses: ProjectStatus[] = ['open', 'scheduled', 'in-progress', 'completed', 'on-hold', 'cancelled'];
@@ -30,6 +31,7 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
   const installers = useInstallersList();
   const [allProjects] = useProjects();
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
+  const [overrides, setOverrides] = useState<Record<string, InstallerDates>>({});
   const [form, setForm] = useState({
     name: '',
     projectNumber: '',
@@ -50,6 +52,7 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
   useEffect(() => {
     if (!project || !open) return;
     setAssigneeIds(project.assigneeIds ?? []);
+    setOverrides({ ...(project.installerDateOverrides ?? {}) });
     setForm({
       name: project.name ?? '',
       projectNumber: project.projectNumber ?? '',
@@ -73,20 +76,21 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
   const toggleInstaller = (id: string) =>
     setAssigneeIds(prev => (prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]));
 
-  /** Conflicts (absence, overlap, travel) per selected installer for the edited dates. */
+  /** Conflicts (absence, overlap, travel) per selected installer for that installer's own days. */
   const conflictsByInstaller = useMemo(() => {
     const map = new Map<string, string[]>();
     if (!project || !form.startDate || !form.endDate) return map;
     for (const id of assigneeIds) {
       const inst = installers.find(i => i.id === id);
       if (!inst) continue;
+      const own = overrides[id];
       const found = installerConflicts(
         inst,
         {
           projectId: project.id,
           name: form.name || project.name,
-          startDate: form.startDate,
-          endDate: form.endDate,
+          startDate: own?.startDate || form.startDate,
+          endDate: own?.endDate || form.endDate,
           startTime: form.startTime,
           endTime: form.endTime,
           location: form.location,
@@ -98,7 +102,7 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
       if (found.length > 0) map.set(id, found.map(c => c.title));
     }
     return map;
-  }, [project, assigneeIds, installers, allProjects, form.startDate, form.endDate, form.startTime, form.endTime, form.location, form.name]);
+  }, [project, assigneeIds, overrides, installers, allProjects, form.startDate, form.endDate, form.startTime, form.endTime, form.location, form.name]);
 
   const handleSave = () => {
     if (!project) return;
@@ -113,6 +117,17 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
     if (form.endDate < form.startDate) {
       toast.error('The end date cannot be before the start date');
       return;
+    }
+    const ownDays: Record<string, InstallerDates> = {};
+    for (const id of assigneeIds) {
+      const o = overrides[id];
+      if (!o) continue;
+      if (!isValidInstallerRange(form.startDate, form.endDate, o)) {
+        const name = installers.find(i => i.id === id)?.name ?? 'An installer';
+        toast.error(`${name}: own days must be inside the work order period`);
+        return;
+      }
+      if (o.startDate !== form.startDate || o.endDate !== form.endDate) ownDays[id] = o;
     }
 
     const client = clients.find(c => c.id === form.clientId);
@@ -135,6 +150,7 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
       contactEmail: form.contactEmail.trim() || undefined,
       description: form.description.trim() || undefined,
       assigneeIds,
+      installerDateOverrides: ownDays,
     });
 
     toast.success('Work order updated');
@@ -257,6 +273,45 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
                 </p>
               )}
             </div>
+
+            {assigneeIds.length > 0 && (
+              <div className="col-span-2 space-y-2">
+                <Label>Installer days</Label>
+                <p className="text-xs text-muted-foreground">Each installer works the whole order unless you give them their own days.</p>
+                {assigneeIds.map(id => {
+                  const inst = installers.find(i => i.id === id);
+                  const own = overrides[id];
+                  return (
+                    <div key={id} className="flex flex-wrap items-center gap-2 rounded-md border border-border p-2">
+                      <span className="text-sm font-medium min-w-[120px]">{inst?.name ?? id}</span>
+                      <Button
+                        type="button" size="sm" variant={own ? 'outline' : 'secondary'}
+                        onClick={() => setOverrides(prev => { const n = { ...prev }; delete n[id]; return n; })}
+                      >Whole order</Button>
+                      <Button
+                        type="button" size="sm" variant={own ? 'secondary' : 'outline'}
+                        onClick={() => setOverrides(prev => ({ ...prev, [id]: prev[id] ?? { startDate: form.startDate, endDate: form.endDate } }))}
+                      >Own days</Button>
+                      {own && (
+                        <>
+                          <Input
+                            aria-label={`${inst?.name} start`} type="date" className="h-8 w-[150px]"
+                            min={form.startDate} max={form.endDate} value={own.startDate}
+                            onChange={e => setOverrides(prev => ({ ...prev, [id]: { ...prev[id], startDate: e.target.value } }))}
+                          />
+                          <span className="text-xs text-muted-foreground">–</span>
+                          <Input
+                            aria-label={`${inst?.name} end`} type="date" className="h-8 w-[150px]"
+                            min={form.startDate} max={form.endDate} value={own.endDate}
+                            onChange={e => setOverrides(prev => ({ ...prev, [id]: { ...prev[id], endDate: e.target.value } }))}
+                          />
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 

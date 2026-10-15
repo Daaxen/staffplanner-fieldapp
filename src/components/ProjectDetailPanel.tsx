@@ -113,6 +113,11 @@ const ProjectDetailPanel = ({ project, installer, onClose, onEdit, onDispatch, o
                   <div key={a.id} className="flex items-center gap-2 mt-1">
                     <div className={cn("w-3 h-3 rounded-full", installerDotMap[a.color])} />
                     <p className="text-sm font-medium text-foreground">{a.name}</p>
+                    {project.installerDateOverrides?.[a.id] && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">
+                        {project.installerDateOverrides[a.id].startDate.slice(5)} – {project.installerDateOverrides[a.id].endDate.slice(5)}
+                      </span>
+                    )}
                     {a.type === 'sub-vendor' && (
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">SUB</span>
                     )}
