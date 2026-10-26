@@ -29,6 +29,9 @@ import { useReminders } from '@/hooks/useReminders';
 import { usePushRegistration } from '@/hooks/usePushRegistration';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import InstallerGuide from '@/components/installer/guide/InstallerGuide';
+import { GUIDE_DISMISSED_KEY } from '@/lib/installerGuide';
+import { GraduationCap, X } from 'lucide-react';
 
 const InstallerApp = () => {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -49,7 +52,9 @@ const InstallerApp = () => {
   const reminders = useReminders();
   const [tab, setTab] = useState<string>('schedule');
   const [projectEntryTab, setProjectEntryTab] = useState<'info' | 'report' | 'log' | 'deviation' | 'summary'>('info');
-  const [moreView, setMoreView] = useState<'menu' | 'schedule' | 'orderbox' | 'reminders' | 'docs' | 'feedback' | 'profile' | 'mytime'>('menu');
+  const [moreView, setMoreView] = useState<'menu' | 'schedule' | 'orderbox' | 'reminders' | 'docs' | 'feedback' | 'profile' | 'mytime' | 'guide'>('menu');
+  const [guideDismissed, setGuideDismissed] = useState(() => localStorage.getItem(GUIDE_DISMISSED_KEY) === '1');
+  const dismissGuide = () => { setGuideDismissed(true); localStorage.setItem(GUIDE_DISMISSED_KEY, '1'); };
   const [technicianMode, setTechnicianMode] = useState<boolean>(
     () => localStorage.getItem('technicianMode') === '1',
   );
@@ -235,6 +240,15 @@ const InstallerApp = () => {
         <TabsContent value="schedule" className="flex-1 overflow-auto mt-0">
           <ScheduleFilters filters={projectFilters} onChange={setProjectFilters} />
           <div className="p-4 space-y-3 pb-20">
+            {!guideDismissed && (
+              <div className="flex items-center gap-3 rounded-md border border-primary/40 bg-secondary p-3">
+                <GraduationCap className="w-5 h-5 text-primary shrink-0" />
+                <button className="flex-1 text-left text-sm font-semibold text-foreground" onClick={() => { setMoreView('guide'); setTab('more'); }}>
+                  Ny här? Läs guiden – steg för steg
+                </button>
+                <button aria-label="Stäng" onClick={dismissGuide} className="p-1 text-muted-foreground"><X className="w-4 h-4" /></button>
+              </div>
+            )}
             <h2 className="text-base font-semibold text-foreground">Active jobs ({activeProjects.length})</h2>
             {activeProjects.map(project => (
               <ProjectCard key={project.id} project={project} onSelect={project => openProjectWorkflow(project, 'info')} currentInstallerId={installer.id} actual={logs.actualFor(project.id)} />
@@ -282,6 +296,7 @@ const InstallerApp = () => {
           {moreView === 'menu' && (
             <div className="p-4 grid grid-cols-2 gap-3 pb-20">
               {[
+                { id: 'guide' as const, label: 'Guide', icon: GraduationCap },
                 { id: 'mytime' as const, label: 'Min tid', icon: Clock },
                 { id: 'schedule' as const, label: 'Full schedule', icon: CalendarDays },
                 { id: 'orderbox' as const, label: 'Available jobs', icon: Package, badge: availableOrderCount },
@@ -304,6 +319,7 @@ const InstallerApp = () => {
               <div className="shrink-0 border-b border-border p-3"><Button variant="ghost" size="sm" onClick={() => setMoreView('menu')}>← More</Button></div>
               <div className="flex-1 overflow-auto">
                 {moreView === 'mytime' && <MyTime />}
+                {moreView === 'guide' && <InstallerGuide onGoTo={t => { setTab(t.tab); setMoreView((t.moreView as typeof moreView) ?? 'menu'); }} />}
                 {moreView === 'schedule' && <InstallerSchedule projects={myProjects} installer={installer} onSelectProject={project => openProjectWorkflow(project, 'info')} />}
                 {moreView === 'orderbox' && <div className="p-4"><InstallerOrderBox projects={localProjects} onPickUp={handlePickUp} onViewDetail={project => handleViewOrderDetail(project)} /></div>}
                 {moreView === 'reminders' && <RemindersInbox state={reminders} />}
