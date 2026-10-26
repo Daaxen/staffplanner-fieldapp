@@ -30,7 +30,14 @@ export interface CompletionRequirement {
   hint: string;
   tab: 'report' | 'summary';
   met: boolean;
+  /** 'recommended' items never block completion; skipping them is an active choice. */
+  severity: 'required' | 'recommended';
 }
+
+/** Key inside signOffs that records the installer actively skipped photos (ISO timestamp). */
+export const PHOTOS_SKIPPED_KEY = '_photosSkipped';
+export const photosSkippedAt = (s: { signOffs?: Record<string, string> }) =>
+  s.signOffs?.[PHOTOS_SKIPPED_KEY] || null;
 
 type TemplateInput = ProjectTemplate | string | null | undefined;
 
@@ -60,14 +67,21 @@ export const completionRequirements = (
   const minPhotos = minPhotosFor(template);
   const signOffs = signOffsFor(template);
   const missingChecks = checklist.filter(c => !s.checkedItems.includes(c.id));
+  const skipped = !!photosSkippedAt(s);
+  const enoughPhotos = s.photoCount >= minPhotos;
 
   return [
     {
       id: 'photos',
-      label: `Required photos uploaded (${s.photoCount}/${minPhotos})`,
-      hint: `Add at least ${minPhotos} photos in the Report tab.`,
+      label: enoughPhotos
+        ? `Foton tillagda (${s.photoCount}/${minPhotos})`
+        : skipped
+          ? `Foton överhoppade (${s.photoCount}/${minPhotos})`
+          : `Foton rekommenderas (${s.photoCount}/${minPhotos})`,
+      hint: `Lägg gärna till minst ${minPhotos} foton – du kan välja att hoppa över.`,
       tab: 'report',
-      met: s.photoCount >= minPhotos,
+      met: enoughPhotos || skipped,
+      severity: 'recommended',
     },
     {
       id: 'checklist',
@@ -77,6 +91,7 @@ export const completionRequirements = (
         : 'All checklist items ticked.',
       tab: 'report',
       met: missingChecks.length === 0,
+      severity: 'required',
     },
     ...signOffs.map(so => ({
       id: so.id === 'customer' ? 'signature' : `signoff:${so.id}`,
@@ -87,6 +102,7 @@ export const completionRequirements = (
           : 'Sign off the work yourself in the Sign-off tab.',
       tab: 'summary' as const,
       met: Boolean(signOffValue(s, so.id)),
+      severity: 'required' as const,
     })),
     {
       id: 'report',
@@ -94,12 +110,18 @@ export const completionRequirements = (
       hint: 'Write and submit the installation report in the Report tab.',
       tab: 'report',
       met: s.reportSubmitted,
+      severity: 'required',
     },
   ];
 };
 
+/** Only required items block completion. */
 export const missingRequirements = (s: CompletionState, template?: TemplateInput) =>
-  completionRequirements(s, template).filter(r => !r.met);
+  completionRequirements(s, template).filter(r => !r.met && r.severity === 'required');
+
+/** Recommended items not done and not actively skipped. */
+export const missingRecommendations = (s: CompletionState, template?: TemplateInput) =>
+  completionRequirements(s, template).filter(r => !r.met && r.severity === 'recommended');
 
 export const canComplete = (s: CompletionState, template?: TemplateInput) =>
   missingRequirements(s, template).length === 0;

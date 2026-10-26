@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { canComplete, missingRequirements } from '@/lib/completionRequirements';
+import {
+  canComplete,
+  missingRecommendations,
+  missingRequirements,
+  PHOTOS_SKIPPED_KEY,
+} from '@/lib/completionRequirements';
 import { emptyWork } from '@/lib/offline/fieldWork';
 
 const stateOf = (w: ReturnType<typeof emptyWork>) => ({
@@ -23,7 +28,7 @@ describe('field report persistence', () => {
     const w = emptyWork('ORD-1');
     expect(canComplete(stateOf(w))).toBe(false);
     const missing = missingRequirements(stateOf(w)).map(m => m.id);
-    expect(missing).toContain('photos');
+    expect(missing).not.toContain('photos');
     expect(missing).toContain('checklist');
     expect(missing).toContain('signature');
     expect(missing).toContain('report');
@@ -51,5 +56,28 @@ describe('field report persistence', () => {
       photos: [{ id: 'a', capturedAt: '2026-09-19T08:00:00Z', category: 'before' as const }],
     };
     expect(missingRequirements(stateOf(partly)).length).toBeGreaterThan(0);
+  });
+
+  const allButPhotos = () => ({
+    ...emptyWork('ORD-2'),
+    checkedItems: ['installed', 'tested', 'cleaned', 'materials'],
+    signature: 'Anna Kund',
+    reportSubmitted: true,
+  });
+
+  it('allows completion without photos', () => {
+    expect(canComplete(stateOf(allButPhotos()))).toBe(true);
+  });
+
+  it('lists missing photos as a recommendation until actively skipped', () => {
+    const w = allButPhotos();
+    expect(missingRecommendations(stateOf(w)).map(r => r.id)).toEqual(['photos']);
+    const skipped = { ...w, signOffs: { [PHOTOS_SKIPPED_KEY]: '2026-10-26T07:00:00Z' } };
+    expect(missingRecommendations(stateOf(skipped))).toEqual([]);
+  });
+
+  it('still requires checklist, signature and report without photos', () => {
+    const missing = missingRequirements(stateOf(emptyWork('ORD-3'))).map(m => m.id);
+    expect(missing).toEqual(['checklist', 'signature', 'report']);
   });
 });

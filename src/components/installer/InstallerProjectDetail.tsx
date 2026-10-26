@@ -14,9 +14,12 @@ import {
   checklistFor,
   completionRequirements,
   minPhotosFor,
+  missingRecommendations,
   missingRequirements,
+  PHOTOS_SKIPPED_KEY,
   signOffsFor,
 } from '@/lib/completionRequirements';
+import SkipPhotosDialog from '@/components/installer/SkipPhotosDialog';
 import { templateForProject } from '@/lib/projectTemplates';
 import ProjectLogTab from '@/components/installer/reporting/ProjectLogTab';
 import type { InstallerLogs } from '@/hooks/useInstallerLogs';
@@ -70,8 +73,9 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
     () => completionRequirements(completionState, template),
     [photoCount, checkedItems, signature, reportSubmitted, signOffs, template],
   );
-  const missing = requirements.filter(r => !r.met);
+  const missing = requirements.filter(r => !r.met && r.severity === 'required');
   const readyToComplete = missing.length === 0;
+  const [askSkipPhotos, setAskSkipPhotos] = useState(false);
 
   const toggleCheck = (id: string) =>
     void update({
@@ -80,7 +84,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
         : [...checkedItems, id],
     });
 
-  const handleComplete = async () => {
+  const handleComplete = async (skipPhotos = false) => {
     if (!loaded) return;
     const blockers = missingRequirements(completionState, template);
     if (blockers.length > 0) {
@@ -90,8 +94,15 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
       });
       return;
     }
+    if (!skipPhotos && missingRecommendations(completionState, template).length > 0) {
+      setAskSkipPhotos(true);
+      return;
+    }
     // Queue the status with the report so it replays after an offline shift too.
-    await update({ pendingStatus: 'completed' });
+    await update({
+      pendingStatus: 'completed',
+      ...(skipPhotos ? { signOffs: { ...signOffs, [PHOTOS_SKIPPED_KEY]: new Date().toISOString() } } : {}),
+    });
     onStatusChange!(project.id, 'completed');
     if (!online) toast.success('Saved on this phone — it uploads when you reconnect');
   };
@@ -426,7 +437,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
                     onClick={() => !r.met && setTab(r.tab)}
                     className="w-full flex items-start gap-2 text-left py-1"
                   >
-                    <span className={cn('mt-0.5 shrink-0', r.met ? 'text-status-completed' : 'text-status-cancelled')}>
+                    <span className={cn('mt-0.5 shrink-0', r.met ? 'text-status-completed' : r.severity === 'recommended' ? 'text-status-on-hold' : 'text-status-cancelled')}>
                       {r.met ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
                     </span>
                     <span className="min-w-0">
@@ -523,6 +534,19 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
           )}
         </div>
       )}
+      <SkipPhotosDialog
+        open={askSkipPhotos}
+        photoCount={photoCount}
+        minPhotos={minPhotos}
+        onAddPhotos={() => {
+          setAskSkipPhotos(false);
+          setTab('report');
+        }}
+        onSkip={() => {
+          setAskSkipPhotos(false);
+          void handleComplete(true);
+        }}
+      />
     </div>
   );
 };

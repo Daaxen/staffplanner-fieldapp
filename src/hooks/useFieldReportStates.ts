@@ -24,7 +24,8 @@ export function useFieldReportStates() {
       const ref = projectRefForRowId(row.project_id as string) ?? (row.project_ref as string);
       const photos = Array.isArray(row.photo_paths) ? row.photo_paths.length : 0;
       const signOffs = (row.sign_offs ?? {}) as Record<string, unknown>;
-      const hasSignature = !!row.signature || Object.values(signOffs).some(Boolean);
+      const hasSignature =
+        !!row.signature || Object.entries(signOffs).some(([k, v]) => !k.startsWith('_') && Boolean(v));
       const prev = map[ref];
       map[ref] = {
         projectRef: ref,
