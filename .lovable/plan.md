@@ -1,7 +1,9 @@
 # Montörsguide "For dummies" i montörsappen
 
 ## Vad som byggs
-En enkel steg-för-steg-guide på svenska, inne i montörsappen under **More → Guide**. Stora rubriker, korta steg, en bild per steg (skärmdump av riktiga appen) och en tips-ruta per avsnitt.
+En enkel steg-för-steg-guide på svenska, inne i montörsappen under **More → Guide**. Stora rubriker, korta steg och en tips-ruta per avsnitt.
+
+**Bilder med markeringar:** varje steg har en skärmbild av riktiga appen där det du ska trycka på är inringat i en tydlig färg, med en pil och en numrerad bricka (1, 2, 3). Stegtexten hänvisar till samma nummer, t.ex. "Tryck på knappen (1), välj dag (2)". Bilden går att trycka på för att visa större.
 
 ## Innehåll (4 kapitel)
 1. **Kom igång** – logga in, appens fem flikar längst ner (Active jobs, Reporting, Deviations, Sign-off, More), vad Field mode är.
@@ -18,6 +20,7 @@ Varje kapitel: 3–6 numrerade steg, "Tips"-ruta och "Vanliga misstag" (t.ex. gl
 ## Tekniska detaljer
 - Ny komponent `src/components/installer/guide/InstallerGuide.tsx` med innehåll i `src/lib/installerGuide.ts` (data, lätt att redigera).
 - Ny post `guide` i More-menyn i `InstallerApp.tsx`; "Ta mig dit" använder befintliga `setTab`/`setMoreView`.
-- Skärmdumpar tas med Playwright i mobilvy (390×844) och sparas i `src/assets/guide/`.
+- Skärmdumpar tas med Playwright i mobilvy (390×844) med testdata; markeringar (ram, pil, nummerbricka) ritas in i bilden via en injicerad overlay på elementens verkliga position före skärmdump, så de ligger exakt rätt. Sparas i `src/assets/guide/`.
+- Stegdata innehåller `callouts: [{n, text}]` så texten och numren i bilden hänger ihop.
 - Banner döljs via localStorage-flagga.
 - Inga databasändringar.
