@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import * as XLSX from 'xlsx';
-import { EXPORT_COLUMNS, buildWorkbook, exportFileName, sumBy, validateRow, weekDays } from '@/lib/timeReporting';
+import { EXPORT_COLUMNS, buildWorkbook, exportFileName, sumBy, sumWorkTravel, validateRow, weekDays } from '@/lib/timeReporting';
 
 const clients = [
   { id: 'c1', name: 'Kund A', customer_number: '10' },
@@ -60,5 +60,9 @@ describe('summaries and export', () => {
     expect(JSON.stringify(rows[0])).not.toMatch(/debiter|status|godkänd|avvis/i);
     expect(rows[rows.length - 1][8]).toBe(4);
     expect(exportFileName('2026-09-01', '2026-09-30')).toBe('tidsrapport_2026-09-01_2026-09-30.xlsx');
+  });
+  it('keeps work time and travel time apart in summaries', () => {
+    const s = sumWorkTravel([{ k: 'a', hours: 6, travel_hours: 1.5 }, { k: 'a', hours: 2, travel_hours: 0 }, { k: 'b', hours: 1, travel_hours: 0.5 }], r => r.k);
+    expect(s).toEqual([{ key: 'a', work: 8, travel: 1.5, total: 9.5 }, { key: 'b', work: 1, travel: 0.5, total: 1.5 }]);
   });
 });
