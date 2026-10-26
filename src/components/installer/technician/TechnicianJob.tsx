@@ -197,7 +197,7 @@ const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) 
           'photos',
           <Camera className="w-6 h-6" />,
           'Photos',
-          `${work.photos.length} of ${minPhotos} required`,
+          `${work.photos.length} av ${minPhotos} rekommenderade`,
           work.photos.length >= minPhotos,
         )}
         {panel === 'photos' && (
@@ -315,7 +315,7 @@ const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) 
           <Button
             size="lg"
             disabled={!ready}
-            onClick={complete}
+            onClick={() => void complete()}
             className="w-full h-14 text-base bg-status-completed hover:bg-status-completed/90 text-foreground disabled:opacity-50"
           >
             <CheckSquare className="w-5 h-5 mr-2" />
@@ -333,6 +333,19 @@ const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) 
           </Button>
         )}
       </div>
+      <SkipPhotosDialog
+        open={askSkipPhotos}
+        photoCount={work.photos.length}
+        minPhotos={minPhotos}
+        onAddPhotos={() => {
+          setAskSkipPhotos(false);
+          setPanel('photos');
+        }}
+        onSkip={() => {
+          setAskSkipPhotos(false);
+          void complete(true);
+        }}
+      />
     </div>
   );
 };
