@@ -21,7 +21,6 @@ type Draft = {
   id?: string; date: string; clientId: string; projectGroupId: string; orderId: string;
   activityTypeId: string; hours: string; description: string; sourceAssignmentId?: string | null;
 };
-const NONE = '__none';
 const fmt = (h: number) => h.toFixed(2).replace('.', ',').replace(/,00$/, '');
 const dayName = (d: string) => new Date(d + 'T12:00:00').toLocaleDateString('sv-SE', { weekday: 'short', day: 'numeric', month: 'short' });
 
