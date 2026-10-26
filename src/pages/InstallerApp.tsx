@@ -190,6 +190,7 @@ const InstallerApp = () => {
         project={selectedProject}
         installer={installer}
         logs={logs}
+        topAction={startAction(selectedProject)}
         onBack={() => setSelectedProject(null)}
         onStatusChange={handleStatusChange}
         onPickUp={selectedProject.assigneeIds.length === 0 ? () => handlePickUp(selectedProject) : undefined}
