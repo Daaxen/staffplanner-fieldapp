@@ -22,9 +22,12 @@ import {
   checklistFor,
   completionRequirements,
   minPhotosFor,
+  missingRecommendations,
   missingRequirements,
+  PHOTOS_SKIPPED_KEY,
   signOffsFor,
 } from '@/lib/completionRequirements';
+import SkipPhotosDialog from '@/components/installer/SkipPhotosDialog';
 import { templateForProject } from '@/lib/projectTemplates';
 import PhotoManager from '@/components/installer/PhotoManager';
 import { useFieldWork } from '@/hooks/useFieldWork';
@@ -49,22 +52,30 @@ const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) 
     () => completionRequirements(completionState, template),
     [work.photos.length, work.checkedItems, work.signature, work.reportSubmitted, work.signOffs, template],
   );
-  const missing = requirements.filter(r => !r.met);
+  const missing = requirements.filter(r => !r.met && r.severity === 'required');
   const ready = missing.length === 0;
+  const [askSkipPhotos, setAskSkipPhotos] = useState(false);
 
   const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(project.location || '')}`;
 
-  const setStatus = async (status: Project['status']) => {
-    await update({ pendingStatus: status });
+  const setStatus = async (status: Project['status'], extra: Partial<typeof work> = {}) => {
+    await update({ pendingStatus: status, ...extra });
     onStatusChange?.(project.id, status);
   };
 
-  const complete = async () => {
+  const complete = async (skipPhotos = false) => {
     if (missingRequirements(completionState, template).length > 0) {
       toast.error('Not ready yet', { description: missing.map(m => m.label).join(' · ') });
       return;
     }
-    await setStatus('completed');
+    if (!skipPhotos && missingRecommendations(completionState, template).length > 0) {
+      setAskSkipPhotos(true);
+      return;
+    }
+    await setStatus(
+      'completed',
+      skipPhotos ? { signOffs: { ...(work.signOffs ?? {}), [PHOTOS_SKIPPED_KEY]: new Date().toISOString() } } : {},
+    );
     if (!online) toast.success('Job saved offline — it syncs automatically when you reconnect');
     onBack();
   };

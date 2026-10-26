@@ -437,7 +437,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
                     onClick={() => !r.met && setTab(r.tab)}
                     className="w-full flex items-start gap-2 text-left py-1"
                   >
-                    <span className={cn('mt-0.5 shrink-0', r.met ? 'text-status-completed' : 'text-status-cancelled')}>
+                    <span className={cn('mt-0.5 shrink-0', r.met ? 'text-status-completed' : r.severity === 'recommended' ? 'text-status-on-hold' : 'text-status-cancelled')}>
                       {r.met ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
                     </span>
                     <span className="min-w-0">
@@ -534,6 +534,19 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
           )}
         </div>
       )}
+      <SkipPhotosDialog
+        open={askSkipPhotos}
+        photoCount={photoCount}
+        minPhotos={minPhotos}
+        onAddPhotos={() => {
+          setAskSkipPhotos(false);
+          setTab('report');
+        }}
+        onSkip={() => {
+          setAskSkipPhotos(false);
+          void handleComplete(true);
+        }}
+      />
     </div>
   );
 };
