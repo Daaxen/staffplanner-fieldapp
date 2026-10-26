@@ -104,6 +104,7 @@ const InstallerApp = () => {
 
   const todayStr = format(new Date(), 'yyyy-MM-dd');
   const startAction = (project: Project) => {
+    if (project.status === 'completed' || project.status === 'cancelled') return null;
     const running = logs.activeTimer?.projectId === project.id;
     if (running) {
       const since = new Date(logs.activeTimer!.startedAt).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
