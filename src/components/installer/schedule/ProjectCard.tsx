@@ -1,3 +1,4 @@
+import type React from 'react';
 import { MapPin, Clock, Users, Truck } from 'lucide-react';
 import { type Project, projectTypeIcons, statusLabels, installers } from '@/data/mockData';
 import { vehicles } from '@/data/fleetData';
