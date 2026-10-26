@@ -49,7 +49,7 @@ const InstallerGuide = ({ onGoTo }: Props) => {
           <span className="text-xs text-muted-foreground">Steg {stepIdx + 1} av {chapter.steps.length}</span>
         </div>
         <button onClick={() => setZoom(step.image)} className="block w-full overflow-hidden rounded-md border border-border">
-          <img src={step.image} alt={step.title} className="w-full max-h-[420px] object-cover object-top" loading="lazy" />
+          <img src={step.image} alt={step.title} className="w-full h-auto" loading="lazy" />
         </button>
         <p className="text-[11px] text-muted-foreground text-center">Tryck på bilden för att förstora</p>
         <ol className="space-y-2">
