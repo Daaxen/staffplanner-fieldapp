@@ -102,6 +102,31 @@ const InstallerApp = () => {
     return () => setStatusHandler(null);
   }, [setLocalProjects]);
 
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const startAction = (project: Project) => {
+    const running = logs.activeTimer?.projectId === project.id;
+    if (running) {
+      const since = new Date(logs.activeTimer!.startedAt).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
+      return (
+        <Button className="w-full h-11" variant="destructive" onClick={() => void logs.stopTimer(0)}>
+          Stoppa · pågår sedan {since}
+        </Button>
+      );
+    }
+    const days = installerDatesFor(project, installer.id);
+    const isToday = todayStr >= days.startDate && todayStr <= days.endDate;
+    return (
+      <Button className="w-full h-11 bg-status-completed hover:bg-status-completed/90 text-primary-foreground" onClick={async () => {
+        if (!isToday) { toast.info(`Du är inte planerad på jobbet idag (${days.startDate} – ${days.endDate}). Redovisa andra dagar under Tid.`); return; }
+        if (logs.activeTimer) {
+          if (!window.confirm('Klockan går redan på ett annat jobb. Stoppa den och starta det här?')) return;
+          await logs.stopTimer(0);
+        }
+        await logs.startTimer(project.id);
+      }}>Starta jobb</Button>
+    );
+  };
+
   const handleViewOrderDetail = (project: Project, initialTab: typeof projectEntryTab = 'info') => {
     setProjectEntryTab(initialTab);
     setSelectedProject(project);
@@ -213,26 +238,26 @@ const InstallerApp = () => {
       />
 
       <Tabs value={tab} onValueChange={setTab} className="flex-1 flex flex-col overflow-hidden">
-        <TabsList className="shrink-0 order-last w-full rounded-none border-t border-border bg-card h-16 p-0 grid grid-cols-5 gap-0">
-          <TabsTrigger value="schedule" className="rounded-none data-[state=active]:bg-muted data-[state=active]:shadow-none text-[10px] h-full gap-1 flex-col">
+        <TabsList className="shrink-0 w-full rounded-none border-b border-border bg-card h-16 p-0 grid grid-cols-5 gap-0">
+          <TabsTrigger value="schedule" className="rounded-none data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:shadow-[inset_0_-3px_0_hsl(var(--primary))] text-xs h-full gap-1 flex-col">
             <FolderKanban className="w-3.5 h-3.5" />
-            Active jobs
+            Jobb
           </TabsTrigger>
-          <TabsTrigger value="reporting" className="rounded-none data-[state=active]:bg-muted data-[state=active]:shadow-none text-[10px] h-full gap-1 flex-col">
+          <TabsTrigger value="reporting" className="rounded-none data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:shadow-[inset_0_-3px_0_hsl(var(--primary))] text-xs h-full gap-1 flex-col">
             <ClipboardPenLine className="w-4 h-4" />
-            Reporting
+            Tid
           </TabsTrigger>
-          <TabsTrigger value="deviations" className="rounded-none data-[state=active]:bg-muted data-[state=active]:shadow-none text-[10px] h-full gap-1 flex-col">
+          <TabsTrigger value="deviations" className="rounded-none data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:shadow-[inset_0_-3px_0_hsl(var(--primary))] text-xs h-full gap-1 flex-col">
             <AlertTriangle className="w-4 h-4" />
-            Deviations
+            Avvikelse
           </TabsTrigger>
-          <TabsTrigger value="signoff" className="rounded-none data-[state=active]:bg-muted data-[state=active]:shadow-none text-[10px] h-full gap-1 flex-col">
+          <TabsTrigger value="signoff" className="rounded-none data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:shadow-[inset_0_-3px_0_hsl(var(--primary))] text-xs h-full gap-1 flex-col">
             <CheckCircle2 className="w-4 h-4" />
-            Sign-off
+            Avsluta
           </TabsTrigger>
-          <TabsTrigger value="more" className="rounded-none data-[state=active]:bg-muted data-[state=active]:shadow-none text-[10px] h-full gap-1 flex-col">
+          <TabsTrigger value="more" className="rounded-none data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:shadow-[inset_0_-3px_0_hsl(var(--primary))] text-xs h-full gap-1 flex-col">
             <MoreHorizontal className="w-4 h-4" />
-            More
+            Mer
           </TabsTrigger>
         </TabsList>
 
@@ -249,9 +274,9 @@ const InstallerApp = () => {
                 <button aria-label="Stäng" onClick={dismissGuide} className="p-1 text-muted-foreground"><X className="w-4 h-4" /></button>
               </div>
             )}
-            <h2 className="text-base font-semibold text-foreground">Active jobs ({activeProjects.length})</h2>
+            <h2 className="text-base font-semibold text-foreground">Aktiva jobb ({activeProjects.length})</h2>
             {activeProjects.map(project => (
-              <ProjectCard key={project.id} project={project} onSelect={project => openProjectWorkflow(project, 'info')} currentInstallerId={installer.id} actual={logs.actualFor(project.id)} />
+              <ProjectCard key={project.id} project={project} onSelect={project => openProjectWorkflow(project, 'info')} currentInstallerId={installer.id} actual={logs.actualFor(project.id)} action={startAction(project)} />
             ))}
             {activeProjects.length === 0 && <p className="text-sm text-muted-foreground py-8 text-center">No active jobs.</p>}
             {completedProjects.length > 0 && <h2 className="text-sm font-semibold text-muted-foreground pt-2">Recently completed</h2>}
