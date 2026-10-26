@@ -81,16 +81,20 @@ export function useInstallerLogs(projects: Project[] = []) {
     [expenses],
   );
 
-  const startTimer = useCallback(async (projectId: string) => {
-    if (!installerId) return;
+  /** Starts the clock for today. Returns true when started; shows a Swedish message otherwise. */
+  const startTimer = useCallback(async (projectId: string): Promise<boolean> => {
+    if (!installerId) { toast.error('Ditt konto är inte kopplat till en montör – kontakta admin.'); return false; }
     const startedAt = new Date().toISOString();
     const projectRowId = await ensureProjectRowId(projectId);
-    if (!projectRowId) return;
-    await supabase.from('active_timers').upsert({
+    if (!projectRowId) { toast.error('Ordern hittades inte – ladda om appen och försök igen.'); return false; }
+    const { error } = await supabase.from('active_timers').upsert({
       installer_id: installerId, project_id: projectRowId,
       snapshot_project_name: metaFor(projectId).projectName, started_at: startedAt,
     });
+    if (error) { toast.error(`Klockan kunde inte startas: ${error.message}`); return false; }
     setActiveTimer({ projectId, startedAt });
+    toast.success('Jobbet är startat – klockan går');
+    return true;
   }, [installerId, metaFor]);
 
   const addTime = useCallback(async (entry: {

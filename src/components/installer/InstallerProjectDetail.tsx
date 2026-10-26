@@ -33,6 +33,8 @@ interface InstallerProjectDetailProps {
   project: Project;
   installer: Installer;
   logs: InstallerLogs;
+  /** Big start/stop button shown above the tabs. */
+  topAction?: import('react').ReactNode;
   onBack: () => void;
   onStatusChange?: (projectId: string, newStatus: Project['status']) => void;
   onPickUp?: () => void;
@@ -48,7 +50,7 @@ const statusDotMap: Record<string, string> = {
   'open': 'bg-status-open',
 };
 
-const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChange, onPickUp, initialTab = 'info' }: InstallerProjectDetailProps) => {
+const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChange, onPickUp, initialTab = 'info', topAction }: InstallerProjectDetailProps) => {
   
   const [tab, setTab] = useState(initialTab);
   // Same saved field report, offline queue and sync as technician mode.
@@ -146,6 +148,8 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
           </Button>
         </div>
       )}
+
+      {topAction && <div className="shrink-0 px-4 py-2 border-b border-border bg-card">{topAction}</div>}
 
       {/* Tabbed content */}
       <Tabs value={tab} onValueChange={value => setTab(value as typeof tab)} className="flex-1 flex flex-col overflow-hidden">

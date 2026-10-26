@@ -1,3 +1,4 @@
+import type React from 'react';
 import { MapPin, Clock, Users, Truck } from 'lucide-react';
 import { type Project, projectTypeIcons, statusLabels, installers } from '@/data/mockData';
 import { vehicles } from '@/data/fleetData';
@@ -28,9 +29,11 @@ interface ProjectCardProps {
   currentInstallerId?: string;
   /** Reported work + travel time for this order. */
   actual?: ActualTime;
+  /** Optional big start/stop action shown at the bottom of the card. */
+  action?: React.ReactNode;
 }
 
-const ProjectCard = ({ project, onSelect, currentInstallerId, actual }: ProjectCardProps) => {
+const ProjectCard = ({ project, onSelect, currentInstallerId, actual, action }: ProjectCardProps) => {
   const pct = variancePct(project.estimatedHours, actual?.total);
   const coWorkers = project.assigneeIds
     .filter(id => id !== currentInstallerId)
@@ -104,6 +107,7 @@ const ProjectCard = ({ project, onSelect, currentInstallerId, actual }: ProjectC
           ))}
         </div>
       )}
+      {action && <div className="mt-2.5" onClick={e => e.stopPropagation()}>{action}</div>}
     </div>
   );
 };
