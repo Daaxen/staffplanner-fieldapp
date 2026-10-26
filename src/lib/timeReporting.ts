@@ -91,9 +91,23 @@ export function sumBy<T>(rows: T[], key: (r: NoInfer<T>) => string, hours: (r: N
   return [...m.entries()].map(([k, h]) => ({ key: k, hours: Math.round(h * 100) / 100 })).sort((a, b) => b.hours - a.hours);
 }
 
+const r2 = (n: number) => Math.round(n * 100) / 100;
+
+/** Groups rows and keeps work time and travel time apart; sorted by total, largest first. */
+export function sumWorkTravel<T extends Pick<TimeRow, 'hours' | 'travel_hours'>>(rows: T[], key: (r: T) => string) {
+  const m = new Map<string, { work: number; travel: number }>();
+  rows.forEach(r => {
+    const k = key(r), cur = m.get(k) ?? { work: 0, travel: 0 };
+    m.set(k, { work: cur.work + Number(r.hours), travel: cur.travel + Number(r.travel_hours ?? 0) });
+  });
+  return [...m.entries()]
+    .map(([k, v]) => ({ key: k, work: r2(v.work), travel: r2(v.travel), total: r2(v.work + v.travel) }))
+    .sort((a, b) => b.total - a.total);
+}
+
 export const EXPORT_COLUMNS = [
   'Datum', 'Medarbetare', 'Kundnummer', 'Kundnamn', 'Projektnummer', 'Projektnamn',
-  'Ordernummer', 'Aktivitetstyp', 'Antal timmar', 'Beskrivning', 'Skapad', 'Senast ändrad',
+  'Ordernummer', 'Aktivitetstyp', 'Arbetstid', 'Restid', 'Antal timmar', 'Beskrivning', 'Skapad', 'Senast ändrad',
 ] as const;
 
 export type ExportLine = Record<(typeof EXPORT_COLUMNS)[number], string | number>;
