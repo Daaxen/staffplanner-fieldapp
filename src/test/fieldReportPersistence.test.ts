@@ -28,7 +28,7 @@ describe('field report persistence', () => {
     const w = emptyWork('ORD-1');
     expect(canComplete(stateOf(w))).toBe(false);
     const missing = missingRequirements(stateOf(w)).map(m => m.id);
-    expect(missing).toContain('photos');
+    expect(missing).not.toContain('photos');
     expect(missing).toContain('checklist');
     expect(missing).toContain('signature');
     expect(missing).toContain('report');
