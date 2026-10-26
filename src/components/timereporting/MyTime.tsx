@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { SearchSelect } from '@/components/ui/search-select';
 import { useMyInstallerId } from '@/lib/installerIdentity';
 import { useTimeReportingRefs, useTimeRows } from '@/hooks/useTimeReporting';
 import {
@@ -194,31 +195,22 @@ export default function MyTime() {
               <div><Label>Datum</Label><Input type="date" value={draft.date} onChange={e => setDraft({ ...draft, date: e.target.value })} /></div>
               <div>
                 <Label>Kund</Label>
-                <Select value={draft.clientId || undefined} onValueChange={v => setDraft({ ...draft, clientId: v, projectGroupId: '', orderId: '' })}>
-                  <SelectTrigger><SelectValue placeholder="Välj kund" /></SelectTrigger>
-                  <SelectContent>{refs.clients.map(c => <SelectItem key={c.id} value={c.id}>{clientLabel(c)}</SelectItem>)}</SelectContent>
-                </Select>
+                <SearchSelect value={draft.clientId} placeholder="Välj kund"
+                  options={refs.clients.map(c => ({ value: c.id, label: clientLabel(c), keywords: `${c.customer_number ?? ''} ${c.name}` }))}
+                  onChange={v => setDraft({ ...draft, clientId: v, projectGroupId: '', orderId: '' })} />
               </div>
               <div>
                 <Label>Projekt (valfritt)</Label>
-                <Select value={draft.projectGroupId || NONE} onValueChange={v => setDraft({ ...draft, projectGroupId: v === NONE ? '' : v, orderId: '' })} disabled={!draft.clientId}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={NONE}>Inget projekt</SelectItem>
-                    {refs.groups.filter(g => g.client_id === draft.clientId).map(g => <SelectItem key={g.id} value={g.id}>{g.project_number ? `${g.project_number} – ` : ''}{g.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <SearchSelect value={draft.projectGroupId} noneLabel="Inget projekt" disabled={!draft.clientId}
+                  options={refs.groups.filter(g => g.client_id === draft.clientId).map(g => ({ value: g.id, label: `${g.project_number ? `${g.project_number} – ` : ''}${g.name}` }))}
+                  onChange={v => setDraft({ ...draft, projectGroupId: v, orderId: '' })} />
               </div>
               <div>
                 <Label>Order (valfritt)</Label>
-                <Select value={draft.orderId || NONE} onValueChange={v => setDraft({ ...draft, orderId: v === NONE ? '' : v })} disabled={!draft.clientId}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={NONE}>Ingen order</SelectItem>
-                    {refs.orders.filter(o => o.client_id === draft.clientId && (!draft.projectGroupId || o.project_group_id === draft.projectGroupId))
-                      .map(o => <SelectItem key={o.id} value={o.id}>{o.project_number ? `${o.project_number} – ` : ''}{o.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <SearchSelect value={draft.orderId} noneLabel="Ingen order" disabled={!draft.clientId}
+                  options={refs.orders.filter(o => o.client_id === draft.clientId && (!draft.projectGroupId || o.project_group_id === draft.projectGroupId))
+                    .map(o => ({ value: o.id, label: `${o.project_number ? `${o.project_number} – ` : ''}${o.name}` }))}
+                  onChange={v => setDraft({ ...draft, orderId: v })} />
               </div>
               <div>
                 <Label>Aktivitetstyp</Label>
