@@ -37,6 +37,7 @@ const DeviationForm = ({ projectRef, projectName, installerName, onDone, classNa
   const [severity, setSeverity] = useState<DeviationSeverity>('medium');
   const [description, setDescription] = useState('');
   const [photoIds, setPhotoIds] = useState<string[]>([]);
+  const [saved, setSaved] = useState<{ label: string; description: string; photos: number; offline: boolean } | null>(null);
   const [previews, setPreviews] = useState<Record<string, string>>({});
   const [occurredAt] = useState(() => new Date());
   const [saving, setSaving] = useState(false);
@@ -64,7 +65,7 @@ const DeviationForm = ({ projectRef, projectName, installerName, onDone, classNa
   };
 
   const ready =
-    !!category && description.trim().length >= MIN_DEVIATION_DESCRIPTION && photoIds.length > 0;
+    !!category && description.trim().length >= MIN_DEVIATION_DESCRIPTION;
 
   const submit = async () => {
     if (!ready || !category) return;
@@ -84,6 +85,12 @@ const DeviationForm = ({ projectRef, projectName, installerName, onDone, classNa
       toast.success(
         online ? 'Deviation reported — the office has been notified' : 'Deviation saved — it sends when you reconnect',
       );
+      setSaved({
+        label: DEVIATION_CATEGORIES.find(c => c.id === category)?.label ?? category,
+        description: description.trim(),
+        photos: photoIds.length,
+        offline: !online,
+      });
       setCategory(null);
       setSeverity('medium');
       setDescription('');
@@ -96,6 +103,26 @@ const DeviationForm = ({ projectRef, projectName, installerName, onDone, classNa
       setSaving(false);
     }
   };
+
+  if (saved) {
+    return (
+      <div role="status" className={cn('rounded-2xl border border-status-completed/50 bg-status-completed/10 p-4 space-y-3', className)}>
+        <p className="text-base font-semibold text-foreground">Avvikelse sparad ✓</p>
+        <p className="text-sm text-muted-foreground">
+          {saved.offline ? 'Sparad på telefonen – skickas när du får täckning.' : 'Kontoret har fått din avvikelse.'}
+        </p>
+        <div className="rounded-lg bg-card border border-border p-3 text-sm space-y-1">
+          <p className="font-medium text-foreground">{saved.label}</p>
+          <p className="text-muted-foreground whitespace-pre-wrap">{saved.description}</p>
+          <p className="text-xs text-muted-foreground">{saved.photos} foto{saved.photos === 1 ? '' : 'n'}</p>
+        </div>
+        <button type="button" onClick={() => setSaved(null)}
+          className="w-full h-12 rounded-xl border border-border bg-background text-sm font-medium text-foreground">
+          Rapportera en till
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className={cn('rounded-2xl border border-border bg-card p-3 space-y-4', className)}>
