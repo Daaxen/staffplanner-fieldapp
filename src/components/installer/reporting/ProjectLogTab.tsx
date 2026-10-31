@@ -59,15 +59,7 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate }: Pr
   const cameraInput = useRef<HTMLInputElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
-  const [editing, setEditing] = useState<{ id: string; date: string; start: string; end: string; travel: string } | null>(null);
-  const editHours = editing && editing.start && editing.end ? computeHours(editing.start, editing.end) : 0;
-  const saveEdit = async () => {
-    if (!editing) return;
-    setSaving(true);
-    const ok = await logs.updateTime(editing.id, { startTime: editing.start, endTime: editing.end, travelHours: parseHours(editing.travel) });
-    setSaving(false);
-    if (ok) { setEditing(null); toast.success('Tiden är ändrad'); }
-  };
+  const [editing, setEditing] = useState<EditableTimeEntry | null>(null);
 
   const timeEntries = logs.timeFor(projectId);
   const expenseEntries = logs.expensesFor(projectId);
@@ -323,7 +315,7 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate }: Pr
       {(timeEntries.length > 0 || expenseEntries.length > 0) && (
         <section className="space-y-2">
           <h2 className="text-sm font-semibold text-foreground">Sparat på denna order</h2>
-          {timeEntries.map(entry => <div key={entry.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"><Clock className="w-4 h-4 text-muted-foreground" /><div className="min-w-0 flex-1"><p className="text-sm font-medium text-foreground">{entry.hours.toFixed(2)} h{entry.travelHours ? ` + ${entry.travelHours.toFixed(2)} h restid` : ''}</p><p className="text-xs text-muted-foreground">{entry.date}{entry.startTime ? ` · ${entry.startTime}–${entry.endTime}` : ''}</p></div><Button variant="ghost" size="icon" aria-label="Ändra tid" onClick={() => setEditing({ id: entry.id, date: entry.date, start: entry.startTime?.slice(0, 5) ?? '', end: entry.endTime?.slice(0, 5) ?? '', travel: entry.travelHours ? fmtH(entry.travelHours) : '' })}><Pencil className="w-4 h-4" /></Button><Button variant="ghost" size="icon" aria-label="Delete time entry" onClick={() => void logs.deleteTime(entry.id)}><Trash2 className="w-4 h-4" /></Button></div>)}
+          {timeEntries.map(entry => <div key={entry.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"><Clock className="w-4 h-4 text-muted-foreground" /><div className="min-w-0 flex-1"><p className="text-sm font-medium text-foreground">{entry.hours.toFixed(2)} h{entry.travelHours ? ` + ${entry.travelHours.toFixed(2)} h restid` : ''}</p><p className="text-xs text-muted-foreground">{entry.date}{entry.startTime ? ` · ${entry.startTime}–${entry.endTime}` : ''}</p></div><Button variant="ghost" size="icon" aria-label="Ändra tid" onClick={() => setEditing(entry)}><Pencil className="w-4 h-4" /></Button><Button variant="ghost" size="icon" aria-label="Delete time entry" onClick={() => void logs.deleteTime(entry.id)}><Trash2 className="w-4 h-4" /></Button></div>)}
           {expenseEntries.map(entry => <div key={entry.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"><Wallet className="w-4 h-4 text-muted-foreground" /><div className="min-w-0 flex-1"><p className="text-sm font-medium text-foreground">{expenseCategoryLabels[entry.category]} · {money(entry.amount)}</p><p className="text-xs text-muted-foreground">{entry.date}{entry.km ? ` · ${entry.km} km` : ''}</p></div><Button variant="ghost" size="icon" aria-label="Delete cost entry" onClick={() => void logs.deleteExpense(entry.id)}><Trash2 className="w-4 h-4" /></Button></div>)}
         </section>
       )}
