@@ -230,8 +230,8 @@ const InstallerApp = () => {
           <ScheduleFilters filters={projectFilters} onChange={setProjectFilters} />
           <div className="p-4 space-y-3 pb-20">
             {!guideDismissed && (
-              <div className="flex items-center gap-3 rounded-md border border-primary/40 bg-secondary p-3">
-                <GraduationCap className="w-5 h-5 text-primary shrink-0" />
+              <div className="flex items-center gap-3 rounded-md border border-status-scheduled/50 bg-status-scheduled/10 p-3">
+                <GraduationCap className="w-5 h-5 text-status-scheduled shrink-0" />
                 <button className="flex-1 text-left text-sm font-semibold text-foreground" onClick={() => { setMoreView('guide'); setTab('more'); }}>
                   Ny här? Läs guiden – steg för steg
                 </button>

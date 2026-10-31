@@ -1,7 +1,7 @@
 import { ArrowLeft, MapPin, Clock, Users, FileText, Phone, Camera, CheckSquare, ExternalLink, Info, Paperclip, ClipboardCheck, Mail, Receipt, AlertCircle, AlertTriangle, Check, X } from 'lucide-react';
 import { type Project, type Installer, projectTypeIcons, projectTypeLabels, statusLabels, installers } from '@/data/mockData';
 import { cn } from '@/lib/utils';
-import { toneClasses, type Tone } from '@/lib/installerTone';
+import { toneClasses, svStatusLabels, reportTone, type Tone } from '@/lib/installerTone';
 import { useClients, projectRowId } from '@/lib/appData';
 import { customerFieldInfo } from '@/lib/customerLink';
 import { Button } from '@/components/ui/button';
@@ -119,7 +119,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onPickUp, in
             <span className="text-xs opacity-80">{project.id}</span>
             <div className="flex items-center gap-1">
               <div className={cn("w-2 h-2 rounded-full", statusDotMap[project.status])} />
-              <span className="text-xs opacity-80">{statusLabels[project.status]}</span>
+              <span className="text-xs opacity-80">{svStatusLabels[project.status] ?? statusLabels[project.status]}</span>
             </div>
           </div>
         </div>
@@ -183,11 +183,11 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onPickUp, in
             <Section title="Rapportera">
               <div className="grid grid-cols-3 gap-2">
                 {([
-                  ['log', 'Tid', Clock, 'done'],
-                  ['log', 'Utlägg', Receipt, 'planned'],
-                  ['log', 'Körning', MapPin, 'planned'],
+                  ['log', 'Tid', Clock, reportTone(logs.timeFor(project.id).length > 0)],
+                  ['log', 'Utlägg', Receipt, reportTone(logs.expensesFor(project.id).some(e => e.category !== 'mileage'))],
+                  ['log', 'Körning', MapPin, reportTone(logs.expensesFor(project.id).some(e => e.category === 'mileage'))],
                   ['deviation', 'Avvikelse', AlertTriangle, 'problem'],
-                  ['report', 'Foto', Camera, 'neutral'],
+                  ['report', 'Foto', Camera, reportTone(photoCount > 0, 'neutral')],
                   ['summary', 'Rapport & signering', ClipboardCheck, missing.length > 0 ? 'progress' : 'done'],
                 ] as const).map(([target, label, Icon, tone]) => (
                   <Button key={label} type="button" variant="outline" className={cn("h-16 flex-col gap-1 text-xs font-semibold whitespace-normal leading-tight text-foreground", toneClasses[tone as Tone].surface)}
