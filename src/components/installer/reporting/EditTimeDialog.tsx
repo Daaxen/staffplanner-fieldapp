@@ -66,7 +66,7 @@ const EditTimeDialog = ({ logs, entry, onClose, closedWarning }: EditTimeDialogP
         </DialogHeader>
         {entry && (
           <div className="space-y-3">
-            {closedWarning && <p role="alert" className="rounded-md border border-warning/40 bg-warning/10 p-2 text-sm text-foreground">{TIME_LOCKED_ADMIN_WARNING}</p>}
+            {closedWarning && <p role="alert" className="rounded-md border border-travel/40 bg-travel-surface p-2 text-sm text-foreground">{TIME_LOCKED_ADMIN_WARNING}</p>}
             <div className="grid grid-cols-2 gap-3">
               <TimeWheel id="edit-start" label="Start" value={start} fallback="07:00" onChange={setStart} />
               <TimeWheel id="edit-end" label="Slut" value={end} fallback="16:00" onChange={setEnd} />
