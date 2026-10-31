@@ -320,30 +320,7 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate }: Pr
         </section>
       )}
 
-      <Dialog open={Boolean(editing)} onOpenChange={open => { if (!open) setEditing(null); }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Ändra tid {editing?.date}</DialogTitle>
-            <DialogDescription>Arbetstiden räknas fram från start och slut.</DialogDescription>
-          </DialogHeader>
-          {editing && (
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div><Label>Start</Label><TimeWheel id="edit-start" label="Start" value={editing.start} fallback="07:00" onChange={v => setEditing({ ...editing, start: v })} /></div>
-                <div><Label>Slut</Label><TimeWheel id="edit-end" label="Slut" value={editing.end} fallback="16:00" onChange={v => setEditing({ ...editing, end: v })} /></div>
-              </div>
-              <p className="text-sm text-foreground">Arbetstid: <span className="font-semibold">{fmtH(editHours) || '0'} h</span></p>
-              <div>
-                <DurationWheel id="edit-travel" label="Restid totalt (tur och retur)" hint="All restid för dagen, båda hållen" value={parseHours(editing.travel)} onChange={h => setEditing({ ...editing, travel: h ? fmtH(h) : '' })} />
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditing(null)}>Avbryt</Button>
-            <Button disabled={saving || editHours <= 0} onClick={() => void saveEdit()}>Spara ändring</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <EditTimeDialog logs={logs} entry={editing} onClose={() => setEditing(null)} />
 
     </div>
   );
