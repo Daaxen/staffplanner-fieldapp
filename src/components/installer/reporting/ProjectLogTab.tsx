@@ -15,6 +15,7 @@ import { computeHours } from '@/data/logsData';
 import { hoursBetween, timeMismatchMessage } from '@/lib/validation/reporting';
 import { WORK_DAY_PRESETS, workDayTimes } from '@/lib/timeReporting';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { TimeWheel } from '@/components/ui/time-wheel';
 
 interface ProjectLogTabProps {
   projectId: string;
@@ -226,8 +227,8 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate }: Pr
           ))}
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <div><Label htmlFor="start-time">Start</Label><Input id="start-time" type="time" value={startTime} onChange={e => setStartTime(e.target.value)} /></div>
-          <div><Label htmlFor="end-time">Slut</Label><Input id="end-time" type="time" value={endTime} onChange={e => setEndTime(e.target.value)} /></div>
+          <div><Label>Start</Label><TimeWheel id="start-time" label="Start" value={startTime} fallback="07:00" onChange={setStartTime} /></div>
+          <div><Label>Slut</Label><TimeWheel id="end-time" label="Slut" value={endTime} fallback="16:00" onChange={setEndTime} /></div>
         </div>
         <div>
           <Label htmlFor="stated-hours">Arbetstimmar</Label>
@@ -345,8 +346,8 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate }: Pr
           {editing && (
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
-                <div><Label htmlFor="edit-start">Start</Label><Input id="edit-start" type="time" value={editing.start} onChange={e => setEditing({ ...editing, start: e.target.value })} /></div>
-                <div><Label htmlFor="edit-end">Slut</Label><Input id="edit-end" type="time" value={editing.end} onChange={e => setEditing({ ...editing, end: e.target.value })} /></div>
+                <div><Label>Start</Label><TimeWheel id="edit-start" label="Start" value={editing.start} fallback="07:00" onChange={v => setEditing({ ...editing, start: v })} /></div>
+                <div><Label>Slut</Label><TimeWheel id="edit-end" label="Slut" value={editing.end} fallback="16:00" onChange={v => setEditing({ ...editing, end: v })} /></div>
               </div>
               <p className="text-sm text-foreground">Arbetstid: <span className="font-semibold">{fmtH(editHours) || '0'} h</span></p>
               <div>
