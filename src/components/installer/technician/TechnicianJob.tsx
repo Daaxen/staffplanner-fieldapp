@@ -54,6 +54,10 @@ const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) 
   );
   const missing = requirements.filter(r => !r.met && r.severity === 'required');
   const ready = missing.length === 0;
+  const missingSignOffs = missing.filter(r => r.id.startsWith('signoff:'));
+  const allSignOffsSigned = signOffs.every(so =>
+    (so.id === 'customer' ? work.signature : work.signOffs?.[so.id] ?? '').trim().length > 1,
+  );
   const [askSkipPhotos, setAskSkipPhotos] = useState(false);
 
   const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(project.location || '')}`;
@@ -217,10 +221,12 @@ const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) 
           'signature',
           <PenLine className="w-6 h-6" />,
           'Sign-off',
-          signOffs.every(so => (so.id === 'customer' ? work.signature : work.signOffs?.[so.id] ?? '').trim())
+          allSignOffsSigned
             ? 'Signed'
-            : `${signOffs.length} sign-off${signOffs.length === 1 ? '' : 's'} required`,
-          signOffs.every(so => (so.id === 'customer' ? work.signature : work.signOffs?.[so.id] ?? '').trim()),
+            : missingSignOffs.length > 0
+              ? `${missingSignOffs.length} installer sign-off${missingSignOffs.length === 1 ? '' : 's'} required · Customer optional`
+              : 'Customer sign-off optional',
+          allSignOffsSigned,
         )}
         {panel === 'signature' && (
           <div className="rounded-2xl border border-border bg-card p-3 space-y-3">
@@ -233,6 +239,11 @@ const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) 
               return (
                 <div key={so.id} className="space-y-2">
                   <p className="text-sm font-semibold text-foreground">{so.label}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {so.by === 'customer'
+                      ? 'Optional — the order can be completed without a customer signature.'
+                      : 'Required before the order can be completed.'}
+                  </p>
                   <Input
                     value={value}
                     maxLength={100}
@@ -254,7 +265,7 @@ const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) 
         {bigButton(
           'deviation',
           <AlertTriangle className="w-6 h-6" />,
-          'Work report',
+          'Installation report (required)',
           work.reportSubmitted ? 'Submitted' : 'Not submitted',
           work.reportSubmitted,
         )}

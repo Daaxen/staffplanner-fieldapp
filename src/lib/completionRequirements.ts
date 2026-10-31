@@ -1,7 +1,7 @@
 // Rules that must be satisfied before an order can be marked Complete.
-// Templates (src/lib/projectTemplates.ts) define the checklist, the required
-// photos and the required sign-offs; these defaults are used when no template
-// is attached to the order.
+// Templates define checklists, suggested photos and available sign-offs.
+// Photos and customer sign-offs never block completion; the written report,
+// checklist and any installer sign-offs remain required.
 import { getTemplate, type ProjectTemplate } from '@/lib/projectTemplates';
 
 export const MIN_REQUIRED_PHOTOS = 2;
@@ -30,8 +30,8 @@ export interface CompletionRequirement {
   hint: string;
   tab: 'report' | 'summary';
   met: boolean;
-  /** 'recommended' items never block completion; skipping them is an active choice. */
-  severity: 'required' | 'recommended';
+  /** Only required items block; recommended photos prompt an active skip choice. */
+  severity: 'required' | 'recommended' | 'optional';
 }
 
 /** Key inside signOffs that records the installer actively skipped photos (ISO timestamp). */
@@ -95,14 +95,14 @@ export const completionRequirements = (
     },
     ...signOffs.map(so => ({
       id: so.id === 'customer' ? 'signature' : `signoff:${so.id}`,
-      label: so.label,
+      label: so.by === 'customer' ? `${so.label} (optional)` : so.label,
       hint:
         so.by === 'customer'
-          ? 'Collect the customer signature in the Sign-off tab.'
+          ? 'Customer signature is optional and does not prevent completion.'
           : 'Sign off the work yourself in the Sign-off tab.',
       tab: 'summary' as const,
       met: Boolean(signOffValue(s, so.id)),
-      severity: 'required' as const,
+      severity: so.by === 'customer' ? 'optional' as const : 'required' as const,
     })),
     {
       id: 'report',

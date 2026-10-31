@@ -105,7 +105,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
       pendingStatus: 'completed',
       ...(skipPhotos ? { signOffs: { ...signOffs, [PHOTOS_SKIPPED_KEY]: new Date().toISOString() } } : {}),
     });
-    onStatusChange!(project.id, 'completed');
+    onStatusChange?.(project.id, 'completed');
     if (!online) toast.success('Saved on this phone — it uploads when you reconnect');
   };
 
@@ -369,7 +369,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
               </div>
             </Section>
 
-            <Section title="Installation Report">
+            <Section title="Installation Report (required)">
               <Textarea
                 value={reportText}
                 maxLength={2000}
@@ -436,13 +436,14 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
             <Section title="Completion Requirements">
               <div className="space-y-2">
                 {requirements.map(r => (
-                  <button
+                  <Button
                     key={r.id}
+                    variant="ghost"
                     onClick={() => !r.met && setTab(r.tab)}
-                    className="w-full flex items-start gap-2 text-left py-1"
+                    className="w-full h-auto justify-start whitespace-normal items-start gap-2 text-left py-1 px-0"
                   >
-                    <span className={cn('mt-0.5 shrink-0', r.met ? 'text-status-completed' : r.severity === 'recommended' ? 'text-status-on-hold' : 'text-status-cancelled')}>
-                      {r.met ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+                    <span className={cn('mt-0.5 shrink-0', r.met ? 'text-status-completed' : r.severity === 'optional' ? 'text-muted-foreground' : r.severity === 'recommended' ? 'text-status-on-hold' : 'text-status-cancelled')}>
+                      {r.met ? <Check className="w-4 h-4" /> : r.severity === 'optional' ? <Info className="w-4 h-4" /> : <X className="w-4 h-4" />}
                     </span>
                     <span className="min-w-0">
                       <span className={cn('block text-sm', r.met ? 'text-foreground' : 'font-medium text-foreground')}>
@@ -450,7 +451,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
                       </span>
                       {!r.met && <span className="block text-[11px] text-muted-foreground">{r.hint}</span>}
                     </span>
-                  </button>
+                  </Button>
                 ))}
               </div>
               {!readyToComplete && (
@@ -475,7 +476,9 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
                     <div key={so.id} className="rounded-lg border border-border p-3">
                       <p className="text-xs font-semibold text-foreground mb-1">{so.label}</p>
                       <p className="text-[10px] text-muted-foreground mb-2">
-                        Required before the order can be completed.
+                        {so.by === 'customer'
+                          ? 'Optional — the order can be completed without a customer signature.'
+                          : 'Required before the order can be completed.'}
                       </p>
                       <Input
                         value={value}
@@ -505,7 +508,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
             <Button
               className="w-full bg-status-in-progress hover:bg-status-in-progress/90 text-foreground"
               size="lg"
-              onClick={() => onStatusChange!(project.id, 'in-progress')}
+              onClick={() => onStatusChange?.(project.id, 'in-progress')}
             >
               ▶ Start Project
             </Button>
