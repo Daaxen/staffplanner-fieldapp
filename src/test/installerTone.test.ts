@@ -22,3 +22,12 @@ describe('installer swedish labels and report tone', () => {
     expect(reportTone(false, 'neutral')).toBe('neutral');
   });
 });
+
+import { timeDaysTone } from '@/lib/installerTone';
+describe('timeDaysTone', () => {
+  const r = { startDate: '2026-10-20', endDate: '2026-10-22' };
+  it('green when every day has time', () => expect(timeDaysTone(r, [{ date: '2026-10-20' }, { date: '2026-10-21' }, { date: '2026-10-22' }], '2026-10-31').tone).toBe('done'));
+  it('yellow when some days lack time', () => expect(timeDaysTone(r, [{ date: '2026-10-20' }], '2026-10-31')).toEqual({ tone: 'progress', covered: 1, total: 3 }));
+  it('blue when no time', () => expect(timeDaysTone(r, [], '2026-10-31').tone).toBe('planned'));
+  it('future days not counted', () => expect(timeDaysTone(r, [{ date: '2026-10-20' }], '2026-10-20').tone).toBe('done'));
+});

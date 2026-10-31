@@ -1,7 +1,8 @@
 import { ArrowLeft, MapPin, Clock, Users, FileText, Phone, Camera, CheckSquare, ExternalLink, Info, Paperclip, ClipboardCheck, Mail, Receipt, AlertCircle, AlertTriangle, Check, X } from 'lucide-react';
 import { type Project, type Installer, projectTypeIcons, projectTypeLabels, statusLabels, installers } from '@/data/mockData';
 import { cn } from '@/lib/utils';
-import { toneClasses, svStatusLabels, reportTone, type Tone } from '@/lib/installerTone';
+import { toneClasses, svStatusLabels, reportTone, timeDaysTone, type Tone } from '@/lib/installerTone';
+import { installerDatesFor } from '@/lib/bookings';
 import { useClients, projectRowId } from '@/lib/appData';
 import { customerFieldInfo } from '@/lib/customerLink';
 import { Button } from '@/components/ui/button';
@@ -106,6 +107,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onPickUp, in
 
   const isUnassigned = project.assigneeIds.length === 0;
 
+  const timeCover = timeDaysTone(installerDatesFor(project, installer.id), logs.timeFor(project.id), new Date().toLocaleDateString('sv-SE'));
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Header */}
@@ -183,17 +185,18 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onPickUp, in
             <Section title="Rapportera">
               <div className="grid grid-cols-3 gap-2">
                 {([
-                  ['log', 'Tid', Clock, reportTone(logs.timeFor(project.id).length > 0)],
+                  ['log', 'Tid', Clock, timeCover.tone],
                   ['log', 'Utlägg', Receipt, reportTone(logs.expensesFor(project.id).some(e => e.category !== 'mileage'))],
                   ['log', 'Körning', MapPin, reportTone(logs.expensesFor(project.id).some(e => e.category === 'mileage'))],
                   ['deviation', 'Avvikelse', AlertTriangle, 'problem'],
                   ['report', 'Foto', Camera, reportTone(photoCount > 0, 'neutral')],
                   ['summary', 'Rapport & signering', ClipboardCheck, missing.length > 0 ? 'progress' : 'done'],
                 ] as const).map(([target, label, Icon, tone]) => (
-                  <Button key={label} type="button" variant="outline" className={cn("h-16 flex-col gap-1 text-xs font-semibold whitespace-normal leading-tight text-foreground", toneClasses[tone as Tone].surface)}
+                  <Button key={label} type="button" variant="outline" className={cn("h-auto min-h-16 py-2 flex-col gap-1 text-xs font-semibold whitespace-normal leading-tight text-foreground", toneClasses[tone as Tone].surface)}
                     onClick={() => setTab(target === 'summary' ? 'report' : target)}>
                     <Icon className={cn("w-5 h-5", toneClasses[tone as Tone].icon)} />
-                    {label}
+                    <span className="font-bold">{label}</span>
+                    {label === 'Tid' && timeCover.total > 0 && <span className="text-[10px] font-semibold">{timeCover.covered} av {timeCover.total} dagar</span>}
                   </Button>
                 ))}
               </div>
