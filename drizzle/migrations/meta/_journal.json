@@ -22,6 +22,13 @@
       "when": 1793435838983,
       "tag": "0002_fix_report_snapshot_field_access",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793441261058,
+      "tag": "0003_fix_job_metrics_audit_trigger",
+      "breakpoints": true
     }
   ]
 }
