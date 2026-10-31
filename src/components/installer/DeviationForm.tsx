@@ -185,7 +185,7 @@ const DeviationForm = ({ projectRef, projectName, installerName, onDone, classNa
       </div>
 
       <div>
-        <p className="text-sm font-semibold text-foreground mb-2">Photos (at least one)</p>
+        <p className="text-sm font-semibold text-foreground mb-2">Foton (valfritt)</p>
         <input
           ref={fileInput}
           type="file"
@@ -235,7 +235,7 @@ const DeviationForm = ({ projectRef, projectName, installerName, onDone, classNa
       </Button>
       {!ready && (
         <p className="text-[11px] text-muted-foreground text-center">
-          Pick a category, describe it and add at least one photo.
+          Välj kategori och beskriv vad som hänt. Foto är valfritt.
         </p>
       )}
     </div>
