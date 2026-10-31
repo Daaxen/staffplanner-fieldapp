@@ -188,7 +188,7 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
               <Select value={form.clientId} onValueChange={v => set('clientId', v)}>
                 <SelectTrigger><SelectValue placeholder={project?.client || 'Select client'} /></SelectTrigger>
                 <SelectContent>
-                  {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                  {clients.filter((c, i, arr) => c.id && arr.findIndex(x => x.id === c.id) === i).map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
