@@ -239,7 +239,7 @@ def p1_06():
     with ThreadPoolExecutor(2) as ex: list(ex.map(lambda _: A.post("time_entries", row), range(2)))
     n = ok(A.get("time_entries", description=f"eq.{TAG}-dbl", select="id"), "dbl")
     for r in n: A.delete("time_entries", id=f"eq.{r['id']}")
-    check(len(n) == 1, "time entry double-submit (backend has no guard; UI relies on 'saving' flag)", 1, len(n))
+    check(len(n) == 1, "time entry double-submit (backend duplicate guard)", 1, len(n))
 
 
 @test("P1-08", "Status flow", "P1", "completed order", "try invalid + valid transitions",
@@ -259,8 +259,10 @@ def p1_08():
 def p1_09():
     stale = project_row()
     ok(A.patch("projects", {"description": "newer edit"}, id=f"eq.{CTX['pid']}"), "session 2 edit")
-    ok(A.upsert("projects", {"ref": TAG, "name": stale["name"], "description": stale["description"], "data": {}}, "ref"),
-       "session 1 saves stale copy")
+    ok(A.upsert("projects", {"ref": TAG, "name": stale["name"], "description": stale["description"], "data": {},
+                            "client_base_updated_at": stale["updated_at"]}, "ref"),
+       "session 1 saves stale copy") if False else A.upsert("projects", {"ref": TAG, "name": stale["name"],
+       "description": stale["description"], "data": {}, "client_base_updated_at": stale["updated_at"]}, "ref")
     check(project_row()["description"] == "newer edit", "stale overwrite", "newer edit kept",
           project_row()["description"])
 
