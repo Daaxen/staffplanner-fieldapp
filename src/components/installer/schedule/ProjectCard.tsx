@@ -3,7 +3,7 @@ import { MapPin, Clock, Users, Truck } from 'lucide-react';
 import { type Project, projectTypeIcons, statusLabels, installers } from '@/data/mockData';
 import { vehicles } from '@/data/fleetData';
 import { cn } from '@/lib/utils';
-import { toneFor, toneClasses, svStatusLabels } from '@/lib/installerTone';
+import { toneFor, toneClasses, svStatusLabels, displayStatus } from '@/lib/installerTone';
 import { formatHours, formatVariance, varianceClass, variancePct, varianceTone, type ActualTime } from '@/lib/timeVariance';
 
 const statusColorMap: Record<string, string> = {
@@ -36,6 +36,8 @@ interface ProjectCardProps {
 
 const ProjectCard = ({ project, onSelect, currentInstallerId, actual, action }: ProjectCardProps) => {
   const pct = variancePct(project.estimatedHours, actual?.total);
+  const today = new Date().toISOString().slice(0, 10);
+  const shownStatus = displayStatus(project.status, project.endDate, today);
   const coWorkers = project.assigneeIds
     .filter(id => id !== currentInstallerId)
     .map(id => installers.find(i => i.id === id))
@@ -47,7 +49,7 @@ const ProjectCard = ({ project, onSelect, currentInstallerId, actual, action }: 
     <div
       className={cn(
         "rounded-xl border border-border border-l-[6px] bg-card p-3 shadow-sm active:scale-[0.98] transition-transform cursor-pointer",
-        toneClasses[toneFor(project.status)].border
+        toneClasses[toneFor(shownStatus)].border
       )}
       onClick={() => onSelect(project)}
     >
@@ -57,9 +59,12 @@ const ProjectCard = ({ project, onSelect, currentInstallerId, actual, action }: 
           <p className="text-sm font-semibold text-foreground truncate">
             {projectTypeIcons[project.projectType]} {project.name}
           </p>
+          {project.projectNumber && (
+            <p className="text-[11px] font-semibold text-muted-foreground">Order #{project.projectNumber}</p>
+          )}
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
-          <span className={cn("text-[11px] font-semibold px-2 py-0.5 rounded-full", toneClasses[toneFor(project.status)].badge)}>{svStatusLabels[project.status] ?? statusLabels[project.status]}</span>
+          <span className={cn("text-[11px] font-semibold px-2 py-0.5 rounded-full", toneClasses[toneFor(shownStatus)].badge)}>{svStatusLabels[shownStatus] ?? statusLabels[shownStatus]}</span>
         </div>
       </div>
 

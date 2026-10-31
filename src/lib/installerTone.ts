@@ -29,7 +29,19 @@ export const svStatusLabels: Record<string, string> = {
   open: 'Ej tilldelad',
   'on-hold': 'Pausad',
   cancelled: 'Avbruten',
+  overdue: 'Ej avslutad',
 };
+
+/**
+ * Status shown on installer cards. An order whose end date has passed but is
+ * still marked in-progress is shown as 'overdue' (red) instead of 'Pågår'.
+ */
+export const displayStatus = (
+  status: string,
+  endDate: string | undefined,
+  today: string,
+): string =>
+  status === 'in-progress' && endDate && endDate.slice(0, 10) < today ? 'overdue' : status;
 
 /** Report shortcut tone: green once something is saved, otherwise the "to do" tone. */
 export const reportTone = (saved: boolean, todo: Tone = 'planned'): Tone => (saved ? 'done' : todo);
