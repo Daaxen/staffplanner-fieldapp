@@ -33,8 +33,8 @@ const LogsOverview = ({ logs, projects }: LogsOverviewProps) => {
       )}
 
       <div className="grid grid-cols-3 gap-2">
-        <div className="rounded-lg border border-border bg-card p-3"><Clock className="w-4 h-4 text-muted-foreground mb-2" /><p className="text-lg font-bold text-foreground">{totals.hours.toFixed(1)} h</p><p className="text-xs text-muted-foreground">Time</p></div>
-        <div className="rounded-lg border border-border bg-card p-3"><Receipt className="w-4 h-4 text-muted-foreground mb-2" /><p className="text-lg font-bold text-foreground">{money(totals.costs)}</p><p className="text-xs text-muted-foreground">Costs</p></div>
+        <div className="rounded-lg border border-border bg-card p-3"><Clock className="w-4 h-4 text-muted-foreground mb-2" /><p className="text-lg font-bold text-foreground">{logs.loading ? '…' : `${totals.hours.toFixed(1)} h`}</p><p className="text-xs text-muted-foreground">Time</p></div>
+        <div className="rounded-lg border border-border bg-card p-3"><Receipt className="w-4 h-4 text-muted-foreground mb-2" /><p className="text-lg font-bold text-foreground">{logs.loading ? '…' : money(totals.costs)}</p><p className="text-xs text-muted-foreground">Costs</p></div>
         <div className="rounded-lg border border-border bg-card p-3"><Wallet className="w-4 h-4 text-muted-foreground mb-2" /><p className="text-lg font-bold text-foreground">{totals.km.toFixed(1)}</p><p className="text-xs text-muted-foreground">Kilometres</p></div>
       </div>
 

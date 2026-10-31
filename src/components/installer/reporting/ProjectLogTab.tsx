@@ -238,13 +238,13 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate }: Pr
       <section className="rounded-lg border border-border bg-card p-3 space-y-3">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-sm font-semibold text-foreground">Start / stopp idag</h2>
+            <h2 className="text-sm font-semibold text-foreground">Tidtagning idag</h2>
             <p className="text-xs text-muted-foreground">{timerSince ? `Incheckad sedan ${timerSince} idag` : 'Klockan gäller en dag – stoppas automatiskt vid midnatt'}</p>
           </div>
           {isThisTimer ? (
-            <Button size="sm" variant="destructive" onClick={() => setCheckoutOpen(true)}><Square className="w-4 h-4 mr-1.5" />Stopp</Button>
+            <Button size="sm" variant="destructive" onClick={() => setCheckoutOpen(true)}><Square className="w-4 h-4 mr-1.5" />Stoppa tidtagning</Button>
           ) : (
-            <Button size="sm" disabled={Boolean(logs.activeTimer) || date !== today()} onClick={() => void logs.startTimer(projectId)}><Play className="w-4 h-4 mr-1.5" />Start</Button>
+            <Button size="sm" disabled={Boolean(logs.activeTimer) || date !== today()} onClick={() => void logs.startTimer(projectId)}><Play className="w-4 h-4 mr-1.5" />Starta tidtagning</Button>
           )}
         </div>
         {!isThisTimer && date !== today() && <p className="text-xs text-muted-foreground">Klockan kan bara startas idag. Använd manuell inmatning för andra dagar.</p>}
