@@ -180,16 +180,18 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate, stat
       </div>
 
       <section className="rounded-lg border border-border bg-card p-3 space-y-3">
-        <h2 className="text-sm font-semibold text-foreground flex items-center gap-2"><Clock className="w-4 h-4" />Välj dag</h2>
+        <h2 className="text-sm font-bold text-foreground flex items-center gap-2"><Clock className="w-4 h-4" />Välj dag</h2>
         <div className="flex gap-2 overflow-x-auto pb-1">
           {days.map(d => {
             const dt = new Date(`${d}T12:00:00`);
             const active = d === date && !otherDay;
+            const has = timeEntries.some(e => e.date === d);
+            const dayTone = has ? 'bg-status-completed text-primary-foreground border-status-completed' : d > today() ? 'bg-muted text-muted-foreground' : 'bg-status-scheduled/10 text-status-scheduled border-status-scheduled/40';
             return (
-              <Button key={d} type="button" size="sm" variant={active ? 'default' : 'outline'} className="shrink-0 flex-col h-auto py-1.5"
+              <Button key={d} type="button" size="sm" variant="outline" className={`shrink-0 flex-col h-auto py-1.5 font-bold ${dayTone} ${active ? 'ring-2 ring-primary ring-offset-1' : ''}`}
                 onClick={() => { setDate(d); setOtherDay(false); }}>
                 <span className="text-[10px] leading-none">{d === today() ? 'Idag' : WEEKDAYS[dt.getDay()]}</span>
-                <span className="text-sm font-semibold leading-tight">{dt.getDate()}/{dt.getMonth() + 1}</span>
+                <span className="text-sm font-bold leading-tight">{has ? '✓ ' : ''}{dt.getDate()}/{dt.getMonth() + 1}</span>
               </Button>
             );
           })}
@@ -204,7 +206,7 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate, stat
       </section>
 
       {timeLocked ? <section className="rounded-lg border border-border bg-muted p-3 flex items-center gap-2 text-sm text-foreground"><Lock className="w-4 h-4" />{TIME_LOCKED_MESSAGE}</section> : <section className="rounded-lg border border-border bg-card p-3 space-y-3">
-        <h2 className="text-sm font-semibold text-foreground flex items-center gap-2"><Clock className="w-4 h-4" />Lägg till tid manuellt</h2>
+        <h2 className="text-sm font-bold text-foreground flex items-center gap-2"><Clock className="w-4 h-4" />Lägg till tid manuellt</h2>
         <div className="grid grid-cols-2 gap-2">
           {WORK_DAY_PRESETS.map(preset => (
             <Button key={preset.key} type="button" variant="outline" disabled={saving} onClick={() => {
@@ -235,7 +237,7 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate, stat
           <DurationWheel id="travel-hours" label="Restid totalt (tur och retur)" hint="All restid för dagen, båda hållen" value={parseHours(travelHoursInput)} onChange={h => setTravelHoursInput(h ? fmtH(h) : '')} />
         </div>
         <div><Label htmlFor="time-note">Anteckning (gäller dagens arbete och resa)</Label><Textarea id="time-note" placeholder="T.ex. väntetid hos kund, omväg p.g.a. vägarbete" value={timeNote} onChange={e => setTimeNote(e.target.value)} /></div>
-        <Button className="w-full" disabled={saving} onClick={() => void submitTime()}>Spara tid för {date}</Button>
+        <Button className="w-full font-bold bg-status-completed text-primary-foreground hover:bg-status-completed/90" disabled={saving} onClick={() => void submitTime()}>Spara tid för {date}</Button>
       </section>}
 
       <Dialog open={Boolean(logs.pendingMismatch)} onOpenChange={open => { if (!open) logs.clearMismatch(); }}>
@@ -256,14 +258,14 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate, stat
       </Dialog>
 
       <section className="rounded-lg border border-border bg-card p-3 space-y-3">
-        <h2 className="text-sm font-semibold text-foreground flex items-center gap-2"><MapPin className="w-4 h-4" />Mileage</h2>
+        <h2 className="text-sm font-bold text-foreground flex items-center gap-2"><MapPin className="w-4 h-4" />Mileage</h2>
         <div><Label htmlFor="mileage">Distance (km)</Label><Input id="mileage" inputMode="decimal" type="number" min="0" step="0.1" value={km} onChange={e => setKm(e.target.value)} /></div>
         <Textarea aria-label="Mileage note" placeholder="Route or note (optional)" value={mileageNote} onChange={e => setMileageNote(e.target.value)} />
-        <Button variant="outline" className="w-full" disabled={saving} onClick={() => void submitMileage()}>Save mileage</Button>
+        <Button className="w-full font-bold bg-status-completed text-primary-foreground hover:bg-status-completed/90" disabled={saving} onClick={() => void submitMileage()}>Save mileage</Button>
       </section>
 
       <section className="rounded-lg border border-border bg-card p-3 space-y-3">
-        <h2 className="text-sm font-semibold text-foreground flex items-center gap-2"><Wallet className="w-4 h-4" />Cost</h2>
+        <h2 className="text-sm font-bold text-foreground flex items-center gap-2"><Wallet className="w-4 h-4" />Cost</h2>
         <div><Label>Category</Label><Select value={category} onValueChange={value => setCategory(value as ExpenseCategory)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{logs.categories.map(item => <SelectItem key={item} value={item}>{expenseCategoryLabels[item]}</SelectItem>)}</SelectContent></Select></div>
         <div><Label htmlFor="cost-amount">Amount (SEK)</Label><Input id="cost-amount" inputMode="decimal" type="number" min="0" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} /></div>
         <Textarea aria-label="Cost note" placeholder="What was purchased?" value={expenseNote} onChange={e => setExpenseNote(e.target.value)} />
@@ -315,14 +317,14 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate, stat
           />
         </div>
 
-        <Button variant="outline" className="w-full" disabled={saving || uploading} onClick={() => void submitExpense()}>Save cost</Button>
+        <Button className="w-full font-bold bg-status-completed text-primary-foreground hover:bg-status-completed/90" disabled={saving || uploading} onClick={() => void submitExpense()}>Save cost</Button>
       </section>
 
       {(timeEntries.length > 0 || expenseEntries.length > 0) && (
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold text-foreground">Sparat på denna order</h2>
-          {timeEntries.map(entry => <div key={entry.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"><Clock className="w-4 h-4 text-muted-foreground" /><div className="min-w-0 flex-1"><p className="text-sm font-medium text-foreground">{entry.hours.toFixed(2)} h{entry.travelHours ? ` + ${entry.travelHours.toFixed(2)} h restid` : ''}</p><p className="text-xs text-muted-foreground">{entry.date}{entry.startTime ? ` · ${entry.startTime}–${entry.endTime}` : ''}</p></div>{timeLocked ? <Button variant="ghost" size="icon" aria-label="Tiden är låst" onClick={() => toast.info(TIME_LOCKED_MESSAGE)}><Lock className="w-4 h-4" /></Button> : <><Button variant="ghost" size="icon" aria-label="Ändra tid" onClick={() => setEditing(entry)}><Pencil className="w-4 h-4" /></Button><Button variant="ghost" size="icon" aria-label="Delete time entry" onClick={() => void logs.deleteTime(entry.id)}><Trash2 className="w-4 h-4" /></Button></>}</div>)}
-          {expenseEntries.map(entry => <div key={entry.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"><Wallet className="w-4 h-4 text-muted-foreground" /><div className="min-w-0 flex-1"><p className="text-sm font-medium text-foreground">{expenseCategoryLabels[entry.category]} · {money(entry.amount)}</p><p className="text-xs text-muted-foreground">{entry.date}{entry.km ? ` · ${entry.km} km` : ''}</p></div><Button variant="ghost" size="icon" aria-label="Delete cost entry" onClick={() => void logs.deleteExpense(entry.id)}><Trash2 className="w-4 h-4" /></Button></div>)}
+          <h2 className="text-sm font-bold text-foreground">Sparat på denna order</h2>
+          {timeEntries.map(entry => <div key={entry.id} className={`flex items-center gap-3 rounded-lg border border-border border-l-4 ${timeLocked ? 'border-l-status-cancelled bg-muted' : 'border-l-status-completed bg-card'} p-3`}><Clock className="w-4 h-4 text-status-completed" /><div className="min-w-0 flex-1"><p className="text-sm font-bold text-foreground">{entry.hours.toFixed(2)} h{entry.travelHours ? ` + ${entry.travelHours.toFixed(2)} h restid` : ''}</p><p className="text-xs text-muted-foreground">{entry.date}{entry.startTime ? ` · ${entry.startTime}–${entry.endTime}` : ''}</p></div>{timeLocked ? <Button variant="ghost" size="icon" aria-label="Tiden är låst" onClick={() => toast.info(TIME_LOCKED_MESSAGE)}><Lock className="w-4 h-4" /></Button> : <><Button variant="ghost" size="icon" aria-label="Ändra tid" onClick={() => setEditing(entry)}><Pencil className="w-4 h-4" /></Button><Button variant="ghost" size="icon" aria-label="Delete time entry" onClick={() => void logs.deleteTime(entry.id)}><Trash2 className="w-4 h-4" /></Button></>}</div>)}
+          {expenseEntries.map(entry => <div key={entry.id} className="flex items-center gap-3 rounded-lg border border-border border-l-4 border-l-status-completed bg-card p-3"><Wallet className="w-4 h-4 text-status-completed" /><div className="min-w-0 flex-1"><p className="text-sm font-bold text-foreground">{expenseCategoryLabels[entry.category]} · {money(entry.amount)}</p><p className="text-xs text-muted-foreground">{entry.date}{entry.km ? ` · ${entry.km} km` : ''}</p></div><Button variant="ghost" size="icon" aria-label="Delete cost entry" onClick={() => void logs.deleteExpense(entry.id)}><Trash2 className="w-4 h-4" /></Button></div>)}
         </section>
       )}
 

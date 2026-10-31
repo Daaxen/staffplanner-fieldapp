@@ -33,3 +33,29 @@ export const svStatusLabels: Record<string, string> = {
 
 /** Report shortcut tone: green once something is saved, otherwise the "to do" tone. */
 export const reportTone = (saved: boolean, todo: Tone = 'planned'): Tone => (saved ? 'done' : todo);
+
+const isoDays = (start: string, end: string): string[] => {
+  const out: string[] = [];
+  const d = new Date(`${start.slice(0, 10)}T12:00:00Z`);
+  const e = new Date(`${(end || start).slice(0, 10)}T12:00:00Z`);
+  while (d <= e && out.length < 366) { out.push(d.toISOString().slice(0, 10)); d.setUTCDate(d.getUTCDate() + 1); }
+  return out;
+};
+
+/**
+ * Time shortcut tone: green only when every passed order day (≤ today) has time,
+ * yellow when some do, blue when none. Future days are not counted.
+ */
+export function timeDaysTone(
+  range: { startDate: string; endDate: string },
+  entries: { date: string }[],
+  today: string,
+): { tone: Tone; covered: number; total: number } {
+  const days = range.startDate ? isoDays(range.startDate, range.endDate).filter(d => d <= today) : [];
+  const logged = new Set(entries.map(e => e.date.slice(0, 10)));
+  const covered = days.filter(d => logged.has(d)).length;
+  const total = days.length;
+  if (total === 0) return { tone: entries.length > 0 ? 'done' : 'planned', covered, total };
+  const tone: Tone = covered === 0 ? 'planned' : covered === total ? 'done' : 'progress';
+  return { tone, covered, total };
+}
