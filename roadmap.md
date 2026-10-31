@@ -7,5 +7,5 @@
 - [x] Verify all destinations remain accessible on desktop and mobile
 - [x] Make photos and client sign-off optional while retaining the required written installation report
 - [x] Verify completion rules with regression tests
-- [ ] Verify the signed-in installer completion flow — blocked because preview sign-in could not be established; user must sign in in the preview
-- [ ] Fix the report-save failure and verify the report can be read back
+- [x] Verify signed-in installer completion readiness with no photos or customer sign-off; left the live order in progress
+- [x] Fix the report-save failure and verify the submitted report can be read back after reload
