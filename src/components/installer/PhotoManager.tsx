@@ -190,7 +190,7 @@ const PhotoManager = ({
 
       {typeof minPhotos === 'number' && (
         <p className="text-[11px] text-muted-foreground">
-          {work.photos.length} of at least {minPhotos} photos taken.
+          {work.photos.length} of {minPhotos} recommended photos taken — optional.
         </p>
       )}
 

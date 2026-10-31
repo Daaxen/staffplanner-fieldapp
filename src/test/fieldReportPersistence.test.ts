@@ -5,6 +5,7 @@ import {
   missingRequirements,
   PHOTOS_SKIPPED_KEY,
 } from '@/lib/completionRequirements';
+import { PROJECT_TEMPLATES } from '@/lib/projectTemplates';
 import { emptyWork } from '@/lib/offline/fieldWork';
 
 const stateOf = (w: ReturnType<typeof emptyWork>) => ({
@@ -30,7 +31,7 @@ describe('field report persistence', () => {
     const missing = missingRequirements(stateOf(w)).map(m => m.id);
     expect(missing).not.toContain('photos');
     expect(missing).toContain('checklist');
-    expect(missing).toContain('signature');
+    expect(missing).not.toContain('signature');
     expect(missing).toContain('report');
   });
 
@@ -76,8 +77,54 @@ describe('field report persistence', () => {
     expect(missingRecommendations(stateOf(skipped))).toEqual([]);
   });
 
-  it('still requires checklist, signature and report without photos', () => {
+  it('still requires checklist and report without photos or customer sign-off', () => {
     const missing = missingRequirements(stateOf(emptyWork('ORD-3'))).map(m => m.id);
-    expect(missing).toEqual(['checklist', 'signature', 'report']);
+    expect(missing).toEqual(['checklist', 'report']);
+  });
+
+  it('allows completion without customer sign-off', () => {
+    const w = { ...allButPhotos(), signature: '' };
+    expect(canComplete(stateOf(w))).toBe(true);
+    expect(missingRecommendations(stateOf(w)).map(r => r.id)).toEqual(['photos']);
+  });
+
+  it('requires the written installation report even when other requirements are met', () => {
+    const w = {
+      ...allButPhotos(),
+      signature: '',
+      reportText: 'Installationen är klar och testad.',
+      reportSubmitted: false,
+    };
+    expect(canComplete(stateOf(w))).toBe(false);
+    expect(missingRequirements(stateOf(w)).map(r => r.id)).toEqual(['report']);
+    expect(canComplete(stateOf({ ...w, reportSubmitted: true }))).toBe(true);
+  });
+
+  it.each(PROJECT_TEMPLATES)('keeps photos and customer sign-off optional for $id orders', template => {
+    const w = {
+      ...emptyWork('ORD-TEMPLATE'),
+      checkedItems: template.checklist.map(item => item.id),
+      reportText: 'Installationen är klar och testad.',
+      reportSubmitted: true,
+      signOffs: Object.fromEntries(
+        template.signOffs.filter(so => so.by === 'installer').map(so => [so.id, 'Test Montör']),
+      ),
+    };
+    expect(w.photos).toEqual([]);
+    expect(w.signature).toBe('');
+    expect(canComplete(stateOf(w), template)).toBe(true);
+    expect(missingRequirements(stateOf({ ...w, reportSubmitted: false }), template).map(r => r.id)).toEqual(['report']);
+  });
+
+  it('retains required installer sign-off on digital signage orders', () => {
+    const template = PROJECT_TEMPLATES.find(t => t.id === 'digital-signage');
+    if (!template) throw new Error('Digital signage template missing');
+    const w = {
+      ...emptyWork('ORD-SIGNAGE'),
+      checkedItems: template.checklist.map(item => item.id),
+      reportSubmitted: true,
+    };
+    expect(canComplete(stateOf(w), template)).toBe(false);
+    expect(missingRequirements(stateOf(w), template).map(r => r.id)).toEqual(['signoff:installer']);
   });
 });
