@@ -4,6 +4,7 @@ import {
   hydrateWork,
   loadWork,
   saveWork,
+  subscribeFieldWork,
   syncFieldWork,
   type FieldWork,
 } from '@/lib/offline/fieldWork';
@@ -38,6 +39,31 @@ export function useFieldWork(projectRef: string, projectName?: string) {
     };
   }, [projectRef, projectName]);
 
+  // Adopt upload confirmations without replacing edits still being saved.
+  const refreshSavedWork = useCallback(async () => {
+    const pendingWrites = writes.current;
+    await pendingWrites.catch(() => undefined);
+    const current = workRef.current;
+    const saved = await loadWork(projectRef, projectName);
+    if (writes.current === pendingWrites && workRef.current === current && current.projectRef === projectRef) {
+      workRef.current = saved;
+      setWork(saved);
+    }
+    return saved;
+  }, [projectRef, projectName]);
+
+  useEffect(() => {
+    if (!loaded) return;
+    let active = true;
+    const unsubscribe = subscribeFieldWork(() => {
+      if (active) void refreshSavedWork().catch(() => undefined);
+    });
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [loaded, refreshSavedWork]);
+
   // Push saved work up shortly after the last edit, and again when back online.
   const schedulePush = useCallback(() => {
     if (pushTimer.current) window.clearTimeout(pushTimer.current);
@@ -59,12 +85,16 @@ export function useFieldWork(projectRef: string, projectName?: string) {
 
   const update = useCallback(
     async (patch: Partial<FieldWork>) => {
-      const next = { ...workRef.current, ...patch, projectRef, projectName };
+      const next = { ...workRef.current, ...patch, projectRef, projectName, dirty: true };
       workRef.current = next;
       setWork(next);
       const write = writes.current.catch(() => undefined).then(() => saveWork(next));
       writes.current = write;
       const saved = await write;
+      if (workRef.current === next) {
+        workRef.current = saved;
+        setWork(saved);
+      }
       schedulePush();
       return saved;
     },
@@ -76,10 +106,10 @@ export function useFieldWork(projectRef: string, projectName?: string) {
     if (!canSubmitReport(workRef.current.reportText)) throw new Error('Skriv en installationsrapport först.');
     await update({ reportSubmitted: true });
     await syncFieldWork();
-    const saved = await loadWork(projectRef, projectName);
+    const saved = await refreshSavedWork();
     // A queued report is saved on the phone, not yet confirmed by the server.
-    return !saved.dirty;
-  }, [loaded, update, projectRef, projectName]);
+    return saved.reportSubmitted && !saved.dirty;
+  }, [loaded, update, refreshSavedWork]);
 
   /** Used by PhotoManager, which saves the work record itself. */
   const replace = useCallback(
@@ -96,10 +126,10 @@ export function useFieldWork(projectRef: string, projectName?: string) {
       photoCount: work.photos.length,
       checkedItems: work.checkedItems,
       signature: work.signature,
-      reportSubmitted: work.reportSubmitted,
+      reportSubmitted: work.reportSubmitted && !work.dirty,
       signOffs: work.signOffs ?? {},
     }),
-    [work.photos.length, work.checkedItems, work.signature, work.reportSubmitted, work.signOffs],
+    [work.photos.length, work.checkedItems, work.signature, work.reportSubmitted, work.dirty, work.signOffs],
   );
 
   return { work, state, loaded, online, update, submitReport, replace, setWork };

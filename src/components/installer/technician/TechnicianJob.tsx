@@ -41,13 +41,15 @@ type Panel = 'checklist' | 'photos' | 'signature' | 'deviation' | 'issue' | null
 const TechnicianJob = ({ project, onBack }: TechnicianJobProps) => {
   const [panel, setPanel] = useState<Panel>(null);
   const { work, state: completionState, update, submitReport, replace, online, loaded } = useFieldWork(project.id, project.name);
+  const reportConfirmed = completionState.reportSubmitted;
+  const reportPending = work.reportSubmitted && !reportConfirmed;
   const template = useMemo(() => templateForProject(project), [project.templateId, project.projectType]);
   const checklist = checklistFor(template);
   const minPhotos = minPhotosFor(template);
   const signOffs = signOffsFor(template);
   const requirements = useMemo(
     () => completionRequirements(completionState, template),
-    [work.photos.length, work.checkedItems, work.signature, work.reportSubmitted, work.signOffs, template],
+    [completionState, template],
   );
   const missing = requirements.filter(r => !r.met && r.severity === 'required');
   const ready = missing.length === 0;
@@ -61,7 +63,13 @@ const TechnicianJob = ({ project, onBack }: TechnicianJobProps) => {
     setSubmittingReport(true);
     try {
       const synced = await submitReport();
-      toast.success(synced ? 'Report submitted' : 'Report saved on this phone — waiting to upload');
+      if (synced) {
+        toast.success('Report submitted');
+      } else {
+        toast.warning('Report saved on this phone — not submitted yet', {
+          description: online ? 'Upload not confirmed. Try submitting again.' : 'It will upload when you are back online.',
+        });
+      }
     } catch (error) {
       toast.error('Could not submit report', {
         description: error instanceof Error ? error.message : 'Please try again.',
@@ -256,8 +264,8 @@ const TechnicianJob = ({ project, onBack }: TechnicianJobProps) => {
           'deviation',
           <AlertTriangle className="w-6 h-6" />,
           'Installation report (required)',
-          work.reportSubmitted ? 'Submitted' : 'Not submitted',
-          work.reportSubmitted,
+          reportConfirmed ? 'Submitted' : reportPending ? 'Waiting to upload' : 'Not submitted',
+          reportConfirmed,
         )}
         {panel === 'deviation' && (
           <div className="rounded-2xl border border-border bg-card p-3 space-y-2">
@@ -272,10 +280,11 @@ const TechnicianJob = ({ project, onBack }: TechnicianJobProps) => {
             <Button
               size="lg"
               className="w-full h-12"
-              disabled={!loaded || !canSubmitReport(work.reportText) || work.reportSubmitted || submittingReport}
+              type="button"
+              disabled={!loaded || !canSubmitReport(work.reportText) || reportConfirmed || submittingReport}
               onClick={() => void handleSubmitReport()}
             >
-              {submittingReport ? 'Submitting…' : 'Submit report'}
+              {submittingReport ? 'Submitting…' : reportConfirmed ? 'Report submitted' : reportPending ? 'Retry submission' : 'Submit report'}
             </Button>
           </div>
         )}
@@ -310,7 +319,7 @@ const TechnicianJob = ({ project, onBack }: TechnicianJobProps) => {
             ))}
           </div>
         )}
-        {ready && work.reportSubmitted ? (
+        {ready && reportConfirmed ? (
           <p role="status" className="text-center text-sm text-status-completed font-semibold py-2">
             Rapportering klar – du behöver inte göra något mer här
           </p>

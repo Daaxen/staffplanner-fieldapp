@@ -57,6 +57,8 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onPickUp, in
   const { isAdmin } = useAuth();
   const { work, state: completionState, update, submitReport, replace, loaded, online } = useFieldWork(project.id, project.name);
   const { checkedItems, reportText, reportSubmitted, signature } = work;
+  const reportConfirmed = completionState.reportSubmitted;
+  const reportPending = reportSubmitted && !reportConfirmed;
   const signOffs = work.signOffs ?? {};
   const photoCount = work.photos.length;
 
@@ -74,7 +76,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onPickUp, in
 
   const requirements = useMemo(
     () => completionRequirements(completionState, template),
-    [photoCount, checkedItems, signature, reportSubmitted, signOffs, template],
+    [completionState, template],
   );
   const missing = requirements.filter(r => !r.met && r.severity === 'required');
   const reportingDone = loaded && isReportingDone(completionState, template);
@@ -84,9 +86,13 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onPickUp, in
     setSubmittingReport(true);
     try {
       const synced = await submitReport();
-      toast.success(synced
-        ? 'Installation report submitted'
-        : 'Report saved on this phone — waiting to upload');
+      if (synced) {
+        toast.success('Installation report submitted');
+      } else {
+        toast.warning('Report saved on this phone — not submitted yet', {
+          description: online ? 'Upload not confirmed. Try submitting again.' : 'It will upload when you are back online.',
+        });
+      }
     } catch (error) {
       toast.error('Could not submit report', {
         description: error instanceof Error ? error.message : 'Please try again.',
@@ -399,14 +405,15 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onPickUp, in
               />
               <div className="flex items-center justify-between mt-2">
                 <span className="text-[11px] text-muted-foreground">
-                  {reportSubmitted ? 'Report submitted' : 'Not submitted yet'}
+                  {reportConfirmed ? 'Report submitted' : reportPending ? 'Saved on this phone — waiting to upload' : !loaded ? 'Loading report…' : 'Not submitted yet'}
                 </span>
                 <Button
                   size="sm"
-                  disabled={!loaded || !canSubmitReport(reportText) || reportSubmitted || submittingReport}
+                  type="button"
+                  disabled={!loaded || !canSubmitReport(reportText) || reportConfirmed || submittingReport}
                   onClick={() => void handleSubmitReport()}
                 >
-                  {submittingReport ? 'Submitting…' : 'Submit report'}
+                  {submittingReport ? 'Submitting…' : reportConfirmed ? 'Report submitted' : reportPending ? 'Retry submission' : 'Submit report'}
                 </Button>
               </div>
             </Section>
