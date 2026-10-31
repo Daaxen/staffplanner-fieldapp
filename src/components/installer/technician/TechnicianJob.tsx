@@ -23,12 +23,9 @@ import {
   canSubmitReport,
   completionRequirements,
   minPhotosFor,
-  missingRecommendations,
   missingRequirements,
-  PHOTOS_SKIPPED_KEY,
   signOffsFor,
 } from '@/lib/completionRequirements';
-import SkipPhotosDialog from '@/components/installer/SkipPhotosDialog';
 import { templateForProject } from '@/lib/projectTemplates';
 import PhotoManager from '@/components/installer/PhotoManager';
 import { useFieldWork } from '@/hooks/useFieldWork';
