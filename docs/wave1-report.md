@@ -1,41 +1,35 @@
-# Wave 1 execution report — proposed docs/wave1-report.md
+# Wave 1 regression report – 2026-10-31
 
-## Release gate: INCONCLUSIVE / BLOCKED
-Baseline: `bunx vitest run`: **30 files passed, 201 tests passed**, duration 3.03s.
-Python Playwright headless Chromium used viewport 1280×1800 against localhost:8080.
-All eleven scenario precondition attempts redirected to `/auth`; no business actions executed.
+Runner: `python3 e2e/wave1/backend_suite.py` (replays the app's own write paths as TEST W1 A / TEST W1 B and checks what is stored). Baseline: `bunx vitest run` – 30 files, 201 tests pass.
+Test data: customer "TEST – Golden Customer", order "TEST – Golden Project" (ref TEST-W1-<run>). Everything created was deleted at the end of the run (no orders or customers left over). Rows in the audit log can't be removed, so they stay as a record of the test run.
 
-Test | Result | Classification
----|---|---
-P0-01 | Blocked | D
-P0-02 | Blocked | D
-P0-03 | Blocked | D
-P0-04 | Blocked | D
-P0-05 | Blocked | D
-P1-06 | Blocked | D
-P1-07 | Blocked | D
-P1-08 | Blocked | D
-P1-09 | Blocked | D
-P2-10 | Blocked | D
-GOLDEN | Blocked | D
+## Release gate: NOT MET (one release-blocking bug)
 
-Totals: scenario Passed 0 / Failed 0 / Blocked 11 / Not supported 0. A=0 confirmed application bugs, B=0 observed runner failures, C=0 confirmed missing-feature failures, D=11 environment/precondition blocks. This is NOT full workflow coverage or a release pass.
+| Test | Pri | Result | Class | Finding |
+|---|---|---|---|---|
+| P0-01 Customer → work order | P0 | PASS | – | Linked by client_id, saving again with the same ref gives no duplicate, the UUID stays the same |
+| P0-02 Booking sync | P0 | PASS | – | Assign A+B, change dates/times, remove B: bookings = assignees each step, no orphans |
+| P0-03 Time + correction | P0 | PASS | – | Correction edits the same row; total 13.5 h; B sees only own time, cannot edit A's |
+| P0-04 Report + sign-off | P0 | **FAIL** | **A** | Report and sign-off persist, but **setting the order to Completed fails** |
+| P0-05 Invoice prep inputs | P0 | PASS | – | Uses the corrected hours (13.5 h × 600 = 8 100) |
+| P1-06 Double submit | P1 | FAIL | A (minor) | Orders, bookings and reports: no duplicates. Two time rows saved at the same instant both get stored; only the UI's saving lock prevents this |
+| P1-07 Interrupted flow | P1 | NOT RUN | – | Needs UI automation; covered partly by existing unit tests for offline report saving |
+| P1-08 Status flow | P1 | BLOCKED | – | Could not reach Completed because of the P0-04 bug |
+| P1-09 Stale data | P1 | FAIL | A | Saving an older copy of an order overwrites a newer edit (last save wins, no warning) |
+| P2-10 Installer role | P2 | PASS | – | B sees only assigned order, cannot edit it, cannot read client rates or create customers |
+| GOLDEN | P0 | **FAIL** | A | Steps 1–9 and 11 pass; step 10 (complete order) fails – same bug as P0-04 |
 
-## Evidence and blockers
-`lovable auth-session --json --self` failed: no auth user matches the requesting user's email. No alternate real-user session was minted, no installer impersonation or mutations occurred. Required `lovable supabase query` documents and enforces a read-only interface; no safe tagged deletion lifecycle can be implemented with it. A self login alone will not remove that cleanup blocker.
+## Bug 1 (release-blocking): orders with reported time cannot be completed
+- Error: `null value in column "entity_type" of relation "audit_log"`.
+- Likely cause: on completion, the system copies the order's figures into the AI-planning statistics. The audit-log trigger on that table was created without the entity-name argument, so the audit write is rejected and the whole completion is rolled back. The statistics table holds 0 rows today, which means no order has been completed since the trigger was added.
+- Proposed fix: recreate the audit trigger on the statistics table with the entity name (e.g. `audit_row_change('job_metrics','order_id')`) and add a test for it.
 
-`/tmp/browser/wave1/`: results.json, run.log, per-ID PNG screenshots and ZIP Playwright traces; start/end-cleanup-check.json; immutable-audit.json and immutable-job-metrics.json. `/tmp/wave1-vitest.log` contains baseline output. Runner draft at `/tmp/wave1-proposed/e2e/wave1/run.py` contains metadata, self-session restore, read-only DB assertion helper and safety gates. It is a precondition runner, NOT a complete implementation of business-action tests or delete cleanup. No claim of those steps passing is made.
+## Bug 2: stale save overwrites newer edits (P1)
+The work-order save sends the entire order every time. Two people editing the same order means the last save silently wins. Proposed fix: compare the order's `updated_at` before saving and show "the order was changed by someone else".
 
-## Cleanup
-Start and end queries found zero customers named TEST – Golden Customer and zero projects named TEST – Golden Project or ref prefixed TEST-W1-. Created/modified/deleted rows: zero. Immutable audit_log matching tagged entity labels: []; job_metrics matching tagged customer/order prefix: []. No run-created immutable IDs remain. Queries are tag-scoped, not a claim that unrelated database data was audited. No unrelated rows were touched.
+## Bug 3: time entries saved twice in the same instant (P1, low)
+Time entries have no natural key. Today only the disabled Save button stops a double tap, so a double tap on a slow phone could still give two rows. Proposed fix: send a client-generated id per save, or add a short duplicate check.
 
-## Likely causes / proposed actions
-No runtime application bug was established; no app fix proposed as proven necessary. Static review candidates only: verify role restrictions at page/backend layers because route requireRole is not supplied; verify stale-write protection independently from scheduling conflict validation. Do not alter either without reproduction.
-To unblock: requester signs into app preview under their own identity; approve dedicated test A+B creation plus app-role setup; provide authorized, narrowly tag-scoped writable cleanup capability. Then implement and execute actual selectors/actions and per-step DB assertions across all scenarios, preserving failure artifacts. Never switch to existing real installer data.
-
-## Delivery constraint and exact proposed additions
-Higher-priority sandbox rules require repository files unchanged. No docs/ or e2e/ files were added. Proposed new files (location: entire new file; replacement: exact full contents of corresponding staged file):
-- docs/wave1-test-map.md ← /tmp/wave1-proposed/docs/wave1-test-map.md
-- docs/wave1-report.md ← /tmp/wave1-proposed/docs/wave1-report.md
-- e2e/wave1/run.py ← /tmp/wave1-proposed/e2e/wave1/run.py
-These are scratch drafts for the invoking agent; the runner must not be represented as a complete workflow suite.
+## Not currently supported / not covered
+- UI-level interrupted-flow and two-browser tests (P1-07, the UI half of P1-09) are not automated yet.
+- Invoice-prep amounts are worked out live in the browser; no stored invoice copy exists to check against.

@@ -34,3 +34,6 @@ Invoice suggestions are computed by buildInvoiceSuggestion from current inputs; 
 - Snapshot auto-reactivity is not an established invoice contract; current-input calculation is supported.
 - Required SQL CLI explicitly read-only: tagged delete cleanup unavailable (D).
 - Baseline is 30 test files / 201 tests, not 30 individual tests. Includes source-text assertions, so green unit tests do not prove live persistence or RLS.
+
+## Continuation correction
+Sessions and narrowly scoped REST cleanup are now available; earlier D/session/cleanup statements above are historical, not current blockers. TEST A successfully opened authenticated UI and created TEST customers. Current execution is blocked by incomplete B-class automation, not authentication. See updated report for exact coverage and cleanup. No unsupported feature has been newly established. The staged runner remains incomplete and must not be marketed as all eleven implemented tests.

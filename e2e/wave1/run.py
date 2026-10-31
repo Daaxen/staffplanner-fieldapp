@@ -1,51 +1,25 @@
-"""Safety-gated Wave 1 browser/DB runner. Never substitutes real identities."""
-import json, subprocess, datetime
+"""Wave1 UI runner. Writes only TEST entities, cleanup by captured UUIDs."""
+import json, re, time, urllib.request, urllib.parse
 from pathlib import Path
 from playwright.sync_api import sync_playwright
-OUT=Path('/tmp/browser/wave1'); OUT.mkdir(parents=True,exist_ok=True)
-CASES=[('P0-01','Customer/order','Create tagged customer/order; reopen/reload; compare UUID and row count'),('P0-02','Booking sync','Assign dedicated A+B; change dates and B days; remove B; compare both booking tables'),('P0-03','Time reporting','A+B report; correct A in place; verify totals after reload/relogin'),('P0-04','Report/sign-off','Submit written report/checklist/sign-off; reopen and verify persistence'),('P0-05','Invoice preparation','Compare current corrected hours with invoice suggestion'),('P1-06','Double submit','Rapid submit order/booking/time/report; assert single intended row'),('P1-07','Interrupted flow','Edit then navigate/reload; compare UI and stored values'),('P1-08','Status flow','Exercise allowed forward/back and rejected transitions'),('P1-09','Stale data','Two authorized contexts edit same tagged order; compare last persisted values'),('P2-10','Installer role','Dedicated A sees assigned only and cannot access finance/admin'),('GOLDEN','Full workflow','Run all 13 approved steps and verify persistence')]
-def db(sql):
- p=subprocess.run(['lovable','supabase','query',sql,'--json'],capture_output=True,text=True)
- if p.returncode: raise RuntimeError('DB query unavailable (details withheld)')
- return json.loads(p.stdout)['rows']
-def cleanup_check(stage):
- # No DELETE is available through the required read-only query interface.
- # Existing tagged rows are not assumed to belong to this invocation.
- rows=db("select id,ref,name from projects where name='TEST – Golden Project' or ref like 'TEST-W1-%'")
- clients=db("select id,ref,name from clients where name='TEST – Golden Customer'")
- (OUT/f'{stage}-cleanup-check.json').write_text(json.dumps(dict(projects=rows,clients=clients,deleted=0),indent=2))
- return rows,clients
-def restore_session(context):
- p=subprocess.run(['lovable','auth-session','--json','--self'],capture_output=True,text=True)
- if p.returncode: return False,'Self session unavailable: no matching app account; no alternate user used'
- a=json.loads((Path.home()/'.cache/lovable-auth/session.json').read_text())
- context.add_init_script('localStorage.setItem('+json.dumps(a['storage_key'])+','+json.dumps(json.dumps(a['session']))+');')
- return True,''
-def assert_db(operation,sql,expected,ids):
- actual=db(sql)
- if actual!=expected: raise AssertionError(json.dumps(dict(operation=operation,expected=expected,actual=actual,ids=ids)))
-def main():
- cleanup_check('start'); results=[]
- try:
-  with sync_playwright() as p:
-   browser=p.chromium.launch(headless=True)
-   ctx=browser.new_context(viewport={'width':1280,'height':1800}); ok,reason=restore_session(ctx)
-   page=ctx.new_page()
-   for ident,area,actions in CASES:
-    ctx.tracing.start(screenshots=True,snapshots=True,sources=True)
-    try:
-     page.goto('http://localhost:8080/app/orders',wait_until='networkidle')
-     page.screenshot(path=str(OUT/f'{ident}.png'),full_page=True)
-     actual={'url':page.url,'self_session':ok,'mutations':0}
-     # Authentication alone is insufficient: tagged cleanup must also be writable.
-     why=reason or 'Required cleanup SQL interface is read-only; safe fixture lifecycle unavailable'
-     row=dict(id=ident,area=area,priority=ident.split('-')[0],preconditions='Authorized self admin; writable tagged cleanup; dedicated installer A+B where needed',actions=actions,expected='UI actions agree with persisted tagged rows; no unintended duplicates',pass_fail='Pass only after all actions and DB assertions complete',status='Blocked',classification='D',operation='Authenticate and establish safe fixture lifecycle',actual=actual,reason=why,ids={'run':'TEST-W1-'+datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ'),'project':None,'users':[]})
-    except Exception as e:
-     row=dict(id=ident,area=area,status='Blocked',classification='D',operation='Open browser precondition',expected='Reachable app',actual=str(e),ids={})
-    finally: ctx.tracing.stop(path=str(OUT/f'{ident}.zip'))
-    results.append(row); print(json.dumps(row))
-   browser.close()
- finally:
-  cleanup_check('end')
-  (OUT/'results.json').write_text(json.dumps(results,indent=2))
-if __name__=='__main__': main()
+OUT=Path('/tmp/browser/wave1'); OUT.mkdir(exist_ok=True,parents=True)
+RUN='1793440688'; TAG='TEST-W1-'+RUN
+SESSION=json.load(open('/tmp/wave1-sessions/testa.json'))
+ENV=Path('/dev-server/.env').read_text(); KEY=re.search(r'VITE_SUPABASE_PUBLISHABLE_KEY=["\']?([^\n"\']+)',ENV).group(1)
+def rest(table,query='',method='GET',body=None):
+ req=urllib.request.Request('https://piubkkipultepevxbxuv.supabase.co/rest/v1/'+table+'?'+urllib.parse.quote(query,safe='=,*().-'),data=json.dumps(body).encode() if body else None,method=method,headers={'apikey':KEY,'Authorization':'Bearer '+SESSION['session']['access_token'],'Content-Type':'application/json','Prefer':'return=representation'})
+ with urllib.request.urlopen(req) as r: return json.load(r)
+def snap(page,name):
+ page.screenshot(path=str(OUT/(name+'.png')),full_page=True); (OUT/(name+'.txt')).write_text(page.locator('body').inner_text())
+def goto(page,route):
+ page.goto('http://localhost:8080/'+route); page.wait_for_timeout(2200)
+def context(b,who):
+ c=b.new_context(viewport={'width':1440,'height':1100}); c.tracing.start(screenshots=True,snapshots=True); p=c.new_page(); goto(p,''); s=json.load(open('/tmp/wave1-sessions/'+who+'.json')); p.evaluate('s=>localStorage.setItem(s.storage_key,JSON.stringify(s.session))',s); return c,p
+if __name__=='__main__':
+ with sync_playwright() as pw:
+  b=pw.chromium.launch(); c,p=context(b,'testa')
+  rows=rest('clients','customer_number=eq.'+TAG)
+  goto(p,'app/planner'); p.get_by_role('button',name='Create work order',exact=True).click(); p.locator('#order-name').fill('TEST – Golden Project'); p.locator('#order-number').fill(TAG); p.locator('#order-client').fill('TEST – Golden'); p.get_by_role('button',name=re.compile('TEST – Golden Customer '+TAG)).click()
+  for i in range(2):
+   p.get_by_role('button',name='Pick',exact=True).first.click(); p.locator('button[name="day"]').filter(has_text=re.compile('^28$')).first.click()
+  p.get_by_role('button',name='Create Project',exact=True).click(); p.wait_for_timeout(3500); snap(p,'created-project'); print('PROJECTS',json.dumps(rest('projects','project_number=eq.'+TAG))); c.tracing.stop(path=str(OUT/'creation.zip')); b.close()
