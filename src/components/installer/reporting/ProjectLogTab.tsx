@@ -15,7 +15,7 @@ import { computeHours } from '@/data/logsData';
 import { hoursBetween, timeMismatchMessage } from '@/lib/validation/reporting';
 import { WORK_DAY_PRESETS, workDayTimes } from '@/lib/timeReporting';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { TimeWheel } from '@/components/ui/time-wheel';
+import { DurationWheel, TimeWheel } from '@/components/ui/time-wheel';
 
 interface ProjectLogTabProps {
   projectId: string;
@@ -242,10 +242,9 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate }: Pr
           )}
         </div>
         <div>
-          <Label htmlFor="travel-hours">Restid (timmar)</Label>
-          <Input id="travel-hours" inputMode="decimal" type="text" placeholder="0" value={travelHoursInput} onChange={e => setTravelHoursInput(e.target.value)} />
+          <DurationWheel id="travel-hours" label="Restid totalt (tur och retur)" hint="All restid för dagen, båda hållen" value={parseHours(travelHoursInput)} onChange={h => setTravelHoursInput(h ? fmtH(h) : '')} />
         </div>
-        <Textarea aria-label="Anteckning" placeholder="Anteckning (valfritt)" value={timeNote} onChange={e => setTimeNote(e.target.value)} />
+        <div><Label htmlFor="time-note">Anteckning (gäller dagens arbete och resa)</Label><Textarea id="time-note" placeholder="T.ex. väntetid hos kund, omväg p.g.a. vägarbete" value={timeNote} onChange={e => setTimeNote(e.target.value)} /></div>
         <Button className="w-full" disabled={saving} onClick={() => void submitTime()}>Spara tid för {date}</Button>
       </section>
 
@@ -351,8 +350,7 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate }: Pr
               </div>
               <p className="text-sm text-foreground">Arbetstid: <span className="font-semibold">{fmtH(editHours) || '0'} h</span></p>
               <div>
-                <Label htmlFor="edit-travel">Restid (timmar)</Label>
-                <Input id="edit-travel" inputMode="decimal" type="text" placeholder="0" value={editing.travel} onChange={e => setEditing({ ...editing, travel: e.target.value })} />
+                <DurationWheel id="edit-travel" label="Restid totalt (tur och retur)" hint="All restid för dagen, båda hållen" value={parseHours(editing.travel)} onChange={h => setEditing({ ...editing, travel: h ? fmtH(h) : '' })} />
               </div>
             </div>
           )}
