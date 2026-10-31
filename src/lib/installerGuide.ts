@@ -1,8 +1,8 @@
 import home from '@/assets/guide/01_home.jpg';
 import jobs from '@/assets/guide/02_jobs.jpg';
 import orderInfo from '@/assets/guide/03_order_info.jpg';
-import day from '@/assets/guide/04_day.jpg';
-import manual from '@/assets/guide/05_manual.jpg';
+import day from '@/assets/guide/current-day.jpg.asset.json';
+import manual from '@/assets/guide/current-manual.jpg.asset.json';
 import mileage from '@/assets/guide/06_mileage.jpg';
 import expense from '@/assets/guide/07_expense.jpg';
 import more from '@/assets/guide/08_more.jpg';
@@ -87,14 +87,14 @@ export const installerGuide: GuideChapter[] = [
     steps: [
       {
         title: 'Välj vilken dag du redovisar',
-        image: day,
+        image: day.url,
         callouts: [
           { n: 1, text: 'Välj vilken dag du redovisar. Idag är förvalt. "Annan dag" ger ett eget datum.' },
         ],
       },
       {
         title: 'Fyll i arbetstid och restid',
-        image: manual,
+        image: manual.url,
         callouts: [
           { n: 1, text: 'Välj Halvdag (4 h) eller Heldag (8 h), eller ange egna start- och sluttider.' },
           { n: 2, text: 'Skriv restid i timmar, till exempel 1,5. Tryck sedan "Spara tid" för vald dag.' },
