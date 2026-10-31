@@ -12,6 +12,8 @@ import { toast } from 'sonner';
 import { SearchSelect } from '@/components/ui/search-select';
 import { useMyInstallerId } from '@/lib/installerIdentity';
 import { useTimeReportingRefs, useTimeRows } from '@/hooks/useTimeReporting';
+import { useAuth } from '@/hooks/useAuth';
+import { isTimeLocked, TIME_LOCKED_MESSAGE, TIME_LOCKED_ADMIN_WARNING } from '@/lib/timeReporting';
 import {
   INTERNAL_CUSTOMER_NUMBER, INTERNAL_HELP, NORMAL_DAY_HOURS, WORK_DAY_PRESETS, clientLabel, isoDate, rowHours, validateRow, weekDays,
   type TimeRow,

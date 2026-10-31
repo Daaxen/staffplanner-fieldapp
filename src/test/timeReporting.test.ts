@@ -90,3 +90,10 @@ describe('summaries and export', () => {
     expect(s).toEqual([{ key: 'a', work: 8, travel: 1.5, total: 9.5 }, { key: 'b', work: 1, travel: 0.5, total: 1.5 }]);
   });
 });
+
+import { isTimeLocked } from '@/lib/timeReporting';
+describe('time lock on completed orders', () => {
+  it('locks time when the order is completed', () => expect(isTimeLocked('completed')).toBe(true));
+  it('keeps time editable while the order is in progress', () => expect(isTimeLocked('in_progress')).toBe(false));
+  it('keeps time editable on scheduled orders', () => expect(isTimeLocked('scheduled')).toBe(false));
+});
