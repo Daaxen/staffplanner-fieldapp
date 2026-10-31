@@ -11,11 +11,10 @@ import { expenseCategoryLabels, type ExpenseCategory } from '@/data/logsData';
 import type { InstallerLogs } from '@/hooks/useInstallerLogs';
 import { sumActualTime } from '@/lib/timeVariance';
 import TimeVarianceCard from '@/components/installer/reporting/TimeVarianceCard';
-import { computeHours } from '@/data/logsData';
 import { hoursBetween, timeMismatchMessage } from '@/lib/validation/reporting';
 import { WORK_DAY_PRESETS, workDayTimes } from '@/lib/timeReporting';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DurationWheel, TimeWheel } from '@/components/ui/time-wheel';
+import EditTimeDialog, { fmtH, parseHours, type EditableTimeEntry } from '@/components/installer/reporting/EditTimeDialog';
 
 interface ProjectLogTabProps {
   projectId: string;
@@ -30,13 +29,6 @@ const pad = (n: number) => n.toString().padStart(2, '0');
 const isoLocal = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const today = () => isoLocal(new Date());
 const money = (amount: number) => `${amount.toLocaleString('sv-SE')} SEK`;
-/** Parses travel time in hours; accepts comma or dot. */
-const parseHours = (value: string) => {
-  const hours = Number(value.replace(',', '.'));
-  if (!Number.isFinite(hours) || hours <= 0) return 0;
-  return Math.min(12, Math.round(hours * 100) / 100);
-};
-const fmtH = (h: number) => h.toFixed(2).replace(/\.?0+$/, '').replace('.', ',');
 const WEEKDAYS = ['Sön', 'Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör'];
 
 const orderDays = (start?: string, end?: string) => {
