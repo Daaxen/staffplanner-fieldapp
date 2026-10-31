@@ -165,7 +165,7 @@ const OperationsDashboard = () => {
           })}
         </div>
 
-        <div>
+        {COMMERCIAL_TRACK_ENABLED && <div>
           <h3 className="text-sm font-semibold text-foreground mb-1">Commercial pipeline</h3>
           <p className="text-xs text-muted-foreground mb-3">Sales and invoicing track, separate from the work status.</p>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
@@ -187,7 +187,7 @@ const OperationsDashboard = () => {
               </span>
             ))}
           </div>
-        </div>
+        </div>}
 
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="rounded-xl border border-border bg-card p-4">
