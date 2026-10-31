@@ -36,6 +36,13 @@
       "when": 1793443795349,
       "tag": "0004_stale_save_and_double_submit_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793443946255,
+      "tag": "0005_stale_save_error_code",
+      "breakpoints": true
     }
   ]
 }
