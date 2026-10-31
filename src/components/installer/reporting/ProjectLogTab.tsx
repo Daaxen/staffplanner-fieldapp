@@ -11,11 +11,11 @@ import { expenseCategoryLabels, type ExpenseCategory } from '@/data/logsData';
 import type { InstallerLogs } from '@/hooks/useInstallerLogs';
 import { sumActualTime } from '@/lib/timeVariance';
 import TimeVarianceCard from '@/components/installer/reporting/TimeVarianceCard';
-import { computeHours } from '@/data/logsData';
 import { hoursBetween, timeMismatchMessage } from '@/lib/validation/reporting';
 import { WORK_DAY_PRESETS, workDayTimes } from '@/lib/timeReporting';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DurationWheel, TimeWheel } from '@/components/ui/time-wheel';
+import EditTimeDialog, { fmtH, parseHours, type EditableTimeEntry } from '@/components/installer/reporting/EditTimeDialog';
 
 interface ProjectLogTabProps {
   projectId: string;
@@ -30,13 +30,6 @@ const pad = (n: number) => n.toString().padStart(2, '0');
 const isoLocal = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const today = () => isoLocal(new Date());
 const money = (amount: number) => `${amount.toLocaleString('sv-SE')} SEK`;
-/** Parses travel time in hours; accepts comma or dot. */
-const parseHours = (value: string) => {
-  const hours = Number(value.replace(',', '.'));
-  if (!Number.isFinite(hours) || hours <= 0) return 0;
-  return Math.min(12, Math.round(hours * 100) / 100);
-};
-const fmtH = (h: number) => h.toFixed(2).replace(/\.?0+$/, '').replace('.', ',');
 const WEEKDAYS = ['Sön', 'Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör'];
 
 const orderDays = (start?: string, end?: string) => {
@@ -67,15 +60,7 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate }: Pr
   const cameraInput = useRef<HTMLInputElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
-  const [editing, setEditing] = useState<{ id: string; date: string; start: string; end: string; travel: string } | null>(null);
-  const editHours = editing && editing.start && editing.end ? computeHours(editing.start, editing.end) : 0;
-  const saveEdit = async () => {
-    if (!editing) return;
-    setSaving(true);
-    const ok = await logs.updateTime(editing.id, { startTime: editing.start, endTime: editing.end, travelHours: parseHours(editing.travel) });
-    setSaving(false);
-    if (ok) { setEditing(null); toast.success('Tiden är ändrad'); }
-  };
+  const [editing, setEditing] = useState<EditableTimeEntry | null>(null);
 
   const timeEntries = logs.timeFor(projectId);
   const expenseEntries = logs.expensesFor(projectId);
@@ -331,35 +316,12 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate }: Pr
       {(timeEntries.length > 0 || expenseEntries.length > 0) && (
         <section className="space-y-2">
           <h2 className="text-sm font-semibold text-foreground">Sparat på denna order</h2>
-          {timeEntries.map(entry => <div key={entry.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"><Clock className="w-4 h-4 text-muted-foreground" /><div className="min-w-0 flex-1"><p className="text-sm font-medium text-foreground">{entry.hours.toFixed(2)} h{entry.travelHours ? ` + ${entry.travelHours.toFixed(2)} h restid` : ''}</p><p className="text-xs text-muted-foreground">{entry.date}{entry.startTime ? ` · ${entry.startTime}–${entry.endTime}` : ''}</p></div><Button variant="ghost" size="icon" aria-label="Ändra tid" onClick={() => setEditing({ id: entry.id, date: entry.date, start: entry.startTime?.slice(0, 5) ?? '', end: entry.endTime?.slice(0, 5) ?? '', travel: entry.travelHours ? fmtH(entry.travelHours) : '' })}><Pencil className="w-4 h-4" /></Button><Button variant="ghost" size="icon" aria-label="Delete time entry" onClick={() => void logs.deleteTime(entry.id)}><Trash2 className="w-4 h-4" /></Button></div>)}
+          {timeEntries.map(entry => <div key={entry.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"><Clock className="w-4 h-4 text-muted-foreground" /><div className="min-w-0 flex-1"><p className="text-sm font-medium text-foreground">{entry.hours.toFixed(2)} h{entry.travelHours ? ` + ${entry.travelHours.toFixed(2)} h restid` : ''}</p><p className="text-xs text-muted-foreground">{entry.date}{entry.startTime ? ` · ${entry.startTime}–${entry.endTime}` : ''}</p></div><Button variant="ghost" size="icon" aria-label="Ändra tid" onClick={() => setEditing(entry)}><Pencil className="w-4 h-4" /></Button><Button variant="ghost" size="icon" aria-label="Delete time entry" onClick={() => void logs.deleteTime(entry.id)}><Trash2 className="w-4 h-4" /></Button></div>)}
           {expenseEntries.map(entry => <div key={entry.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"><Wallet className="w-4 h-4 text-muted-foreground" /><div className="min-w-0 flex-1"><p className="text-sm font-medium text-foreground">{expenseCategoryLabels[entry.category]} · {money(entry.amount)}</p><p className="text-xs text-muted-foreground">{entry.date}{entry.km ? ` · ${entry.km} km` : ''}</p></div><Button variant="ghost" size="icon" aria-label="Delete cost entry" onClick={() => void logs.deleteExpense(entry.id)}><Trash2 className="w-4 h-4" /></Button></div>)}
         </section>
       )}
 
-      <Dialog open={Boolean(editing)} onOpenChange={open => { if (!open) setEditing(null); }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Ändra tid {editing?.date}</DialogTitle>
-            <DialogDescription>Arbetstiden räknas fram från start och slut.</DialogDescription>
-          </DialogHeader>
-          {editing && (
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div><Label>Start</Label><TimeWheel id="edit-start" label="Start" value={editing.start} fallback="07:00" onChange={v => setEditing({ ...editing, start: v })} /></div>
-                <div><Label>Slut</Label><TimeWheel id="edit-end" label="Slut" value={editing.end} fallback="16:00" onChange={v => setEditing({ ...editing, end: v })} /></div>
-              </div>
-              <p className="text-sm text-foreground">Arbetstid: <span className="font-semibold">{fmtH(editHours) || '0'} h</span></p>
-              <div>
-                <DurationWheel id="edit-travel" label="Restid totalt (tur och retur)" hint="All restid för dagen, båda hållen" value={parseHours(editing.travel)} onChange={h => setEditing({ ...editing, travel: h ? fmtH(h) : '' })} />
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditing(null)}>Avbryt</Button>
-            <Button disabled={saving || editHours <= 0} onClick={() => void saveEdit()}>Spara ändring</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <EditTimeDialog logs={logs} entry={editing} onClose={() => setEditing(null)} />
 
     </div>
   );
