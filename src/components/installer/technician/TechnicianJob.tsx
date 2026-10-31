@@ -37,12 +37,11 @@ import DeviationForm from '@/components/installer/DeviationForm';
 interface TechnicianJobProps {
   project: Project;
   onBack: () => void;
-  onStatusChange?: (projectId: string, newStatus: Project['status']) => void;
 }
 
 type Panel = 'checklist' | 'photos' | 'signature' | 'deviation' | 'issue' | null;
 
-const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) => {
+const TechnicianJob = ({ project, onBack }: TechnicianJobProps) => {
   const [panel, setPanel] = useState<Panel>(null);
   const { work, state: completionState, update, submitReport, replace, online, loaded } = useFieldWork(project.id, project.name);
   const template = useMemo(() => templateForProject(project), [project.templateId, project.projectType]);
@@ -59,7 +58,6 @@ const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) 
   const allSignOffsSigned = signOffs.every(so =>
     (so.id === 'customer' ? work.signature : work.signOffs?.[so.id] ?? '').trim().length > 1,
   );
-  const [askSkipPhotos, setAskSkipPhotos] = useState(false);
   const [submittingReport, setSubmittingReport] = useState(false);
 
   const handleSubmitReport = async () => {
@@ -78,27 +76,6 @@ const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) 
 
   const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(project.location || '')}`;
 
-  const setStatus = async (status: Project['status'], extra: Partial<typeof work> = {}) => {
-    await update({ pendingStatus: status, ...extra });
-    onStatusChange?.(project.id, status);
-  };
-
-  const complete = async (skipPhotos = false) => {
-    if (missingRequirements(completionState, template).length > 0) {
-      toast.error('Not ready yet', { description: missing.map(m => m.label).join(' · ') });
-      return;
-    }
-    if (!skipPhotos && missingRecommendations(completionState, template).length > 0) {
-      setAskSkipPhotos(true);
-      return;
-    }
-    await setStatus(
-      'completed',
-      skipPhotos ? { signOffs: { ...(work.signOffs ?? {}), [PHOTOS_SKIPPED_KEY]: new Date().toISOString() } } : {},
-    );
-    if (!online) toast.success('Job saved offline — it syncs automatically when you reconnect');
-    onBack();
-  };
 
   const bigButton = (
     key: Exclude<Panel, null>,
@@ -336,41 +313,14 @@ const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) 
             ))}
           </div>
         )}
-        {project.status === 'in-progress' ? (
-          <Button
-            size="lg"
-            disabled={!ready}
-            onClick={() => void complete()}
-            className="w-full h-14 text-base bg-status-completed hover:bg-status-completed/90 text-foreground disabled:opacity-50"
-          >
-            <CheckSquare className="w-5 h-5 mr-2" />
-            {ready ? 'Finish job' : `Finish job (${missing.length} left)`}
-          </Button>
-        ) : project.status === 'completed' ? (
-          <p className="text-center text-sm text-status-completed font-medium py-2">Job completed</p>
+        {ready && work.reportSubmitted ? (
+          <p role="status" className="text-center text-sm text-status-completed font-semibold py-2">
+            Rapportering klar – du behöver inte göra något mer här
+          </p>
         ) : (
-          <Button
-            size="lg"
-            onClick={() => setStatus('in-progress')}
-            className="w-full h-14 text-base bg-status-in-progress hover:bg-status-in-progress/90 text-foreground"
-          >
-            Start job
-          </Button>
+          <p className="text-center text-xs text-muted-foreground py-1">Skicka in rapporten när allt ovan är klart.</p>
         )}
       </div>
-      <SkipPhotosDialog
-        open={askSkipPhotos}
-        photoCount={work.photos.length}
-        minPhotos={minPhotos}
-        onAddPhotos={() => {
-          setAskSkipPhotos(false);
-          setPanel('photos');
-        }}
-        onSkip={() => {
-          setAskSkipPhotos(false);
-          void complete(true);
-        }}
-      />
     </div>
   );
 };

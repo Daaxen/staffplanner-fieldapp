@@ -85,15 +85,6 @@ const InstallerApp = () => {
     toast.success(`Picked up: ${project.name}`);
   };
 
-  const handleStatusChange = (projectId: string, newStatus: Project['status']) => {
-    setLocalProjects(prev => prev.map(p =>
-      p.id === projectId ? { ...p, status: newStatus } : p
-    ));
-    setSelectedProject(prev => prev && prev.id === projectId ? { ...prev, status: newStatus } : prev);
-    const label = newStatus === 'in-progress' ? 'Started' : newStatus === 'completed' ? 'Completed' : 'Updated';
-    toast.success(`${label} project`);
-  };
-
   // Replay status changes made while offline once the connection is back.
   useEffect(() => {
     setStatusHandler((projectRef, status) => {
@@ -110,7 +101,7 @@ const InstallerApp = () => {
       const since = new Date(logs.activeTimer!.startedAt).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
       return (
         <Button className="w-full h-11" variant="destructive" onClick={() => void logs.stopTimer(0)}>
-          Stoppa · pågår sedan {since}
+          Stoppa tidtagning · sedan {since}
         </Button>
       );
     }
@@ -124,7 +115,7 @@ const InstallerApp = () => {
           await logs.stopTimer(0);
         }
         await logs.startTimer(project.id);
-      }}>Starta jobb</Button>
+      }}>Starta tidtagning</Button>
     );
   };
 
@@ -179,7 +170,6 @@ const InstallerApp = () => {
       <TechnicianMode
         projects={localProjects}
         installer={installer}
-        onStatusChange={handleStatusChange}
         onExit={() => toggleTechnicianMode(false)}
       />
     );
@@ -193,7 +183,6 @@ const InstallerApp = () => {
         logs={logs}
         topAction={startAction(selectedProject)}
         onBack={() => setSelectedProject(null)}
-        onStatusChange={handleStatusChange}
         onPickUp={selectedProject.assigneeIds.length === 0 ? () => handlePickUp(selectedProject) : undefined}
         initialTab={projectEntryTab}
       />
