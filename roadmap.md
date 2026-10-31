@@ -9,3 +9,5 @@
 - [x] Verify completion rules with regression tests
 - [x] Verify signed-in installer completion readiness with no photos or customer sign-off; left the live order in progress
 - [x] Fix the report-save failure and verify the submitted report can be read back after reload
+- [ ] Remove installer time tracking controls and travel presets; add half/full-day work shortcuts
+- [ ] Verify manual time entry and day shortcuts in tests and the installer app
