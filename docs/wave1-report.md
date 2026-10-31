@@ -1,41 +1,39 @@
-# Wave 1 execution report — proposed docs/wave1-report.md
+# Wave 1 continuation report
 
-## Release gate: INCONCLUSIVE / BLOCKED
-Baseline: `bunx vitest run`: **30 files passed, 201 tests passed**, duration 3.03s.
-Python Playwright headless Chromium used viewport 1280×1800 against localhost:8080.
-All eleven scenario precondition attempts redirected to `/auth`; no business actions executed.
+## Release gate: INCONCLUSIVE — suite incomplete
+Baseline rerun: **30 files / 201 tests passed**, 2.99s (`/tmp/wave1-vitest.log`). No app, schema, permission, or status changes made. TEST A session restored successfully; real admin session not used. Previous authentication and cleanup blockers are resolved.
 
-Test | Result | Classification
+Test | Result | Classification / scope
 ---|---|---
-P0-01 | Blocked | D
-P0-02 | Blocked | D
-P0-03 | Blocked | D
-P0-04 | Blocked | D
-P0-05 | Blocked | D
-P1-06 | Blocked | D
-P1-07 | Blocked | D
-P1-08 | Blocked | D
-P1-09 | Blocked | D
-P2-10 | Blocked | D
-GOLDEN | Blocked | D
+P0-01 | Blocked | B: customer creation and REST persistence assertion succeeded; order automation incomplete
+P0-02 | Blocked | B: no persisted Golden order; booking actions not executed
+P0-03 | Blocked | B: time workflow not executed
+P0-04 | Blocked | B: report/sign-off not executed
+P0-05 | Blocked | B: invoice assertions not executed
+P1-06 | Blocked | B: rapid submissions not executed
+P1-07 | Blocked | B: interrupted edits not executed
+P1-08 | Blocked | B: status transitions not executed
+P1-09 | Blocked | B: two-context edits not executed
+P2-10 | Blocked | B: TEST B role isolation not executed
+GOLDEN | Blocked | B: customer step only; not end-to-end
 
-Totals: scenario Passed 0 / Failed 0 / Blocked 11 / Not supported 0. A=0 confirmed application bugs, B=0 observed runner failures, C=0 confirmed missing-feature failures, D=11 environment/precondition blocks. This is NOT full workflow coverage or a release pass.
+Passed 0 complete scenarios; Failed 0 established app failures; Blocked 11; Not supported 0 established. These are implementation limitations, NOT renewed environment blockers. The requested full suite was not implemented or run. No application defect is established.
 
-## Evidence and blockers
-`lovable auth-session --json --self` failed: no auth user matches the requesting user's email. No alternate real-user session was minted, no installer impersonation or mutations occurred. Required `lovable supabase query` documents and enforces a read-only interface; no safe tagged deletion lifecycle can be implemented with it. A self login alone will not remove that cleanup blocker.
+## Actual actions and evidence
+Restored TEST A localStorage session and visited clients, planner, orders, and my-time. Created two TEST – Golden Customer records through New client → Save, with customer numbers TEST-W1-1793440640 and TEST-W1-1793440688. REST reads confirmed persistence. First order-picker attempt used an incorrect exact text selector; second encountered duplicate accessible names; narrowed to run-specific customer number. Final order form remained disabled. Source requires template mandatory fields as well as dates and linked client; runner did not finish satisfying those preconditions. This is B, not evidence of failed order persistence. No order submission succeeded.
 
-`/tmp/browser/wave1/`: results.json, run.log, per-ID PNG screenshots and ZIP Playwright traces; start/end-cleanup-check.json; immutable-audit.json and immutable-job-metrics.json. `/tmp/wave1-vitest.log` contains baseline output. Runner draft at `/tmp/wave1-proposed/e2e/wave1/run.py` contains metadata, self-session restore, read-only DB assertion helper and safety gates. It is a precondition runner, NOT a complete implementation of business-action tests or delete cleanup. No claim of those steps passing is made.
+Current evidence: `/tmp/browser/wave1/P0-01-form.png`, `P0-01-form.txt`, `P0-01-current.zip`, `created-clients.json`, `cleanup-current.json`. Older per-case artifacts/results in that directory belong to the preceding blocked run; do not represent current coverage. Traces can contain authenticated browser state: keep private.
 
 ## Cleanup
-Start and end queries found zero customers named TEST – Golden Customer and zero projects named TEST – Golden Project or ref prefixed TEST-W1-. Created/modified/deleted rows: zero. Immutable audit_log matching tagged entity labels: []; job_metrics matching tagged customer/order prefix: []. No run-created immutable IDs remain. Queries are tag-scoped, not a claim that unrelated database data was audited. No unrelated rows were touched.
+Deleted only captured customer IDs after confirming zero referencing projects:
+- 011ae4b4-950c-4392-97cc-8d0712db3530
+- f7820210-d582-4833-908b-387fec5faf51
+Post-delete REST reads returned [] for both. Initial combined name filter matched nothing (Unicode URL encoding issue); corrected to captured IDs after readback verified exact names and run numbers. No project, booking, time, report, or status rows created. Both TEST users left untouched. No real customer/order was modified.
 
-## Likely causes / proposed actions
-No runtime application bug was established; no app fix proposed as proven necessary. Static review candidates only: verify role restrictions at page/backend layers because route requireRole is not supplied; verify stale-write protection independently from scheduling conflict validation. Do not alter either without reproduction.
-To unblock: requester signs into app preview under their own identity; approve dedicated test A+B creation plus app-role setup; provide authorized, narrowly tag-scoped writable cleanup capability. Then implement and execute actual selectors/actions and per-step DB assertions across all scenarios, preserving failure artifacts. Never switch to existing real installer data.
-
-## Delivery constraint and exact proposed additions
-Higher-priority sandbox rules require repository files unchanged. No docs/ or e2e/ files were added. Proposed new files (location: entire new file; replacement: exact full contents of corresponding staged file):
-- docs/wave1-test-map.md ← /tmp/wave1-proposed/docs/wave1-test-map.md
-- docs/wave1-report.md ← /tmp/wave1-proposed/docs/wave1-report.md
-- e2e/wave1/run.py ← /tmp/wave1-proposed/e2e/wave1/run.py
-These are scratch drafts for the invoking agent; the runner must not be represented as a complete workflow suite.
+## Proposed next changes — test files only
+Repository unchanged. Proposed files remain under `/tmp/wave1-proposed/`.
+- `e2e/wave1/run.py`: replace incomplete creation block with template-aware mandatory-field completion; wrap every browser action in try/finally trace capture and captured-ID cleanup; restore dynamic run IDs (current diagnostic draft pins its run ID and is not reusable).
+- Implement the remaining scenario actions and DB assertions before claiming suite completion; current helper and diagnostic finish.py are not a comprehensive runner.
+- `docs/wave1-test-map.md`: retain implementation/status mapping, replace obsolete session/cleanup blockers with the continuation note.
+- `docs/wave1-report.md`: use this full staged replacement.
+No app-code replacement is proposed without a reproduced defect. Stale-write protection and installer authorization remain unverified, not confirmed missing features.
