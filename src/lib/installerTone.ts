@@ -20,3 +20,16 @@ export const toneClasses: Record<Tone, { border: string; badge: string; surface:
   problem: { border: 'border-destructive', badge: 'bg-destructive/15 text-destructive border border-destructive/40', surface: 'bg-destructive/10 border-destructive/40', icon: 'text-destructive', dot: 'bg-destructive' },
   neutral: { border: 'border-status-cancelled', badge: 'bg-muted text-muted-foreground border border-border', surface: 'bg-muted border-border', icon: 'text-muted-foreground', dot: 'bg-status-cancelled' },
 };
+
+/** Swedish status labels shown on installer badges. */
+export const svStatusLabels: Record<string, string> = {
+  completed: 'Klar',
+  'in-progress': 'Pågår',
+  scheduled: 'Planerad',
+  open: 'Ej tilldelad',
+  'on-hold': 'Pausad',
+  cancelled: 'Avbruten',
+};
+
+/** Report shortcut tone: green once something is saved, otherwise the "to do" tone. */
+export const reportTone = (saved: boolean, todo: Tone = 'planned'): Tone => (saved ? 'done' : todo);

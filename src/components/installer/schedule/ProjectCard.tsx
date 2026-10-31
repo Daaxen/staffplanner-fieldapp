@@ -3,7 +3,7 @@ import { MapPin, Clock, Users, Truck } from 'lucide-react';
 import { type Project, projectTypeIcons, statusLabels, installers } from '@/data/mockData';
 import { vehicles } from '@/data/fleetData';
 import { cn } from '@/lib/utils';
-import { toneFor, toneClasses } from '@/lib/installerTone';
+import { toneFor, toneClasses, svStatusLabels } from '@/lib/installerTone';
 import { formatHours, formatVariance, varianceClass, variancePct, varianceTone, type ActualTime } from '@/lib/timeVariance';
 
 const statusColorMap: Record<string, string> = {
@@ -59,7 +59,7 @@ const ProjectCard = ({ project, onSelect, currentInstallerId, actual, action }: 
           </p>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
-          <span className={cn("text-[11px] font-semibold px-2 py-0.5 rounded-full", toneClasses[toneFor(project.status)].badge)}>{statusLabels[project.status]}</span>
+          <span className={cn("text-[11px] font-semibold px-2 py-0.5 rounded-full", toneClasses[toneFor(project.status)].badge)}>{svStatusLabels[project.status] ?? statusLabels[project.status]}</span>
         </div>
       </div>
 
