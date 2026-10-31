@@ -11,3 +11,6 @@
 - [x] Fix the report-save failure and verify the submitted report can be read back after reload
 - [x] Remove installer time tracking controls and travel presets; add half/full-day work shortcuts
 - [x] Verify manual time entry and day shortcuts in tests and the installer app
+- [x] Keep failed report uploads retryable and distinguish queued reports from confirmed submissions
+- [x] Verify report retry and confirmation with regression tests
+- [x] Verify the saved report reads back in the signed-in installer view after reload
