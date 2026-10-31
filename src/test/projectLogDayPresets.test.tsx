@@ -23,7 +23,12 @@ describe('order work-day entry', () => {
     const logs = makeLogs();
     render(<ProjectLogTab projectId="TEST-order" logs={logs} />);
     fireEvent.change(screen.getByLabelText('Datum'), { target: { value: '2026-10-30' } });
-    fireEvent.change(screen.getByLabelText('Start'), { target: { value: '09:30' } });
+    const hoursWheel = screen.getAllByRole('spinbutton', { name: 'Start timmar' })[0];
+    fireEvent.keyDown(hoursWheel, { key: 'ArrowDown' });
+    fireEvent.keyDown(hoursWheel, { key: 'ArrowDown' });
+    const minutesWheel = screen.getAllByRole('spinbutton', { name: 'Start minuter' })[0];
+    fireEvent.keyDown(minutesWheel, { key: 'ArrowDown' });
+    fireEvent.keyDown(minutesWheel, { key: 'ArrowDown' });
     fireEvent.change(screen.getByLabelText('Restid (timmar)'), { target: { value: '1,5' } });
     fireEvent.click(screen.getByRole('button', { name: label }));
     expect(logs.addTime).not.toHaveBeenCalled();
