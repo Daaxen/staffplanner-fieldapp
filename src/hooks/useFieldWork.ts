@@ -2,11 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   emptyWork,
   hydrateWork,
+  loadWork,
   saveWork,
   syncFieldWork,
   type FieldWork,
 } from '@/lib/offline/fieldWork';
 import { useOnlineStatus } from '@/hooks/useOffline';
+import { canSubmitReport } from '@/lib/completionRequirements';
 
 /**
  * One shared source for a job's checklist, report, photos and sign-offs.
@@ -19,12 +21,15 @@ export function useFieldWork(projectRef: string, projectName?: string) {
   const [loaded, setLoaded] = useState(false);
   const online = useOnlineStatus();
   const pushTimer = useRef<number | null>(null);
+  const workRef = useRef(work);
+  const writes = useRef<Promise<unknown>>(Promise.resolve());
 
   useEffect(() => {
     let active = true;
     setLoaded(false);
     hydrateWork(projectRef, projectName).then(w => {
       if (!active) return;
+      workRef.current = w;
       setWork(w);
       setLoaded(true);
     });
@@ -54,17 +59,32 @@ export function useFieldWork(projectRef: string, projectName?: string) {
 
   const update = useCallback(
     async (patch: Partial<FieldWork>) => {
-      const next = await saveWork({ ...work, ...patch, projectRef, projectName });
+      const next = { ...workRef.current, ...patch, projectRef, projectName };
+      workRef.current = next;
       setWork(next);
+      const write = writes.current.catch(() => undefined).then(() => saveWork(next));
+      writes.current = write;
+      const saved = await write;
       schedulePush();
-      return next;
+      return saved;
     },
-    [work, projectRef, projectName, schedulePush],
+    [projectRef, projectName, schedulePush],
   );
+
+  const submitReport = useCallback(async () => {
+    if (!loaded) throw new Error('Rapporten laddas fortfarande. Försök igen strax.');
+    if (!canSubmitReport(workRef.current.reportText)) throw new Error('Skriv en installationsrapport först.');
+    await update({ reportSubmitted: true });
+    await syncFieldWork();
+    const saved = await loadWork(projectRef, projectName);
+    // A queued report is saved on the phone, not yet confirmed by the server.
+    return !saved.dirty;
+  }, [loaded, update, projectRef, projectName]);
 
   /** Used by PhotoManager, which saves the work record itself. */
   const replace = useCallback(
     (next: FieldWork) => {
+      workRef.current = next;
       setWork(next);
       schedulePush();
     },
@@ -82,5 +102,5 @@ export function useFieldWork(projectRef: string, projectName?: string) {
     [work.photos.length, work.checkedItems, work.signature, work.reportSubmitted, work.signOffs],
   );
 
-  return { work, state, loaded, online, update, replace, setWork };
+  return { work, state, loaded, online, update, submitReport, replace, setWork };
 }

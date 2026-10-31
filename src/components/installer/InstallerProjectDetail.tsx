@@ -12,6 +12,7 @@ import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import {
   checklistFor,
+  canSubmitReport,
   completionRequirements,
   minPhotosFor,
   missingRecommendations,
@@ -54,7 +55,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
   
   const [tab, setTab] = useState(initialTab);
   // Same saved field report, offline queue and sync as technician mode.
-  const { work, state: completionState, update, replace, loaded, online } = useFieldWork(project.id, project.name);
+  const { work, state: completionState, update, submitReport, replace, loaded, online } = useFieldWork(project.id, project.name);
   const { checkedItems, reportText, reportSubmitted, signature } = work;
   const signOffs = work.signOffs ?? {};
   const photoCount = work.photos.length;
@@ -78,6 +79,23 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
   const missing = requirements.filter(r => !r.met && r.severity === 'required');
   const readyToComplete = missing.length === 0;
   const [askSkipPhotos, setAskSkipPhotos] = useState(false);
+  const [submittingReport, setSubmittingReport] = useState(false);
+
+  const handleSubmitReport = async () => {
+    setSubmittingReport(true);
+    try {
+      const synced = await submitReport();
+      toast.success(synced
+        ? 'Installation report submitted'
+        : 'Report saved on this phone — waiting to upload');
+    } catch (error) {
+      toast.error('Could not submit report', {
+        description: error instanceof Error ? error.message : 'Please try again.',
+      });
+    } finally {
+      setSubmittingReport(false);
+    }
+  };
 
   const toggleCheck = (id: string) =>
     void update({
@@ -372,6 +390,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
             <Section title="Installation Report (required)">
               <Textarea
                 value={reportText}
+                disabled={!loaded || submittingReport}
                 maxLength={2000}
                 onChange={e => void update({ reportText: e.target.value, reportSubmitted: false })}
                 placeholder="Describe the work performed, deviations and any follow-up needed…"
@@ -383,17 +402,10 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
                 </span>
                 <Button
                   size="sm"
-                  disabled={reportText.trim().length < 10 || reportSubmitted}
-                  onClick={() => {
-                    void update({ reportSubmitted: true });
-                    toast.success(
-                      online
-                        ? 'Installation report submitted'
-                        : 'Report saved on this phone — it uploads when you reconnect',
-                    );
-                  }}
+                  disabled={!loaded || !canSubmitReport(reportText) || reportSubmitted || submittingReport}
+                  onClick={() => void handleSubmitReport()}
                 >
-                  Submit report
+                  {submittingReport ? 'Submitting…' : 'Submit report'}
                 </Button>
               </div>
             </Section>
