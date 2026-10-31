@@ -461,14 +461,19 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onPickUp, in
                   </Button>
                 ))}
               </div>
-              {!readyToComplete && (
+              {missing.length > 0 ? (
                 <div className="mt-3 flex items-start gap-2 rounded-lg border border-status-on-hold/40 bg-status-on-hold/10 p-2.5">
                   <AlertCircle className="w-4 h-4 text-status-on-hold mt-0.5 shrink-0" />
                   <p className="text-xs text-foreground">
-                    {missing.length} requirement{missing.length > 1 ? 's' : ''} missing — the order cannot be marked complete yet.
+                    {missing.length} sak{missing.length > 1 ? 'er' : ''} kvar innan din rapportering är klar.
                   </p>
                 </div>
-              )}
+              ) : reportingDone ? (
+                <div className="mt-3 flex items-start gap-2 rounded-lg border border-status-completed/40 bg-status-completed/10 p-2.5">
+                  <Check className="w-4 h-4 text-status-completed mt-0.5 shrink-0" />
+                  <p className="text-xs font-medium text-foreground">Rapportering klar – du behöver inte göra något mer här.</p>
+                </div>
+              ) : null}
             </Section>
 
             <Section title="Sign-off">
