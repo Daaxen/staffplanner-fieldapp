@@ -409,7 +409,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onPickUp, in
 
         {/* LOG TAB */}
         <TabsContent value="log" className="flex-1 overflow-auto mt-0">
-          <ProjectLogTab projectId={project.id} logs={logs} plannedHours={project.estimatedHours} startDate={project.startDate} endDate={project.endDate} />
+          <ProjectLogTab projectId={project.id} logs={logs} plannedHours={project.estimatedHours} startDate={project.startDate} endDate={project.endDate} status={project.status} isAdmin={isAdmin} />
         </TabsContent>
 
         <TabsContent value="deviation" className="flex-1 overflow-auto mt-0">

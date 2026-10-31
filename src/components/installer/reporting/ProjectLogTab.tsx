@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { Camera, Clock, MapPin, Paperclip, Pencil, Receipt, Trash2, Wallet, X } from 'lucide-react';
+import { Camera, Clock, Lock, MapPin, Paperclip, Pencil, Receipt, Trash2, Wallet, X } from 'lucide-react';
 import { missingReceiptMessage, receiptRequired, uploadReceipt, RECEIPT_ACCEPT } from '@/lib/receipts';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import type { InstallerLogs } from '@/hooks/useInstallerLogs';
 import { sumActualTime } from '@/lib/timeVariance';
 import TimeVarianceCard from '@/components/installer/reporting/TimeVarianceCard';
 import { hoursBetween, timeMismatchMessage } from '@/lib/validation/reporting';
-import { WORK_DAY_PRESETS, workDayTimes } from '@/lib/timeReporting';
+import { WORK_DAY_PRESETS, workDayTimes, isTimeLocked, TIME_LOCKED_MESSAGE } from '@/lib/timeReporting';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DurationWheel, TimeWheel } from '@/components/ui/time-wheel';
 import EditTimeDialog, { fmtH, parseHours, type EditableTimeEntry } from '@/components/installer/reporting/EditTimeDialog';
@@ -24,6 +24,9 @@ interface ProjectLogTabProps {
   plannedHours?: number;
   startDate?: string;
   endDate?: string;
+  /** Work status of the order; time is locked once completed (admins excepted). */
+  status?: string;
+  isAdmin?: boolean;
 }
 
 const pad = (n: number) => n.toString().padStart(2, '0');
@@ -41,7 +44,9 @@ const orderDays = (start?: string, end?: string) => {
   return out;
 };
 
-const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate }: ProjectLogTabProps) => {
+const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate, status, isAdmin = false }: ProjectLogTabProps) => {
+  const closed = isTimeLocked(status);
+  const timeLocked = closed && !isAdmin;
   const [date, setDate] = useState(today);
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
@@ -198,7 +203,7 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate }: Pr
         </p>
       </section>
 
-      <section className="rounded-lg border border-border bg-card p-3 space-y-3">
+      {timeLocked ? <section className="rounded-lg border border-border bg-muted p-3 flex items-center gap-2 text-sm text-foreground"><Lock className="w-4 h-4" />{TIME_LOCKED_MESSAGE}</section> : <section className="rounded-lg border border-border bg-card p-3 space-y-3">
         <h2 className="text-sm font-semibold text-foreground flex items-center gap-2"><Clock className="w-4 h-4" />Lägg till tid manuellt</h2>
         <div className="grid grid-cols-2 gap-2">
           {WORK_DAY_PRESETS.map(preset => (
@@ -231,7 +236,7 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate }: Pr
         </div>
         <div><Label htmlFor="time-note">Anteckning (gäller dagens arbete och resa)</Label><Textarea id="time-note" placeholder="T.ex. väntetid hos kund, omväg p.g.a. vägarbete" value={timeNote} onChange={e => setTimeNote(e.target.value)} /></div>
         <Button className="w-full" disabled={saving} onClick={() => void submitTime()}>Spara tid för {date}</Button>
-      </section>
+      </section>}
 
       <Dialog open={Boolean(logs.pendingMismatch)} onOpenChange={open => { if (!open) logs.clearMismatch(); }}>
         <DialogContent>
@@ -316,12 +321,12 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate }: Pr
       {(timeEntries.length > 0 || expenseEntries.length > 0) && (
         <section className="space-y-2">
           <h2 className="text-sm font-semibold text-foreground">Sparat på denna order</h2>
-          {timeEntries.map(entry => <div key={entry.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"><Clock className="w-4 h-4 text-muted-foreground" /><div className="min-w-0 flex-1"><p className="text-sm font-medium text-foreground">{entry.hours.toFixed(2)} h{entry.travelHours ? ` + ${entry.travelHours.toFixed(2)} h restid` : ''}</p><p className="text-xs text-muted-foreground">{entry.date}{entry.startTime ? ` · ${entry.startTime}–${entry.endTime}` : ''}</p></div><Button variant="ghost" size="icon" aria-label="Ändra tid" onClick={() => setEditing(entry)}><Pencil className="w-4 h-4" /></Button><Button variant="ghost" size="icon" aria-label="Delete time entry" onClick={() => void logs.deleteTime(entry.id)}><Trash2 className="w-4 h-4" /></Button></div>)}
+          {timeEntries.map(entry => <div key={entry.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"><Clock className="w-4 h-4 text-muted-foreground" /><div className="min-w-0 flex-1"><p className="text-sm font-medium text-foreground">{entry.hours.toFixed(2)} h{entry.travelHours ? ` + ${entry.travelHours.toFixed(2)} h restid` : ''}</p><p className="text-xs text-muted-foreground">{entry.date}{entry.startTime ? ` · ${entry.startTime}–${entry.endTime}` : ''}</p></div>{timeLocked ? <Button variant="ghost" size="icon" aria-label="Tiden är låst" onClick={() => toast.info(TIME_LOCKED_MESSAGE)}><Lock className="w-4 h-4" /></Button> : <><Button variant="ghost" size="icon" aria-label="Ändra tid" onClick={() => setEditing(entry)}><Pencil className="w-4 h-4" /></Button><Button variant="ghost" size="icon" aria-label="Delete time entry" onClick={() => void logs.deleteTime(entry.id)}><Trash2 className="w-4 h-4" /></Button></>}</div>)}
           {expenseEntries.map(entry => <div key={entry.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"><Wallet className="w-4 h-4 text-muted-foreground" /><div className="min-w-0 flex-1"><p className="text-sm font-medium text-foreground">{expenseCategoryLabels[entry.category]} · {money(entry.amount)}</p><p className="text-xs text-muted-foreground">{entry.date}{entry.km ? ` · ${entry.km} km` : ''}</p></div><Button variant="ghost" size="icon" aria-label="Delete cost entry" onClick={() => void logs.deleteExpense(entry.id)}><Trash2 className="w-4 h-4" /></Button></div>)}
         </section>
       )}
 
-      <EditTimeDialog logs={logs} entry={editing} onClose={() => setEditing(null)} />
+      <EditTimeDialog logs={logs} entry={editing} onClose={() => setEditing(null)} closedWarning={closed && isAdmin} />
 
     </div>
   );
