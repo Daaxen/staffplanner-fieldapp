@@ -172,6 +172,8 @@ async function loadInstallers() {
  */
 const rowIdByRef = new Map<string, string>();
 const refByRowId = new Map<string, string>();
+/** updated_at last read per order ref — sent back so the database can reject stale saves. */
+const updatedAtByRef = new Map<string, string>();
 
 function rememberProjectKey(ref: string | null, rowId: string | null) {
   if (!ref || !rowId) return;
@@ -205,7 +207,7 @@ async function loadProjects() {
   const { data, error } = await supabase
     .from('projects')
     .select(
-      'id,ref,data,name,status,commercial_status,start_date,end_date,project_type,location,' +
+      'id,ref,updated_at,data,name,status,commercial_status,start_date,end_date,project_type,location,' +
         'contact_name,contact_phone,contact_email,project_number,template_id,' +
         'client_ref,client_name,street,postal_code,region,location_lat,location_lng,' +
         'start_time,end_time,estimated_hours,is_flex_order,description,' +
@@ -293,6 +295,7 @@ async function loadProjects() {
           economy,
         } as Project;
         rememberProjectKey(project.id, r.id as string);
+        if (r.updated_at) updatedAtByRef.set(project.id, r.updated_at as string);
         return project;
       })
       .filter((p) => p.id),
@@ -402,14 +405,22 @@ async function upsertProjectRow(p: Project) {
         vehicle_type: p.vehicleType || null,
         // full snapshot kept for compatibility — no key is ever removed
         data: p as unknown as Record<string, unknown>,
+        client_base_updated_at: updatedAtByRef.get(p.id) ?? null,
       } as never,
       { onConflict: 'ref' },
     )
-    .select('id')
+    .select('id,updated_at')
     .maybeSingle();
-  if (error) throw error;
+  if (error) {
+    if (error.message?.includes('STALE_WRITE')) {
+      throw new Error('This work order was changed by someone else. Reload the page and make your change again.');
+    }
+    throw error;
+  }
+  const saved = data as { id: string; updated_at?: string } | null;
+  if (saved?.updated_at) updatedAtByRef.set(p.id, saved.updated_at);
 
-  const rowId = (data as { id: string } | null)?.id;
+  const rowId = saved?.id;
   if (!rowId) return;
 
   // economy figures live in their own typed table (profitability + alerts)
