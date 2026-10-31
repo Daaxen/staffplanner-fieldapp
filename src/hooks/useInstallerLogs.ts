@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useMyInstallerId } from '@/lib/installerIdentity';
-import { computeHours, DEFAULT_MILEAGE_RATE, type TimeEntry, type ExpenseEntry, type ExpenseCategory, type ActiveTimer } from '@/data/logsData';
+import { computeHours, DEFAULT_MILEAGE_RATE, type TimeEntry, type ExpenseEntry, type ExpenseCategory } from '@/data/logsData';
 import { ratesForClient, type Project } from '@/data/mockData';
 import { ensureProjectRowId, projectRefForRowId } from '@/lib/appData';
 import { sumActualTime } from '@/lib/timeVariance';
@@ -22,7 +22,6 @@ export function useInstallerLogs(projects: Project[] = []) {
 
   const [time, setTime] = useState<TimeEntry[]>([]);
   const [expenses, setExpenses] = useState<ExpenseEntry[]>([]);
-  const [activeTimer, setActiveTimer] = useState<ActiveTimer | null>(null);
   const [loading, setLoading] = useState(true);
   /** Set when typed hours disagree with the start and finish times. */
   const [pendingMismatch, setPendingMismatch] = useState<TimeMismatch | null>(null);
@@ -40,11 +39,10 @@ export function useInstallerLogs(projects: Project[] = []) {
   const refresh = useCallback(async () => {
     if (!installerId) { setLoading(false); return; }
     setLoading(true);
-    const [t, e, m, timer] = await Promise.all([
+    const [t, e, m] = await Promise.all([
       supabase.from('time_entries').select('*').eq('installer_id', installerId).order('entry_date', { ascending: false }),
       supabase.from('expense_entries').select('*').eq('installer_id', installerId).order('entry_date', { ascending: false }),
       supabase.from('mileage_entries').select('*').eq('installer_id', installerId).order('entry_date', { ascending: false }),
-      supabase.from('active_timers').select('*').eq('installer_id', installerId).maybeSingle(),
     ]);
 
     setTime((t.data ?? []).map(r => ({
@@ -66,7 +64,6 @@ export function useInstallerLogs(projects: Project[] = []) {
     }));
     setExpenses([...exp, ...mil].sort((a, b) => (a.date < b.date ? 1 : -1)));
 
-    setActiveTimer(timer.data ? { projectId: projectRefForRowId(timer.data.project_id) ?? timer.data.project_id, startedAt: timer.data.started_at } : null);
     setLoading(false);
   }, [installerId]);
 
@@ -81,22 +78,6 @@ export function useInstallerLogs(projects: Project[] = []) {
     [expenses],
   );
 
-  /** Starts the clock for today. Returns true when started; shows a Swedish message otherwise. */
-  const startTimer = useCallback(async (projectId: string): Promise<boolean> => {
-    if (!installerId) { toast.error('Ditt konto är inte kopplat till en montör – kontakta admin.'); return false; }
-    const startedAt = new Date().toISOString();
-    const projectRowId = await ensureProjectRowId(projectId);
-    if (!projectRowId) { toast.error('Ordern hittades inte – ladda om appen och försök igen.'); return false; }
-    const { error } = await supabase.from('active_timers').upsert({
-      installer_id: installerId, project_id: projectRowId,
-      snapshot_project_name: metaFor(projectId).projectName, started_at: startedAt,
-    });
-    if (error) { toast.error(`Klockan kunde inte startas: ${error.message}`); return false; }
-    setActiveTimer({ projectId, startedAt });
-    toast.success('Tidtagningen är startad');
-    return true;
-  }, [installerId, metaFor]);
-
   const addTime = useCallback(async (entry: {
     projectId: string; date: string; startTime?: string; endTime?: string; hours?: number;
     travelHours?: number; note?: string; source?: TimeEntry['source'];
@@ -104,8 +85,6 @@ export function useInstallerLogs(projects: Project[] = []) {
     acceptComputed?: boolean;
   }) => {
     if (!installerId) return null;
-    const bothTimes = Boolean(entry.startTime && entry.endTime);
-
     // The database recalculates hours from the times, so a disagreeing figure
     // is never overwritten in silence — the user decides.
     const mismatch = entry.acceptComputed ? null : timeMismatch(entry);
@@ -115,8 +94,8 @@ export function useInstallerLogs(projects: Project[] = []) {
       return null;
     }
 
-    const hours = bothTimes
-      ? computeHours(entry.startTime!, entry.endTime!)
+    const hours = entry.startTime && entry.endTime
+      ? computeHours(entry.startTime, entry.endTime)
       : (entry.hours || 0);
     const travelHours = Math.round((entry.travelHours || 0) * 100) / 100;
 
@@ -143,38 +122,6 @@ export function useInstallerLogs(projects: Project[] = []) {
     return data;
   }, [installerId, metaFor, projects, refresh]);
 
-
-  /** Check out: stores start, finish, work time and travel time in one entry. */
-  const stopTimer = useCallback(async (travelHours = 0) => {
-    if (!activeTimer || !installerId) return null;
-    const started = new Date(activeTimer.startedAt);
-    const now = new Date();
-    // The clock is per day: a timer left running past midnight stops at 23:59 on its start day.
-    const dayEnd = new Date(started); dayEnd.setHours(23, 59, 0, 0);
-    const ended = now > dayEnd ? dayEnd : now;
-    const hours = Math.max(0, Math.round(((ended.getTime() - started.getTime()) / 3_600_000) * 100) / 100);
-    const pad = (n: number) => n.toString().padStart(2, '0');
-    const hm = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    const localDate = `${started.getFullYear()}-${pad(started.getMonth() + 1)}-${pad(started.getDate())}`;
-    await addTime({
-      projectId: activeTimer.projectId,
-      date: localDate,
-      startTime: hm(started),
-      endTime: hm(ended),
-      hours, travelHours, source: 'timer',
-    });
-    if (ended !== now) toast.warning('Klockan stoppades vid midnatt – kontrollera sluttiden');
-
-    await supabase.from('active_timers').delete().eq('installer_id', installerId);
-    setActiveTimer(null);
-    return null;
-  }, [activeTimer, installerId, addTime]);
-
-  const cancelTimer = useCallback(async () => {
-    if (!installerId) return;
-    await supabase.from('active_timers').delete().eq('installer_id', installerId);
-    setActiveTimer(null);
-  }, [installerId]);
 
   const deleteTime = useCallback(async (id: string) => {
     await supabase.from('time_entries').delete().eq('id', id);
@@ -265,8 +212,7 @@ export function useInstallerLogs(projects: Project[] = []) {
 
   return {
     loading, refresh,
-    timeFor, expensesFor, activeTimer, actualFor,
-    startTimer, stopTimer, cancelTimer,
+    timeFor, expensesFor, actualFor,
     addTime, updateTime, deleteTime, pendingMismatch, clearMismatch,
     addExpense, addMileage, deleteExpense,
     rateFor, categories,
