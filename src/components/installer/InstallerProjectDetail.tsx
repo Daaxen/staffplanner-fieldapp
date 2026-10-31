@@ -465,8 +465,8 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onPickUp, in
                 ))}
               </div>
               {missing.length > 0 ? (
-                <div className="mt-3 flex items-start gap-2 rounded-lg border border-status-on-hold/40 bg-status-on-hold/10 p-2.5">
-                  <AlertCircle className="w-4 h-4 text-status-on-hold mt-0.5 shrink-0" />
+                <div className="mt-3 flex items-start gap-2 rounded-lg border border-destructive/50 bg-destructive/10 p-2.5">
+                  <AlertCircle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
                   <p className="text-xs text-foreground">
                     {missing.length} sak{missing.length > 1 ? 'er' : ''} kvar innan din rapportering är klar.
                   </p>
