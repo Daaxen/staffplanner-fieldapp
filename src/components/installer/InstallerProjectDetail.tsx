@@ -24,6 +24,7 @@ import type { InstallerLogs } from '@/hooks/useInstallerLogs';
 import MiniMap from '@/components/maps/MiniMap';
 import PhotoManager from '@/components/installer/PhotoManager';
 import { useFieldWork } from '@/hooks/useFieldWork';
+import { useAuth } from '@/hooks/useAuth';
 import DeviationForm from '@/components/installer/DeviationForm';
 import OrderDocumentsSection from '@/components/documents/OrderDocumentsSection';
 
@@ -51,6 +52,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onPickUp, in
   
   const [tab, setTab] = useState(initialTab);
   // Same saved field report, offline queue and sync as technician mode.
+  const { isAdmin } = useAuth();
   const { work, state: completionState, update, submitReport, replace, loaded, online } = useFieldWork(project.id, project.name);
   const { checkedItems, reportText, reportSubmitted, signature } = work;
   const signOffs = work.signOffs ?? {};
