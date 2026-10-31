@@ -1,6 +1,7 @@
 import { ArrowLeft, MapPin, Clock, Users, FileText, Phone, Camera, CheckSquare, ExternalLink, Info, Paperclip, ClipboardCheck, Mail, Receipt, AlertCircle, AlertTriangle, Check, X } from 'lucide-react';
 import { type Project, type Installer, projectTypeIcons, projectTypeLabels, statusLabels, installers } from '@/data/mockData';
 import { cn } from '@/lib/utils';
+import { toneClasses, type Tone } from '@/lib/installerTone';
 import { useClients, projectRowId } from '@/lib/appData';
 import { customerFieldInfo } from '@/lib/customerLink';
 import { Button } from '@/components/ui/button';
@@ -182,16 +183,16 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onPickUp, in
             <Section title="Rapportera">
               <div className="grid grid-cols-3 gap-2">
                 {([
-                  ['log', 'Tid', Clock],
-                  ['log', 'Utlägg', Receipt],
-                  ['log', 'Körning', MapPin],
-                  ['deviation', 'Avvikelse', AlertTriangle],
-                  ['report', 'Foto', Camera],
-                  ['summary', 'Rapport & signering', ClipboardCheck],
-                ] as const).map(([target, label, Icon]) => (
-                  <Button key={label} type="button" variant="outline" className="h-16 flex-col gap-1 text-xs whitespace-normal leading-tight"
+                  ['log', 'Tid', Clock, 'done'],
+                  ['log', 'Utlägg', Receipt, 'planned'],
+                  ['log', 'Körning', MapPin, 'planned'],
+                  ['deviation', 'Avvikelse', AlertTriangle, 'problem'],
+                  ['report', 'Foto', Camera, 'neutral'],
+                  ['summary', 'Rapport & signering', ClipboardCheck, missing.length > 0 ? 'progress' : 'done'],
+                ] as const).map(([target, label, Icon, tone]) => (
+                  <Button key={label} type="button" variant="outline" className={cn("h-16 flex-col gap-1 text-xs font-semibold whitespace-normal leading-tight text-foreground", toneClasses[tone as Tone].surface)}
                     onClick={() => setTab(target === 'summary' ? 'report' : target)}>
-                    <Icon className="w-5 h-5" />
+                    <Icon className={cn("w-5 h-5", toneClasses[tone as Tone].icon)} />
                     {label}
                   </Button>
                 ))}
@@ -464,8 +465,8 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onPickUp, in
                 ))}
               </div>
               {missing.length > 0 ? (
-                <div className="mt-3 flex items-start gap-2 rounded-lg border border-status-on-hold/40 bg-status-on-hold/10 p-2.5">
-                  <AlertCircle className="w-4 h-4 text-status-on-hold mt-0.5 shrink-0" />
+                <div className="mt-3 flex items-start gap-2 rounded-lg border border-destructive/50 bg-destructive/10 p-2.5">
+                  <AlertCircle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
                   <p className="text-xs text-foreground">
                     {missing.length} sak{missing.length > 1 ? 'er' : ''} kvar innan din rapportering är klar.
                   </p>
