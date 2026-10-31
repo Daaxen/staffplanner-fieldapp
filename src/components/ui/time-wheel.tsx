@@ -15,8 +15,9 @@ export function roundToQuarter(value: string, fallback = '07:00'): { h: number; 
   return { h: Math.floor(total / 60), m: total % 60 };
 }
 
-function WheelColumn({ items, value, onChange, label }: {
+function WheelColumn({ items, value, onChange, label, format = pad, suffix }: {
   items: number[]; value: number; onChange: (v: number) => void; label: string;
+  format?: (n: number) => string; suffix?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const timer = useRef<number>();
@@ -48,7 +49,7 @@ function WheelColumn({ items, value, onChange, label }: {
       role="spinbutton"
       aria-label={label}
       aria-valuenow={value}
-      aria-valuetext={pad(value)}
+      aria-valuetext={suffix ? `${format(value)} ${suffix}` : format(value)}
       tabIndex={0}
       onScroll={onScroll}
       onKeyDown={e => {
@@ -72,7 +73,7 @@ function WheelColumn({ items, value, onChange, label }: {
             )}
             style={{ height: ITEM_H, lineHeight: `${ITEM_H}px` }}
           >
-            {pad(n)}
+            {format(n)}{suffix && dist === 0 ? <span className="ml-1 text-xs font-normal text-muted-foreground">{suffix}</span> : null}
           </button>
         );
       })}
@@ -98,6 +99,40 @@ export function TimeWheel({ id, label, value, onChange, fallback }: TimeWheelPro
       <WheelColumn label={`${label} timmar`} items={HOURS} value={h} onChange={nh => emit(nh, m)} />
       <span aria-hidden className="relative self-center px-0.5 text-lg font-semibold text-foreground">:</span>
       <WheelColumn label={`${label} minuter`} items={MINUTES} value={m} onChange={nm => emit(h, nm)} />
+    </div>
+  );
+}
+
+const DURATION_HOURS = Array.from({ length: 13 }, (_, i) => i);
+
+/** Splits decimal hours into whole hours and quarter minutes (max 12 h). */
+export function splitDuration(hours: number): { h: number; m: number } {
+  const total = Math.min(12 * 60, Math.max(0, Math.round((hours * 60) / 15) * 15));
+  return { h: Math.floor(total / 60), m: total % 60 };
+}
+
+export const joinDuration = (h: number, m: number) => Math.min(12, h + m / 60);
+
+interface DurationWheelProps {
+  id?: string;
+  label: string;
+  hint?: string;
+  value: number;
+  onChange: (hours: number) => void;
+}
+
+/** Scroll-wheel for a duration (travel time) in a warm tone to stand apart from clock wheels. */
+export function DurationWheel({ id, label, hint, value, onChange }: DurationWheelProps) {
+  const { h, m } = splitDuration(value);
+  return (
+    <div id={id} className="rounded-lg border border-travel/40 bg-travel-surface p-2">
+      <p className="px-1 text-sm font-medium text-foreground">{label}</p>
+      <div className="relative mx-auto flex max-w-[220px] items-stretch">
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 rounded-md bg-travel/25" style={{ top: ITEM_H * 2, height: ITEM_H }} />
+        <WheelColumn label={`${label} timmar`} items={DURATION_HOURS} value={h} onChange={nh => onChange(joinDuration(nh, nh === 12 ? 0 : m))} format={String} suffix="h" />
+        <WheelColumn label={`${label} minuter`} items={MINUTES} value={m} onChange={nm => onChange(joinDuration(h, nm))} suffix="min" />
+      </div>
+      {hint && <p className="px-1 text-xs text-muted-foreground">{hint}</p>}
     </div>
   );
 }

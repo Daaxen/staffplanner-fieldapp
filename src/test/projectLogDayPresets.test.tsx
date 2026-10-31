@@ -29,7 +29,11 @@ describe('order work-day entry', () => {
     const minutesWheel = screen.getAllByRole('spinbutton', { name: 'Start minuter' })[0];
     fireEvent.keyDown(minutesWheel, { key: 'ArrowDown' });
     fireEvent.keyDown(minutesWheel, { key: 'ArrowDown' });
-    fireEvent.change(screen.getByLabelText('Restid (timmar)'), { target: { value: '1,5' } });
+    const travelHours = screen.getAllByRole('spinbutton', { name: 'Restid totalt (tur och retur) timmar' })[0];
+    fireEvent.keyDown(travelHours, { key: 'ArrowDown' });
+    const travelMinutes = screen.getAllByRole('spinbutton', { name: 'Restid totalt (tur och retur) minuter' })[0];
+    fireEvent.keyDown(travelMinutes, { key: 'ArrowDown' });
+    fireEvent.keyDown(travelMinutes, { key: 'ArrowDown' });
     fireEvent.click(screen.getByRole('button', { name: label }));
     expect(logs.addTime).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Spara tid för 2026-10-30' }));

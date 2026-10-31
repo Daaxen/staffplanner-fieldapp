@@ -51,6 +51,8 @@
     --status-confirmed: 200 80% 44%;
     --status-completed: 142 71% 45%;
     --status-on-hold: 25 95% 53%;
+    --travel: 38 92% 50%;
+    --travel-surface: 40 90% 95%;
     --status-cancelled: 220 10% 60%;
 
     /* Installer colors */
@@ -70,6 +72,8 @@
   }
 
   .dark {
+    --travel: 38 85% 55%;
+    --travel-surface: 35 40% 16%;
     --background: 224 55% 6%;
     --foreground: 210 40% 98%;
     --card: 224 45% 10%;

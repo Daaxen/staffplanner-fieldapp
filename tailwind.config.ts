@@ -68,6 +68,10 @@ export default {
           "on-hold": "hsl(var(--status-on-hold))",
           cancelled: "hsl(var(--status-cancelled))",
         },
+        travel: {
+          DEFAULT: "hsl(var(--travel))",
+          surface: "hsl(var(--travel-surface))",
+        },
         installer: {
           1: "hsl(var(--installer-1))",
           2: "hsl(var(--installer-2))",
