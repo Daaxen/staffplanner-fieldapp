@@ -21,7 +21,7 @@ import {
   DEFAULT_INVOICE_SETTINGS, type InvoiceSettings, type InvoiceSuggestion,
 } from '@/lib/invoicePrep';
 import {
-  canTransitionCommercial, commercialLabels, commercialStatusOf, type CommercialStatus,
+  canTransitionCommercial, commercialLabels, COMMERCIAL_TRACK_ENABLED, commercialStatusOf, type CommercialStatus,
 } from '@/lib/commercial';
 
 const numberField = (
@@ -193,7 +193,7 @@ const InvoicePrepView = () => {
             <thead className="bg-muted/50 text-xs text-muted-foreground">
               <tr>
                 <th className="px-3 py-2 text-left">Order</th>
-                <th className="px-3 py-2 text-left">Commercial</th>
+                {COMMERCIAL_TRACK_ENABLED && <th className="px-3 py-2 text-left">Commercial</th>}
                 <th className="px-3 py-2 text-right">Hours</th>
                 <th className="px-3 py-2 text-right">Revenue</th>
                 <th className="px-3 py-2 text-right">Cost</th>
@@ -204,7 +204,7 @@ const InvoicePrepView = () => {
             </thead>
             <tbody>
               {shown.length === 0 && (
-                <tr><td colSpan={8} className="px-3 py-8 text-center text-muted-foreground">No orders to prepare.</td></tr>
+                <tr><td colSpan={COMMERCIAL_TRACK_ENABLED ? 8 : 7} className="px-3 py-8 text-center text-muted-foreground">No orders to prepare.</td></tr>
               )}
               {shown.map(s => (
                 <tr
@@ -216,7 +216,7 @@ const InvoicePrepView = () => {
                     <div className="font-medium text-foreground">{s.project.name}</div>
                     <div className="text-[11px] text-muted-foreground">{s.project.client}</div>
                   </td>
-                  <td className="px-3 py-2 text-xs text-muted-foreground">{commercialLabels[s.commercialStatus]}</td>
+                  {COMMERCIAL_TRACK_ENABLED && <td className="px-3 py-2 text-xs text-muted-foreground">{commercialLabels[s.commercialStatus]}</td>}
                   <td className="px-3 py-2 text-right">{s.hours}</td>
                   <td className="px-3 py-2 text-right">{sek(s.revenue)}</td>
                   <td className="px-3 py-2 text-right text-muted-foreground">{sek(s.totalCost)}</td>
@@ -315,7 +315,7 @@ const InvoicePrepView = () => {
 
               <ReceiptList receipts={receipts[selected.project.id] ?? []} />
 
-              <DialogFooter className="gap-2">
+              {COMMERCIAL_TRACK_ENABLED && <DialogFooter className="gap-2">
                 <Button
                   variant="outline"
                   onClick={() => { setCommercial(selected.project.id, 'ready_for_invoice'); setSelectedId(null); }}
@@ -325,7 +325,7 @@ const InvoicePrepView = () => {
                 <Button onClick={() => { setCommercial(selected.project.id, 'invoiced'); setSelectedId(null); }}>
                   Mark invoiced
                 </Button>
-              </DialogFooter>
+              </DialogFooter>}
             </div>
           )}
         </DialogContent>

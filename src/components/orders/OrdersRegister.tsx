@@ -5,7 +5,7 @@ import { installers, type Project, type ProjectStatus, type ProjectType, statusL
 import { transitionError } from '@/lib/validation/controlledValues';
 import {
   COMMERCIAL_STATUSES, commercialLabels, commercialStatusOf, canTransitionCommercial,
-  commercialTransitionError, type CommercialStatus,
+  commercialTransitionError, type CommercialStatus, COMMERCIAL_TRACK_ENABLED,
 } from '@/lib/commercial';
 
 import { useProjects, registerBookingOverride } from '@/lib/appData';
@@ -466,7 +466,7 @@ const OrdersRegister = () => {
               <th className="px-3 py-2 text-left">Project</th>
               <th className="px-3 py-2 text-left">Location</th>
               <th className="px-3 py-2 text-left"><SortHeader k="status" label="Status" /></th>
-              <th className="px-3 py-2 text-left">Commercial</th>
+              {COMMERCIAL_TRACK_ENABLED && <th className="px-3 py-2 text-left">Commercial</th>}
               <th className="px-3 py-2 text-left"><SortHeader k="startDate" label="Start" /></th>
               <th className="px-3 py-2 text-left"><SortHeader k="endDate" label="End" /></th>
               <th className="px-3 py-2 text-left">Assignees</th>
@@ -506,7 +506,7 @@ const OrdersRegister = () => {
                     {statusLabels[o.status]}
                   </span>
                 </td>
-                <td className="px-3 py-2">
+                {COMMERCIAL_TRACK_ENABLED && <td className="px-3 py-2">
                   <Select
                     value={commercialStatusOf(o)}
                     onValueChange={v => setCommercial(o.id, v as CommercialStatus)}
@@ -523,7 +523,7 @@ const OrdersRegister = () => {
                       })}
                     </SelectContent>
                   </Select>
-                </td>
+                </td>}
                 <td className="px-3 py-2 whitespace-nowrap text-muted-foreground">{o.startDate}</td>
                 <td className="px-3 py-2 whitespace-nowrap text-muted-foreground">{o.endDate}</td>
                 <td className="px-3 py-2">

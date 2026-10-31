@@ -17,7 +17,7 @@ export function useTimeReportingRefs() {
       const [c, g, o, a, e] = await Promise.all([
         supabase.rpc('time_report_clients'),
         supabase.from('project_groups').select('id,name,project_number,client_id').order('name'),
-        supabase.from('projects').select('id,name,project_number,client_id,project_group_id').eq('sandbox', false).neq('status', 'cancelled').order('name'),
+        supabase.from('projects').select('id,name,project_number,client_id,project_group_id,status').eq('sandbox', false).neq('status', 'cancelled').order('name'),
         supabase.from('time_activity_types').select('id,name').eq('active', true).order('sort_order'),
         supabase.from('installers').select('id,name').order('name'),
       ]);

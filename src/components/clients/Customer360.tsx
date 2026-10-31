@@ -28,7 +28,7 @@ import {
   sek,
   type Profitability,
 } from '@/lib/profitability';
-import { commercialLabels, commercialStatusOf } from '@/lib/commercial';
+import { commercialLabels, commercialStatusOf, COMMERCIAL_TRACK_ENABLED } from '@/lib/commercial';
 import { statusLabels, type Client, type Project } from '@/data/mockData';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -281,7 +281,7 @@ const Customer360 = () => {
           date: p.startDate.slice(0, 10),
           kind: 'Order',
           title: p.name,
-          detail: `Planned start · ${statusLabels[p.status]} · ${commercialLabels[commercialStatusOf(p)]}`,
+          detail: `Planned start · ${statusLabels[p.status]}${COMMERCIAL_TRACK_ENABLED ? ` · ${commercialLabels[commercialStatusOf(p)]}` : ''}`,
         });
       }
       if (p.status === 'completed' && p.endDate) {
@@ -439,7 +439,7 @@ const Customer360 = () => {
                     <Row
                       key={p.id}
                       title={p.name}
-                      subtitle={`${statusLabels[p.status]} · ${commercialLabels[commercialStatusOf(p)]} · ${p.location || '—'}`}
+                      subtitle={`${statusLabels[p.status]}${COMMERCIAL_TRACK_ENABLED ? ` · ${commercialLabels[commercialStatusOf(p)]}` : ''} · ${p.location || '—'}`}
                       right={`${p.startDate?.slice(0, 10) ?? ''} → ${p.endDate?.slice(0, 10) ?? ''}`}
                       rightSub={p.estimatedHours ? `${p.estimatedHours} h planned` : undefined}
                     />
@@ -457,7 +457,7 @@ const Customer360 = () => {
                     <Row
                       key={project.id}
                       title={project.name}
-                      subtitle={`${statusLabels[project.status]} · ${commercialLabels[commercialStatusOf(project)]}`}
+                      subtitle={`${statusLabels[project.status]}${COMMERCIAL_TRACK_ENABLED ? ` · ${commercialLabels[commercialStatusOf(project)]}` : ''}`}
                       right={sek(result.revenue)}
                       rightSub={`${Math.round(result.actualHours)} h logged`}
                     />
@@ -515,7 +515,7 @@ const Customer360 = () => {
                     <Row
                       key={project.id}
                       title={project.name}
-                      subtitle={`${commercialLabels[commercialStatusOf(project)]} · ${Math.round(result.actualHours)} h logged`}
+                      subtitle={`${COMMERCIAL_TRACK_ENABLED ? `${commercialLabels[commercialStatusOf(project)]} · ` : ''}${Math.round(result.actualHours)} h logged`}
                       right={sek(result.revenue)}
                       rightSub={reports[project.id]?.hasSignature ? 'signed off' : 'awaiting sign-off'}
                     />

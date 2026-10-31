@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Copy, Pencil, Plus, Trash2, CalendarPlus, Building } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Copy, Lock, Pencil, Plus, Trash2, CalendarPlus, Building } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,8 @@ import { toast } from 'sonner';
 import { SearchSelect } from '@/components/ui/search-select';
 import { useMyInstallerId } from '@/lib/installerIdentity';
 import { useTimeReportingRefs, useTimeRows } from '@/hooks/useTimeReporting';
+import { useAuth } from '@/hooks/useAuth';
+import { isTimeLocked, TIME_LOCKED_MESSAGE, TIME_LOCKED_ADMIN_WARNING } from '@/lib/timeReporting';
 import {
   INTERNAL_CUSTOMER_NUMBER, INTERNAL_HELP, NORMAL_DAY_HOURS, WORK_DAY_PRESETS, clientLabel, isoDate, rowHours, validateRow, weekDays,
   type TimeRow,
@@ -27,6 +29,8 @@ const dayName = (d: string) => new Date(d + 'T12:00:00').toLocaleDateString('sv-
 export default function MyTime() {
   const { installerId, checked } = useMyInstallerId();
   const refs = useTimeReportingRefs();
+  const { isAdmin } = useAuth();
+  const orderClosed = (id?: string | null) => isTimeLocked(byId(refs.orders, id ?? null)?.status);
   const [date, setDate] = useState(isoDate(new Date()));
   const [mode, setMode] = useState<'day' | 'week'>('day');
   const week = useMemo(() => weekDays(date), [date]);
@@ -155,9 +159,10 @@ export default function MyTime() {
                   <div className="text-right shrink-0">
                     <div className="font-semibold">{fmt(rowHours(r))} h</div>
                     <div className="flex gap-1 mt-1">
+                      {orderClosed(r.project_id) && !isAdmin ? <Button size="icon" variant="ghost" className="h-7 w-7" aria-label="Tiden är låst" onClick={() => toast.info(TIME_LOCKED_MESSAGE)}><Lock className="w-3.5 h-3.5" /></Button> : <>
                       <Button size="icon" variant="ghost" className="h-7 w-7" aria-label="Redigera" onClick={() => setDraft(fromRow(r))}><Pencil className="w-3.5 h-3.5" /></Button>
                       <Button size="icon" variant="ghost" className="h-7 w-7" aria-label="Kopiera" onClick={() => setDraft(fromRow(r, true))}><Copy className="w-3.5 h-3.5" /></Button>
-                      <Button size="icon" variant="ghost" className="h-7 w-7" aria-label="Ta bort" onClick={() => remove(r.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" aria-label="Ta bort" onClick={() => remove(r.id)}><Trash2 className="w-3.5 h-3.5" /></Button></>}
                     </div>
                   </div>
                 </div>
@@ -189,6 +194,7 @@ export default function MyTime() {
       <Dialog open={!!draft} onOpenChange={o => !o && setDraft(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{draft?.id ? 'Redigera tidsrad' : 'Ny tidsrad'}</DialogTitle></DialogHeader>
+          {draft && orderClosed(draft.orderId) && <p role="alert" className="rounded-md border border-travel/40 bg-travel-surface p-2 text-sm text-foreground">{isAdmin ? TIME_LOCKED_ADMIN_WARNING : TIME_LOCKED_MESSAGE}</p>}
           {draft && (
             <div className="space-y-3">
               <div><Label>Datum</Label><Input type="date" value={draft.date} onChange={e => setDraft({ ...draft, date: e.target.value })} /></div>

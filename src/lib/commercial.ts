@@ -136,3 +136,7 @@ export const commercialGroup: Record<CommercialStatus, 'pipeline' | 'production'
   paid: 'paid',
   closed: 'paid',
 };
+
+/** The commercial track is hidden across the app for now (work status
+ *  "Completed" is the final step). Data is kept so it can be re-enabled. */
+export const COMMERCIAL_TRACK_ENABLED = false;

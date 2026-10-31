@@ -43,6 +43,13 @@
       "when": 1793443946255,
       "tag": "0005_stale_save_error_code",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793449597454,
+      "tag": "0006_lock_time_on_completed_orders",
+      "breakpoints": true
     }
   ]
 }
