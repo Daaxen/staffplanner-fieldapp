@@ -202,24 +202,24 @@ const InstallerApp = () => {
       />
 
       <Tabs value={tab} onValueChange={setTab} className="flex-1 flex flex-col overflow-hidden">
-        <TabsList className="shrink-0 w-full rounded-none border-b border-border bg-card h-16 p-0 grid grid-cols-5 gap-0">
-          <TabsTrigger value="schedule" className="rounded-none data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:shadow-[inset_0_-3px_0_hsl(var(--primary))] text-xs h-full gap-1 flex-col">
+        <TabsList className="shrink-0 w-full rounded-none border-b border-border bg-primary text-primary-foreground/70 h-16 p-0 grid grid-cols-5 gap-0">
+          <TabsTrigger value="schedule" className="rounded-none data-[state=active]:bg-primary-foreground/10 data-[state=active]:text-primary-foreground data-[state=active]:font-semibold data-[state=active]:shadow-[inset_0_-4px_0_hsl(var(--status-scheduled))] text-xs h-full gap-1 flex-col">
             <FolderKanban className="w-3.5 h-3.5" />
             Jobb
           </TabsTrigger>
-          <TabsTrigger value="reporting" className="rounded-none data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:shadow-[inset_0_-3px_0_hsl(var(--primary))] text-xs h-full gap-1 flex-col">
+          <TabsTrigger value="reporting" className="rounded-none data-[state=active]:bg-primary-foreground/10 data-[state=active]:text-primary-foreground data-[state=active]:font-semibold data-[state=active]:shadow-[inset_0_-4px_0_hsl(var(--status-scheduled))] text-xs h-full gap-1 flex-col">
             <ClipboardPenLine className="w-4 h-4" />
             Tid
           </TabsTrigger>
-          <TabsTrigger value="deviations" className="rounded-none data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:shadow-[inset_0_-3px_0_hsl(var(--primary))] text-xs h-full gap-1 flex-col">
+          <TabsTrigger value="deviations" className="rounded-none data-[state=active]:bg-primary-foreground/10 data-[state=active]:text-primary-foreground data-[state=active]:font-semibold data-[state=active]:shadow-[inset_0_-4px_0_hsl(var(--status-scheduled))] text-xs h-full gap-1 flex-col">
             <AlertTriangle className="w-4 h-4" />
             Avvikelse
           </TabsTrigger>
-          <TabsTrigger value="signoff" className="rounded-none data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:shadow-[inset_0_-3px_0_hsl(var(--primary))] text-xs h-full gap-1 flex-col">
+          <TabsTrigger value="signoff" className="rounded-none data-[state=active]:bg-primary-foreground/10 data-[state=active]:text-primary-foreground data-[state=active]:font-semibold data-[state=active]:shadow-[inset_0_-4px_0_hsl(var(--status-scheduled))] text-xs h-full gap-1 flex-col">
             <CheckCircle2 className="w-4 h-4" />
             Avsluta
           </TabsTrigger>
-          <TabsTrigger value="more" className="rounded-none data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:shadow-[inset_0_-3px_0_hsl(var(--primary))] text-xs h-full gap-1 flex-col">
+          <TabsTrigger value="more" className="rounded-none data-[state=active]:bg-primary-foreground/10 data-[state=active]:text-primary-foreground data-[state=active]:font-semibold data-[state=active]:shadow-[inset_0_-4px_0_hsl(var(--status-scheduled))] text-xs h-full gap-1 flex-col">
             <MoreHorizontal className="w-4 h-4" />
             Mer
           </TabsTrigger>

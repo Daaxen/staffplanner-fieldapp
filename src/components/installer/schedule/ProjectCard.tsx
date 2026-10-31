@@ -3,6 +3,7 @@ import { MapPin, Clock, Users, Truck } from 'lucide-react';
 import { type Project, projectTypeIcons, statusLabels, installers } from '@/data/mockData';
 import { vehicles } from '@/data/fleetData';
 import { cn } from '@/lib/utils';
+import { toneFor, toneClasses } from '@/lib/installerTone';
 import { formatHours, formatVariance, varianceClass, variancePct, varianceTone, type ActualTime } from '@/lib/timeVariance';
 
 const statusColorMap: Record<string, string> = {
@@ -45,8 +46,8 @@ const ProjectCard = ({ project, onSelect, currentInstallerId, actual, action }: 
   return (
     <div
       className={cn(
-        "rounded-xl border-l-[4px] bg-card p-3 shadow-sm active:scale-[0.98] transition-transform cursor-pointer",
-        statusColorMap[project.status]?.split(' ')[1] || 'border-border'
+        "rounded-xl border border-border border-l-[6px] bg-card p-3 shadow-sm active:scale-[0.98] transition-transform cursor-pointer",
+        toneClasses[toneFor(project.status)].border
       )}
       onClick={() => onSelect(project)}
     >
@@ -58,8 +59,7 @@ const ProjectCard = ({ project, onSelect, currentInstallerId, actual, action }: 
           </p>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
-          <div className={cn("w-2 h-2 rounded-full", statusDotMap[project.status])} />
-          <span className="text-[10px] text-muted-foreground">{statusLabels[project.status]}</span>
+          <span className={cn("text-[11px] font-semibold px-2 py-0.5 rounded-full", toneClasses[toneFor(project.status)].badge)}>{statusLabels[project.status]}</span>
         </div>
       </div>
 
