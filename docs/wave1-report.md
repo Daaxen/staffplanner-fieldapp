@@ -1,39 +1,35 @@
-# Wave 1 continuation report
+# Wave 1 regression report – 2026-10-31
 
-## Release gate: INCONCLUSIVE — suite incomplete
-Baseline rerun: **30 files / 201 tests passed**, 2.99s (`/tmp/wave1-vitest.log`). No app, schema, permission, or status changes made. TEST A session restored successfully; real admin session not used. Previous authentication and cleanup blockers are resolved.
+Runner: `python3 e2e/wave1/backend_suite.py` (replays the app's own write paths as TEST W1 A / TEST W1 B and checks what is stored). Baseline: `bunx vitest run` – 30 files, 201 tests pass.
+Test data: customer "TEST – Golden Customer", order "TEST – Golden Project" (ref TEST-W1-<run>). Everything created was deleted at the end of the run (no orders or customers left over). Rows in the audit log can't be removed, so they stay as a record of the test run.
 
-Test | Result | Classification / scope
----|---|---
-P0-01 | Blocked | B: customer creation and REST persistence assertion succeeded; order automation incomplete
-P0-02 | Blocked | B: no persisted Golden order; booking actions not executed
-P0-03 | Blocked | B: time workflow not executed
-P0-04 | Blocked | B: report/sign-off not executed
-P0-05 | Blocked | B: invoice assertions not executed
-P1-06 | Blocked | B: rapid submissions not executed
-P1-07 | Blocked | B: interrupted edits not executed
-P1-08 | Blocked | B: status transitions not executed
-P1-09 | Blocked | B: two-context edits not executed
-P2-10 | Blocked | B: TEST B role isolation not executed
-GOLDEN | Blocked | B: customer step only; not end-to-end
+## Release gate: NOT MET (one release-blocking bug)
 
-Passed 0 complete scenarios; Failed 0 established app failures; Blocked 11; Not supported 0 established. These are implementation limitations, NOT renewed environment blockers. The requested full suite was not implemented or run. No application defect is established.
+| Test | Pri | Result | Class | Finding |
+|---|---|---|---|---|
+| P0-01 Customer → work order | P0 | PASS | – | Linked by client_id, saving again with the same ref gives no duplicate, the UUID stays the same |
+| P0-02 Booking sync | P0 | PASS | – | Assign A+B, change dates/times, remove B: bookings = assignees each step, no orphans |
+| P0-03 Time + correction | P0 | PASS | – | Correction edits the same row; total 13.5 h; B sees only own time, cannot edit A's |
+| P0-04 Report + sign-off | P0 | **FAIL** | **A** | Report and sign-off persist, but **setting the order to Completed fails** |
+| P0-05 Invoice prep inputs | P0 | PASS | – | Uses the corrected hours (13.5 h × 600 = 8 100) |
+| P1-06 Double submit | P1 | FAIL | A (minor) | Orders, bookings and reports: no duplicates. Two time rows saved at the same instant both get stored; only the UI's saving lock prevents this |
+| P1-07 Interrupted flow | P1 | NOT RUN | – | Needs UI automation; covered partly by existing unit tests for offline report saving |
+| P1-08 Status flow | P1 | BLOCKED | – | Could not reach Completed because of the P0-04 bug |
+| P1-09 Stale data | P1 | FAIL | A | Saving an older copy of an order overwrites a newer edit (last save wins, no warning) |
+| P2-10 Installer role | P2 | PASS | – | B sees only assigned order, cannot edit it, cannot read client rates or create customers |
+| GOLDEN | P0 | **FAIL** | A | Steps 1–9 and 11 pass; step 10 (complete order) fails – same bug as P0-04 |
 
-## Actual actions and evidence
-Restored TEST A localStorage session and visited clients, planner, orders, and my-time. Created two TEST – Golden Customer records through New client → Save, with customer numbers TEST-W1-1793440640 and TEST-W1-1793440688. REST reads confirmed persistence. First order-picker attempt used an incorrect exact text selector; second encountered duplicate accessible names; narrowed to run-specific customer number. Final order form remained disabled. Source requires template mandatory fields as well as dates and linked client; runner did not finish satisfying those preconditions. This is B, not evidence of failed order persistence. No order submission succeeded.
+## Bug 1 (release-blocking): orders with reported time cannot be completed
+- Error: `null value in column "entity_type" of relation "audit_log"`.
+- Likely cause: on completion, the system copies the order's figures into the AI-planning statistics. The audit-log trigger on that table was created without the entity-name argument, so the audit write is rejected and the whole completion is rolled back. The statistics table holds 0 rows today, which means no order has been completed since the trigger was added.
+- Proposed fix: recreate the audit trigger on the statistics table with the entity name (e.g. `audit_row_change('job_metrics','order_id')`) and add a test for it.
 
-Current evidence: `/tmp/browser/wave1/P0-01-form.png`, `P0-01-form.txt`, `P0-01-current.zip`, `created-clients.json`, `cleanup-current.json`. Older per-case artifacts/results in that directory belong to the preceding blocked run; do not represent current coverage. Traces can contain authenticated browser state: keep private.
+## Bug 2: stale save overwrites newer edits (P1)
+The work-order save sends the entire order every time. Two people editing the same order means the last save silently wins. Proposed fix: compare the order's `updated_at` before saving and show "the order was changed by someone else".
 
-## Cleanup
-Deleted only captured customer IDs after confirming zero referencing projects:
-- 011ae4b4-950c-4392-97cc-8d0712db3530
-- f7820210-d582-4833-908b-387fec5faf51
-Post-delete REST reads returned [] for both. Initial combined name filter matched nothing (Unicode URL encoding issue); corrected to captured IDs after readback verified exact names and run numbers. No project, booking, time, report, or status rows created. Both TEST users left untouched. No real customer/order was modified.
+## Bug 3: time entries saved twice in the same instant (P1, low)
+Time entries have no natural key. Today only the disabled Save button stops a double tap, so a double tap on a slow phone could still give two rows. Proposed fix: send a client-generated id per save, or add a short duplicate check.
 
-## Proposed next changes — test files only
-Repository unchanged. Proposed files remain under `/tmp/wave1-proposed/`.
-- `e2e/wave1/run.py`: replace incomplete creation block with template-aware mandatory-field completion; wrap every browser action in try/finally trace capture and captured-ID cleanup; restore dynamic run IDs (current diagnostic draft pins its run ID and is not reusable).
-- Implement the remaining scenario actions and DB assertions before claiming suite completion; current helper and diagnostic finish.py are not a comprehensive runner.
-- `docs/wave1-test-map.md`: retain implementation/status mapping, replace obsolete session/cleanup blockers with the continuation note.
-- `docs/wave1-report.md`: use this full staged replacement.
-No app-code replacement is proposed without a reproduced defect. Stale-write protection and installer authorization remain unverified, not confirmed missing features.
+## Not currently supported / not covered
+- UI-level interrupted-flow and two-browser tests (P1-07, the UI half of P1-09) are not automated yet.
+- Invoice-prep amounts are worked out live in the browser; no stored invoice copy exists to check against.
