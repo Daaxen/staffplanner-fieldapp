@@ -27,7 +27,12 @@ const GENERIC = new Set(['internt', 'intern', 'övrigt', 'ovrigt', 'diverse', 'd
 
 export type TRClient = { id: string; name: string; customer_number: string | null };
 export type TRGroup = { id: string; name: string; project_number: string | null; client_id: string | null };
-export type TROrder = { id: string; name: string; project_number: string | null; client_id: string | null; project_group_id: string | null };
+export type TROrder = { id: string; name: string; project_number: string | null; client_id: string | null; project_group_id: string | null; status?: string | null };
+
+/** Time on a completed order is locked for installers; admins may still edit (with a warning). */
+export const isTimeLocked = (status?: string | null) => status === 'completed';
+export const TIME_LOCKED_MESSAGE = 'Ordern är klar. Kontakta admin om tiden behöver ändras.';
+export const TIME_LOCKED_ADMIN_WARNING = 'Ordern är redan klar. Ändringen påverkar redan stängda siffror.';
 
 export type TimeRow = {
   id: string;

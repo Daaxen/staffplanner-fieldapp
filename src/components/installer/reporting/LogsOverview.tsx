@@ -1,9 +1,12 @@
 import { useMemo, useState } from 'react';
-import { Clock, Pencil, Receipt, Wallet } from 'lucide-react';
+import { Clock, Lock, Pencil, Receipt, Wallet } from 'lucide-react';
 import { expenseCategoryLabels } from '@/data/logsData';
 import type { Project } from '@/data/mockData';
 import type { InstallerLogs } from '@/hooks/useInstallerLogs';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
+import { isTimeLocked, TIME_LOCKED_MESSAGE } from '@/lib/timeReporting';
 import EditTimeDialog, { type EditableTimeEntry } from '@/components/installer/reporting/EditTimeDialog';
 
 interface LogsOverviewProps {
@@ -22,6 +25,8 @@ const LogsOverview = ({ logs, projects }: LogsOverviewProps) => {
     costs: expenses.reduce((sum, entry) => sum + entry.amount, 0),
     km: expenses.reduce((sum, entry) => sum + (entry.km ?? 0), 0),
   }), [time, expenses]);
+  const { isAdmin } = useAuth();
+  const closed = (id: string) => isTimeLocked(projects.find(p => p.id === id)?.status);
   const projectName = (id: string) => projects.find(project => project.id === id)?.name ?? id;
 
   return (
@@ -42,7 +47,9 @@ const LogsOverview = ({ logs, projects }: LogsOverviewProps) => {
               <p className="text-xs text-muted-foreground">{entry.date}{entry.startTime ? ` · ${entry.startTime}–${entry.endTime}` : ''}{entry.travelHours ? ` · ${entry.travelHours.toFixed(2)} h restid` : ''}</p>
             </div>
             <span className="text-sm font-semibold text-foreground">{entry.hours.toFixed(2)} h</span>
-            <Button variant="ghost" size="icon" aria-label="Ändra tid" onClick={() => setEditing(entry)}><Pencil className="w-4 h-4" /></Button>
+            {closed(entry.projectId) && !isAdmin
+              ? <Button variant="ghost" size="icon" aria-label="Tiden är låst" onClick={() => toast.info(TIME_LOCKED_MESSAGE)}><Lock className="w-4 h-4" /></Button>
+              : <Button variant="ghost" size="icon" aria-label="Ändra tid" onClick={() => setEditing(entry)}><Pencil className="w-4 h-4" /></Button>}
           </div>
         ))}
       </section>
@@ -54,7 +61,7 @@ const LogsOverview = ({ logs, projects }: LogsOverviewProps) => {
         ))}
       </section>
 
-      <EditTimeDialog logs={logs} entry={editing} onClose={() => setEditing(null)} />
+      <EditTimeDialog logs={logs} entry={editing} onClose={() => setEditing(null)} closedWarning={Boolean(editing && isAdmin && closed((editing as { projectId?: string }).projectId ?? ''))} />
     </div>
   );
 };
