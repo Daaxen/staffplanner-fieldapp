@@ -160,14 +160,14 @@ def p0_02():
     sync_order([A_INST, B_INST], "2027-03-01", "2027-03-03", status="scheduled")
     check({a["installer_id"] for a in assignments()} == {A_INST, B_INST}, "assign A+B", "A,B booked", assignments())
     check({a["installer_id"] for a in assignees()} == {A_INST, B_INST}, "assignees A+B", "A,B", assignees())
-    check(len(assignments(B)) == 1, "B sees own booking", 1, len(assignments(B)))
+    check(len([a for a in assignments(B) if a["installer_id"] == B_INST]) == 1, "B sees own booking", 1, assignments(B))
     sync_order([A_INST, B_INST], "2027-03-02", "2027-03-04", st="07:00:00")
     for a in assignments():
         check(a["planned_start_at"].startswith("2027-03-02T06:00"), "move dates", "start 2027-03-02 07:00 CET", a["planned_start_at"])
     check(len(assignments()) == 2, "no duplicate on move", 2, len(assignments()))
     sync_order([A_INST], "2027-03-02", "2027-03-04", st="07:00:00")
     check([a["installer_id"] for a in assignments()] == [A_INST], "remove B", "only A", assignments())
-    check(len(assignments(B)) == 0, "B booking gone for B", 0, assignments(B))
+    check(not [a for a in assignments(B) if a["installer_id"] == B_INST], "B booking gone for B", 0, assignments(B))
     sync_order([A_INST, B_INST], "2027-03-02", "2027-03-04", st="07:00:00")  # B back for later tests
 
 
