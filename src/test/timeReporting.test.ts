@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import * as XLSX from 'xlsx';
-import { EXPORT_COLUMNS, buildWorkbook, exportFileName, sumBy, sumWorkTravel, validateRow, weekDays } from '@/lib/timeReporting';
+import { EXPORT_COLUMNS, WORK_DAY_PRESETS, buildWorkbook, exportFileName, sumBy, sumWorkTravel, validateRow, weekDays, workDayTimes } from '@/lib/timeReporting';
+import { hoursBetween, timeMismatch } from '@/lib/validation/reporting';
 
 const clients = [
   { id: 'c1', name: 'Kund A', customer_number: '10' },
@@ -14,6 +15,29 @@ const groups = [
 const orders = [{ id: 'o1', name: 'Order', project_number: 'O1', client_id: 'c1', project_group_id: 'g1' }];
 const ctx = { clients, groups, orders, otherHoursThatDay: 0 };
 const base = { date: '2026-09-26', clientId: 'c1', activityTypeId: 'a', hours: 2 };
+
+describe('manual work-day shortcuts', () => {
+  it('fills a half-day as four work hours with matching times', () => {
+    const preset = WORK_DAY_PRESETS.find(p => p.key === 'half');
+    expect(preset?.hours).toBe(4);
+    const times = workDayTimes(preset?.hours ?? 0, '09:30');
+    expect(times).toEqual({ startTime: '09:30', endTime: '13:30' });
+    expect(hoursBetween(times.startTime, times.endTime)).toBe(4);
+    expect(timeMismatch({ ...times, hours: preset?.hours })).toBeNull();
+  });
+  it('fills a full-day as eight work hours with matching times', () => {
+    const preset = WORK_DAY_PRESETS.find(p => p.key === 'full');
+    expect(preset?.hours).toBe(8);
+    const times = workDayTimes(preset?.hours ?? 0, '');
+    expect(times).toEqual({ startTime: '08:00', endTime: '16:00' });
+    expect(hoursBetween(times.startTime, times.endTime)).toBe(8);
+    expect(timeMismatch({ ...times, hours: preset?.hours })).toBeNull();
+  });
+  it('keeps day shortcuts on the selected date for a late start', () => {
+    expect(workDayTimes(8, '20:00')).toEqual({ startTime: '08:00', endTime: '16:00' });
+    expect(workDayTimes(4, '20:00')).toEqual({ startTime: '08:00', endTime: '12:00' });
+  });
+});
 
 describe('time reporting validation', () => {
   it('accepts customer only, customer+project, and order', () => {
