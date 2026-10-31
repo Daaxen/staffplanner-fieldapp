@@ -15,6 +15,9 @@ export const COMPLETION_CHECKLIST: { id: string; label: string }[] = [
 
 const DEFAULT_SIGNOFFS = [{ id: 'customer', label: 'Customer sign-off', by: 'customer' as const }];
 
+/** A written report is required, but short reports must not be silently blocked. */
+export const canSubmitReport = (text: string) => text.trim().length > 0;
+
 export interface CompletionState {
   photoCount: number;
   checkedItems: string[];

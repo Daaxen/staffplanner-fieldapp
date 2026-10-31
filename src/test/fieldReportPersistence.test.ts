@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   canComplete,
+  canSubmitReport,
   missingRecommendations,
   missingRequirements,
   PHOTOS_SKIPPED_KEY,
@@ -17,6 +18,12 @@ const stateOf = (w: ReturnType<typeof emptyWork>) => ({
 });
 
 describe('field report persistence', () => {
+  it('accepts short written reports such as N/A while rejecting empty reports', () => {
+    expect(canSubmitReport('N/A')).toBe(true);
+    expect(canSubmitReport('Klart')).toBe(true);
+    expect(canSubmitReport('')).toBe(false);
+    expect(canSubmitReport('   \n')).toBe(false);
+  });
   it('starts an order with nothing documented', () => {
     const w = emptyWork('ORD-1', 'Test');
     expect(w.checkedItems).toEqual([]);

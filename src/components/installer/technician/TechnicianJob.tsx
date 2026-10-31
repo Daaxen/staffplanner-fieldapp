@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 import { type Project } from '@/data/mockData';
 import {
   checklistFor,
+  canSubmitReport,
   completionRequirements,
   minPhotosFor,
   missingRecommendations,
@@ -43,7 +44,7 @@ type Panel = 'checklist' | 'photos' | 'signature' | 'deviation' | 'issue' | null
 
 const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) => {
   const [panel, setPanel] = useState<Panel>(null);
-  const { work, state: completionState, update, replace, online } = useFieldWork(project.id, project.name);
+  const { work, state: completionState, update, submitReport, replace, online, loaded } = useFieldWork(project.id, project.name);
   const template = useMemo(() => templateForProject(project), [project.templateId, project.projectType]);
   const checklist = checklistFor(template);
   const minPhotos = minPhotosFor(template);
@@ -59,6 +60,21 @@ const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) 
     (so.id === 'customer' ? work.signature : work.signOffs?.[so.id] ?? '').trim().length > 1,
   );
   const [askSkipPhotos, setAskSkipPhotos] = useState(false);
+  const [submittingReport, setSubmittingReport] = useState(false);
+
+  const handleSubmitReport = async () => {
+    setSubmittingReport(true);
+    try {
+      const synced = await submitReport();
+      toast.success(synced ? 'Report submitted' : 'Report saved on this phone — waiting to upload');
+    } catch (error) {
+      toast.error('Could not submit report', {
+        description: error instanceof Error ? error.message : 'Please try again.',
+      });
+    } finally {
+      setSubmittingReport(false);
+    }
+  };
 
   const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(project.location || '')}`;
 
@@ -273,6 +289,7 @@ const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) 
           <div className="rounded-2xl border border-border bg-card p-3 space-y-2">
             <Textarea
               value={work.reportText}
+              disabled={!loaded || submittingReport}
               maxLength={2000}
               onChange={e => update({ reportText: e.target.value, reportSubmitted: false })}
               placeholder="What was done, and any deviation or problem on site…"
@@ -281,13 +298,10 @@ const TechnicianJob = ({ project, onBack, onStatusChange }: TechnicianJobProps) 
             <Button
               size="lg"
               className="w-full h-12"
-              disabled={work.reportText.trim().length < 10 || work.reportSubmitted}
-              onClick={() => {
-                void update({ reportSubmitted: true });
-                toast.success(online ? 'Report submitted' : 'Report saved — uploads when you reconnect');
-              }}
+              disabled={!loaded || !canSubmitReport(work.reportText) || work.reportSubmitted || submittingReport}
+              onClick={() => void handleSubmitReport()}
             >
-              Submit report
+              {submittingReport ? 'Submitting…' : 'Submit report'}
             </Button>
           </div>
         )}

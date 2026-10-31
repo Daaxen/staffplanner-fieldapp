@@ -15,6 +15,13 @@
       "when": 1792049917550,
       "tag": "0001_superuser_rules",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793435838983,
+      "tag": "0002_fix_report_snapshot_field_access",
+      "breakpoints": true
     }
   ]
 }

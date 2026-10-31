@@ -222,11 +222,22 @@ export interface SyncResult {
   failed: number;
 }
 
-let syncing = false;
+let syncInFlight: Promise<SyncResult> | null = null;
 
 export async function syncFieldWork(): Promise<SyncResult> {
-  if (syncing || !navigator.onLine) return { synced: 0, failed: 0 };
-  syncing = true;
+  if (!navigator.onLine) return { synced: 0, failed: 0 };
+  // Submission must wait for an earlier draft upload, then upload its newer edit.
+  while (syncInFlight) await syncInFlight;
+  const task = runFieldWorkSync();
+  syncInFlight = task;
+  try {
+    return await task;
+  } finally {
+    syncInFlight = null;
+  }
+}
+
+async function runFieldWorkSync(): Promise<SyncResult> {
   let synced = 0;
   let failed = 0;
   try {
@@ -269,14 +280,17 @@ export async function syncFieldWork(): Promise<SyncResult> {
 
         if (work.pendingStatus && statusHandler) statusHandler(work.projectRef, work.pendingStatus);
 
-        await idbSet('work', work.projectRef, { ...work, photos, pendingStatus: undefined, dirty: false });
+        const latest = await loadWork(work.projectRef);
+        // Never replace a newly typed/submitted report with an older uploaded draft.
+        if (JSON.stringify(latest) === JSON.stringify(work)) {
+          await idbSet('work', work.projectRef, { ...work, photos, pendingStatus: undefined, dirty: false });
+        }
         synced += 1;
       } catch {
         failed += 1;
       }
     }
   } finally {
-    syncing = false;
     notify();
   }
   return { synced, failed };
