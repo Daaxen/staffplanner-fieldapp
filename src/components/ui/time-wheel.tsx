@@ -24,7 +24,7 @@ function WheelColumn({ items, value, onChange, label }: {
 
   useEffect(() => {
     const el = ref.current;
-    if (el && Math.round(el.scrollTop / ITEM_H) !== index) el.scrollTo({ top: index * ITEM_H });
+    if (el && Math.round(el.scrollTop / ITEM_H) !== index) el.scrollTo?.({ top: index * ITEM_H });
   }, [index]);
 
   const onScroll = () => {
