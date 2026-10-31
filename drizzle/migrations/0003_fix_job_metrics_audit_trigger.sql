@@ -1,0 +1,2 @@
+DROP TRIGGER IF EXISTS trg_audit_job_metrics_ins ON public.job_metrics;
+CREATE TRIGGER trg_audit_job_metrics_ins AFTER INSERT ON public.job_metrics FOR EACH ROW EXECUTE FUNCTION public.audit_row_change('job_metrics', 'order_id');
