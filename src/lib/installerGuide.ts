@@ -86,25 +86,24 @@ export const installerGuide: GuideChapter[] = [
     intro: 'Öppna ordern, gå till fliken Log och välj dag.',
     steps: [
       {
-        title: 'Välj dag och starta klockan',
+        title: 'Välj vilken dag du redovisar',
         image: day,
         callouts: [
           { n: 1, text: 'Välj vilken dag du redovisar. Idag är förvalt. "Annan dag" ger ett eget datum.' },
-          { n: 2, text: 'Start / stopp idag – tryck Start när du börjar och Stopp när du slutar.' },
         ],
       },
       {
-        title: 'Eller fyll i tiden själv',
+        title: 'Fyll i arbetstid och restid',
         image: manual,
         callouts: [
-          { n: 1, text: 'Restid anges i timmar. Använd snabbknapparna 0,5 – 1 – 1,5 – 2 h.' },
-          { n: 2, text: 'Tryck "Spara tid" – datumet på knappen visar vilken dag det sparas på.' },
+          { n: 1, text: 'Välj Halvdag (4 h) eller Heldag (8 h), eller ange egna start- och sluttider.' },
+          { n: 2, text: 'Skriv restid i timmar, till exempel 1,5. Tryck sedan "Spara tid" för vald dag.' },
         ],
       },
     ],
     tip: 'Intern tid utan kund? Gå till More → Min tid och välj "Intern eller osäker kund" (kund 9999) och skriv vad du gjorde.',
     mistakes: [
-      'Glömd klocka stoppas automatiskt vid midnatt – kontrollera sluttiden dagen efter.',
+      'Kontrollera start- och sluttiderna innan du sparar en halvdag eller heldag.',
       'Max 24 timmar per dag. Fel dag? Ta bort raden och lägg in den igen.',
     ],
     goTo: { tab: 'reporting' },

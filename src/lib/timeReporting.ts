@@ -4,6 +4,20 @@ import * as XLSX from 'xlsx';
 export const INTERNAL_CUSTOMER_NUMBER = '9999';
 export const INTERNAL_LABEL = '9999 – Dynamic Places Intern';
 export const NORMAL_DAY_HOURS = 8;
+export const WORK_DAY_PRESETS = [
+  { key: 'half', label: 'Halvdag', hours: NORMAL_DAY_HOURS / 2 },
+  { key: 'full', label: 'Heldag', hours: NORMAL_DAY_HOURS },
+] as const;
+
+/** Keeps the selected start when the preset fits within the same calendar day. */
+export function workDayTimes(hours: number, selectedStart: string) {
+  const [h, m] = selectedStart.split(':').map(Number);
+  const minutes = h * 60 + m;
+  const valid = /^([01]\d|2[0-3]):[0-5]\d$/.test(selectedStart);
+  const start = valid && minutes + hours * 60 < 24 * 60 ? minutes : 8 * 60;
+  const format = (value: number) => `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}`;
+  return { startTime: format(start), endTime: format(start + hours * 60) };
+}
 export const MAX_ROW_HOURS = 24;
 export const MAX_DAY_HOURS = 24;
 export const INTERNAL_HELP =
