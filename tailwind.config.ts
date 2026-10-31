@@ -66,6 +66,10 @@ export default {
           "in-progress": "hsl(var(--status-in-progress))",
           completed: "hsl(var(--status-completed))",
           "on-hold": "hsl(var(--status-on-hold))",
+        },
+        travel: {
+          DEFAULT: "hsl(var(--travel))",
+          surface: "hsl(var(--travel-surface))",
           cancelled: "hsl(var(--status-cancelled))",
         },
         installer: {
