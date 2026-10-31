@@ -1480,6 +1480,7 @@ export type Database = {
       }
       projects: {
         Row: {
+          client_base_updated_at: string | null
           client_id: string | null
           client_name: string | null
           client_ref: string | null
@@ -1518,6 +1519,7 @@ export type Database = {
           vehicle_type: string | null
         }
         Insert: {
+          client_base_updated_at?: string | null
           client_id?: string | null
           client_name?: string | null
           client_ref?: string | null
@@ -1556,6 +1558,7 @@ export type Database = {
           vehicle_type?: string | null
         }
         Update: {
+          client_base_updated_at?: string | null
           client_id?: string | null
           client_name?: string | null
           client_ref?: string | null
