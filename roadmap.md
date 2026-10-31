@@ -5,3 +5,5 @@
 - [x] Replace installer navigation with Active jobs, Reporting, Deviations, Sign-off, and More
 - [x] Preserve direct links and redirect legacy navigation URLs
 - [x] Verify all destinations remain accessible on desktop and mobile
+- [ ] Make photos and client sign-off optional while retaining the required written installation report
+- [ ] Verify completion rules and the installer completion flow
