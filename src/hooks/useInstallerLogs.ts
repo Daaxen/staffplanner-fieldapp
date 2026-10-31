@@ -93,7 +93,7 @@ export function useInstallerLogs(projects: Project[] = []) {
     });
     if (error) { toast.error(`Klockan kunde inte startas: ${error.message}`); return false; }
     setActiveTimer({ projectId, startedAt });
-    toast.success('Jobbet är startat – klockan går');
+    toast.success('Tidtagningen är startad');
     return true;
   }, [installerId, metaFor]);
 
@@ -181,6 +181,22 @@ export function useInstallerLogs(projects: Project[] = []) {
     setTime(prev => prev.filter(t => t.id !== id));
   }, []);
 
+  /** Corrects an existing entry in place: hours always follow start and end. */
+  const updateTime = useCallback(async (id: string, patch: {
+    startTime: string; endTime: string; travelHours?: number; note?: string;
+  }) => {
+    const hours = computeHours(patch.startTime, patch.endTime);
+    if (hours <= 0) { toast.error('Sluttiden måste vara efter starttiden'); return false; }
+    const travelHours = Math.round((patch.travelHours || 0) * 100) / 100;
+    const { error } = await supabase.from('time_entries').update({
+      start_time: patch.startTime, end_time: patch.endTime, hours, travel_hours: travelHours,
+      ...(patch.note !== undefined ? { note: patch.note || null } : {}),
+    }).eq('id', id);
+    if (error) { toast.error(`Tiden kunde inte ändras: ${error.message}`); return false; }
+    await refresh();
+    return true;
+  }, [refresh]);
+
   const addExpense = useCallback(async (entry: {
     projectId: string; date: string; category: ExpenseCategory; amount: number; note?: string; receiptName?: string; kind?: ExpenseKind;
   }) => {
@@ -251,7 +267,7 @@ export function useInstallerLogs(projects: Project[] = []) {
     loading, refresh,
     timeFor, expensesFor, activeTimer, actualFor,
     startTimer, stopTimer, cancelTimer,
-    addTime, deleteTime, pendingMismatch, clearMismatch,
+    addTime, updateTime, deleteTime, pendingMismatch, clearMismatch,
     addExpense, addMileage, deleteExpense,
     rateFor, categories,
   };

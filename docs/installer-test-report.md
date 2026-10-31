@@ -52,3 +52,29 @@ Release-blocking:
 1. Installers (without admin role) cannot start or complete an order – status changes are rejected and silently reverted.
 
 Test data left in place for inspection: order TEST-installtör, customer "TEST – Installer Customer", its time entries, report and deviation.
+
+---
+
+## Retest after simplified installer flow (2026-10-31)
+
+Phone viewport 390×844, signed in as TEST W1 B (installer only), order TEST-installtör (TEST-INST-01).
+
+| Test | Result |
+|---|---|
+| INST-01 Find assigned order | PASS |
+| INST-02 What / where / when | PASS: report shortcuts, schedule, description and customer come first |
+| INST-03 No project Start action | PASS: "Start Project", "Mark Complete" and "Starta jobb" are gone. "Starta tidtagning" starts only the clock, and the status stayed Scheduled |
+| INST-05 Report time (timer) | PASS |
+| INST-06 Correct time entry | PASS: 08:00–15:30 with 1 h travel saved as 7.50 h + 1.00 h on the same row (no duplicate) and survived a reload |
+| INST-10/12 Report done | PASS: green "Rapportering klar" banner shown for the submitted report |
+| INST-13 Persistence after reload | PASS for time |
+| Permissions | PASS: a direct status update to the order as TEST W1 B changed 0 rows |
+| INST-04, 07, 08, 09, 11 Deviation, expense, mileage, photo, sign-off | Not clicked through in this round. The code now shows a persistent "Avvikelse sparad ✓" card, deviation photos are optional, and saved expenses/mileage are listed under "Sparat på denna order" |
+| INST-14 Whole flow on mobile | Partly verified |
+
+### Answers
+1–2. Yes: the order name, the schedule, the work description and the customer are at the top. 3. Yes. 4–6. The flows exist and are reachable in one tap from "Rapportera", but they were not re-clicked this round. 7. Yes: the report is required, and photos and the customer signature are optional. 8. Yes: the green banner, plus a message in the technician view. 9. Yes for the screens checked. 10. The status label is still shown read-only in the header. There is no "Klar" badge on the job list cards yet.
+
+**INSTALLER UX: PASS · INSTALLER REPORTING FLOW: PASS (partially verified) · MOBILE USABILITY: PASS (partially verified)**
+
+Remaining: click through deviation, expense, mileage and photo on a phone. Add the "Klar" badge on job cards.

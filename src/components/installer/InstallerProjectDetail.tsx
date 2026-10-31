@@ -15,12 +15,9 @@ import {
   canSubmitReport,
   completionRequirements,
   minPhotosFor,
-  missingRecommendations,
-  missingRequirements,
-  PHOTOS_SKIPPED_KEY,
+  isReportingDone,
   signOffsFor,
 } from '@/lib/completionRequirements';
-import SkipPhotosDialog from '@/components/installer/SkipPhotosDialog';
 import { templateForProject } from '@/lib/projectTemplates';
 import ProjectLogTab from '@/components/installer/reporting/ProjectLogTab';
 import type { InstallerLogs } from '@/hooks/useInstallerLogs';
@@ -37,7 +34,6 @@ interface InstallerProjectDetailProps {
   /** Big start/stop button shown above the tabs. */
   topAction?: import('react').ReactNode;
   onBack: () => void;
-  onStatusChange?: (projectId: string, newStatus: Project['status']) => void;
   onPickUp?: () => void;
   initialTab?: 'info' | 'docs' | 'report' | 'log' | 'deviation' | 'summary';
 }
@@ -51,7 +47,7 @@ const statusDotMap: Record<string, string> = {
   'open': 'bg-status-open',
 };
 
-const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChange, onPickUp, initialTab = 'info', topAction }: InstallerProjectDetailProps) => {
+const InstallerProjectDetail = ({ project, installer, logs, onBack, onPickUp, initialTab = 'info', topAction }: InstallerProjectDetailProps) => {
   
   const [tab, setTab] = useState(initialTab);
   // Same saved field report, offline queue and sync as technician mode.
@@ -77,8 +73,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
     [photoCount, checkedItems, signature, reportSubmitted, signOffs, template],
   );
   const missing = requirements.filter(r => !r.met && r.severity === 'required');
-  const readyToComplete = missing.length === 0;
-  const [askSkipPhotos, setAskSkipPhotos] = useState(false);
+  const reportingDone = loaded && isReportingDone(completionState, template);
   const [submittingReport, setSubmittingReport] = useState(false);
 
   const handleSubmitReport = async () => {
@@ -104,36 +99,9 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
         : [...checkedItems, id],
     });
 
-  const handleComplete = async (skipPhotos = false) => {
-    if (!loaded) return;
-    const blockers = missingRequirements(completionState, template);
-    if (blockers.length > 0) {
-      setTab('summary');
-      toast.error('Cannot complete yet', {
-        description: blockers.map(b => b.label.replace(/\s*\(.*\)$/, '')).join(' · '),
-      });
-      return;
-    }
-    if (!skipPhotos && missingRecommendations(completionState, template).length > 0) {
-      setAskSkipPhotos(true);
-      return;
-    }
-    // Queue the status with the report so it replays after an offline shift too.
-    await update({
-      pendingStatus: 'completed',
-      ...(skipPhotos ? { signOffs: { ...signOffs, [PHOTOS_SKIPPED_KEY]: new Date().toISOString() } } : {}),
-    });
-    onStatusChange?.(project.id, 'completed');
-    if (!online) toast.success('Saved on this phone — it uploads when you reconnect');
-  };
-
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(project.location)}`;
 
   const isUnassigned = project.assigneeIds.length === 0;
-
-  // Determine which bottom action to show
-  const showStartButton = project.status === 'scheduled' && onStatusChange;
-  const showCompleteButton = project.status === 'in-progress' && onStatusChange;
 
   return (
     <div className="h-screen flex flex-col bg-background">
@@ -164,6 +132,13 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
           <Button size="sm" onClick={onPickUp} className="text-xs h-8">
             Pick Up Order
           </Button>
+        </div>
+      )}
+
+      {reportingDone && (
+        <div role="status" className="shrink-0 bg-status-completed/15 border-b border-status-completed/40 px-4 py-2.5 flex items-center gap-2">
+          <Check className="w-5 h-5 text-status-completed shrink-0" />
+          <p className="text-sm font-semibold text-foreground">Rapportering klar – du behöver inte göra något mer här</p>
         </div>
       )}
 
@@ -201,6 +176,26 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
         {/* INFO TAB */}
         <TabsContent value="info" className="flex-1 overflow-auto mt-0">
           <div className="p-4 space-y-4">
+            {/* Reporting shortcuts — the installer's main job */}
+            <Section title="Rapportera">
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  ['log', 'Tid', Clock],
+                  ['log', 'Utlägg', Receipt],
+                  ['log', 'Körning', MapPin],
+                  ['deviation', 'Avvikelse', AlertTriangle],
+                  ['report', 'Foto', Camera],
+                  ['summary', 'Rapport & signering', ClipboardCheck],
+                ] as const).map(([target, label, Icon]) => (
+                  <Button key={label} type="button" variant="outline" className="h-16 flex-col gap-1 text-xs whitespace-normal leading-tight"
+                    onClick={() => setTab(target === 'summary' ? 'report' : target)}>
+                    <Icon className="w-5 h-5" />
+                    {label}
+                  </Button>
+                ))}
+              </div>
+            </Section>
+
             {/* Schedule */}
             <Section title="Schedule">
               <InfoRow icon={<Clock className="w-4 h-4" />} label="Start" value={`${project.startDate}${project.startTime ? ` at ${project.startTime}` : ''}`} />
@@ -466,14 +461,19 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
                   </Button>
                 ))}
               </div>
-              {!readyToComplete && (
+              {missing.length > 0 ? (
                 <div className="mt-3 flex items-start gap-2 rounded-lg border border-status-on-hold/40 bg-status-on-hold/10 p-2.5">
                   <AlertCircle className="w-4 h-4 text-status-on-hold mt-0.5 shrink-0" />
                   <p className="text-xs text-foreground">
-                    {missing.length} requirement{missing.length > 1 ? 's' : ''} missing — the order cannot be marked complete yet.
+                    {missing.length} sak{missing.length > 1 ? 'er' : ''} kvar innan din rapportering är klar.
                   </p>
                 </div>
-              )}
+              ) : reportingDone ? (
+                <div className="mt-3 flex items-start gap-2 rounded-lg border border-status-completed/40 bg-status-completed/10 p-2.5">
+                  <Check className="w-4 h-4 text-status-completed mt-0.5 shrink-0" />
+                  <p className="text-xs font-medium text-foreground">Rapportering klar – du behöver inte göra något mer här.</p>
+                </div>
+              ) : null}
             </Section>
 
             <Section title="Sign-off">
@@ -513,59 +513,6 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onStatusChan
         </TabsContent>
       </Tabs>
 
-      {/* Sticky bottom action button */}
-      {(showStartButton || showCompleteButton) && (
-        <div className="shrink-0 border-t border-border bg-card px-4 py-3">
-          {showStartButton && (
-            <Button
-              className="w-full bg-status-in-progress hover:bg-status-in-progress/90 text-foreground"
-              size="lg"
-              onClick={() => onStatusChange?.(project.id, 'in-progress')}
-            >
-              ▶ Start Project
-            </Button>
-          )}
-          {showCompleteButton && (
-            <>
-              {!readyToComplete && (
-                <div className="mb-2 rounded-lg border border-status-on-hold/40 bg-status-on-hold/10 p-2.5">
-                  <p className="text-[11px] font-semibold text-foreground flex items-center gap-1.5 mb-1">
-                    <AlertCircle className="w-3.5 h-3.5 text-status-on-hold" />
-                    Missing before completion
-                  </p>
-                  <ul className="space-y-0.5">
-                    {missing.map(r => (
-                      <li key={r.id} className="text-[11px] text-muted-foreground">• {r.label}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              <Button
-                className="w-full bg-status-completed hover:bg-status-completed/90 text-foreground disabled:opacity-50"
-                size="lg"
-                disabled={!readyToComplete || !loaded}
-                onClick={() => void handleComplete()}
-              >
-                <CheckSquare className="w-4 h-4 mr-2" />
-                {readyToComplete ? 'Mark Complete' : `Mark Complete (${missing.length} missing)`}
-              </Button>
-            </>
-          )}
-        </div>
-      )}
-      <SkipPhotosDialog
-        open={askSkipPhotos}
-        photoCount={photoCount}
-        minPhotos={minPhotos}
-        onAddPhotos={() => {
-          setAskSkipPhotos(false);
-          setTab('report');
-        }}
-        onSkip={() => {
-          setAskSkipPhotos(false);
-          void handleComplete(true);
-        }}
-      />
     </div>
   );
 };

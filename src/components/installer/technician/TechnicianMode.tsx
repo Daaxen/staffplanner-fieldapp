@@ -10,11 +10,10 @@ import { useOfflineSync } from '@/hooks/useOffline';
 interface TechnicianModeProps {
   projects: Project[];
   installer: Installer;
-  onStatusChange?: (projectId: string, newStatus: Project['status']) => void;
   onExit: () => void;
 }
 
-const TechnicianMode = ({ projects, installer, onStatusChange, onExit }: TechnicianModeProps) => {
+const TechnicianMode = ({ projects, installer, onExit }: TechnicianModeProps) => {
   const [openId, setOpenId] = useState<string | null>(null);
   const offline = useOfflineSync();
   const today = format(new Date(), 'yyyy-MM-dd');
@@ -35,7 +34,7 @@ const TechnicianMode = ({ projects, installer, onStatusChange, onExit }: Technic
 
   const open = todaysJobs.find(p => p.id === openId) ?? null;
   if (open) {
-    return <TechnicianJob project={open} onBack={() => setOpenId(null)} onStatusChange={onStatusChange} />;
+    return <TechnicianJob project={open} onBack={() => setOpenId(null)} />;
   }
 
   return (

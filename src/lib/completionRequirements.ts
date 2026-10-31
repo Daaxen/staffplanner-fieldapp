@@ -128,3 +128,10 @@ export const missingRecommendations = (s: CompletionState, template?: TemplateIn
 
 export const canComplete = (s: CompletionState, template?: TemplateInput) =>
   missingRequirements(s, template).length === 0;
+
+/**
+ * The installer's own part is done once the report is submitted and every
+ * required item is met. This never changes the order's status.
+ */
+export const isReportingDone = (s: CompletionState, template?: TemplateInput) =>
+  s.reportSubmitted && missingRequirements(s, template).length === 0;
