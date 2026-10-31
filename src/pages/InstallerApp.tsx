@@ -93,32 +93,6 @@ const InstallerApp = () => {
     return () => setStatusHandler(null);
   }, [setLocalProjects]);
 
-  const todayStr = format(new Date(), 'yyyy-MM-dd');
-  const startAction = (project: Project) => {
-    if (project.status === 'completed' || project.status === 'cancelled') return null;
-    const running = logs.activeTimer?.projectId === project.id;
-    if (running) {
-      const since = new Date(logs.activeTimer!.startedAt).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
-      return (
-        <Button className="w-full h-11" variant="destructive" onClick={() => void logs.stopTimer(0)}>
-          Stoppa tidtagning · sedan {since}
-        </Button>
-      );
-    }
-    const days = installerDatesFor(project, installer.id);
-    const isToday = todayStr >= days.startDate && todayStr <= days.endDate;
-    return (
-      <Button className="w-full h-11 bg-status-completed hover:bg-status-completed/90 text-primary-foreground" onClick={async () => {
-        if (!isToday) { toast.info(`Du är inte planerad på jobbet idag (${days.startDate} – ${days.endDate}). Redovisa andra dagar under Tid.`); return; }
-        if (logs.activeTimer) {
-          if (!window.confirm('Klockan går redan på ett annat jobb. Stoppa den och starta det här?')) return;
-          await logs.stopTimer(0);
-        }
-        await logs.startTimer(project.id);
-      }}>Starta tidtagning</Button>
-    );
-  };
-
   const handleViewOrderDetail = (project: Project, initialTab: typeof projectEntryTab = 'info') => {
     setProjectEntryTab(initialTab);
     setSelectedProject(project);
@@ -181,7 +155,6 @@ const InstallerApp = () => {
         project={selectedProject}
         installer={installer}
         logs={logs}
-        topAction={startAction(selectedProject)}
         onBack={() => setSelectedProject(null)}
         onPickUp={selectedProject.assigneeIds.length === 0 ? () => handlePickUp(selectedProject) : undefined}
         initialTab={projectEntryTab}
@@ -267,7 +240,7 @@ const InstallerApp = () => {
             )}
             <h2 className="text-base font-semibold text-foreground">Aktiva jobb ({activeProjects.length})</h2>
             {activeProjects.map(project => (
-              <ProjectCard key={project.id} project={project} onSelect={project => openProjectWorkflow(project, 'info')} currentInstallerId={installer.id} actual={logs.actualFor(project.id)} action={startAction(project)} />
+              <ProjectCard key={project.id} project={project} onSelect={project => openProjectWorkflow(project, 'info')} currentInstallerId={installer.id} actual={logs.actualFor(project.id)} />
             ))}
             {activeProjects.length === 0 && <p className="text-sm text-muted-foreground py-8 text-center">No active jobs.</p>}
             {completedProjects.length > 0 && <h2 className="text-sm font-semibold text-muted-foreground pt-2">Recently completed</h2>}

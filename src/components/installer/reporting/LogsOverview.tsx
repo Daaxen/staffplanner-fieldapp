@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
-import { Clock, Receipt, Timer, Wallet } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Clock, Receipt, Wallet } from 'lucide-react';
 import { expenseCategoryLabels } from '@/data/logsData';
 import type { Project } from '@/data/mockData';
 import type { InstallerLogs } from '@/hooks/useInstallerLogs';
@@ -24,14 +23,6 @@ const LogsOverview = ({ logs, projects }: LogsOverviewProps) => {
 
   return (
     <div className="p-4 space-y-4 pb-20">
-      {logs.activeTimer && (
-        <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 flex items-center gap-3">
-          <Timer className="w-5 h-5 text-primary" />
-          <div className="min-w-0 flex-1"><p className="text-sm font-semibold text-foreground">Timer running</p><p className="text-xs text-muted-foreground truncate">{projectName(logs.activeTimer.projectId)}</p></div>
-          <Button size="sm" variant="destructive" onClick={() => void logs.stopTimer()}>Stop</Button>
-        </div>
-      )}
-
       <div className="grid grid-cols-3 gap-2">
         <div className="rounded-lg border border-border bg-card p-3"><Clock className="w-4 h-4 text-muted-foreground mb-2" /><p className="text-lg font-bold text-foreground">{logs.loading ? '…' : `${totals.hours.toFixed(1)} h`}</p><p className="text-xs text-muted-foreground">Time</p></div>
         <div className="rounded-lg border border-border bg-card p-3"><Receipt className="w-4 h-4 text-muted-foreground mb-2" /><p className="text-lg font-bold text-foreground">{logs.loading ? '…' : money(totals.costs)}</p><p className="text-xs text-muted-foreground">Costs</p></div>

@@ -13,7 +13,7 @@ import { SearchSelect } from '@/components/ui/search-select';
 import { useMyInstallerId } from '@/lib/installerIdentity';
 import { useTimeReportingRefs, useTimeRows } from '@/hooks/useTimeReporting';
 import {
-  INTERNAL_CUSTOMER_NUMBER, INTERNAL_HELP, NORMAL_DAY_HOURS, clientLabel, isoDate, rowHours, validateRow, weekDays,
+  INTERNAL_CUSTOMER_NUMBER, INTERNAL_HELP, NORMAL_DAY_HOURS, WORK_DAY_PRESETS, clientLabel, isoDate, rowHours, validateRow, weekDays,
   type TimeRow,
 } from '@/lib/timeReporting';
 
@@ -219,6 +219,9 @@ export default function MyTime() {
                 </Select>
               </div>
               <div><Label>Antal timmar</Label><Input inputMode="decimal" placeholder="t.ex. 2,5" value={draft.hours} onChange={e => setDraft({ ...draft, hours: e.target.value })} /></div>
+              <div className="grid grid-cols-2 gap-2">
+                {WORK_DAY_PRESETS.map(preset => <Button key={preset.key} type="button" variant="outline" disabled={saving} onClick={() => setDraft({ ...draft, hours: String(preset.hours) })}>{preset.label} · {preset.hours} h</Button>)}
+              </div>
               <div>
                 <Label>Beskrivning av utfört arbete{isInternal ? ' (obligatorisk)' : ''}</Label>
                 <Textarea value={draft.description} onChange={e => setDraft({ ...draft, description: e.target.value })} />
