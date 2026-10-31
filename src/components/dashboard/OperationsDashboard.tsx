@@ -26,7 +26,7 @@ import { useProjects } from '@/lib/appData';
 import { useFieldReportStates } from '@/hooks/useFieldReportStates';
 import { computeOperations, type OpsBucket } from '@/lib/operations';
 import { statusLabels, type ProjectStatus } from '@/data/mockData';
-import { computeCommercialMetrics, COMMERCIAL_STATUSES, commercialLabels } from '@/lib/commercial';
+import { computeCommercialMetrics, COMMERCIAL_STATUSES, commercialLabels, COMMERCIAL_TRACK_ENABLED } from '@/lib/commercial';
 import { sek } from '@/lib/profitability';
 
 const cards: {

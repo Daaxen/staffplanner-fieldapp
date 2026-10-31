@@ -28,7 +28,7 @@ import {
   sek,
   type Profitability,
 } from '@/lib/profitability';
-import { commercialLabels, commercialStatusOf } from '@/lib/commercial';
+import { commercialLabels, commercialStatusOf, COMMERCIAL_TRACK_ENABLED } from '@/lib/commercial';
 import { statusLabels, type Client, type Project } from '@/data/mockData';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
