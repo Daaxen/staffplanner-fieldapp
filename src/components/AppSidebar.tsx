@@ -110,7 +110,7 @@ const AppSidebar = ({ activeView, onViewChange, collapsed = false, onToggleColla
         )}
         {!collapsed && (
           <div className="min-w-0 flex-1">
-            <h1 className="text-base font-semibold text-sidebar-primary">StaffPlanner</h1>
+            <h1 className="text-base font-semibold text-sidebar-primary">FETCH</h1>
             <p className="text-xs text-sidebar-foreground/60">Retail Installations</p>
           </div>
         )}

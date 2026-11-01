@@ -11,7 +11,7 @@ const Terms = () => (
 
       <section className="space-y-3 text-sm leading-relaxed">
         <p>
-          These Terms govern your use of the StaffPlanner application ("the Service")
+          These Terms govern your use of the FETCH application ("the Service")
           provided by <strong>Dynamic Places AB</strong> (org. nr. 559431-4642),
           Stockholm, Sweden.
         </p>

@@ -65,7 +65,7 @@ const FeedbackModule = ({ view, compact = false, orderNumber, projectNumber }: P
       <div className="flex flex-wrap items-center gap-2 border-b border-border bg-card px-4 py-3">
         <div className="mr-auto">
           <h2 className="text-base font-semibold text-foreground">Feedback &amp; Förbättringar</h2>
-          <p className="text-xs text-muted-foreground">Rapportera buggar och föreslå förbättringar av StaffPlanner.</p>
+          <p className="text-xs text-muted-foreground">Rapportera buggar och föreslå förbättringar av FETCH.</p>
         </div>
         {!compact && (
           <Input

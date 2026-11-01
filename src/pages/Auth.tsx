@@ -79,7 +79,7 @@ const Auth = () => {
           <div className="w-12 h-12 rounded-lg bg-sidebar flex items-center justify-center">
             <Calendar className="w-6 h-6 text-sidebar-primary" />
           </div>
-          <h1 className="text-xl font-semibold">StaffPlanner</h1>
+          <h1 className="text-xl font-semibold">FETCH</h1>
           <p className="text-sm text-muted-foreground">
             {mode === 'login' && 'Sign in to your account'}
             {mode === 'setPassword' && 'Set your password'}

@@ -78,6 +78,6 @@ This project is configured as a Progressive Web App (PWA). You can install it di
 
 1. Open the published URL in a modern browser (Chrome, Safari, Edge).
 2. Use the browser's **Add to Home Screen** / **Install** prompt, or find it in the browser menu.
-3. The app will launch full-screen with the StaffPlanner icon and theme.
+3. The app will launch full-screen with the FETCH icon and theme.
 
 No native build or app store submission is required.
