@@ -44,3 +44,15 @@ describe('timeDaysTone', () => {
   it('blue when no time', () => expect(timeDaysTone(r, [], '2026-10-31').tone).toBe('planned'));
   it('future days not counted', () => expect(timeDaysTone(r, [{ date: '2026-10-20' }], '2026-10-20').tone).toBe('done'));
 });
+
+import { timeDaysTone as tdt } from '@/lib/installerTone';
+describe('timeDaysTone weekends', () => {
+  it('Fri–Mon order is done with time on Fri and Mon only', () => {
+    const r = tdt({ startDate: '2026-10-30', endDate: '2026-11-02' }, [{ date: '2026-10-30' }, { date: '2026-11-02' }], '2026-11-02');
+    expect(r).toEqual({ tone: 'done', covered: 2, total: 2 });
+  });
+  it('counts a weekend day when time was logged on it', () => {
+    const r = tdt({ startDate: '2026-10-30', endDate: '2026-11-02' }, [{ date: '2026-10-30' }, { date: '2026-10-31' }], '2026-11-02');
+    expect(r).toEqual({ tone: 'progress', covered: 2, total: 3 });
+  });
+});

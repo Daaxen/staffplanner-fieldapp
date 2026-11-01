@@ -63,8 +63,12 @@ export function timeDaysTone(
   entries: { date: string }[],
   today: string,
 ): { tone: Tone; covered: number; total: number } {
-  const days = range.startDate ? isoDays(range.startDate, range.endDate).filter(d => d <= today) : [];
   const logged = new Set(entries.map(e => e.date.slice(0, 10)));
+  // Weekends are optional: only counted when time was actually logged on them.
+  const isWeekend = (d: string) => { const w = new Date(`${d}T12:00:00Z`).getUTCDay(); return w === 0 || w === 6; };
+  const days = range.startDate
+    ? isoDays(range.startDate, range.endDate).filter(d => d <= today && (!isWeekend(d) || logged.has(d)))
+    : [];
   const covered = days.filter(d => logged.has(d)).length;
   const total = days.length;
   if (total === 0) return { tone: entries.length > 0 ? 'done' : 'planned', covered, total };
