@@ -27,3 +27,13 @@ This only reads what's already saved. Nothing about how reports are submitted ch
 - Short descriptions stay as they are, with no toggle.
 
 Technical: a small shared `ExpandableText` component (line-clamp, plus a toggle shown only when the text overflows), used in the description cells.
+
+## Addition: billables in the field report
+The work order's field report also gets a **Billables** summary, broken down per installer and in total:
+- **Work time:** hours × hourly rate, using the same rate order as Tidsöversikt (time row, then order, then customer).
+- **Travel time:** hours (shown on its own, not priced, matching today's rule).
+- **Mileage:** km and amount.
+- **Expenses:** each category with its amount, and a link to the receipt where one exists.
+- **Grand total (kr)**, with a warning if some time rows have no price.
+
+Technical: reuses `billableRate`/`billableAmount` from timeReporting.ts and reads mileage_entries and expense_entries by project_id. A small pure helper for the totals gets tests.
