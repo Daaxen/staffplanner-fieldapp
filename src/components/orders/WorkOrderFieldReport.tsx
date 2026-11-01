@@ -1,0 +1,121 @@
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { ClipboardCheck, Image as ImageIcon, AlertTriangle, Receipt } from 'lucide-react';
+import { ExpandableText } from '@/components/ui/expandable-text';
+import { workOrderBillables } from '@/lib/workOrderBillables';
+import { receiptUrl } from '@/lib/receipts';
+
+const kr = (n: number) => `${n.toLocaleString('sv-SE', { maximumFractionDigits: 2 })} kr`;
+type Any = Record<string, any>;
+
+export default function WorkOrderFieldReport({ projectId }: { projectId: string }) {
+  const [d, setD] = useState<{ reports: Any[]; time: Any[]; dev: Any[]; mil: Any[]; exp: Any[]; names: Record<string, string>; order: Any | null; client: Any | null; photos: Record<string, string> } | null>(null);
+  const [zoom, setZoom] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const [r, t, dv, m, e, p] = await Promise.all([
+        supabase.from('field_reports').select('*').eq('project_id', projectId),
+        supabase.from('time_entries').select('installer_id,entry_date,hours,travel_hours,hourly_rate,note,description').eq('project_id', projectId).order('entry_date'),
+        supabase.from('deviations').select('*').eq('project_id', projectId),
+        supabase.from('mileage_entries').select('installer_id,entry_date,km,amount,note').eq('project_id', projectId),
+        supabase.from('expense_entries').select('installer_id,entry_date,category,amount,note,receipt_path').eq('project_id', projectId),
+        supabase.from('projects').select('hourly_rate,client_id').eq('id', projectId).maybeSingle(),
+      ]);
+      const client = p.data?.client_id ? (await supabase.from('clients').select('hourly_rate').eq('id', p.data.client_id).maybeSingle()).data : null;
+      const ids = new Set<string>();
+      [r.data, t.data, dv.data, m.data, e.data].forEach(a => (a ?? []).forEach((x: Any) => ids.add(x.installer_id)));
+      const names: Record<string, string> = {};
+      if (ids.size) (await supabase.from('installers').select('id,name').in('id', [...ids])).data?.forEach(i => { names[i.id] = i.name; });
+      const paths = [...(r.data ?? []).flatMap((x: Any) => x.photo_paths ?? []), ...(dv.data ?? []).flatMap((x: Any) => x.photo_paths ?? [])].filter((x: unknown) => typeof x === 'string') as string[];
+      const photos: Record<string, string> = {};
+      if (paths.length) (await supabase.storage.from('field-photos').createSignedUrls(paths, 3600)).data?.forEach(s => { if (s.signedUrl && s.path) photos[s.path] = s.signedUrl; });
+      if (alive) setD({ reports: r.data ?? [], time: t.data ?? [], dev: dv.data ?? [], mil: m.data ?? [], exp: e.data ?? [], names, order: p.data, client, photos });
+    })();
+    return () => { alive = false; };
+  }, [projectId]);
+
+  if (!d) return <div className="pt-4 border-t border-border text-sm text-muted-foreground">Loading field report…</div>;
+  const b = workOrderBillables(d.time as any, d.mil as any, d.exp as any, d.order, d.client);
+  const installerIds = Object.keys(b.perInstaller).concat(d.reports.map(r => r.installer_id)).filter((v, i, a) => a.indexOf(v) === i);
+  const name = (id: string) => d.names[id] ?? 'Unknown';
+  const Photos = ({ paths }: { paths: string[] }) => paths?.length ? (
+    <div className="flex flex-wrap gap-2 mt-2">{paths.map(p => d.photos[p] && <img key={p} src={d.photos[p]} onClick={() => setZoom(d.photos[p])} className="w-16 h-16 object-cover rounded cursor-pointer border border-border" alt="" />)}</div>
+  ) : null;
+
+  return (
+    <div className="pt-4 border-t border-border space-y-4">
+      <h3 className="text-sm font-bold flex items-center gap-2"><ClipboardCheck className="w-4 h-4" /> Field report</h3>
+      {installerIds.length === 0 && d.dev.length === 0 && <p className="text-sm text-muted-foreground">Nothing reported yet.</p>}
+
+      {installerIds.map(id => {
+        const rep = d.reports.find(r => r.installer_id === id);
+        const rows = d.time.filter(t => t.installer_id === id);
+        const checked = Array.isArray(rep?.checked_items) ? rep.checked_items.length : Object.values(rep?.checked_items ?? {}).filter(Boolean).length;
+        const signs = Object.keys(rep?.sign_offs ?? {}).length;
+        return (
+          <div key={id} className="rounded-lg border border-border p-3 space-y-2">
+            <div className="flex justify-between items-center">
+              <p className="text-sm font-bold">{name(id)}</p>
+              {rep && <span className={rep.submitted_at ? 'text-xs font-semibold text-status-completed' : 'text-xs font-semibold text-status-in-progress'}>
+                {rep.submitted_at ? `Submitted ${new Date(rep.submitted_at).toLocaleString('sv-SE')}` : 'Not submitted'}
+              </span>}
+            </div>
+            {rep?.report_text ? <ExpandableText text={rep.report_text} className="text-sm" /> : <p className="text-xs text-muted-foreground">No written report.</p>}
+            {rep && <p className="text-xs text-muted-foreground">Checklist: {checked} checked · Sign-offs: {signs}{rep.signature ? ' · Customer signature ✓' : ''}</p>}
+            {rep && <Photos paths={rep.photo_paths ?? []} />}
+            {rows.some(r => r.description || r.note) && (
+              <div className="space-y-1 pt-1">
+                <p className="text-xs font-semibold text-muted-foreground">Time comments</p>
+                {rows.filter(r => r.description || r.note).map((r, i) => (
+                  <div key={i} className="text-sm flex gap-2"><span className="text-xs text-muted-foreground w-20 shrink-0">{r.entry_date}</span><ExpandableText text={r.description || r.note} className="min-w-0 flex-1" /></div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      {d.dev.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Deviations</p>
+          {d.dev.map(x => (
+            <div key={x.id} className="rounded-lg border border-destructive/40 p-2 text-sm">
+              <p className="font-semibold">{x.category} · {x.severity} · {name(x.installer_id)}</p>
+              <ExpandableText text={x.description} />
+              <Photos paths={x.photo_paths ?? []} />
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="rounded-lg border border-border p-3 space-y-2">
+        <p className="text-sm font-bold flex items-center gap-2"><Receipt className="w-4 h-4" /> Billables</p>
+        <table className="w-full text-xs">
+          <thead><tr className="text-muted-foreground text-left"><th>Installer</th><th className="text-right">Work</th><th className="text-right">Travel</th><th className="text-right">Mileage</th><th className="text-right">Expenses</th><th className="text-right">Total</th></tr></thead>
+          <tbody>
+            {Object.entries(b.perInstaller).map(([id, l]) => (
+              <tr key={id} className="border-t border-border"><td>{name(id)}</td><td className="text-right">{l.workHours} h · {kr(l.workAmount)}</td><td className="text-right">{l.travelHours} h</td><td className="text-right">{l.km} km · {kr(l.mileageAmount)}</td><td className="text-right">{kr(l.expenseAmount)}</td><td className="text-right font-semibold">{kr(l.total)}</td></tr>
+            ))}
+            <tr className="border-t-2 border-border font-bold"><td>Total</td><td className="text-right">{b.total.workHours} h · {kr(b.total.workAmount)}</td><td className="text-right">{b.total.travelHours} h</td><td className="text-right">{b.total.km} km · {kr(b.total.mileageAmount)}</td><td className="text-right">{kr(b.total.expenseAmount)}</td><td className="text-right">{kr(b.total.total)}</td></tr>
+          </tbody>
+        </table>
+        {b.total.unpricedRows > 0 && <p className="text-xs font-semibold text-destructive">{b.total.unpricedRows} time rows have no hourly rate and are not priced.</p>}
+        {d.exp.length > 0 && (
+          <div className="space-y-1">
+            <p className="text-xs font-semibold text-muted-foreground">Expenses</p>
+            {d.exp.map((x, i) => (
+              <div key={i} className="text-xs flex justify-between gap-2">
+                <span>{x.entry_date} · {x.category} · {name(x.installer_id)}</span>
+                <span className="flex gap-2">{kr(Number(x.amount))}{x.receipt_path && <button className="text-primary hover:underline" onClick={async () => { const u = await receiptUrl(x.receipt_path); if (u) window.open(u, '_blank'); }}>Receipt</button>}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {zoom && <div className="fixed inset-0 z-[100] bg-foreground/80 flex items-center justify-center p-4" onClick={() => setZoom(null)}><img src={zoom} className="max-h-full max-w-full rounded" alt="" /><ImageIcon className="hidden" /></div>}
+    </div>
+  );
+}

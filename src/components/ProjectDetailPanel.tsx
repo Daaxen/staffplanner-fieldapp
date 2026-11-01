@@ -7,6 +7,7 @@ import SimilarJobsPanel from '@/components/orders/SimilarJobsPanel';
 import HistoricalEstimateCard from '@/components/orders/HistoricalEstimateCard';
 import CancelWorkOrderDialog from '@/components/gantt/CancelWorkOrderDialog';
 import OrderDocumentsSection from '@/components/documents/OrderDocumentsSection';
+import WorkOrderFieldReport from '@/components/orders/WorkOrderFieldReport';
 import { projectRowId } from '@/lib/appData';
 
 const statusColorMap: Record<ProjectStatus, string> = {
@@ -169,6 +170,7 @@ const ProjectDetailPanel = ({ project, installer, onClose, onEdit, onDispatch, o
           </div>
 
           {orderRowId && <OrderDocumentsSection projectId={orderRowId} />}
+          {orderRowId && <WorkOrderFieldReport projectId={orderRowId} />}
 
           {/* Action buttons */}
           <div className="space-y-2 pt-4 border-t border-border">

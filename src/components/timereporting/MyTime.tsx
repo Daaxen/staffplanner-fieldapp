@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { ExpandableText } from '@/components/ui/expandable-text';
 import { ChevronLeft, ChevronRight, Copy, Lock, Pencil, Plus, Trash2, CalendarPlus, Building } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -154,7 +155,7 @@ export default function MyTime() {
                     <div className="text-xs text-muted-foreground truncate">
                       {[byId(refs.activities, r.activity_type_id)?.name, byId(refs.groups, r.project_group_id)?.name, byId(refs.orders, r.project_id)?.name].filter(Boolean).join(' · ')}
                     </div>
-                    {(r.description || r.note) && <div className="text-sm mt-1 break-words">{r.description || r.note}</div>}
+                    <ExpandableText text={r.description || r.note} className="text-sm mt-1" />
                   </div>
                   <div className="text-right shrink-0">
                     <div className="font-semibold">{fmt(rowHours(r))} h</div>
