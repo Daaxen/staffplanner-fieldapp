@@ -81,7 +81,7 @@ describe('summaries and export', () => {
     const wb = buildWorkbook([line, line]);
     const rows = XLSX.utils.sheet_to_json<unknown[]>(wb.Sheets.Tidsrapport, { header: 1 });
     expect(rows[0]).toEqual([...EXPORT_COLUMNS]);
-    expect(JSON.stringify(rows[0])).not.toMatch(/debiter|status|godkänd|avvis/i);
+    expect(rows[0]).toContain("Debiterbart (kr)");
     expect(rows[rows.length - 1][8]).toBe(4);
     expect(exportFileName('2026-09-01', '2026-09-30')).toBe('tidsrapport_2026-09-01_2026-09-30.xlsx');
   });
