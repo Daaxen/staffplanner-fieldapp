@@ -97,3 +97,12 @@ describe('time lock on completed orders', () => {
   it('keeps time editable while the order is in progress', () => expect(isTimeLocked('in_progress')).toBe(false));
   it('keeps time editable on scheduled orders', () => expect(isTimeLocked('scheduled')).toBe(false));
 });
+
+import { billableRate as _br, billableAmount as _ba } from '@/lib/timeReporting';
+describe('billable rate priority', () => {
+  it('uses time entry rate first', () => expect(_br({ hourly_rate: 700 }, { hourly_rate: 600 }, { hourly_rate: 500 })).toBe(700));
+  it('falls back to order rate', () => expect(_br({ hourly_rate: null }, { hourly_rate: 600 }, { hourly_rate: 500 })).toBe(600));
+  it('falls back to client rate', () => expect(_br({}, { hourly_rate: null }, { hourly_rate: 500 })).toBe(500));
+  it('returns null when no rate', () => expect(_ba({ hours: 8 }, null, null)).toBeNull());
+  it('amount is work hours × rate (travel excluded)', () => expect(_ba({ hours: 7.5, hourly_rate: 600 })).toBe(4500));
+});

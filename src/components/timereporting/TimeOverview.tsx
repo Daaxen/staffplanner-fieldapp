@@ -1,4 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { svStatusLabels } from '@/lib/installerTone';
 import * as XLSX from 'xlsx';
 import { ArrowDown, ArrowUp, ArrowUpDown, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,11 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useTimeReportingRefs, useTimeRows } from '@/hooks/useTimeReporting';
 import {
-  INTERNAL_CUSTOMER_NUMBER, buildWorkbook, clientLabel, exportFileName, isoDate, rowHours, sumWorkTravel, type ExportLine, type TimeRow,
+  INTERNAL_CUSTOMER_NUMBER, billableAmount, billableRate, buildWorkbook, clientLabel, exportFileName, isoDate, rowHours, sumWorkTravel, type ExportLine, type TimeRow,
 } from '@/lib/timeReporting';
 
 const ALL = '__all';
 const fmt = (h: number) => h.toFixed(2).replace('.', ',');
+const kr = (n: number) => n.toLocaleString('sv-SE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+type Rated = { id: string; hourly_rate: number | null; status?: string | null };
 
 export default function TimeOverview({ exportMode = false }: { exportMode?: boolean }) {
   const refs = useTimeReportingRefs();
@@ -21,6 +25,23 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
   const [to, setTo] = useState(isoDate(new Date(today.getFullYear(), today.getMonth() + 1, 0)));
   const [f, setF] = useState({ employee: ALL, client: ALL, group: ALL, order: ALL, activity: ALL });
   const { rows, loading } = useTimeRows({ from, to });
+  // Admin-only rates/status (installers never load this screen).
+  const [orderRates, setOrderRates] = useState<Rated[]>([]);
+  const [clientRates, setClientRates] = useState<Rated[]>([]);
+  useEffect(() => {
+    (async () => {
+      const [o, c] = await Promise.all([
+        supabase.from('projects').select('id,hourly_rate,status'),
+        supabase.from('clients').select('id,hourly_rate'),
+      ]);
+      setOrderRates((o.data ?? []) as Rated[]);
+      setClientRates((c.data ?? []) as Rated[]);
+    })();
+  }, []);
+  const ordR = (r: TimeRow) => orderRates.find(x => x.id === r.project_id);
+  const cliR = (r: TimeRow) => clientRates.find(x => x.id === r.client_id);
+  const amountOf = (r: TimeRow) => billableAmount(r, ordR(r), cliR(r));
+  const statusOf = (r: TimeRow) => { const s = ordR(r)?.status; return s ? svStatusLabels[s] ?? s : ''; };
 
   const by = <T extends { id: string }>(l: T[], id?: string | null) => l.find(x => x.id === id);
   const filtered = useMemo(() => rows.filter(r =>
@@ -31,6 +52,8 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
   const work = filtered.reduce((t, r) => t + Number(r.hours), 0);
   const travel = filtered.reduce((t, r) => t + Number(r.travel_hours ?? 0), 0);
   const total = work + travel;
+  const billable = filtered.reduce((t, r) => t + (amountOf(r) ?? 0), 0);
+  const unpriced = filtered.filter(r => amountOf(r) == null).length;
   const internalId = refs.clients.find(c => c.customer_number === INTERNAL_CUSTOMER_NUMBER)?.id;
   const internalTotal = filtered.filter(r => r.client_id === internalId).reduce((s, r) => s + rowHours(r), 0);
   const summaries = [
@@ -52,6 +75,8 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
     { label: 'Arbetstid', value: r => Number(r.hours), num: true },
     { label: 'Restid', value: r => Number(r.travel_hours ?? 0), num: true },
     { label: 'Totalt', value: r => rowHours(r), num: true },
+    { label: 'Orderstatus', value: r => statusOf(r) },
+    { label: 'Debiterbart (kr)', value: r => amountOf(r) ?? -1, num: true },
     { label: 'Beskrivning', value: r => r.description ?? r.note ?? '' },
     { label: 'Senast ändrad', value: r => r.updated_at },
   ];
@@ -74,6 +99,7 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
         Datum: r.entry_date, Medarbetare: by(refs.employees, r.installer_id)?.name ?? '', Kundnummer: c?.customer_number ?? '',
         Kundnamn: c?.name ?? '', Projektnummer: g?.project_number ?? '', Projektnamn: g?.name ?? '', Ordernummer: o?.project_number ?? '',
         Aktivitetstyp: by(refs.activities, r.activity_type_id)?.name ?? '', Arbetstid: Math.round(Number(r.hours) * 100) / 100, Restid: Math.round(Number(r.travel_hours ?? 0) * 100) / 100, 'Antal timmar': Math.round(rowHours(r) * 100) / 100,
+        Orderstatus: statusOf(r), Timpris: billableRate(r, ordR(r), cliR(r)) ?? '', 'Debiterbart (kr)': amountOf(r) ?? '',
         Beskrivning: r.description ?? r.note ?? '', Skapad: new Date(r.created_at).toLocaleString('sv-SE'),
         'Senast ändrad': new Date(r.updated_at).toLocaleString('sv-SE'),
       };
@@ -106,9 +132,10 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
         {sel('order', 'Order', refs.orders.filter(o => f.client === ALL || o.client_id === f.client).map(o => ({ id: o.id, label: `${o.project_number ?? ''} ${o.name}`.trim() })))}
         {sel('activity', 'Aktivitet', refs.activities.map(a => ({ id: a.id, label: a.name })))}
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="rounded-md border border-border p-3"><div className="text-xs text-muted-foreground">Total rapporterad tid</div><div className="text-2xl font-semibold">{fmt(total)} h</div><div className="text-xs text-muted-foreground mt-1">Arbetstid {fmt(work)} h · Restid {fmt(travel)} h</div></div>
         <div className="rounded-md border border-border p-3"><div className="text-xs text-muted-foreground">Mot kund 9999</div><div className="text-2xl font-semibold">{fmt(internalTotal)} h</div></div>
+        <div className="rounded-md border border-border p-3"><div className="text-xs text-muted-foreground">Debiterbart (arbetstid)</div><div className="text-2xl font-semibold">{kr(billable)} kr</div>{unpriced > 0 && <div className="text-xs text-destructive mt-1">{unpriced} rader saknar timpris</div>}</div>
         <div className="rounded-md border border-border p-3"><div className="text-xs text-muted-foreground">Tidsrader</div><div className="text-2xl font-semibold">{filtered.length}</div></div>
       </div>
       <div className="grid md:grid-cols-4 gap-3">
@@ -135,10 +162,11 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
               ))}
             </TableRow></TableHeader>
             <TableBody>
-              {loading ? <TableRow><TableCell colSpan={12}>Laddar…</TableCell></TableRow> : sorted.map(r => {
+              {loading ? <TableRow><TableCell colSpan={14}>Laddar…</TableCell></TableRow> : sorted.map(r => {
                 const c = by(refs.clients, r.client_id);
+                const amt = amountOf(r);
                 return (
-                  <TableRow key={r.id}>
+                  <TableRow key={r.id} className={amt == null ? 'bg-destructive/5' : undefined}>
                     <TableCell>{r.entry_date}</TableCell>
                     <TableCell>{by(refs.employees, r.installer_id)?.name}</TableCell>
                     <TableCell>{c?.customer_number}</TableCell>
@@ -149,6 +177,8 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
                     <TableCell className="text-right">{fmt(Number(r.hours))}</TableCell>
                     <TableCell className="text-right">{fmt(Number(r.travel_hours ?? 0))}</TableCell>
                     <TableCell className="text-right font-medium">{fmt(rowHours(r))}</TableCell>
+                    <TableCell>{statusOf(r)}</TableCell>
+                    <TableCell className={amt == null ? 'text-right text-destructive' : 'text-right'} title={amt == null ? 'Saknar timpris' : undefined}>{amt == null ? '–' : kr(amt)}</TableCell>
                     <TableCell className="max-w-xs truncate">{r.description ?? r.note}</TableCell>
                     <TableCell>{new Date(r.updated_at).toLocaleString('sv-SE')}</TableCell>
                   </TableRow>
