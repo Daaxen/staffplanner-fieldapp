@@ -21,3 +21,9 @@ This only reads what's already saved. Nothing about how reports are submitted ch
 ## Technical
 - New read-only `WorkOrderFieldReport` component. It reads field_reports, time_entries, deviations and documents by project_id. Photos use signed storage URLs.
 - Mount it in the work order detail panel.
+
+## Addition: expandable "Beskrivning"
+- In Tidsöversikt (and in the time-row list in Min tid), long descriptions are cut to one line with a "Visa mer" toggle. Clicking it shows the full text, and "Visa mindre" folds it back.
+- Short descriptions stay as they are, with no toggle.
+
+Technical: a small shared `ExpandableText` component (line-clamp, plus a toggle shown only when the text overflows), used in the description cells.
