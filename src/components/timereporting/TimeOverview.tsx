@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { ExpandableText } from '@/components/ui/expandable-text';
 import { supabase } from '@/integrations/supabase/client';
 import { svStatusLabels } from '@/lib/installerTone';
 import * as XLSX from 'xlsx';
@@ -179,7 +180,7 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
                     <TableCell className="text-right font-medium">{fmt(rowHours(r))}</TableCell>
                     <TableCell>{statusOf(r)}</TableCell>
                     <TableCell className={amt == null ? 'text-right text-destructive' : 'text-right'} title={amt == null ? 'Saknar timpris' : undefined}>{amt == null ? '–' : kr(amt)}</TableCell>
-                    <TableCell className="max-w-xs truncate">{r.description ?? r.note}</TableCell>
+                    <TableCell className="max-w-xs"><ExpandableText text={r.description ?? r.note} /></TableCell>
                     <TableCell>{new Date(r.updated_at).toLocaleString('sv-SE')}</TableCell>
                   </TableRow>
                 );
