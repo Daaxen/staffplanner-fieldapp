@@ -31,7 +31,7 @@ export function useTimeReportingRefs() {
   return { clients, groups, orders, activities, employees };
 }
 
-const COLS = 'id,installer_id,entry_date,client_id,project_group_id,project_id,activity_type_id,hours,travel_hours,description,note,created_at,updated_at';
+const COLS = 'id,installer_id,entry_date,client_id,project_group_id,project_id,activity_type_id,hours,travel_hours,description,note,created_at,updated_at,hourly_rate';
 
 export function useTimeRows(filter: { from: string; to: string; installerId?: string | null }) {
   const [rows, setRows] = useState<TimeRow[]>([]);
@@ -45,5 +45,21 @@ export function useTimeRows(filter: { from: string; to: string; installerId?: st
     setLoading(false);
   }, [filter.from, filter.to, filter.installerId]);
   useEffect(() => { reload(); }, [reload]);
+  // Live: any saved/changed/deleted time entry refreshes the list, regardless of order status.
+  useEffect(() => {
+    let t: ReturnType<typeof setTimeout> | undefined;
+    const ch = supabase
+      .channel(`time-rows-${Math.random().toString(36).slice(2)}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'time_entries' }, () => {
+        clearTimeout(t); t = setTimeout(async () => {
+          let q = supabase.from('time_entries').select(COLS).gte('entry_date', filter.from).lte('entry_date', filter.to).order('entry_date').order('created_at');
+          if (filter.installerId) q = q.eq('installer_id', filter.installerId);
+          const { data } = await q;
+          if (data) setRows(data as unknown as TimeRow[]);
+        }, 400);
+      })
+      .subscribe();
+    return () => { clearTimeout(t); supabase.removeChannel(ch); };
+  }, [filter.from, filter.to, filter.installerId]);
   return { rows, loading, reload };
 }

@@ -48,7 +48,19 @@ export type TimeRow = {
   note: string | null;
   created_at: string;
   updated_at: string;
+  hourly_rate?: number | null;
 };
+
+const posRate = (v: unknown) => { const n = Number(v); return v != null && v !== '' && Number.isFinite(n) && n > 0 ? n : null; };
+/** Billable hourly rate: time entry first, then the order, then the client. Null when none is set. */
+export function billableRate(row: { hourly_rate?: number | null }, order?: { hourly_rate?: number | null } | null, client?: { hourly_rate?: number | null } | null) {
+  return posRate(row.hourly_rate) ?? posRate(order?.hourly_rate) ?? posRate(client?.hourly_rate);
+}
+/** Billable amount = work hours × rate (travel excluded). Null when no rate. */
+export function billableAmount(row: { hours: number; hourly_rate?: number | null }, order?: { hourly_rate?: number | null } | null, client?: { hourly_rate?: number | null } | null) {
+  const rate = billableRate(row, order, client);
+  return rate == null ? null : Math.round(Number(row.hours) * rate * 100) / 100;
+}
 
 export const clientLabel = (c?: TRClient | null) =>
   !c ? '' : c.customer_number === INTERNAL_CUSTOMER_NUMBER ? INTERNAL_LABEL : `${c.customer_number ? c.customer_number + ' – ' : ''}${c.name}`;
@@ -126,7 +138,7 @@ export function sumWorkTravel<T extends Pick<TimeRow, 'hours' | 'travel_hours'>>
 
 export const EXPORT_COLUMNS = [
   'Datum', 'Medarbetare', 'Kundnummer', 'Kundnamn', 'Projektnummer', 'Projektnamn',
-  'Ordernummer', 'Aktivitetstyp', 'Arbetstid', 'Restid', 'Antal timmar', 'Beskrivning', 'Skapad', 'Senast ändrad',
+  'Ordernummer', 'Aktivitetstyp', 'Arbetstid', 'Restid', 'Antal timmar', 'Orderstatus', 'Timpris', 'Debiterbart (kr)', 'Beskrivning', 'Skapad', 'Senast ändrad',
 ] as const;
 
 export type ExportLine = Record<(typeof EXPORT_COLUMNS)[number], string | number>;

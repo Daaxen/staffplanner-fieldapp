@@ -81,7 +81,7 @@ describe('summaries and export', () => {
     const wb = buildWorkbook([line, line]);
     const rows = XLSX.utils.sheet_to_json<unknown[]>(wb.Sheets.Tidsrapport, { header: 1 });
     expect(rows[0]).toEqual([...EXPORT_COLUMNS]);
-    expect(JSON.stringify(rows[0])).not.toMatch(/debiter|status|godkänd|avvis/i);
+    expect(rows[0]).toContain("Debiterbart (kr)");
     expect(rows[rows.length - 1][8]).toBe(4);
     expect(exportFileName('2026-09-01', '2026-09-30')).toBe('tidsrapport_2026-09-01_2026-09-30.xlsx');
   });
@@ -96,4 +96,13 @@ describe('time lock on completed orders', () => {
   it('locks time when the order is completed', () => expect(isTimeLocked('completed')).toBe(true));
   it('keeps time editable while the order is in progress', () => expect(isTimeLocked('in_progress')).toBe(false));
   it('keeps time editable on scheduled orders', () => expect(isTimeLocked('scheduled')).toBe(false));
+});
+
+import { billableRate as _br, billableAmount as _ba } from '@/lib/timeReporting';
+describe('billable rate priority', () => {
+  it('uses time entry rate first', () => expect(_br({ hourly_rate: 700 }, { hourly_rate: 600 }, { hourly_rate: 500 })).toBe(700));
+  it('falls back to order rate', () => expect(_br({ hourly_rate: null }, { hourly_rate: 600 }, { hourly_rate: 500 })).toBe(600));
+  it('falls back to client rate', () => expect(_br({}, { hourly_rate: null }, { hourly_rate: 500 })).toBe(500));
+  it('returns null when no rate', () => expect(_ba({ hours: 8 }, null, null)).toBeNull());
+  it('amount is work hours × rate (travel excluded)', () => expect(_ba({ hours: 7.5, hourly_rate: 600 })).toBe(4500));
 });
