@@ -9,10 +9,10 @@ const projectRef = import.meta.env.VITE_SUPABASE_PROJECT_ID ?? "project-ref-unse
 
 export default defineMcp({
   name: "staffplanner-mcp",
-  title: "StaffPlanner MCP",
+  title: "FETCH MCP",
   version: "0.2.0",
   instructions:
-    "Signed-in tools for StaffPlanner (retail installation scheduling). All tools act as the connected user and respect Row-Level Security. Use list_projects/get_project to browse work, list_installers/list_clients for reference data, and whoami to see your identity and roles.",
+    "Signed-in tools for FETCH (retail installation scheduling). All tools act as the connected user and respect Row-Level Security. Use list_projects/get_project to browse work, list_installers/list_clients for reference data, and whoami to see your identity and roles.",
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated",

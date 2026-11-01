@@ -13,7 +13,7 @@ const Privacy = () => (
         <p>
           This Privacy Policy describes how <strong>Dynamic Places AB</strong> (org. nr.
           559431-4642), based in Stockholm, Sweden ("we", "us"), processes personal data
-          in the StaffPlanner application ("the Service"). We are the data controller
+          in the FETCH application ("the Service"). We are the data controller
           for personal data collected through the Service.
         </p>
 

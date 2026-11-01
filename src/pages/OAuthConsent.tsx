@@ -59,9 +59,9 @@ export default function OAuthConsent() {
     <main className="min-h-screen flex items-center justify-center p-6 bg-background">
       <div className="w-full max-w-md space-y-5 rounded-lg border p-6 bg-card">
         <div>
-          <h1 className="text-lg font-semibold">Connect {clientName} to StaffPlanner</h1>
+          <h1 className="text-lg font-semibold">Connect {clientName} to FETCH</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            This lets {clientName} call StaffPlanner's tools while you are signed in.
+            This lets {clientName} call FETCH's tools while you are signed in.
             It does not bypass your permissions — the tools see only what your account can see.
           </p>
         </div>

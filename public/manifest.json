@@ -1,6 +1,6 @@
 {
-  "name": "StaffPlanner",
-  "short_name": "StaffPlanner",
+  "name": "FETCH",
+  "short_name": "FETCH",
   "description": "Plan, dispatch, and track retail installation projects with your team.",
   "start_url": "/",
   "display": "standalone",

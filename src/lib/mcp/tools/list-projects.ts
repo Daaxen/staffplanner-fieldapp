@@ -6,7 +6,7 @@ export default defineTool({
   name: "list_projects",
   title: "List projects",
   description:
-    "List installation/site-survey/transport projects from StaffPlanner. Optional filters by status, project type, client name, assigned installer id, and unassigned-only. Reads from live database; RLS applies.",
+    "List installation/site-survey/transport projects from FETCH. Optional filters by status, project type, client name, assigned installer id, and unassigned-only. Reads from live database; RLS applies.",
   inputSchema: {
     status: z.enum(["open", "scheduled", "in-progress", "completed", "on-hold", "cancelled"]).optional(),
     projectType: z.enum(["installation", "site-survey", "transport"]).optional(),

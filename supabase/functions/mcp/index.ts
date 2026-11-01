@@ -27,7 +27,7 @@ function unauth() {
 var list_projects_default = defineTool({
   name: "list_projects",
   title: "List projects",
-  description: "List installation/site-survey/transport projects from StaffPlanner. Optional filters by status, project type, client name, assigned installer id, and unassigned-only. Reads from live database; RLS applies.",
+  description: "List installation/site-survey/transport projects from FETCH. Optional filters by status, project type, client name, assigned installer id, and unassigned-only. Reads from live database; RLS applies.",
   inputSchema: {
     status: z.enum(["open", "scheduled", "in-progress", "completed", "on-hold", "cancelled"]).optional(),
     projectType: z.enum(["installation", "site-survey", "transport"]).optional(),
@@ -166,9 +166,9 @@ var whoami_default = defineTool5({
 var projectRef = "piubkkipultepevxbxuv";
 var mcp_default = defineMcp({
   name: "staffplanner-mcp",
-  title: "StaffPlanner MCP",
+  title: "FETCH MCP",
   version: "0.2.0",
-  instructions: "Signed-in tools for StaffPlanner (retail installation scheduling). All tools act as the connected user and respect Row-Level Security. Use list_projects/get_project to browse work, list_installers/list_clients for reference data, and whoami to see your identity and roles.",
+  instructions: "Signed-in tools for FETCH (retail installation scheduling). All tools act as the connected user and respect Row-Level Security. Use list_projects/get_project to browse work, list_installers/list_clients for reference data, and whoami to see your identity and roles.",
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated"
