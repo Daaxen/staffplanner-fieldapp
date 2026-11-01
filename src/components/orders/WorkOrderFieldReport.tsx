@@ -4,11 +4,15 @@ import { ClipboardCheck, Image as ImageIcon, AlertTriangle, Receipt } from 'luci
 import { ExpandableText } from '@/components/ui/expandable-text';
 import { workOrderBillables } from '@/lib/workOrderBillables';
 import { receiptUrl } from '@/lib/receipts';
+import { exportFieldReportPdf, exportFieldReportXlsx } from '@/lib/fieldReportExport';
+import { Button } from '@/components/ui/button';
+import { FileDown, FileSpreadsheet } from 'lucide-react';
 
 const kr = (n: number) => `${n.toLocaleString('sv-SE', { maximumFractionDigits: 2 })} kr`;
 type Any = Record<string, any>;
 
-export default function WorkOrderFieldReport({ projectId }: { projectId: string }) {
+export default function WorkOrderFieldReport({ projectId, orderName }: { projectId: string; orderName: string }) {
+  const [pdfBusy, setPdfBusy] = useState(false);
   const [d, setD] = useState<{ reports: Any[]; time: Any[]; dev: Any[]; mil: Any[]; exp: Any[]; names: Record<string, string>; order: Any | null; client: Any | null; photos: Record<string, string> } | null>(null);
   const [zoom, setZoom] = useState<string | null>(null);
 
@@ -46,7 +50,13 @@ export default function WorkOrderFieldReport({ projectId }: { projectId: string 
 
   return (
     <div className="pt-4 border-t border-border space-y-4">
-      <h3 className="text-sm font-bold flex items-center gap-2"><ClipboardCheck className="w-4 h-4" /> Field report</h3>
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-sm font-bold flex items-center gap-2"><ClipboardCheck className="w-4 h-4" /> Field report</h3>
+        <div className="flex gap-1">
+          <Button size="sm" variant="outline" disabled={pdfBusy} onClick={async () => { setPdfBusy(true); try { await exportFieldReportPdf({ ...d, orderName }); } finally { setPdfBusy(false); } }}><FileDown className="w-4 h-4" />{pdfBusy ? 'Skapar…' : 'PDF'}</Button>
+          <Button size="sm" variant="outline" onClick={() => exportFieldReportXlsx({ ...d, orderName })}><FileSpreadsheet className="w-4 h-4" />Excel</Button>
+        </div>
+      </div>
       {installerIds.length === 0 && d.dev.length === 0 && <p className="text-sm text-muted-foreground">Nothing reported yet.</p>}
 
       {installerIds.map(id => {

@@ -170,7 +170,7 @@ const ProjectDetailPanel = ({ project, installer, onClose, onEdit, onDispatch, o
           </div>
 
           {orderRowId && <OrderDocumentsSection projectId={orderRowId} />}
-          {orderRowId && <WorkOrderFieldReport projectId={orderRowId} />}
+          {orderRowId && <WorkOrderFieldReport projectId={orderRowId} orderName={project.name} />}
 
           {/* Action buttons */}
           <div className="space-y-2 pt-4 border-t border-border">
