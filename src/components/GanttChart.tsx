@@ -136,7 +136,7 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
   }, [projectsList, days]);
 
   const todayStr = new Date().toISOString().split('T')[0];
-  const colWidth = viewMode === 'day' ? 200 : viewMode === 'week' ? 120 : 50;
+  const colWidth = viewMode === 'day' ? 200 : viewMode === 'week' ? 100 : 50;
 
   const viewLabel = useMemo(() => {
     if (days.length === 0) return '';
