@@ -323,7 +323,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onPickUp, in
                       </div>
                       <span className="text-sm text-foreground">{inst.name}</span>
                       {isMe && <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium">You</span>}
-                      {inst.type === 'sub-vendor' && <span className="text-[10px] text-muted-foreground">(SUB)</span>}
+                      {inst.type === 'sub-vendor' && <span className="text-[10px] font-bold bg-travel-surface text-travel border border-travel/40 px-1.5 py-0.5 rounded-full">UE · underleverantör</span>}
                     </div>
                   );
                 })}

@@ -13,6 +13,7 @@ import { useClients, useInstallersList, useProjects } from '@/lib/appData';
 import { installerConflicts } from '@/lib/schedulingConflicts';
 import { isValidInstallerRange, type InstallerDates } from '@/lib/bookings';
 import { toast } from 'sonner';
+import SubVendorLinks from '@/components/orders/SubVendorLinks';
 
 const statuses: ProjectStatus[] = ['open', 'scheduled', 'in-progress', 'completed', 'on-hold', 'cancelled'];
 
@@ -284,6 +285,15 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
                 </p>
               )}
             </div>
+
+            {project && (
+              <SubVendorLinks
+                projectRef={project.id}
+                endDate={form.endDate}
+                status={form.status}
+                onAssign={id => setAssigneeIds(prev => (prev.includes(id) ? prev : [...prev, id]))}
+              />
+            )}
 
             {assigneeIds.length > 0 && (
               <div className="col-span-2 space-y-2">

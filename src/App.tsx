@@ -11,6 +11,7 @@ import OAuthConsent from "./pages/OAuthConsent";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
+import SubVendorOrder from "./pages/SubVendorOrder";
 import { AuthProvider } from "@/hooks/useAuth";
 import BookingConflictPrompt from "@/components/scheduling/BookingConflictPrompt";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -28,6 +29,7 @@ const App = () => (
           <BookingConflictPrompt />
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/uv/:token" element={<SubVendorOrder />} />
             <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
