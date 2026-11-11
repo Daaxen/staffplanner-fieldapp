@@ -50,16 +50,16 @@ export function isWeekendIso(date: string): boolean {
   return w === 0 || w === 6;
 }
 
-/** Grid column indexes (from gridStart) of weekend days inside [start, end]. */
-export function weekendSegments(start: string, end: string, gridStart: string): number[] {
+/** Grid column indexes (via dayOffset from gridStart) of weekend days inside [start, end]. */
+export function weekendSegments(start: string, end: string, gridStart: Date): number[] {
   if (!start) return [];
-  const g = Date.parse(`${gridStart.slice(0, 10)}T12:00:00Z`);
-  const d = new Date(`${(start < gridStart ? gridStart : start).slice(0, 10)}T12:00:00Z`);
+  const d = new Date(`${start.slice(0, 10)}T12:00:00Z`);
   const e = Date.parse(`${(end || start).slice(0, 10)}T12:00:00Z`);
   const out: number[] = [];
   for (let n = 0; d.getTime() <= e && n < 400; n++, d.setUTCDate(d.getUTCDate() + 1)) {
     const iso = d.toISOString().slice(0, 10);
-    if (isWeekendIso(iso)) out.push(Math.round((d.getTime() - g) / 86400000));
+    const idx = dayOffset(iso, gridStart);
+    if (idx >= 0 && isWeekendIso(iso)) out.push(idx);
   }
   return out;
 }

@@ -17,7 +17,7 @@ interface DraggableBarProps {
   allowVerticalDrag?: boolean;
   onDragEnd: (newStartDate: string, newEndDate: string, dropClientY?: number) => void;
   /** First visible grid day (yyyy-mm-dd); enables the weekend overlay. */
-  gridStart?: string;
+  gridStart?: Date;
   worksWeekends?: boolean;
 }
 
