@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
   const me = link.installer_id as string;
   const locked = p.status === 'completed';
   const audit = (action: string, entity: string, id: string, vals: unknown) => db.from('audit_log').insert({
-    actor_type: 'sub-vendor', actor_name: owner?.name ?? 'Sub-vendor', source: 'sub-vendor link', entity_type: entity,
+    actor_type: 'service', actor_name: owner?.name ?? 'Sub-vendor', source: 'sub-vendor link', entity_type: entity,
     entity_id: id, entity_label: p.name, action, new_values: vals as never,
   });
 
@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
       : db.from('time_entries').insert(row).select('id').single();
     const { data, error } = await q;
     if (error) return json({ error: error.message }, 400);
-    await audit(b.id ? 'update' : 'insert', 'time_entries', data.id, row);
+    await audit(b.id ? 'update' : 'create', 'time_entries', data.id, row);
     return json({ ok: true });
   }
 
@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
       ...(b.submit ? { submitted_at: new Date().toISOString() } : {}) };
     const { error } = await db.from('field_reports').upsert(row, { onConflict: 'project_id,installer_id' });
     if (error) return json({ error: error.message }, 400);
-    await audit(b.submit ? 'submit' : 'update', 'field_reports', p.id, { submit: b.submit });
+    await audit('update', 'field_reports', p.id, { submit: b.submit });
     return json({ ok: true });
   }
 
@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
       installer_id: me, installer_name: owner?.name, category: b.category, severity: b.severity, description: b.description,
     }).select('id').single();
     if (error) return json({ error: error.message }, 400);
-    await audit('insert', 'deviations', data.id, { category: b.category });
+    await audit('create', 'deviations', data.id, { category: b.category });
     return json({ ok: true });
   }
   return json({ error: 'Unknown action' }, 400);
