@@ -43,3 +43,23 @@ export function dayCount(startStr: string, endStr: string): number {
   if (!y1 || !y2) return 1;
   return Math.max(utcDay(y2, m2 - 1, d2) - utcDay(y1, m1 - 1, d1) + 1, 1);
 }
+
+/** True for Saturday/Sunday (yyyy-mm-dd, timezone-safe). */
+export function isWeekendIso(date: string): boolean {
+  const w = new Date(`${date.slice(0, 10)}T12:00:00Z`).getUTCDay();
+  return w === 0 || w === 6;
+}
+
+/** Grid column indexes (from gridStart) of weekend days inside [start, end]. */
+export function weekendSegments(start: string, end: string, gridStart: string): number[] {
+  if (!start) return [];
+  const g = Date.parse(`${gridStart.slice(0, 10)}T12:00:00Z`);
+  const d = new Date(`${(start < gridStart ? gridStart : start).slice(0, 10)}T12:00:00Z`);
+  const e = Date.parse(`${(end || start).slice(0, 10)}T12:00:00Z`);
+  const out: number[] = [];
+  for (let n = 0; d.getTime() <= e && n < 400; n++, d.setUTCDate(d.getUTCDate() + 1)) {
+    const iso = d.toISOString().slice(0, 10);
+    if (isWeekendIso(iso)) out.push(Math.round((d.getTime() - g) / 86400000));
+  }
+  return out;
+}

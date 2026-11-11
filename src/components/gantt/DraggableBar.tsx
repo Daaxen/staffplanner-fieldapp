@@ -1,5 +1,6 @@
 import { useRef, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import { weekendSegments } from '@/lib/ganttDates';
 
 interface DraggableBarProps {
   left: number;
@@ -15,13 +16,16 @@ interface DraggableBarProps {
   onClick?: () => void;
   allowVerticalDrag?: boolean;
   onDragEnd: (newStartDate: string, newEndDate: string, dropClientY?: number) => void;
+  /** First visible grid day (yyyy-mm-dd); enables the weekend overlay. */
+  gridStart?: string;
+  worksWeekends?: boolean;
 }
 
 const DraggableBar = ({
   left, width, top, height, colWidth,
   projectStartDate, projectEndDate,
   className, style, children, onClick, onDragEnd,
-  allowVerticalDrag = false,
+  allowVerticalDrag = false, gridStart, worksWeekends = false,
 }: DraggableBarProps) => {
   const barRef = useRef<HTMLDivElement>(null);
   const dragInfo = useRef<{
@@ -133,7 +137,14 @@ const DraggableBar = ({
       >
         <div className="w-0.5 h-3/5 my-auto mt-[20%] ml-0.5 rounded-full opacity-0 group-hover:opacity-100 bg-foreground/40 transition-opacity" />
       </div>
+      {gridStart && !worksWeekends && weekendSegments(projectStartDate, projectEndDate, gridStart).map(i => (
+        <div key={i} aria-hidden className="absolute inset-y-0 pointer-events-none rounded-sm border-2 border-dashed border-current bg-background/75"
+          style={{ left: i * colWidth - left + 2, width: colWidth - 4 }} title="Helg – ej planerad" />
+      ))}
       {children}
+      {gridStart && worksWeekends && weekendSegments(projectStartDate, projectEndDate, gridStart).length > 0 && (
+        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold px-1.5 py-0.5 rounded bg-background/80 text-foreground pointer-events-none">Inkl. helg</span>
+      )}
       {/* Right resize handle */}
       <div
         className="absolute right-0 top-0 w-2 h-full cursor-col-resize z-10 group"

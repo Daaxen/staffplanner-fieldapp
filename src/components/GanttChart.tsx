@@ -101,9 +101,9 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
         start.setDate(start.getDate() + dateOffset);
         break;
       case 'week':
-        numDays = 14;
+        numDays = 7;
         start = new Date(today);
-        start.setDate(start.getDate() - today.getDay() + 1 + dateOffset * 14);
+        start.setDate(start.getDate() - ((today.getDay() + 6) % 7) + dateOffset * 7);
         break;
       case 'month': {
         const monthStart = new Date(today.getFullYear(), today.getMonth() + dateOffset, 1);
@@ -136,7 +136,7 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
   }, [projectsList, days]);
 
   const todayStr = new Date().toISOString().split('T')[0];
-  const colWidth = viewMode === 'day' ? 200 : viewMode === 'week' ? 80 : 50;
+  const colWidth = viewMode === 'day' ? 200 : viewMode === 'week' ? 120 : 50;
 
   const viewLabel = useMemo(() => {
     if (days.length === 0) return '';
