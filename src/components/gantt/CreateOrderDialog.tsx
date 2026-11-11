@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -79,6 +80,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
   const [endTime, setEndTime] = useState('17:00');
   const [estimatedHours, setEstimatedHours] = useState('');
   const [isFlexOrder, setIsFlexOrder] = useState(false);
+  const [worksWeekends, setWorksWeekends] = useState(false);
   const [pendingProject, setPendingProject] = useState<Project | null>(null);
   const [overrideOpen, setOverrideOpen] = useState(false);
   const [bookingConflicts, setBookingConflicts] = useState<BookingConflict[]>([]);
@@ -338,6 +340,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
       endTime: endTime || undefined,
       estimatedHours: projectType !== 'transport' && estimatedHours ? parseFloat(estimatedHours) : undefined,
       isFlexOrder,
+      worksWeekends,
       description: description || undefined,
       ...(projectType === 'transport' && {
         transportStops: transportStops.filter(s => s.address.trim()),
@@ -732,6 +735,12 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
               </label>
             </div>
           </div>
+
+<label className="flex items-start gap-3 rounded-md border border-border p-3 cursor-pointer">
+                <Switch checked={worksWeekends} onCheckedChange={setWorksWeekends} />
+                <span><span className="text-sm font-semibold">Arbete pågår över helg (lör–sön)</span>
+                <span className="block text-xs text-muted-foreground">Av: helgdagar planeras inte och kräver ingen tid.</span></span>
+              </label>
 
           {/* Transport Stops */}
           {projectType === 'transport' && (
