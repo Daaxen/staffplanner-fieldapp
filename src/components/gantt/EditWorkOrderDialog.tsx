@@ -208,7 +208,7 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
               <Label htmlFor="wo-end">End date</Label>
               <Input id="wo-end" type="date" value={form.endDate} onChange={e => set('endDate', e.target.value)} />
             </div>
-            <div className="col-span-full">
+            <div className="col-span-2">
               <label className="flex items-start gap-3 rounded-md border border-border p-3 cursor-pointer">
                 <Switch checked={worksWeekends} onCheckedChange={setWorksWeekends} />
                 <span><span className="text-sm font-semibold">Arbete pågår över helg (lör–sön)</span>
