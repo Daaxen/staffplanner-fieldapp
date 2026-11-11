@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TimeWheel, DurationWheel } from '@/components/ui/time-wheel';
 import { DEVIATION_CATEGORIES, DEVIATION_SEVERITIES } from '@/lib/deviations';
-import { CalendarDays, Camera, Clock, Lock, MapPin, Pencil, Phone, Trash2, TriangleAlert, User, Users } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Car, Receipt, CalendarDays, Camera, Clock, Lock, MapPin, Pencil, Phone, Trash2, TriangleAlert, User, Users } from 'lucide-react';
 import { toast } from 'sonner';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -23,6 +24,8 @@ const call = async (body: Record<string, unknown>) => {
   }
   return data;
 };
+
+const EXP_LABEL: Record<string, string> = { materials: 'Material', travel: 'Resa', parking: 'Parkering', meal: 'Måltid', other: 'Övrigt' };
 
 const days = (from?: string, to?: string) => {
   const out: string[] = [];
@@ -47,6 +50,8 @@ const SubVendorOrder = () => {
   const [photos, setPhotos] = useState<{ path: string; url?: string }[]>([]);
   const [dev, setDev] = useState({ category: 'site-not-ready', severity: 'low', description: '' });
   const [busy, setBusy] = useState(false);
+  const [mile, setMile] = useState<{ id?: string; entry_date: string; km: string; note: string } | null>(null);
+  const [exp, setExp] = useState<{ id?: string; entry_date: string; category: string; amount: string; note: string; receipt_path?: string } | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -71,6 +76,17 @@ const SubVendorOrder = () => {
       if (error) throw error;
       const next = [...photos.map(p => p.path), path];
       await run({ action: 'saveReport', report_text: report, photo_paths: next, submit: false }, 'Foto sparat');
+    } catch (e) { toast.error((e as Error).message); }
+  };
+
+  const uploadReceipt = async (file: File) => {
+    const ext = (file.name.split('.').pop() ?? 'jpg').toLowerCase();
+    try {
+      const { path, token: up } = await call({ token, action: 'photoUpload', ext: ['jpg', 'jpeg', 'png', 'webp', 'heic'].includes(ext) ? ext : 'jpg' });
+      const { error } = await supabase.storage.from('field-photos').uploadToSignedUrl(path, up, file);
+      if (error) throw error;
+      setExp(e => (e ? { ...e, receipt_path: path } : e));
+      toast.success('Kvitto bifogat');
     } catch (e) { toast.error((e as Error).message); }
   };
 
@@ -147,6 +163,72 @@ const SubVendorOrder = () => {
               <div className="flex gap-2">
                 <Button size="sm" disabled={busy} onClick={async () => { if (await run({ action: 'saveTime', ...edit, note: edit.note || undefined }, 'Tid sparad')) setEdit(null); }}>Spara</Button>
                 <Button size="sm" variant="outline" onClick={() => setEdit(null)}>Avbryt</Button>
+              </div>
+            </div>
+          )}
+        </Card>
+
+        <Card title={`Milersättning · ${d.mileage.reduce((s: number, m: any) => s + Number(m.km), 0)} km`} icon={Car}>
+          {d.mileage.map((m: any) => (
+            <div key={m.id} className="flex items-center gap-2 text-sm border-b border-border pb-1">
+              <span className="font-semibold">{m.entry_date}</span><span>{Number(m.km)} km</span>
+              {m.note && <span className="truncate text-muted-foreground">{m.note}</span>}
+              {!d.locked && <span className="ml-auto flex">
+                <Button size="icon" variant="ghost" className="h-7 w-7" aria-label="Ändra" onClick={() => setMile({ id: m.id, entry_date: m.entry_date, km: String(m.km), note: m.note ?? '' })}><Pencil className="h-3.5 w-3.5" /></Button>
+                <Button size="icon" variant="ghost" className="h-7 w-7" aria-label="Ta bort" onClick={() => run({ action: 'deleteEntry', kind: 'mileage', id: m.id }, 'Borttagen')}><Trash2 className="h-3.5 w-3.5" /></Button>
+              </span>}
+            </div>
+          ))}
+          {!d.locked && !mile && <Button size="sm" variant="outline" onClick={() => setMile({ entry_date: o.start_date, km: '', note: '' })}>Lägg till körning</Button>}
+          {mile && (
+            <div className="space-y-2 rounded-lg border border-border p-3">
+              <Select value={mile.entry_date} onValueChange={v => setMile({ ...mile, entry_date: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{days(o.start_date, o.end_date).map(x => <SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent>
+              </Select>
+              <Input type="number" inputMode="decimal" min="0" placeholder="Kilometer (egen bil)" value={mile.km} onChange={e => setMile({ ...mile, km: e.target.value })} />
+              <Input placeholder="Anteckning (t.ex. sträcka)" value={mile.note} onChange={e => setMile({ ...mile, note: e.target.value })} />
+              <div className="flex gap-2">
+                <Button size="sm" disabled={busy || !(Number(mile.km) > 0)} onClick={async () => { if (await run({ action: 'saveMileage', id: mile.id, entry_date: mile.entry_date, km: Number(mile.km), note: mile.note || undefined }, 'Körning sparad')) setMile(null); }}>Spara</Button>
+                <Button size="sm" variant="outline" onClick={() => setMile(null)}>Avbryt</Button>
+              </div>
+            </div>
+          )}
+        </Card>
+
+        <Card title={`Inköp & utlägg · ${d.expenses.reduce((s: number, e: any) => s + Number(e.amount), 0).toFixed(2)} kr`} icon={Receipt}>
+          {d.expenses.map((e: any) => (
+            <div key={e.id} className="flex items-center gap-2 text-sm border-b border-border pb-1">
+              <span className="font-semibold">{e.entry_date}</span><span>{EXP_LABEL[e.category] ?? e.category}</span><span>{Number(e.amount).toFixed(2)} kr</span>
+              {e.hasReceipt && <Receipt className="h-3.5 w-3.5 text-primary" aria-label="Kvitto bifogat" />}
+              {!d.locked && <span className="ml-auto flex">
+                <Button size="icon" variant="ghost" className="h-7 w-7" aria-label="Ta bort" onClick={() => run({ action: 'deleteEntry', kind: 'expense', id: e.id }, 'Borttagen')}><Trash2 className="h-3.5 w-3.5" /></Button>
+              </span>}
+            </div>
+          ))}
+          {!d.locked && !exp && <Button size="sm" variant="outline" onClick={() => setExp({ entry_date: o.start_date, category: 'materials', amount: '', note: '' })}>Lägg till inköp</Button>}
+          {exp && (
+            <div className="space-y-2 rounded-lg border border-border p-3">
+              <div className="grid grid-cols-2 gap-2">
+                <Select value={exp.entry_date} onValueChange={v => setExp({ ...exp, entry_date: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{days(o.start_date, o.end_date).map(x => <SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent>
+                </Select>
+                <Select value={exp.category} onValueChange={v => setExp({ ...exp, category: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{Object.entries(EXP_LABEL).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <Input type="number" inputMode="decimal" min="0" placeholder="Belopp (kr inkl. moms)" value={exp.amount} onChange={e => setExp({ ...exp, amount: e.target.value })} />
+              <Input placeholder="Vad köptes?" value={exp.note} onChange={e => setExp({ ...exp, note: e.target.value })} />
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm">
+                <Camera className="h-4 w-4" />{exp.receipt_path ? 'Kvitto bifogat ✓' : 'Fota kvitto'}
+                <input type="file" accept="image/*" capture="environment" className="hidden" onChange={ev => { const f = ev.target.files?.[0]; if (f) uploadReceipt(f); ev.target.value = ''; }} />
+              </label>
+              <p className="text-xs text-muted-foreground">Kvitto krävs för inköp.</p>
+              <div className="flex gap-2">
+                <Button size="sm" disabled={busy || !(Number(exp.amount) > 0)} onClick={async () => { if (await run({ action: 'saveExpense', id: exp.id, entry_date: exp.entry_date, category: exp.category, amount: Number(exp.amount), note: exp.note || undefined, receipt_path: exp.receipt_path }, 'Inköp sparat')) setExp(null); }}>Spara</Button>
+                <Button size="sm" variant="outline" onClick={() => setExp(null)}>Avbryt</Button>
               </div>
             </div>
           )}
