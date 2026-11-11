@@ -4,3 +4,5 @@
 - Shared snapshot triggers compare row fields through JSON rather than direct record access, because reporting tables do not all expose the same snapshot columns.
 - Manual work-day shortcuts use the shared normal-day duration and fill consistent start/end times in order forms, so database hour recalculation cannot change the chosen duration.- Time-entry locking on completed orders is enforced by a DB trigger (admins/superusers exempt) and mirrored in UI via `isTimeLocked()`, so installers cannot bypass the lock from any screen.
 - The commercial track is hidden behind `COMMERCIAL_TRACK_ENABLED` in src/lib/commercial.ts; data and DB rules are kept so it can be re-enabled without migrations.
+- Work order report exports (single and combined) go through `loadFieldReportData` + `exportFieldReport*` in src/lib/fieldReportExport.ts with an exclude set, so client/internal variants never diverge.
+- Weekends on the planning board are non-working unless `projects.works_weekends` is set; bars and time-day requirements both read that flag.

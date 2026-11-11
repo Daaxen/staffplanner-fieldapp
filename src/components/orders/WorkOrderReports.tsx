@@ -66,7 +66,7 @@ export default function WorkOrderReports({ projects }: { projects: Project[] }) 
   const chosen = projects.filter(p => selected.has(p.id));
 
   const create = async () => {
-    const ids = chosen.map(p => projectRowId(p.id)).filter(Boolean) as string[];
+    const ids = [...chosen].sort((a, b) => a.startDate.localeCompare(b.startDate)).map(p => projectRowId(p.id)).filter(Boolean) as string[];
     if (!ids.length) return;
     setBusy(true);
     try {
