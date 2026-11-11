@@ -6,3 +6,4 @@
 - The commercial track is hidden behind `COMMERCIAL_TRACK_ENABLED` in src/lib/commercial.ts; data and DB rules are kept so it can be re-enabled without migrations.
 - Work order report exports (single and combined) go through `loadFieldReportData` + `exportFieldReport*` in src/lib/fieldReportExport.ts with an exclude set, so client/internal variants never diverge.
 - Weekends on the planning board are non-working unless `projects.works_weekends` is set; bars and time-day requirements both read that flag.
+- Sub-vendor access goes only through the `subvendor-access` backend function with a hashed one-order link token (`work_order_links`), returning whitelisted site fields; never give sub-vendors accounts or direct table access, so client pricing/contract data can't leak.
