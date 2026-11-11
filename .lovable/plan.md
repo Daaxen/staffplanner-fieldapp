@@ -23,3 +23,20 @@ The report is made from data that's already saved. Nothing is changed or stored.
   - make the export functions accept many orders and an `exclude` set
   - single-order export reuses the same path
 - Tests: the exclude rules (amounts hidden when prices are excluded, travel and mileage dropped) and the multi-order totals.
+
+---
+
+# Planning board: one-week view and weekends
+
+## What you get
+- **Week view shows exactly one week** (Monday to Sunday). Today it shows two weeks.
+- **Weekends are highlighted:** Saturday and Sunday columns get a light gray shade and a "Helg" label, in Day, Week and Month view.
+- **By default, orders don't run over the weekend.** An order that spans a weekend is drawn as a solid bar on weekdays and a faded dashed outline on Saturday and Sunday ("not planned"). Weekend days also don't count as required days for time reporting (already the case).
+- **Active choice in the work order:** a new switch in Create and Edit work order, **"Arbete pågår över helg (lör–sön)"**. It's off by default. When it's on, the bar stays solid across the weekend with an "Inkl. helg" badge, and Saturday and Sunday count as booked days.
+
+## Technical
+- Migration: `projects.works_weekends boolean not null default false`. This is additive, so existing orders get "off".
+- Map it in appData.ts (`worksWeekends`), CreateOrderDialog and EditWorkOrderDialog (Switch).
+- GanttChart: in week mode, set the visible range to 7 days. Add a weekend column background (semantic token). Render each bar as segments, with weekend segments dashed when `!worksWeekends`.
+- Helper `isWeekendIso(date)` in ganttDates.ts, plus tests.
+- `timeDaysTone` keeps optional weekends. When `worksWeekends` is on, weekends count as required days.
