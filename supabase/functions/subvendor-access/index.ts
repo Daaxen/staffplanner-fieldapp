@@ -20,6 +20,12 @@ const Body = z.discriminatedUnion('action', [
   z.object({ action: z.literal('saveReport'), token: z.string().min(20).max(200), report_text: z.string().max(10000),
     photo_paths: z.array(z.string().max(300)).max(50), submit: z.boolean() }),
   z.object({ action: z.literal('photoUpload'), token: z.string().min(20).max(200), ext: z.enum(['jpg', 'jpeg', 'png', 'webp', 'heic']) }),
+  z.object({ action: z.literal('saveMileage'), token: z.string().min(20).max(200), id: z.string().uuid().optional(),
+    entry_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), km: z.number().positive().max(2000), note: z.string().max(1000).optional() }),
+  z.object({ action: z.literal('saveExpense'), token: z.string().min(20).max(200), id: z.string().uuid().optional(),
+    entry_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), category: z.enum(['materials', 'travel', 'parking', 'meal', 'other']),
+    amount: z.number().positive().max(50000), note: z.string().max(1000).optional(), receipt_path: z.string().max(300).optional() }),
+  z.object({ action: z.literal('deleteEntry'), token: z.string().min(20).max(200), kind: z.enum(['mileage', 'expense']), id: z.string().uuid() }),
   z.object({ action: z.literal('deviation'), token: z.string().min(20).max(200), category: z.string().max(40),
     severity: z.enum(['low', 'medium', 'high', 'critical']), description: z.string().min(10).max(4000) }),
 ]);
@@ -53,10 +59,12 @@ Deno.serve(async (req) => {
   });
 
   if (b.action === 'get') {
-    const [{ data: asg }, { data: times }, { data: rep }] = await Promise.all([
+    const [{ data: asg }, { data: times }, { data: rep }, { data: miles }, { data: exps }] = await Promise.all([
       db.from('assignments').select('installer_id, installers(name,type,base_location)').eq('project_id', p.id).neq('assignment_status', 'cancelled'),
       db.from('time_entries').select('id,entry_date,start_time,end_time,hours,travel_hours,note').eq('project_id', p.id).eq('installer_id', me).order('entry_date'),
       db.from('field_reports').select('report_text,photo_paths,submitted_at').eq('project_id', p.id).eq('installer_id', me).maybeSingle(),
+      db.from('mileage_entries').select('id,entry_date,km,note').eq('project_id', p.id).eq('installer_id', me).order('entry_date'),
+      db.from('expense_entries').select('id,entry_date,category,amount,note,receipt_path').eq('project_id', p.id).eq('installer_id', me).order('entry_date'),
     ]);
     const paths = ((rep?.photo_paths ?? []) as string[]);
     const urls = paths.length ? (await db.storage.from('field-photos').createSignedUrls(paths, 3600)).data ?? [] : [];
@@ -64,7 +72,7 @@ Deno.serve(async (req) => {
     return json({
       order: site, me: { id: me, name: owner?.name }, locked, expires_at: link.expires_at,
       team: (asg ?? []).map((a: any) => ({ id: a.installer_id, name: a.installers?.name, subVendor: a.installers?.type === 'sub-vendor', company: a.installers?.type === 'sub-vendor' ? a.installers?.base_location : null })),
-      times: times ?? [], report: rep ? { ...rep, photos: urls.map(u => ({ path: u.path, url: u.signedUrl })) } : null,
+      times: times ?? [], mileage: miles ?? [], expenses: (exps ?? []).map((e: any) => ({ ...e, hasReceipt: !!e.receipt_path, receipt_path: undefined })), report: rep ? { ...rep, photos: urls.map(u => ({ path: u.path, url: u.signedUrl })) } : null,
     });
   }
 
@@ -85,6 +93,39 @@ Deno.serve(async (req) => {
     const { data, error } = await q;
     if (error) return json({ error: error.message }, 400);
     await audit(b.id ? 'update' : 'create', 'time_entries', data.id, row);
+    return json({ ok: true });
+  }
+
+  if (b.action === 'saveMileage' || b.action === 'saveExpense' || b.action === 'deleteEntry') {
+    if (locked) return json({ error: 'Ordern är klar. Kontakta admin om något behöver ändras.' }, 409);
+    if (b.action === 'deleteEntry') {
+      const t = b.kind === 'mileage' ? 'mileage_entries' : 'expense_entries';
+      const { error } = await db.from(t).delete().eq('id', b.id).eq('installer_id', me).eq('project_id', p.id);
+      if (error) return json({ error: error.message }, 400);
+      await audit('delete', t, b.id, null);
+      return json({ ok: true });
+    }
+    if ((p.start_date && b.entry_date < p.start_date) || (p.end_date && b.entry_date > p.end_date))
+      return json({ error: 'Datumet ligger utanför ordern' }, 400);
+    const { data: cl } = p.client_id ? await db.from('clients').select('name,mileage_rate').eq('id', p.client_id).maybeSingle() : { data: null };
+    const { data: pr } = await db.from('projects').select('mileage_rate').eq('id', p.id).maybeSingle();
+    const base = { project_id: p.id, installer_id: me, entry_date: b.entry_date, note: b.note ?? null,
+      snapshot_project_name: p.name, snapshot_client_name: cl?.name ?? null };
+    let table: string, row: Record<string, unknown>;
+    if (b.action === 'saveMileage') {
+      table = 'mileage_entries';
+      const rate = Number(pr?.mileage_rate ?? cl?.mileage_rate ?? 25);
+      row = { ...base, km: b.km, rate, amount: 0 };
+    } else {
+      table = 'expense_entries';
+      if (b.receipt_path && !b.receipt_path.startsWith(`subvendor/${me}/${p.id}/`)) return json({ error: 'Invalid receipt' }, 400);
+      row = { ...base, category: b.category, amount: b.amount, entry_kind: 'expense', ...(b.receipt_path ? { receipt_path: b.receipt_path } : {}) };
+    }
+    const q = b.id ? db.from(table).update(row).eq('id', b.id).eq('installer_id', me).eq('project_id', p.id).select('id').single()
+      : db.from(table).insert(row).select('id').single();
+    const { data, error } = await q;
+    if (error) return json({ error: error.message }, 400);
+    await audit(b.id ? 'update' : 'create', table, data.id, { ...row, rate: undefined });
     return json({ ok: true });
   }
 
