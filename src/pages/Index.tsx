@@ -1,3 +1,4 @@
+import WorkOrderReports from '@/components/orders/WorkOrderReports';
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import AppSidebar from '@/components/AppSidebar';
@@ -154,6 +155,9 @@ const Index = () => {
         )}
         {activeView === 'profile' && (
           <ProfileEditor />
+        )}
+        {activeView === 'work-order-reports' && (
+          <WorkOrderReports projects={projects} />
         )}
         {activeView === 'resources' && (
           <ResourcePlanningDashboard />

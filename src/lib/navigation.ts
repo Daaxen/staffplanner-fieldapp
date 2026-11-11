@@ -84,6 +84,7 @@ export const navigationGroups: NavigationGroup[] = [
     items: [
       { id: 'planner', label: 'Planning board', icon: Calendar, roles: adminHr },
       { id: 'resources', label: 'Resource planning', icon: Gauge, roles: adminHr },
+      { id: 'work-order-reports', label: 'Work order reports', icon: FileText, roles: admin },
     ],
   },
   {
