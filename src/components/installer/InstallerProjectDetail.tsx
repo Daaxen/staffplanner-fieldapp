@@ -113,7 +113,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onPickUp, in
 
   const isUnassigned = project.assigneeIds.length === 0;
 
-  const timeCover = timeDaysTone(installerDatesFor(project, installer.id), logs.timeFor(project.id), new Date().toLocaleDateString('sv-SE'));
+  const timeCover = timeDaysTone({ ...installerDatesFor(project, installer.id), worksWeekends: project.worksWeekends }, logs.timeFor(project.id), new Date().toLocaleDateString('sv-SE'));
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Header */}

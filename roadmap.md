@@ -1,16 +1,3 @@
 # Roadmap
-- [x] Remove mock installer records while keeping installer UI safe with no records
-- [x] Reorganize desktop navigation into workflow groups without changing business logic
-- [x] Improve role-based navigation visibility for Admin, Installer, and HR
-- [x] Replace installer navigation with Active jobs, Reporting, Deviations, Sign-off, and More
-- [x] Preserve direct links and redirect legacy navigation URLs
-- [x] Verify all destinations remain accessible on desktop and mobile
-- [x] Make photos and client sign-off optional while retaining the required written installation report
-- [x] Verify completion rules with regression tests
-- [x] Verify signed-in installer completion readiness with no photos or customer sign-off; left the live order in progress
-- [x] Fix the report-save failure and verify the submitted report can be read back after reload
-- [x] Remove installer time tracking controls and travel presets; add half/full-day work shortcuts
-- [x] Verify manual time entry and day shortcuts in tests and the installer app
-- [x] Keep failed report uploads retryable and distinguish queued reports from confirmed submissions
-- [x] Verify report retry and confirmation with regression tests
-- [x] Verify the saved report reads back in the signed-in installer view after reload
+- [x] Work order reports page (multi-select, client/internal, exclude checklist, PDF/Excel)
+- [x] Planning board: week view = 7 days, weekend highlight, dashed weekend segments, works_weekends switch

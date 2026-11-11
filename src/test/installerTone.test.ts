@@ -56,3 +56,10 @@ describe('timeDaysTone weekends', () => {
     expect(r).toEqual({ tone: 'progress', covered: 2, total: 3 });
   });
 });
+
+describe('timeDaysTone worksWeekends', () => {
+  it('requires weekend days when the order works weekends', () => {
+    const r = tdt({ startDate: '2026-10-30', endDate: '2026-11-02', worksWeekends: true }, [{ date: '2026-10-30' }, { date: '2026-11-02' }], '2026-11-02');
+    expect(r).toEqual({ tone: 'progress', covered: 2, total: 4 });
+  });
+});

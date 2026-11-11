@@ -113,7 +113,7 @@ const GanttHeader = ({ days, colWidth, headerHeight, todayStr, viewMode = 'week'
                 "flex flex-col items-center justify-center shrink-0",
                 weekBorder ? "border-l-2 border-l-gantt-week-border border-r border-r-border" : "border-r border-border",
                 isToday && "bg-gantt-today/10",
-                isWeekend && !holiday && "bg-muted/50",
+                isWeekend && !holiday && "bg-muted",
                 holiday && "bg-gantt-holiday/8"
               )}
               style={{ width: colWidth }}
@@ -131,6 +131,9 @@ const GanttHeader = ({ days, colWidth, headerHeight, todayStr, viewMode = 'week'
               )}>
                 {day.getDate()}
               </span>
+              {isWeekend && !holiday && colWidth >= 60 && (
+                <span className="text-[9px] font-semibold text-muted-foreground leading-tight">Helg</span>
+              )}
               {holiday && (
                 <span className="text-[7px] text-gantt-holiday font-medium leading-tight truncate max-w-full px-0.5">
                   {holiday}

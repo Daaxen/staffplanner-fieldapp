@@ -219,6 +219,8 @@ const ClientsView = ({ projects, days, colWidth, startDate, todayStr, onSelectPr
                       const assignees = project.assigneeIds.map(id => getInstaller(id)).filter(Boolean) as Installer[];
                       return (
                         <DraggableBar
+                          gridStart={startDate}
+                          worksWeekends={project.worksWeekends}
                           key={project.id}
                           left={left}
                           width={width}

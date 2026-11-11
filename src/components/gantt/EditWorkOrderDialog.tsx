@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -31,6 +32,7 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
   const installers = useInstallersList();
   const [allProjects] = useProjects();
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
+  const [worksWeekends, setWorksWeekends] = useState(false);
   const [overrides, setOverrides] = useState<Record<string, InstallerDates>>({});
   const [form, setForm] = useState({
     name: '',
@@ -52,6 +54,7 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
   useEffect(() => {
     if (!project || !open) return;
     setAssigneeIds(project.assigneeIds ?? []);
+    setWorksWeekends(!!project.worksWeekends);
     setOverrides({ ...(project.installerDateOverrides ?? {}) });
     setForm({
       name: project.name ?? '',
@@ -149,6 +152,7 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
       contactPhone: form.contactPhone.trim() || undefined,
       contactEmail: form.contactEmail.trim() || undefined,
       description: form.description.trim() || undefined,
+      worksWeekends,
       assigneeIds,
       installerDateOverrides: ownDays,
     });
@@ -203,6 +207,13 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
             <div className="space-y-1.5">
               <Label htmlFor="wo-end">End date</Label>
               <Input id="wo-end" type="date" value={form.endDate} onChange={e => set('endDate', e.target.value)} />
+            </div>
+            <div className="col-span-2">
+              <label className="flex items-start gap-3 rounded-md border border-border p-3 cursor-pointer">
+                <Switch checked={worksWeekends} onCheckedChange={setWorksWeekends} />
+                <span><span className="text-sm font-semibold">Arbete pågår över helg (lör–sön)</span>
+                <span className="block text-xs text-muted-foreground">Av: helgdagar planeras inte och kräver ingen tid.</span></span>
+              </label>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="wo-stime">Start time</Label>

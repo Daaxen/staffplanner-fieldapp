@@ -291,6 +291,8 @@ const ProjectsView = ({ projects, days, colWidth, startDate, todayStr, onSelectP
                     style={{ height: rowHeight }}
                   >
                     <DraggableBar
+                      gridStart={startDate}
+                      worksWeekends={project.worksWeekends}
                       left={left}
                       width={width}
                       top={8}

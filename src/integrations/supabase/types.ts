@@ -1517,6 +1517,7 @@ export type Database = {
           template_id: string | null
           updated_at: string
           vehicle_type: string | null
+          works_weekends: boolean
         }
         Insert: {
           client_base_updated_at?: string | null
@@ -1556,6 +1557,7 @@ export type Database = {
           template_id?: string | null
           updated_at?: string
           vehicle_type?: string | null
+          works_weekends?: boolean
         }
         Update: {
           client_base_updated_at?: string | null
@@ -1595,6 +1597,7 @@ export type Database = {
           template_id?: string | null
           updated_at?: string
           vehicle_type?: string | null
+          works_weekends?: boolean
         }
         Relationships: [
           {

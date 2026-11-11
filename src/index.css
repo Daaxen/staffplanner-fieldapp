@@ -123,3 +123,10 @@
 .gantt-scroll::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground) / 0.5);
 }
+
+@layer components {
+  .gantt-weekend {
+    background-color: hsl(var(--muted));
+    background-image: repeating-linear-gradient(135deg, hsl(var(--border) / 0.6) 0 1px, transparent 1px 8px);
+  }
+}

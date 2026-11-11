@@ -409,6 +409,8 @@ const InstallersView = ({
                       const yOffset = laneCount <= 1 ? (baseRowHeight - barH) / 2 : barPadding + lane * (barH + barGap);
                       return (
                         <DraggableBar
+                          gridStart={startDate}
+                          worksWeekends={project.worksWeekends}
                           key={project.id}
                           left={left}
                           width={width}

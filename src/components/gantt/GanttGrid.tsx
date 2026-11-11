@@ -23,7 +23,7 @@ const GanttGrid = ({ days, colWidth, totalHeight, todayStr }: GanttGridProps) =>
             className={cn(
               "absolute top-0 border-r border-gantt-grid",
               isToday && "bg-gantt-today/5",
-              holiday ? "bg-gantt-holiday/6" : isWeekend && "bg-muted/30"
+              holiday ? "bg-gantt-holiday/6" : isWeekend && "gantt-weekend"
             )}
             style={{ left: i * colWidth, width: colWidth, height: totalHeight }}
           />

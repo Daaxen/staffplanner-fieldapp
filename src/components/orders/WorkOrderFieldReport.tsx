@@ -4,7 +4,7 @@ import { ClipboardCheck, Image as ImageIcon, AlertTriangle, Receipt } from 'luci
 import { ExpandableText } from '@/components/ui/expandable-text';
 import { workOrderBillables } from '@/lib/workOrderBillables';
 import { receiptUrl } from '@/lib/receipts';
-import { exportFieldReportPdf, exportFieldReportXlsx } from '@/lib/fieldReportExport';
+import { exportFieldReportPdf, exportFieldReportXlsx, loadFieldReportData, type FieldReportData } from '@/lib/fieldReportExport';
 import { Button } from '@/components/ui/button';
 import { FileDown, FileSpreadsheet } from 'lucide-react';
 
@@ -13,30 +13,12 @@ type Any = Record<string, any>;
 
 export default function WorkOrderFieldReport({ projectId, orderName }: { projectId: string; orderName: string }) {
   const [pdfBusy, setPdfBusy] = useState(false);
-  const [d, setD] = useState<{ reports: Any[]; time: Any[]; dev: Any[]; mil: Any[]; exp: Any[]; names: Record<string, string>; order: Any | null; client: Any | null; photos: Record<string, string> } | null>(null);
+  const [d, setD] = useState<FieldReportData | null>(null);
   const [zoom, setZoom] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
-    (async () => {
-      const [r, t, dv, m, e, p] = await Promise.all([
-        supabase.from('field_reports').select('*').eq('project_id', projectId),
-        supabase.from('time_entries').select('installer_id,entry_date,hours,travel_hours,hourly_rate,note,description').eq('project_id', projectId).order('entry_date'),
-        supabase.from('deviations').select('*').eq('project_id', projectId),
-        supabase.from('mileage_entries').select('installer_id,entry_date,km,amount,note').eq('project_id', projectId),
-        supabase.from('expense_entries').select('installer_id,entry_date,category,amount,note,receipt_path').eq('project_id', projectId),
-        supabase.from('projects').select('hourly_rate,client_id').eq('id', projectId).maybeSingle(),
-      ]);
-      const client = p.data?.client_id ? (await supabase.from('clients').select('hourly_rate').eq('id', p.data.client_id).maybeSingle()).data : null;
-      const ids = new Set<string>();
-      [r.data, t.data, dv.data, m.data, e.data].forEach(a => (a ?? []).forEach((x: Any) => ids.add(x.installer_id)));
-      const names: Record<string, string> = {};
-      if (ids.size) (await supabase.from('installers').select('id,name').in('id', [...ids])).data?.forEach(i => { names[i.id] = i.name; });
-      const paths = [...(r.data ?? []).flatMap((x: Any) => x.photo_paths ?? []), ...(dv.data ?? []).flatMap((x: Any) => x.photo_paths ?? [])].filter((x: unknown) => typeof x === 'string') as string[];
-      const photos: Record<string, string> = {};
-      if (paths.length) (await supabase.storage.from('field-photos').createSignedUrls(paths, 3600)).data?.forEach(s => { if (s.signedUrl && s.path) photos[s.path] = s.signedUrl; });
-      if (alive) setD({ reports: r.data ?? [], time: t.data ?? [], dev: dv.data ?? [], mil: m.data ?? [], exp: e.data ?? [], names, order: p.data, client, photos });
-    })();
+    loadFieldReportData([projectId]).then(([data]) => { if (alive) setD(data); });
     return () => { alive = false; };
   }, [projectId]);
 

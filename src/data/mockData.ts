@@ -139,6 +139,8 @@ export interface Project {
   hourlyRate?: number;   // resolved from client rates
   mileageRate?: number;  // resolved from client rates
   isFlexOrder?: boolean;
+  /** Work continues over Saturday–Sunday. Default false: weekends are not planned. */
+  worksWeekends?: boolean;
   description?: string;
   contactName?: string;
   contactPhone?: string;
