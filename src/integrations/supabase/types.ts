@@ -2402,6 +2402,57 @@ export type Database = {
         }
         Relationships: []
       }
+      work_order_links: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          installer_id: string
+          last_used_at: string | null
+          project_id: string
+          revoked_at: string | null
+          token_hash: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          installer_id: string
+          last_used_at?: string | null
+          project_id: string
+          revoked_at?: string | null
+          token_hash: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          installer_id?: string
+          last_used_at?: string | null
+          project_id?: string
+          revoked_at?: string | null
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_order_links_installer_id_fkey"
+            columns: ["installer_id"]
+            isOneToOne: false
+            referencedRelation: "installers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_order_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
