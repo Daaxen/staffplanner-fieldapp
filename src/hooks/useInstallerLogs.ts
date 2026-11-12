@@ -1,3 +1,4 @@
+import { receiptPathsOf } from '@/lib/receipts';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useMyInstallerId } from '@/lib/installerIdentity';
@@ -55,7 +56,7 @@ export function useInstallerLogs(projects: Project[] = []) {
     const exp: ExpenseEntry[] = (e.data ?? []).map(r => ({
       id: r.id, projectId: projectRefForRowId(r.project_id) ?? r.project_id, installerId: r.installer_id, date: r.entry_date,
       category: r.category as ExpenseCategory, amount: Number(r.amount),
-      note: r.note ?? undefined, receiptName: r.receipt_path ?? undefined, createdAt: r.created_at,
+      note: r.note ?? undefined, receiptName: r.receipt_path ?? undefined, receiptPaths: receiptPathsOf(r), createdAt: r.created_at,
     }));
     const mil: ExpenseEntry[] = (m.data ?? []).map(r => ({
       id: r.id, projectId: projectRefForRowId(r.project_id) ?? r.project_id, installerId: r.installer_id, date: r.entry_date,
@@ -145,13 +146,14 @@ export function useInstallerLogs(projects: Project[] = []) {
   }, [refresh]);
 
   const addExpense = useCallback(async (entry: {
-    projectId: string; date: string; category: ExpenseCategory; amount: number; note?: string; receiptName?: string; kind?: ExpenseKind;
+    projectId: string; date: string; category: ExpenseCategory; amount: number; note?: string; receiptName?: string; receiptPaths?: string[]; kind?: ExpenseKind;
   }) => {
+    const paths = entry.receiptPaths ?? (entry.receiptName ? [entry.receiptName] : []);
     if (!installerId) return null;
     const kind = entry.kind ?? 'expense';
     const check = expenseEntrySchema.safeParse({
       projectId: entry.projectId, date: entry.date, category: entry.category,
-      kind, amount: entry.amount, receiptName: entry.receiptName, note: entry.note,
+      kind, amount: entry.amount, receiptName: paths[0], note: entry.note,
     });
     const issue = firstIssue(check);
     if (issue) { toast.error(issue); return null; }
@@ -162,7 +164,7 @@ export function useInstallerLogs(projects: Project[] = []) {
     const { data, error } = await supabase.from('expense_entries').insert({
       project_id: projectRowId, snapshot_project_name: meta.projectName, snapshot_client_name: meta.clientName,
       installer_id: installerId, entry_date: entry.date, category: entry.category, entry_kind: kind,
-      amount: entry.amount, note: entry.note ?? null, receipt_path: entry.receiptName ?? null,
+      amount: entry.amount, note: entry.note ?? null, receipt_path: paths[0] ?? null, receipt_paths: paths,
     }).select().maybeSingle();
     if (error) { toast.error(error.message); return null; }
     await refresh();

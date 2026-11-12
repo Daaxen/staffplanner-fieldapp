@@ -47,6 +47,7 @@ export type ExpenseEntry = {
   rate?: number;
   note?: string;
   receiptName?: string;
+  receiptPaths?: string[];
   createdAt: string;
 };
 

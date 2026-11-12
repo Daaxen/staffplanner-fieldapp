@@ -45,7 +45,7 @@ const SubVendorOrder = () => {
   const { token = '' } = useParams();
   const [d, setD] = useState<Data | null>(null);
   const [inactive, setInactive] = useState(false);
-  const [edit, setEdit] = useState<{ id?: string; entry_date: string; start_time: string; end_time: string; travel_hours: number; note: string } | null>(null);
+  const [edit, setEdit] = useState<{ id?: string; entry_date: string; start_time: string; end_time: string; travel_hours: number; note: string; travelOnly?: boolean } | null>(null);
   const [report, setReport] = useState('');
   const [photos, setPhotos] = useState<{ path: string; url?: string }[]>([]);
   const [dev, setDev] = useState({ category: 'site-not-ready', severity: 'low', description: '' });
@@ -140,12 +140,13 @@ const SubVendorOrder = () => {
               <span>{t.start_time?.slice(0, 5)}–{t.end_time?.slice(0, 5)}</span>
               <span className="text-muted-foreground">{Number(t.hours)} h + {Number(t.travel_hours)} h resa</span>
               {!d.locked && <span className="ml-auto flex">
-                <Button size="icon" variant="ghost" className="h-7 w-7" aria-label="Ändra" onClick={() => setEdit({ id: t.id, entry_date: t.entry_date, start_time: t.start_time?.slice(0, 5), end_time: t.end_time?.slice(0, 5), travel_hours: Number(t.travel_hours), note: t.note ?? '' })}><Pencil className="h-3.5 w-3.5" /></Button>
+                <Button size="icon" variant="ghost" className="h-7 w-7" aria-label="Ändra" onClick={() => setEdit({ id: t.id, entry_date: t.entry_date, start_time: t.start_time?.slice(0, 5), end_time: t.end_time?.slice(0, 5), travel_hours: Number(t.travel_hours), note: t.note ?? '', travelOnly: !t.start_time })}><Pencil className="h-3.5 w-3.5" /></Button>
                 <Button size="icon" variant="ghost" className="h-7 w-7" aria-label="Ta bort" onClick={() => run({ action: 'deleteTime', id: t.id }, 'Borttagen')}><Trash2 className="h-3.5 w-3.5" /></Button>
               </span>}
             </div>
           ))}
           {!d.locked && !edit && <Button size="sm" onClick={() => setEdit({ entry_date: days(o.start_date, o.end_date).find(x => x === new Date().toLocaleDateString('sv-SE')) ?? o.start_date, start_time: '07:00', end_time: '16:00', travel_hours: 0, note: '' })}>Rapportera tid</Button>}
+          {!d.locked && !edit && <Button size="sm" variant="outline" className="ml-2" onClick={() => setEdit({ entry_date: days(o.start_date, o.end_date).find(x => x === new Date().toLocaleDateString('sv-SE')) ?? o.start_date, start_time: '07:00', end_time: '16:00', travel_hours: 0, note: '', travelOnly: true })}>Bara restid</Button>}
           {edit && (
             <div className="space-y-3 rounded-lg border border-border p-3">
               <div className="space-y-1"><Label>Dag</Label>
@@ -154,14 +155,14 @@ const SubVendorOrder = () => {
                   <SelectContent>{days(o.start_date, o.end_date).map(x => <SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              {!edit.travelOnly && <div className="grid grid-cols-2 gap-2">
                 <div><Label>Start</Label><TimeWheel label="Start" value={edit.start_time} onChange={v => setEdit({ ...edit, start_time: v })} /></div>
                 <div><Label>Slut</Label><TimeWheel label="Slut" value={edit.end_time} onChange={v => setEdit({ ...edit, end_time: v })} fallback="16:00" /></div>
-              </div>
+              </div>}
               <DurationWheel label="Restid totalt (tur och retur)" value={edit.travel_hours} onChange={v => setEdit({ ...edit, travel_hours: v })} />
               <div><Label>Anteckning (gäller dagens arbete och resa)</Label><Textarea rows={2} value={edit.note} onChange={e => setEdit({ ...edit, note: e.target.value })} /></div>
               <div className="flex gap-2">
-                <Button size="sm" disabled={busy} onClick={async () => { if (await run({ action: 'saveTime', ...edit, note: edit.note || undefined }, 'Tid sparad')) setEdit(null); }}>Spara</Button>
+                <Button size="sm" disabled={busy} onClick={async () => { if (await run({ action: 'saveTime', id: edit.id, entry_date: edit.entry_date, travel_hours: edit.travel_hours, start_time: edit.travelOnly ? null : edit.start_time, end_time: edit.travelOnly ? null : edit.end_time, note: edit.note || undefined }, 'Tid sparad')) setEdit(null); }}>Spara</Button>
                 <Button size="sm" variant="outline" onClick={() => setEdit(null)}>Avbryt</Button>
               </div>
             </div>
