@@ -60,10 +60,10 @@ const isoDays = (start: string, end: string): string[] => {
  */
 export function timeDaysTone(
   range: { startDate: string; endDate: string; worksWeekends?: boolean },
-  entries: { date: string }[],
+  entries: { date: string; hours?: number }[],
   today: string,
 ): { tone: Tone; covered: number; total: number } {
-  const logged = new Set(entries.map(e => e.date.slice(0, 10)));
+  const logged = new Set(entries.filter(e => e.hours == null || e.hours > 0).map(e => e.date.slice(0, 10)));
   // Weekends are optional: only counted when time was actually logged on them.
   const isWeekend = (d: string) => { const w = new Date(`${d}T12:00:00Z`).getUTCDay(); return w === 0 || w === 6; };
   const days = range.startDate
