@@ -36,8 +36,11 @@ export default function ReportingRateCard({ rows, selected, onSelect }: { rows: 
               className={`w-full grid grid-cols-[10rem_7rem_1fr_auto_3.5rem] items-center gap-3 rounded px-2 py-1.5 text-sm hover:bg-muted ${selected === r.id ? 'bg-muted' : ''}`}>
               <span className="font-semibold truncate text-left">{r.name}</span>
               <span className="tabular-nums text-muted-foreground">{h(r.reported)} / {h(r.available)} h</span>
-              <span className="h-2.5 rounded-full bg-muted overflow-hidden"><span className={`block h-full ${bar[r.tone]}`} style={{ width: `${Math.min(r.pct, 100)}%` }} /></span>
-              <span className="text-xs text-muted-foreground whitespace-nowrap">{r.absenceDays > 0 ? `${r.absenceDays} dag frånvaro · ` : ''}restid {h(r.travel)} h</span>
+              <span className="flex flex-col gap-0.5">
+                <span className="h-2.5 rounded-full bg-muted overflow-hidden" title="Arbetstid"><span className={`block h-full ${bar[r.tone]}`} style={{ width: `${Math.min(r.pct, 100)}%` }} /></span>
+                <span className="h-1.5 rounded-full bg-muted overflow-hidden" title="Restid"><span className="block h-full bg-travel" style={{ width: `${r.available > 0 ? Math.min((r.travel / r.available) * 100, 100) : 0}%` }} /></span>
+              </span>
+              <span className="text-xs text-muted-foreground whitespace-nowrap">{r.absenceDays > 0 ? `${r.absenceDays} dag frånvaro · ` : ''}<span className="text-travel font-medium">restid {h(r.travel)} h</span></span>
               <span className="font-bold tabular-nums text-right">{r.pct} %</span>
             </button>
           ))}
@@ -45,6 +48,7 @@ export default function ReportingRateCard({ rows, selected, onSelect }: { rows: 
             <span className="flex items-center gap-1"><span className={`w-2 h-2 rounded-full ${dot.green}`} />≥ 90 %</span>
             <span className="flex items-center gap-1"><span className={`w-2 h-2 rounded-full ${dot.yellow}`} />60–89 %</span>
             <span className="flex items-center gap-1"><span className={`w-2 h-2 rounded-full ${dot.red}`} />&lt; 60 %</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-1.5 rounded-full bg-travel" />Restid</span>
             <span>Tillgänglig tid = vardagar × 8 h minus frånvaro</span>
           </div>
         </div>
