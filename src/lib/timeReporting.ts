@@ -162,3 +162,36 @@ export function weekDays(date: string) {
   mon.setDate(d.getDate() - ((d.getDay() + 6) % 7));
   return Array.from({ length: 7 }, (_, i) => { const x = new Date(mon); x.setDate(mon.getDate() + i); return isoDate(x); });
 }
+
+// ---- Reporting rate (rapporteringsgrad) ----
+export type RateTone = 'green' | 'yellow' | 'red';
+export const rateTone = (pct: number): RateTone => (pct >= 90 ? 'green' : pct >= 60 ? 'yellow' : 'red');
+export interface ReportingRateRow { id: string; name: string; available: number; reported: number; travel: number; absenceDays: number; pct: number; tone: RateTone }
+
+const eachDay = (from: string, to: string) => {
+  const out: string[] = [];
+  const d = new Date(from + 'T12:00:00Z'), end = new Date(to + 'T12:00:00Z');
+  while (d <= end) { out.push(d.toISOString().slice(0, 10)); d.setUTCDate(d.getUTCDate() + 1); }
+  return out;
+};
+const isWeekday = (iso: string) => { const g = new Date(iso + 'T12:00:00Z').getUTCDay(); return g !== 0 && g !== 6; };
+
+/** Reported work hours vs available weekday hours (8 h/day minus absence days). Lowest % first. */
+export function reportingRate(
+  entries: { installer_id: string | null; hours: number | string; travel_hours?: number | string | null }[],
+  people: { id: string; name: string }[],
+  absences: { installerId: string; startDate: string; endDate: string }[],
+  range: { from: string; to: string },
+): ReportingRateRow[] {
+  const days = eachDay(range.from, range.to).filter(isWeekday);
+  return people.map(p => {
+    const absent = new Set<string>();
+    absences.filter(a => a.installerId === p.id).forEach(a => days.forEach(d => { if (d >= a.startDate && d <= a.endDate) absent.add(d); }));
+    const available = (days.length - absent.size) * NORMAL_DAY_HOURS;
+    const mine = entries.filter(e => e.installer_id === p.id);
+    const reported = mine.reduce((s, e) => s + Number(e.hours || 0), 0);
+    const travel = mine.reduce((s, e) => s + Number(e.travel_hours || 0), 0);
+    const pct = available > 0 ? Math.round((reported / available) * 100) : reported > 0 ? 100 : 0;
+    return { id: p.id, name: p.name, available, reported, travel, absenceDays: absent.size, pct, tone: rateTone(pct) };
+  }).filter(r => r.available > 0 || r.reported > 0).sort((a, b) => a.pct - b.pct);
+}
