@@ -14,7 +14,7 @@ export type TimeEntry = {
   createdAt: string;
 };
 
-export type ExpenseCategory = 'materials' | 'travel' | 'parking' | 'meal' | 'mileage' | 'other';
+export type ExpenseCategory = 'materials' | 'travel' | 'parking' | 'meal' | 'mileage' | 'accommodation' | 'other';
 
 export const expenseCategoryLabels: Record<ExpenseCategory, string> = {
   materials: 'Materials',
@@ -22,6 +22,7 @@ export const expenseCategoryLabels: Record<ExpenseCategory, string> = {
   parking: 'Parking',
   meal: 'Meal',
   mileage: 'Mileage',
+  accommodation: 'Logi (hotell)',
   other: 'Other',
 };
 
@@ -31,6 +32,7 @@ export const expenseCategoryIcons: Record<ExpenseCategory, string> = {
   parking: '🅿️',
   meal: '🍽️',
   mileage: '🚗',
+  accommodation: '🏨',
   other: '💳',
 };
 

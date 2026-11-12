@@ -200,7 +200,7 @@ export function useInstallerLogs(projects: Project[] = []) {
     setExpenses(prev => prev.filter(e => e.id !== id));
   }, [expenses]);
 
-  const categories = useMemo(() => ['materials', 'travel', 'parking', 'meal', 'other'] as ExpenseCategory[], []);
+  const categories = useMemo(() => ['materials', 'travel', 'parking', 'meal', 'accommodation', 'other'] as ExpenseCategory[], []);
 
   /** Actual time on an order: work hours, travel hours and their total. */
   const actualFor = useCallback(

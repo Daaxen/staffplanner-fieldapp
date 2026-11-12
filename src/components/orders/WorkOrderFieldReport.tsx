@@ -7,6 +7,7 @@ import { receiptUrl } from '@/lib/receipts';
 import { exportFieldReportPdf, exportFieldReportXlsx, loadFieldReportData, type FieldReportData } from '@/lib/fieldReportExport';
 import { Button } from '@/components/ui/button';
 import { FileDown, FileSpreadsheet } from 'lucide-react';
+import { usePerDiemEntries } from '@/hooks/usePerDiem';
 
 const kr = (n: number) => `${n.toLocaleString('sv-SE', { maximumFractionDigits: 2 })} kr`;
 type Any = Record<string, any>;
@@ -15,6 +16,7 @@ export default function WorkOrderFieldReport({ projectId, orderName }: { project
   const [pdfBusy, setPdfBusy] = useState(false);
   const [d, setD] = useState<FieldReportData | null>(null);
   const [zoom, setZoom] = useState<string | null>(null);
+  const { entries: perDiem } = usePerDiemEntries(projectId);
 
   useEffect(() => {
     let alive = true;
@@ -93,6 +95,14 @@ export default function WorkOrderFieldReport({ projectId, orderName }: { project
             <tr className="border-t-2 border-border font-bold"><td>Total</td><td className="text-right">{b.total.workHours} h · {kr(b.total.workAmount)}</td><td className="text-right">{b.total.travelHours} h</td><td className="text-right">{b.total.km} km · {kr(b.total.mileageAmount)}</td><td className="text-right">{kr(b.total.expenseAmount)}</td><td className="text-right">{kr(b.total.total)}</td></tr>
           </tbody>
         </table>
+        {perDiem.length > 0 && (
+          <div className="space-y-1">
+            <p className="text-xs font-semibold text-muted-foreground">Traktamente (skattefritt) · totalt {kr(perDiem.reduce((s, e) => s + Number(e.amount), 0))}</p>
+            {perDiem.map(e => (
+              <p key={e.id} className="text-xs">{e.entry_date} · {name(e.installer_id)} · {e.country} · {e.day_type === 'full' ? 'Heldag' : e.day_type === 'half' ? 'Halvdag' : 'Ingen dag'}{e.overnight === 'private' ? ' + natt' : e.overnight === 'hotel' ? ' · hotell' : ''} · <span className="font-semibold">{kr(Number(e.amount))}</span></p>
+            ))}
+          </div>
+        )}
         {b.total.unpricedRows > 0 && <p className="text-xs font-semibold text-destructive">{b.total.unpricedRows} time rows have no hourly rate and are not priced.</p>}
         {d.exp.length > 0 && (
           <div className="space-y-1">

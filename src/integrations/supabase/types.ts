@@ -1224,6 +1224,108 @@ export type Database = {
           },
         ]
       }
+      per_diem_entries: {
+        Row: {
+          amount: number
+          breakfast_provided: boolean
+          country: string
+          created_at: string
+          day_amount: number
+          day_type: string
+          dinner_provided: boolean
+          distance_confirmed: boolean
+          entry_date: string
+          full_day_rate: number
+          id: string
+          installer_id: string
+          lunch_provided: boolean
+          night_amount: number
+          note: string | null
+          overnight: string
+          project_id: string
+          rate_year: number | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          breakfast_provided?: boolean
+          country?: string
+          created_at?: string
+          day_amount?: number
+          day_type?: string
+          dinner_provided?: boolean
+          distance_confirmed?: boolean
+          entry_date: string
+          full_day_rate?: number
+          id?: string
+          installer_id: string
+          lunch_provided?: boolean
+          night_amount?: number
+          note?: string | null
+          overnight?: string
+          project_id: string
+          rate_year?: number | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          breakfast_provided?: boolean
+          country?: string
+          created_at?: string
+          day_amount?: number
+          day_type?: string
+          dinner_provided?: boolean
+          distance_confirmed?: boolean
+          entry_date?: string
+          full_day_rate?: number
+          id?: string
+          installer_id?: string
+          lunch_provided?: boolean
+          night_amount?: number
+          note?: string | null
+          overnight?: string
+          project_id?: string
+          rate_year?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "per_diem_entries_installer_id_fkey"
+            columns: ["installer_id"]
+            isOneToOne: false
+            referencedRelation: "installers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "per_diem_entries_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      per_diem_rates: {
+        Row: {
+          country: string
+          full_day: number
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          country: string
+          full_day: number
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          country?: string
+          full_day?: number
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
@@ -1488,6 +1590,7 @@ export type Database = {
           contact_email: string | null
           contact_name: string | null
           contact_phone: string | null
+          country: string
           created_at: string
           data: Json
           description: string | null
@@ -1528,6 +1631,7 @@ export type Database = {
           contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
+          country?: string
           created_at?: string
           data?: Json
           description?: string | null
@@ -1568,6 +1672,7 @@ export type Database = {
           contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
+          country?: string
           created_at?: string
           data?: Json
           description?: string | null

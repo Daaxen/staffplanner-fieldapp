@@ -210,7 +210,7 @@ async function loadProjects() {
       'id,ref,updated_at,data,name,status,commercial_status,start_date,end_date,project_type,location,' +
         'contact_name,contact_phone,contact_email,project_number,template_id,' +
         'client_ref,client_name,street,postal_code,region,location_lat,location_lng,' +
-        'start_time,end_time,estimated_hours,is_flex_order,works_weekends,description,' +
+        'start_time,end_time,estimated_hours,is_flex_order,works_weekends,country,description,' +
         'hourly_rate,mileage_rate,vehicle_type,project_group_id,recurrence_series_id,' +
         'project_assignees(installer_id),' +
         'project_economy(fixed_price,additional_revenue,budget_hours,internal_hourly_cost,' +
@@ -289,6 +289,7 @@ async function loadProjects() {
           estimatedHours: col('estimated_hours', d.estimatedHours),
           isFlexOrder: col('is_flex_order', d.isFlexOrder),
           worksWeekends: col('works_weekends', d.worksWeekends) ?? false,
+          country: col('country', d.country) ?? 'Sverige',
           description: col('description', d.description),
           hourlyRate: col('hourly_rate', d.hourlyRate),
           mileageRate: col('mileage_rate', d.mileageRate),
@@ -401,6 +402,7 @@ async function upsertProjectRow(p: Project) {
         estimated_hours: p.estimatedHours ?? null,
         is_flex_order: p.isFlexOrder ?? false,
         works_weekends: p.worksWeekends ?? false,
+        country: p.country || 'Sverige',
         description: p.description || null,
         hourly_rate: p.hourlyRate ?? null,
         mileage_rate: p.mileageRate ?? null,
