@@ -195,3 +195,32 @@ export function reportingRate(
     return { id: p.id, name: p.name, available, reported, travel, absenceDays: absent.size, pct, tone: rateTone(pct) };
   }).filter(r => r.available > 0 || r.reported > 0).sort((a, b) => a.pct - b.pct);
 }
+
+// ---- Period presets (vecka / halvmånad / månad) ----
+export type PeriodKind = 'week' | 'half' | 'month';
+const ymd = (y: number, m: number, d: number) => isoDate(new Date(y, m, d));
+export function periodRange(kind: PeriodKind, anchor: Date): { from: string; to: string } {
+  const y = anchor.getFullYear(), m = anchor.getMonth(), d = anchor.getDate();
+  if (kind === 'week') { const off = (anchor.getDay() + 6) % 7; return { from: ymd(y, m, d - off), to: ymd(y, m, d - off + 6) }; }
+  if (kind === 'half') return d <= 15 ? { from: ymd(y, m, 1), to: ymd(y, m, 15) } : { from: ymd(y, m, 16), to: ymd(y, m + 1, 0) };
+  return { from: ymd(y, m, 1), to: ymd(y, m + 1, 0) };
+}
+export function shiftPeriod(kind: PeriodKind, anchor: Date, dir: 1 | -1): Date {
+  const y = anchor.getFullYear(), m = anchor.getMonth(), d = anchor.getDate();
+  if (kind === 'week') return new Date(y, m, d + 7 * dir);
+  if (kind === 'month') return new Date(y, m + dir, 1);
+  if (dir === 1) return d <= 15 ? new Date(y, m, 16) : new Date(y, m + 1, 1);
+  return d <= 15 ? new Date(y, m - 1, 16) : new Date(y, m, 1);
+}
+const MON = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+const MONTH = ['januari', 'februari', 'mars', 'april', 'maj', 'juni', 'juli', 'augusti', 'september', 'oktober', 'november', 'december'];
+export function periodLabel(kind: PeriodKind, anchor: Date): string {
+  const { from, to } = periodRange(kind, anchor);
+  const f = new Date(from + 'T12:00:00'), t = new Date(to + 'T12:00:00');
+  if (kind === 'month') return `${MONTH[f.getMonth()]} ${f.getFullYear()}`;
+  const span = f.getMonth() === t.getMonth() ? `${f.getDate()}–${t.getDate()} ${MON[t.getMonth()]}` : `${f.getDate()} ${MON[f.getMonth()]}–${t.getDate()} ${MON[t.getMonth()]}`;
+  if (kind === 'half') return span;
+  const th = new Date(f); th.setDate(f.getDate() + 3); const jan4 = new Date(th.getFullYear(), 0, 4);
+  const wk = 1 + Math.round(((th.getTime() - jan4.getTime()) / 864e5 - 3 + ((jan4.getDay() + 6) % 7)) / 7);
+  return `v.${wk} (${span})`;
+}
