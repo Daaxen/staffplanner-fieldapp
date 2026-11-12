@@ -730,6 +730,7 @@ export type Database = {
           note: string | null
           project_id: string
           receipt_path: string | null
+          receipt_paths: Json
           snapshot_client_name: string | null
           snapshot_project_name: string | null
           updated_at: string
@@ -745,6 +746,7 @@ export type Database = {
           note?: string | null
           project_id: string
           receipt_path?: string | null
+          receipt_paths?: Json
           snapshot_client_name?: string | null
           snapshot_project_name?: string | null
           updated_at?: string
@@ -760,6 +762,7 @@ export type Database = {
           note?: string | null
           project_id?: string
           receipt_path?: string | null
+          receipt_paths?: Json
           snapshot_client_name?: string | null
           snapshot_project_name?: string | null
           updated_at?: string
