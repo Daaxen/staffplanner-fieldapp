@@ -34,3 +34,9 @@ Appen visar beloppet direkt, t.ex. "Heldag 300 kr − lunch 105 kr = 195 kr". F�
 - Montören ser landets flagga och dagsbelopp överst ("Utlandstraktamente: Norge – X kr/dag, Skatteverket 2026"). Beloppen i bilden är exempel; riktiga 2026-belopp hämtas och visas för dig innan de används.
 - Resdag in/ut ur Sverige: dagen räknas på det land där montören vistas längst tid (Skatteverkets regel) — montören kan byta land per dag vid behov.
 - Rapporter och export visar land per rad.
+
+## Måltider – tydligare val (tillägg)
+- Per dag och måltid (frukost, lunch, middag) frågar appen: **"Vem betalade?"** med två stora knappar: **"Jag betalade själv"** (grön, inget avdrag) / **"Bjuden / betald av kund eller företag"** (gul, avdrag).
+- Standard är "Jag betalade själv". Under raden visas effekten i klartext, t.ex. "Lunch bjuden → −35 % (−351 kr)".
+- Hotellfrukost som ingår i rummet räknas som bjuden; appen frågar "Ingick frukost i hotellet?" när Hotell valts.
+- Om montören själv betalat en måltid för kund/kollegor rapporteras det som utlägg (kategori Måltid), inte här.
