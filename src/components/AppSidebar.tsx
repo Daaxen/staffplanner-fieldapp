@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Calendar, ChevronDown, LogOut, MessageSquarePlus, PanelLeft, PanelLeftClose, User as UserIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
+import { setTestDataToggled, testDataToggled } from '@/lib/testData';
 import { useReminders } from '@/hooks/useReminders';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { setViewMode } from '@/lib/viewAs';
@@ -131,6 +132,11 @@ const AppSidebar = ({ activeView, onViewChange, collapsed = false, onToggleColla
               className="text-xs rounded-md py-1.5 text-sidebar-foreground/70 hover:bg-sidebar-accent/50"
             >Montörsvy</button>
           </div>
+          <label className="mt-2 flex items-center justify-between gap-2 px-1 text-xs text-sidebar-foreground/70 cursor-pointer">
+            <span>Visa testdata</span>
+            <input type="checkbox" className="accent-primary" defaultChecked={testDataToggled()}
+              onChange={e => { setTestDataToggled(e.target.checked); window.location.reload(); }} />
+          </label>
         </div>
       )}
 
