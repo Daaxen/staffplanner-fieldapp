@@ -8,3 +8,4 @@
 - Weekends on the planning board are non-working unless `projects.works_weekends` is set; bars and time-day requirements both read that flag.
 - Sub-vendor access goes only through the `subvendor-access` backend function with a hashed one-order link token (`work_order_links`), returning whitelisted site fields; never give sub-vendors accounts or direct table access, so client pricing/contract data can't leak.
 - Per diem (traktamente) amounts are computed only by the `compute_per_diem_entry` DB trigger from the yearly `per_diem_rates` table (Skatteverket, keyed by Swedish country name); src/lib/perDiem.ts mirrors it for previews, so rates change by data, not code.
+- Test data is marked with `sandbox = true` on installers/projects/clients (auto-set by the `mark_test_data` trigger for TEST- tags or test accounts) and filtered out via src/lib/testData.ts in appData and report loaders, so reports never include test rows while test accounts still see their own.
