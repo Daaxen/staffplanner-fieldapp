@@ -15,6 +15,7 @@ import { hoursBetween, timeMismatchMessage } from '@/lib/validation/reporting';
 import { WORK_DAY_PRESETS, workDayTimes, isTimeLocked, TIME_LOCKED_MESSAGE } from '@/lib/timeReporting';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DurationWheel, TimeWheel } from '@/components/ui/time-wheel';
+import PerDiemSection from '@/components/installer/reporting/PerDiemSection';
 import EditTimeDialog, { fmtH, parseHours, type EditableTimeEntry } from '@/components/installer/reporting/EditTimeDialog';
 
 interface ProjectLogTabProps {
@@ -27,6 +28,8 @@ interface ProjectLogTabProps {
   /** Work status of the order; time is locked once completed (admins excepted). */
   status?: string;
   isAdmin?: boolean;
+  /** Country of the work site; drives domestic vs foreign per diem. */
+  country?: string;
 }
 
 const pad = (n: number) => n.toString().padStart(2, '0');
@@ -44,7 +47,7 @@ const orderDays = (start?: string, end?: string) => {
   return out;
 };
 
-const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate, status, isAdmin = false }: ProjectLogTabProps) => {
+const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate, status, isAdmin = false, country }: ProjectLogTabProps) => {
   const closed = isTimeLocked(status);
   const timeLocked = closed && !isAdmin;
   const [date, setDate] = useState(today);
@@ -256,6 +259,8 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate, stat
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <PerDiemSection projectId={projectId} country={country} date={date} locked={timeLocked} />
 
       <section className="rounded-lg border border-border bg-card p-3 space-y-3">
         <h2 className="text-sm font-bold text-foreground flex items-center gap-2"><MapPin className="w-4 h-4" />Mileage</h2>
