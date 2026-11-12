@@ -26,3 +26,11 @@ Appen visar beloppet direkt, t.ex. "Heldag 300 kr − lunch 105 kr = 195 kr". F�
 - Belopp räknas i databasen (trigger) från gällande års tabell så klienten inte kan sätta egna belopp. Låstrigger återanvänds.
 - Sub-vendor: nya actions i `subvendor-access`, belopp visas men inga satser/kunddata.
 - Tester: hel-/halvdag, måltidsavdrag, nattraktamente, låsning.
+
+## Utlandstraktamente (tillägg)
+- Ordern får ett fält **Land** (standard Sverige). Fylls i automatiskt från adressen/kartpositionen när den finns, kan ändras i "Edit work order".
+- Är landet inte Sverige används Skatteverkets **normalbelopp per land** för aktuellt år (t.ex. Norge, Danmark, Finland, Tyskland). Hela landslistan läggs in i tabellen och admin kan uppdatera den varje år.
+- Regler utland: heldag = normalbeloppet, halvdag (hemresedag efter kl 19 / avresa efter 12) = 50 %, nattraktamente = 50 % vid privat logi. Måltidsavdrag: frukost 15 %, lunch 35 %, middag 35 %. Efter 3 månader 70 %.
+- Montören ser landets flagga och dagsbelopp överst ("Utlandstraktamente: Norge – X kr/dag, Skatteverket 2026"). Beloppen i bilden är exempel; riktiga 2026-belopp hämtas och visas för dig innan de används.
+- Resdag in/ut ur Sverige: dagen räknas på det land där montören vistas längst tid (Skatteverkets regel) — montören kan byta land per dag vid behov.
+- Rapporter och export visar land per rad.
