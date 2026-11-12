@@ -1,3 +1,4 @@
+import { withoutTestIds } from '@/lib/testData';
 import { useViewAs } from '@/lib/viewAs';
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -38,7 +39,7 @@ export function useInstallers() {
     if (error) setError(error.message);
     else {
       setError(null);
-      setInstallers((data ?? []).map((r) => toInstaller(r as InstallerRow)));
+      setInstallers((await withoutTestIds((data ?? []) as InstallerRow[], 'installers')).map((r) => toInstaller(r)));
     }
     setLoading(false);
   }, []);

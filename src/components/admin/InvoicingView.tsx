@@ -1,3 +1,4 @@
+import { withoutTestRows } from '@/lib/testData';
 import { useEffect, useMemo, useState } from 'react';
 import { FileSpreadsheet, Download, AlertTriangle, RefreshCw } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -64,7 +65,7 @@ const InvoicingView = () => {
     };
 
     const rows: Line[] = [];
-    (t.data ?? []).forEach(r => {
+    (await withoutTestRows(t.data ?? [])).forEach(r => {
       const meta = projMeta(r.project_id, r.snapshot_project_name, r.snapshot_client_name);
       const rate = Number(r.hourly_rate ?? ratesForClient(meta.clientName, meta.clientId).hourlyRate);
       rows.push({
@@ -74,7 +75,7 @@ const InvoicingView = () => {
         detail: [r.start_time && r.end_time ? `${r.start_time}–${r.end_time}` : r.source, r.note].filter(Boolean).join(' · '),
       });
     });
-    (e.data ?? []).forEach(r => {
+    (await withoutTestRows(e.data ?? [])).forEach(r => {
       const meta = projMeta(r.project_id, r.snapshot_project_name, r.snapshot_client_name);
       rows.push({
         id: r.id, type: 'expense', date: r.entry_date, projectId: r.project_id, ...meta,
@@ -83,7 +84,7 @@ const InvoicingView = () => {
         detail: [expenseCategoryLabels[r.category as ExpenseCategory] ?? r.category, r.note, r.receipt_path].filter(Boolean).join(' · '),
       });
     });
-    (m.data ?? []).forEach(r => {
+    (await withoutTestRows(m.data ?? [])).forEach(r => {
       const meta = projMeta(r.project_id, r.snapshot_project_name, r.snapshot_client_name);
       rows.push({
         id: r.id, type: 'mileage', date: r.entry_date, projectId: r.project_id, ...meta,

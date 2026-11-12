@@ -1,3 +1,4 @@
+import { withoutTestRows } from '@/lib/testData';
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { projectRefForRowId, useProjects } from '@/lib/appData';
@@ -37,20 +38,20 @@ export function useProfitabilityData() {
       return next[projectId];
     };
 
-    (t.data ?? []).forEach(r => {
+    (await withoutTestRows(t.data ?? [])).forEach(r => {
       const row = ensure(r.project_id);
       const hours = Number(r.hours) || 0;
       if (isExternal(r.installer_id)) row.externalHours += hours;
       else row.internalHours += hours;
     });
-    (e.data ?? []).forEach(r => {
+    (await withoutTestRows(e.data ?? [])).forEach(r => {
       const row = ensure(r.project_id);
       const amount = Number(r.amount) || 0;
       if (r.category === 'materials') row.materialExpenses += amount;
       else if (r.category === 'travel' || r.category === 'parking') row.travelExpenses += amount;
       else row.otherExpenses += amount;
     });
-    (m.data ?? []).forEach(r => {
+    (await withoutTestRows(m.data ?? [])).forEach(r => {
       const row = ensure(r.project_id);
       row.mileageKm += Number(r.km) || 0;
       row.mileageCost += Number(r.amount) || 0;
