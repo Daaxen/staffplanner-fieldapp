@@ -10,8 +10,10 @@ import { Label } from '@/components/ui/label';
 import { SearchSelect } from '@/components/ui/search-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useTimeReportingRefs, useTimeRows } from '@/hooks/useTimeReporting';
+import { useResourceData } from '@/hooks/useResourceData';
+import ReportingRateCard from './ReportingRateCard';
 import {
-  INTERNAL_CUSTOMER_NUMBER, billableAmount, billableRate, buildWorkbook, clientLabel, exportFileName, isoDate, rowHours, sumWorkTravel, type ExportLine, type TimeRow,
+  INTERNAL_CUSTOMER_NUMBER, reportingRate, billableAmount, billableRate, buildWorkbook, clientLabel, exportFileName, isoDate, rowHours, sumWorkTravel, type ExportLine, type TimeRow,
 } from '@/lib/timeReporting';
 
 const ALL = '__all';
@@ -50,6 +52,8 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
     (f.group === ALL || r.project_group_id === f.group) && (f.order === ALL || r.project_id === f.order) &&
     (f.activity === ALL || r.activity_type_id === f.activity)), [rows, f]);
 
+  const { absences } = useResourceData();
+  const rateRows = useMemo(() => reportingRate(rows, refs.employees.filter(e => f.employee === ALL || e.id === f.employee), absences, { from, to }), [rows, refs.employees, absences, from, to, f.employee]);
   const work = filtered.reduce((t, r) => t + Number(r.hours), 0);
   const travel = filtered.reduce((t, r) => t + Number(r.travel_hours ?? 0), 0);
   const total = work + travel;
@@ -135,6 +139,7 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
         {sel('order', 'Order', refs.orders.filter(o => f.client === ALL || o.client_id === f.client).map(o => ({ id: o.id, label: `${o.project_number ?? ''} ${o.name}`.trim() })))}
         {sel('activity', 'Aktivitet', refs.activities.map(a => ({ id: a.id, label: a.name })))}
       </div>
+      {!exportMode && <ReportingRateCard rows={rateRows} selected={f.employee === ALL ? undefined : f.employee} onSelect={id => setF(c => ({ ...c, employee: c.employee === id ? ALL : id }))} />}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="rounded-md border border-border p-3"><div className="text-xs text-muted-foreground">Total rapporterad tid</div><div className="text-2xl font-semibold">{fmt(total)} h</div><div className="text-xs text-muted-foreground mt-1">Arbetstid {fmt(work)} h · Restid {fmt(travel)} h</div></div>
         <div className="rounded-md border border-border p-3"><div className="text-xs text-muted-foreground">Mot kund 9999</div><div className="text-2xl font-semibold">{fmt(internalTotal)} h</div></div>
