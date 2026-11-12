@@ -1,3 +1,4 @@
+import { receiptPathsOf } from '@/lib/receipts';
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { projectRefForRowId } from '@/lib/appData';
@@ -24,23 +25,25 @@ export function useProjectReceipts() {
     setLoading(true);
     const { data } = await supabase
       .from('expense_entries')
-      .select('id, project_id, entry_date, category, amount, note, receipt_path')
+      .select('id, project_id, entry_date, category, amount, note, receipt_path, receipt_paths')
       .not('receipt_path', 'is', null)
       .order('entry_date', { ascending: false });
 
     const next: Record<string, ProjectReceipt[]> = {};
     (data ?? []).forEach(r => {
       const projectId = projectRefForRowId(r.project_id) ?? r.project_id;
+      receiptPathsOf(r).forEach((path, i) => {
       const entry: ProjectReceipt = {
-        id: r.id,
+        id: i ? `${r.id}:${i}` : r.id,
         projectId,
         date: r.entry_date,
         category: r.category,
         amount: Number(r.amount) || 0,
         note: r.note ?? undefined,
-        path: r.receipt_path as string,
+        path,
       };
       (next[projectId] ??= []).push(entry);
+      });
     });
     setReceipts(next);
     setLoading(false);

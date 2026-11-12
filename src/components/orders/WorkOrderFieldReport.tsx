@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ClipboardCheck, Image as ImageIcon, AlertTriangle, Receipt } from 'lucide-react';
 import { ExpandableText } from '@/components/ui/expandable-text';
 import { workOrderBillables } from '@/lib/workOrderBillables';
-import { receiptUrl } from '@/lib/receipts';
+import { receiptUrl, receiptPathsOf } from '@/lib/receipts';
 import { exportFieldReportPdf, exportFieldReportXlsx, loadFieldReportData, type FieldReportData } from '@/lib/fieldReportExport';
 import { Button } from '@/components/ui/button';
 import { FileDown, FileSpreadsheet } from 'lucide-react';
@@ -110,7 +110,7 @@ export default function WorkOrderFieldReport({ projectId, orderName }: { project
             {d.exp.map((x, i) => (
               <div key={i} className="text-xs flex justify-between gap-2">
                 <span>{x.entry_date} · {x.category} · {name(x.installer_id)}</span>
-                <span className="flex gap-2">{kr(Number(x.amount))}{x.receipt_path && <button className="text-primary hover:underline" onClick={async () => { const u = await receiptUrl(x.receipt_path); if (u) window.open(u, '_blank'); }}>Receipt</button>}</span>
+                <span className="flex gap-2">{kr(Number(x.amount))}{receiptPathsOf(x).map((rp, ri, all) => <button key={rp} className="text-primary hover:underline" onClick={async () => { const u = await receiptUrl(rp); if (u) window.open(u, '_blank'); }}>Receipt{all.length > 1 ? ` ${ri + 1}` : ''}</button>)}</span>
               </div>
             ))}
           </div>

@@ -62,8 +62,7 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate, stat
   const [category, setCategory] = useState<ExpenseCategory>('materials');
   const [amount, setAmount] = useState('');
   const [expenseNote, setExpenseNote] = useState('');
-  const [receiptPath, setReceiptPath] = useState('');
-  const [receiptLabel, setReceiptLabel] = useState('');
+  const [receipts, setReceipts] = useState<{ path: string; label: string }[]>([]);
   const [uploading, setUploading] = useState(false);
   const cameraInput = useRef<HTMLInputElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -110,8 +109,10 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate, stat
   };
 
   const submitTime = async () => {
+    const travelOnly = !startTime && !endTime && parseHours(travelHoursInput) > 0;
+    if (travelOnly) { await saveTime(true); return; }
     if (!startTime || !endTime) {
-      toast.error('Ange start- och sluttid');
+      toast.error('Ange start- och sluttid, eller bara restid');
       return;
     }
     await saveTime(false);
@@ -136,15 +137,19 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate, stat
     toast.success('Mileage saved');
   };
 
-  const pickReceipt = async (file?: File | null) => {
-    if (!file) return;
+  const pickReceipts = async (list?: FileList | null) => {
+    const files = Array.from(list ?? []);
+    if (!files.length) return;
     setUploading(true);
-    const result = await uploadReceipt(file);
+    let added = 0;
+    for (const file of files) {
+      const result = await uploadReceipt(file);
+      if ('error' in result) { toast.error(`${file.name}: ${result.error}`); continue; }
+      added += 1;
+      setReceipts(prev => [...prev, { path: result.path, label: file.name }]);
+    }
     setUploading(false);
-    if ('error' in result) { toast.error(result.error); return; }
-    setReceiptPath(result.path);
-    setReceiptLabel(file.name);
-    toast.success('Kvitto bifogat');
+    if (added) toast.success(added === 1 ? 'Kvitto bifogat' : `${added} kvitton bifogade`);
   };
 
   const submitExpense = async () => {
@@ -153,17 +158,17 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate, stat
       toast.error('Ange ett giltigt belopp');
       return;
     }
-    if (receiptRequired(category, value) && !receiptPath) {
+    if (receiptRequired(category, value) && receipts.length === 0) {
       toast.error(missingReceiptMessage(category));
       return;
     }
     setSaving(true);
     const result = await logs.addExpense({
-      projectId, date, category, amount: value, note: expenseNote, receiptName: receiptPath || undefined,
+      projectId, date, category, amount: value, note: expenseNote, receiptPaths: receipts.map(r => r.path),
     });
     setSaving(false);
     if (!result) { toast.error('Kostnaden kunde inte sparas'); return; }
-    setAmount(''); setExpenseNote(''); setReceiptPath(''); setReceiptLabel('');
+    setAmount(''); setExpenseNote(''); setReceipts([]);
     toast.success('Kostnad sparad');
   };
 
@@ -277,30 +282,24 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate, stat
 
         <div className="space-y-2">
           <Label>Kvitto{receiptRequired(category, Number(amount) || 0) ? ' *' : ''}</Label>
-          {receiptPath ? (
-            <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 p-2">
+          {receipts.map((r, i) => (
+            <div key={r.path} className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 p-2">
               <Receipt className="w-4 h-4 text-muted-foreground shrink-0" />
-              <span className="text-xs text-foreground truncate flex-1">{receiptLabel}</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Ta bort kvitto"
-                onClick={() => { setReceiptPath(''); setReceiptLabel(''); }}
-              >
+              <span className="text-xs text-foreground truncate flex-1">{r.label}</span>
+              <Button variant="ghost" size="icon" aria-label="Ta bort kvitto" onClick={() => setReceipts(prev => prev.filter((_, j) => j !== i))}>
                 <X className="w-4 h-4" />
               </Button>
             </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-2">
-              <Button variant="outline" disabled={uploading} onClick={() => cameraInput.current?.click()}>
-                <Camera className="w-4 h-4 mr-1.5" />Fota kvitto
-              </Button>
-              <Button variant="outline" disabled={uploading} onClick={() => fileInput.current?.click()}>
-                <Paperclip className="w-4 h-4 mr-1.5" />Bifoga fil
-              </Button>
-            </div>
-          )}
-          {!receiptPath && receiptRequired(category, Number(amount) || 0) && (
+          ))}
+          <div className="grid grid-cols-2 gap-2">
+            <Button variant="outline" disabled={uploading} onClick={() => cameraInput.current?.click()}>
+              <Camera className="w-4 h-4 mr-1.5" />{receipts.length ? 'Fota fler' : 'Fota kvitto'}
+            </Button>
+            <Button variant="outline" disabled={uploading} onClick={() => fileInput.current?.click()}>
+              <Paperclip className="w-4 h-4 mr-1.5" />{receipts.length ? 'Bifoga fler' : 'Bifoga filer'}
+            </Button>
+          </div>
+          {receipts.length === 0 && receiptRequired(category, Number(amount) || 0) && (
             <p className="text-xs text-destructive">{missingReceiptMessage(category)}</p>
           )}
           <input
@@ -310,15 +309,16 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate, stat
             capture="environment"
             className="hidden"
             aria-label="Fota kvitto"
-            onChange={e => { void pickReceipt(e.target.files?.[0]); e.target.value = ''; }}
+            onChange={e => { const el = e.target; void pickReceipts(el.files).finally(() => { el.value = ''; }); }}
           />
           <input
             ref={fileInput}
             type="file"
             accept={RECEIPT_ACCEPT}
+            multiple
             className="hidden"
             aria-label="Bifoga kvitto"
-            onChange={e => { void pickReceipt(e.target.files?.[0]); e.target.value = ''; }}
+            onChange={e => { const el = e.target; void pickReceipts(el.files).finally(() => { el.value = ''; }); }}
           />
         </div>
 

@@ -102,7 +102,7 @@ export const timeEntrySchema = z
       return;
     }
     const hours = both ? hoursBetween(v.startTime!, v.endTime!) : (v.hours ?? 0);
-    if (hours <= 0) {
+    if (hours <= 0 && !((v.travelHours ?? 0) > 0)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['hours'],

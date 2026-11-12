@@ -1,3 +1,4 @@
+import { receiptPathsOf } from '@/lib/receipts';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -41,7 +42,7 @@ export async function loadFieldReportData(orderIds: string[]): Promise<FieldRepo
     supabase.from('time_entries').select('project_id,installer_id,entry_date,hours,travel_hours,hourly_rate,note,description').in('project_id', orderIds).order('entry_date'),
     supabase.from('deviations').select('*').in('project_id', orderIds),
     supabase.from('mileage_entries').select('project_id,installer_id,entry_date,km,amount,note').in('project_id', orderIds),
-    supabase.from('expense_entries').select('project_id,installer_id,entry_date,category,amount,note,receipt_path').in('project_id', orderIds),
+    supabase.from('expense_entries').select('project_id,installer_id,entry_date,category,amount,note,receipt_path,receipt_paths').in('project_id', orderIds),
     supabase.from('projects').select('id,name,project_number,start_date,end_date,client_name,hourly_rate,client_id').in('id', orderIds),
   ]);
   const clientIds = [...new Set((p.data ?? []).map(x => x.client_id).filter(Boolean))] as string[];
@@ -136,7 +137,7 @@ export function exportFieldReportXlsx(input: FieldReportData | FieldReportData[]
     return row;
   }))), 'Tid');
   if (!x.has('travel')) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(list.flatMap(d => d.mil.map(r => ({ Order: label(d), Datum: r.entry_date, Montör: nm(d, r.installer_id), Km: Number(r.km), ...(x.has('prices') ? {} : { 'Belopp (kr)': Number(r.amount) }), Anteckning: r.note ?? '' })))), 'Körning');
-  if (!x.has('expenses')) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(list.flatMap(d => d.exp.map(r => ({ Order: label(d), Datum: r.entry_date, Montör: nm(d, r.installer_id), Kategori: r.category, ...(x.has('prices') ? {} : { 'Belopp (kr)': Number(r.amount) }), Kvitto: r.receipt_path ? 'Ja' : 'Nej', Anteckning: r.note ?? '' })))), 'Utlägg');
+  if (!x.has('expenses')) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(list.flatMap(d => d.exp.map(r => ({ Order: label(d), Datum: r.entry_date, Montör: nm(d, r.installer_id), Kategori: r.category, ...(x.has('prices') ? {} : { 'Belopp (kr)': Number(r.amount) }), Kvitton: receiptPathsOf(r).length, Anteckning: r.note ?? '' })))), 'Utlägg');
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(list.flatMap(d => d.reports.map(r => ({ Order: label(d), Montör: nm(d, r.installer_id), Inskickad: r.submitted_at ? new Date(r.submitted_at).toLocaleString('sv-SE') : 'Nej', Rapport: r.report_text ?? '' })))), 'Rapporter');
   if (!x.has('deviations')) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(list.flatMap(d => d.dev.map(r => ({ Order: label(d), Montör: nm(d, r.installer_id), Kategori: r.category, Allvar: r.severity, Status: r.status, Beskrivning: r.description })))), 'Avvikelser');
   const out = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });

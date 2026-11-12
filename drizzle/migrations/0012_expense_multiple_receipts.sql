@@ -1,0 +1,3 @@
+ALTER TABLE public.expense_entries ADD COLUMN IF NOT EXISTS receipt_paths jsonb NOT NULL DEFAULT '[]'::jsonb;
+UPDATE public.expense_entries SET receipt_paths = jsonb_build_array(receipt_path) WHERE receipt_path IS NOT NULL AND btrim(receipt_path) <> '' AND receipt_paths = '[]'::jsonb;
+COMMENT ON COLUMN public.expense_entries.receipt_path IS 'First receipt; kept in sync with receipt_paths[0] for the receipt rule';

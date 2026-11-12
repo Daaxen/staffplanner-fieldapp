@@ -61,3 +61,10 @@ export async function receiptUrl(path: string): Promise<string | null> {
 export function receiptFileName(path: string): string {
   return path.split('/').pop() ?? path;
 }
+
+/** All receipt paths on an expense row (new list, falling back to the single legacy path). */
+export function receiptPathsOf(r: { receipt_path?: string | null; receipt_paths?: unknown }): string[] {
+  const list = Array.isArray(r.receipt_paths) ? (r.receipt_paths as unknown[]).filter((x): x is string => typeof x === 'string' && x.trim() !== '') : [];
+  if (list.length) return list;
+  return r.receipt_path ? [r.receipt_path] : [];
+}
