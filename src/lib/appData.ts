@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { getSandboxIds, withoutTestIds } from '@/lib/testData';
 import { toast } from 'sonner';
 
 import {
@@ -82,6 +83,10 @@ async function loadClients() {
     const { data: safe } = await supabase.rpc('assigned_clients');
     rows = (safe ?? []) as Record<string, unknown>[];
   }
+  {
+    const s = await getSandboxIds();
+    if (!s.include) rows = rows.filter((r) => !s.clients.has(r.id as string) && !s.clientRefs.has(r.ref as string));
+  }
   clientRowIdByRef.clear();
   replace(
     clientRegister,
@@ -141,13 +146,13 @@ async function loadInstallers() {
     .select('id,name,color,type,base_location')
     .order('name');
   if (error) throw error;
-  const rows = (data ?? []) as {
+  const rows = (await withoutTestIds((data ?? []) as {
     id: string;
     name: string;
     color: number;
     type: string;
     base_location: string | null;
-  }[];
+  }[], 'installers'));
   replace(
     installerList,
     rows.map<Installer>((r) => ({
@@ -219,7 +224,7 @@ async function loadProjects() {
     )
     .order('start_date', { ascending: false });
   if (error) throw error;
-  const rows = (data ?? []) as unknown as Record<string, unknown>[];
+  const rows = await withoutTestIds((data ?? []) as unknown as (Record<string, unknown> & { id: string })[], 'projects');
   rowIdByRef.clear();
   refByRowId.clear();
   replace(

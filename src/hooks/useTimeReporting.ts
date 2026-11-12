@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { withoutTestIds, withoutTestRows } from '@/lib/testData';
 import type { TRClient, TRGroup, TROrder, TimeRow } from '@/lib/timeReporting';
 
 export type ActivityType = { id: string; name: string };
@@ -21,11 +22,11 @@ export function useTimeReportingRefs() {
         supabase.from('time_activity_types').select('id,name').eq('active', true).order('sort_order'),
         supabase.from('installers').select('id,name').order('name'),
       ]);
-      setClients((c.data ?? []) as TRClient[]);
+      setClients(await withoutTestIds((c.data ?? []) as TRClient[], 'clients'));
       setGroups((g.data ?? []) as TRGroup[]);
-      setOrders((o.data ?? []) as TROrder[]);
+      setOrders(await withoutTestIds((o.data ?? []) as TROrder[], 'projects'));
       setActivities((a.data ?? []) as ActivityType[]);
-      setEmployees((e.data ?? []) as Employee[]);
+      setEmployees(await withoutTestIds((e.data ?? []) as Employee[], 'installers'));
     })();
   }, []);
   return { clients, groups, orders, activities, employees };
@@ -41,7 +42,7 @@ export function useTimeRows(filter: { from: string; to: string; installerId?: st
     let q = supabase.from('time_entries').select(COLS).gte('entry_date', filter.from).lte('entry_date', filter.to).order('entry_date').order('created_at');
     if (filter.installerId) q = q.eq('installer_id', filter.installerId);
     const { data } = await q;
-    setRows((data ?? []) as unknown as TimeRow[]);
+    setRows(await withoutTestRows((data ?? []) as unknown as TimeRow[]));
     setLoading(false);
   }, [filter.from, filter.to, filter.installerId]);
   useEffect(() => { reload(); }, [reload]);
@@ -55,7 +56,7 @@ export function useTimeRows(filter: { from: string; to: string; installerId?: st
           let q = supabase.from('time_entries').select(COLS).gte('entry_date', filter.from).lte('entry_date', filter.to).order('entry_date').order('created_at');
           if (filter.installerId) q = q.eq('installer_id', filter.installerId);
           const { data } = await q;
-          if (data) setRows(data as unknown as TimeRow[]);
+          if (data) setRows(await withoutTestRows(data as unknown as TimeRow[]));
         }, 400);
       })
       .subscribe();
