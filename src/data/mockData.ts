@@ -141,6 +141,8 @@ export interface Project {
   isFlexOrder?: boolean;
   /** Work continues over Saturday–Sunday. Default false: weekends are not planned. */
   worksWeekends?: boolean;
+  /** Country where the work is done (Swedish name, matches Skatteverket's list). Default Sverige. */
+  country?: string;
   description?: string;
   contactName?: string;
   contactPhone?: string;
