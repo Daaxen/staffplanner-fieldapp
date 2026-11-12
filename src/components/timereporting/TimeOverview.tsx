@@ -3,7 +3,7 @@ import { ExpandableText } from '@/components/ui/expandable-text';
 import { supabase } from '@/integrations/supabase/client';
 import { svStatusLabels } from '@/lib/installerTone';
 import * as XLSX from 'xlsx';
-import { ArrowDown, ArrowUp, ArrowUpDown, Download } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,7 +13,7 @@ import { useTimeReportingRefs, useTimeRows } from '@/hooks/useTimeReporting';
 import { useResourceData } from '@/hooks/useResourceData';
 import ReportingRateCard from './ReportingRateCard';
 import {
-  INTERNAL_CUSTOMER_NUMBER, reportingRate, billableAmount, billableRate, buildWorkbook, clientLabel, exportFileName, isoDate, rowHours, sumWorkTravel, type ExportLine, type TimeRow,
+  INTERNAL_CUSTOMER_NUMBER, reportingRate, periodRange, shiftPeriod, periodLabel, type PeriodKind, billableAmount, billableRate, buildWorkbook, clientLabel, exportFileName, isoDate, rowHours, sumWorkTravel, type ExportLine, type TimeRow,
 } from '@/lib/timeReporting';
 
 const ALL = '__all';
@@ -26,6 +26,8 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
   const today = new Date();
   const [from, setFrom] = useState(isoDate(new Date(today.getFullYear(), today.getMonth(), 1)));
   const [to, setTo] = useState(isoDate(new Date(today.getFullYear(), today.getMonth() + 1, 0)));
+  const [period, setPeriod] = useState<{ kind: PeriodKind; anchor: Date } | null>({ kind: 'month', anchor: today });
+  const applyPeriod = (kind: PeriodKind, anchor: Date) => { const r = periodRange(kind, anchor); setFrom(r.from); setTo(r.to); setPeriod({ kind, anchor }); };
   const [f, setF] = useState({ employee: ALL, client: ALL, group: ALL, order: ALL, activity: ALL });
   const { rows, loading } = useTimeRows({ from, to });
   // Admin-only rates/status (installers never load this screen).
@@ -130,9 +132,21 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
         <h1 className="text-xl font-semibold">{exportMode ? 'Export av tidsrapport' : 'Tidsöversikt'}</h1>
         <Button onClick={doExport} disabled={filtered.length === 0}><Download className="w-4 h-4 mr-1" />Exportera XLSX</Button>
       </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="inline-flex rounded-md border border-border overflow-hidden" role="group" aria-label="Period">
+          {([['week', 'Vecka'], ['half', 'Halvmånad'], ['month', 'Månad']] as [PeriodKind, string][]).map(([k, l]) => (
+            <Button key={k} type="button" size="sm" variant={period?.kind === k ? 'default' : 'ghost'} className="rounded-none" onClick={() => applyPeriod(k, period?.anchor ?? new Date(from + 'T12:00:00'))}>{l}</Button>
+          ))}
+        </div>
+        {period && <>
+          <Button type="button" size="icon" variant="outline" aria-label="Föregående period" onClick={() => applyPeriod(period.kind, shiftPeriod(period.kind, period.anchor, -1))}><ChevronLeft className="w-4 h-4" /></Button>
+          <span className="text-sm font-semibold min-w-32 text-center">{periodLabel(period.kind, period.anchor)}</span>
+          <Button type="button" size="icon" variant="outline" aria-label="Nästa period" onClick={() => applyPeriod(period.kind, shiftPeriod(period.kind, period.anchor, 1))}><ChevronRight className="w-4 h-4" /></Button>
+        </>}
+      </div>
       <div className="flex flex-wrap gap-3 items-end">
-        <div><Label className="text-xs">Från</Label><Input type="date" value={from} onChange={e => setFrom(e.target.value)} /></div>
-        <div><Label className="text-xs">Till</Label><Input type="date" value={to} onChange={e => setTo(e.target.value)} /></div>
+        <div><Label className="text-xs">Från</Label><Input type="date" value={from} onChange={e => { setFrom(e.target.value); setPeriod(null); }} /></div>
+        <div><Label className="text-xs">Till</Label><Input type="date" value={to} onChange={e => { setTo(e.target.value); setPeriod(null); }} /></div>
         {sel('employee', 'Medarbetare', refs.employees.map(e => ({ id: e.id, label: e.name })))}
         {sel('client', 'Kund', refs.clients.map(c => ({ id: c.id, label: clientLabel(c) })))}
         {sel('group', 'Projekt', refs.groups.filter(g => f.client === ALL || g.client_id === f.client).map(g => ({ id: g.id, label: g.name })))}
