@@ -16,6 +16,7 @@ Mats K.      ██████░░░░░░░░░░░░░░  12 / 
 - Följer samma periodval och medarbetarfilter som resten av Tidsöversikt. Sorteras lägst % först så du ser vem som ligger efter.
 - Klick på en rad filtrerar tabellen under på den personen.
 - Uppdateras live när montörer rapporterar.
+- **Fällbar flik:** rubriken "Rapporteringsgrad ▾" fäller ut och döljer rutan med ett klick. Hopfälld visas bara rubriken och teamets snitt-%. Valet sparas i webbläsaren så den förblir som du lämnade den.
 
 ## Tekniskt
 - Ny komponent `src/components/timereporting/ReportingRateCard.tsx`, renderas överst i TimeOverview (ej i exportläget).
