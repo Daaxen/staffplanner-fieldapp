@@ -14,7 +14,7 @@ const time = z.string().regex(/^\d{2}:\d{2}$/);
 const Body = z.discriminatedUnion('action', [
   z.object({ action: z.literal('get'), token: z.string().min(20).max(200) }),
   z.object({ action: z.literal('saveTime'), token: z.string().min(20).max(200), id: z.string().uuid().optional(),
-    entry_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), start_time: time, end_time: time,
+    entry_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), start_time: time.nullable().optional(), end_time: time.nullable().optional(),
     travel_hours: z.number().min(0).max(12), note: z.string().max(1000).optional() }),
   z.object({ action: z.literal('deleteTime'), token: z.string().min(20).max(200), id: z.string().uuid() }),
   z.object({ action: z.literal('saveReport'), token: z.string().min(20).max(200), report_text: z.string().max(10000),
@@ -24,7 +24,7 @@ const Body = z.discriminatedUnion('action', [
     entry_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), km: z.number().positive().max(2000), note: z.string().max(1000).optional() }),
   z.object({ action: z.literal('saveExpense'), token: z.string().min(20).max(200), id: z.string().uuid().optional(),
     entry_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), category: z.enum(['materials', 'travel', 'parking', 'meal', 'other']),
-    amount: z.number().positive().max(50000), note: z.string().max(1000).optional(), receipt_path: z.string().max(300).optional() }),
+    amount: z.number().positive().max(50000), note: z.string().max(1000).optional(), receipt_path: z.string().max(300).optional(), receipt_paths: z.array(z.string().max(300)).max(100).optional() }),
   z.object({ action: z.literal('deleteEntry'), token: z.string().min(20).max(200), kind: z.enum(['mileage', 'expense']), id: z.string().uuid() }),
   z.object({ action: z.literal('deviation'), token: z.string().min(20).max(200), category: z.string().max(40),
     severity: z.enum(['low', 'medium', 'high', 'critical']), description: z.string().min(10).max(4000) }),
@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
       db.from('time_entries').select('id,entry_date,start_time,end_time,hours,travel_hours,note').eq('project_id', p.id).eq('installer_id', me).order('entry_date'),
       db.from('field_reports').select('report_text,photo_paths,submitted_at').eq('project_id', p.id).eq('installer_id', me).maybeSingle(),
       db.from('mileage_entries').select('id,entry_date,km,note').eq('project_id', p.id).eq('installer_id', me).order('entry_date'),
-      db.from('expense_entries').select('id,entry_date,category,amount,note,receipt_path').eq('project_id', p.id).eq('installer_id', me).order('entry_date'),
+      db.from('expense_entries').select('id,entry_date,category,amount,note,receipt_path,receipt_paths').eq('project_id', p.id).eq('installer_id', me).order('entry_date'),
     ]);
     const paths = ((rep?.photo_paths ?? []) as string[]);
     const urls = paths.length ? (await db.storage.from('field-photos').createSignedUrls(paths, 3600)).data ?? [] : [];
@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
     return json({
       order: site, me: { id: me, name: owner?.name }, locked, expires_at: link.expires_at,
       team: (asg ?? []).map((a: any) => ({ id: a.installer_id, name: a.installers?.name, subVendor: a.installers?.type === 'sub-vendor', company: a.installers?.type === 'sub-vendor' ? a.installers?.base_location : null })),
-      times: times ?? [], mileage: miles ?? [], expenses: (exps ?? []).map((e: any) => ({ ...e, hasReceipt: !!e.receipt_path, receipt_path: undefined })), report: rep ? { ...rep, photos: urls.map(u => ({ path: u.path, url: u.signedUrl })) } : null,
+      times: times ?? [], mileage: miles ?? [], expenses: (exps ?? []).map((e: any) => ({ ...e, hasReceipt: !!e.receipt_path, receiptCount: Array.isArray(e.receipt_paths) && e.receipt_paths.length ? e.receipt_paths.length : (e.receipt_path ? 1 : 0), receipt_path: undefined, receipt_paths: undefined })), report: rep ? { ...rep, photos: urls.map(u => ({ path: u.path, url: u.signedUrl })) } : null,
     });
   }
 
@@ -86,8 +86,9 @@ Deno.serve(async (req) => {
     }
     if ((p.start_date && b.entry_date < p.start_date) || (p.end_date && b.entry_date > p.end_date))
       return json({ error: 'Datumet ligger utanför ordern' }, 400);
-    const row = { project_id: p.id, installer_id: me, client_id: p.client_id, entry_date: b.entry_date, start_time: b.start_time,
-      end_time: b.end_time, hours: 0, travel_hours: b.travel_hours, note: b.note ?? null, source: 'manual' };
+    if (!(b.start_time && b.end_time) && !(b.travel_hours > 0)) return json({ error: 'Ange arbetstid eller restid' }, 400);
+    const row = { project_id: p.id, installer_id: me, client_id: p.client_id, entry_date: b.entry_date, start_time: b.start_time && b.end_time ? b.start_time : null,
+      end_time: b.start_time && b.end_time ? b.end_time : null, hours: 0, travel_hours: b.travel_hours, note: b.note ?? null, source: 'manual' };
     const q = b.id ? db.from('time_entries').update(row).eq('id', b.id).eq('installer_id', me).eq('project_id', p.id).select('id').single()
       : db.from('time_entries').insert(row).select('id').single();
     const { data, error } = await q;
@@ -118,8 +119,9 @@ Deno.serve(async (req) => {
       row = { ...base, km: b.km, rate, amount: 0 };
     } else {
       table = 'expense_entries';
-      if (b.receipt_path && !b.receipt_path.startsWith(`subvendor/${me}/${p.id}/`)) return json({ error: 'Invalid receipt' }, 400);
-      row = { ...base, category: b.category, amount: b.amount, entry_kind: 'expense', ...(b.receipt_path ? { receipt_path: b.receipt_path } : {}) };
+      const paths = b.receipt_paths ?? (b.receipt_path ? [b.receipt_path] : []);
+      if (paths.some(x => !x.startsWith(`subvendor/${me}/${p.id}/`))) return json({ error: 'Invalid receipt' }, 400);
+      row = { ...base, category: b.category, amount: b.amount, entry_kind: 'expense', receipt_paths: paths, receipt_path: paths[0] ?? null };
     }
     const q = b.id ? db.from(table).update(row).eq('id', b.id).eq('installer_id', me).eq('project_id', p.id).select('id').single()
       : db.from(table).insert(row).select('id').single();

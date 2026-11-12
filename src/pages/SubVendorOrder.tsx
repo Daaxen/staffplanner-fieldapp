@@ -51,7 +51,7 @@ const SubVendorOrder = () => {
   const [dev, setDev] = useState({ category: 'site-not-ready', severity: 'low', description: '' });
   const [busy, setBusy] = useState(false);
   const [mile, setMile] = useState<{ id?: string; entry_date: string; km: string; note: string } | null>(null);
-  const [exp, setExp] = useState<{ id?: string; entry_date: string; category: string; amount: string; note: string; receipt_path?: string } | null>(null);
+  const [exp, setExp] = useState<{ id?: string; entry_date: string; category: string; amount: string; note: string; receipt_paths: string[] } | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -85,7 +85,7 @@ const SubVendorOrder = () => {
       const { path, token: up } = await call({ token, action: 'photoUpload', ext: ['jpg', 'jpeg', 'png', 'webp', 'heic'].includes(ext) ? ext : 'jpg' });
       const { error } = await supabase.storage.from('field-photos').uploadToSignedUrl(path, up, file);
       if (error) throw error;
-      setExp(e => (e ? { ...e, receipt_path: path } : e));
+      setExp(e => (e ? { ...e, receipt_paths: [...e.receipt_paths, path] } : e));
       toast.success('Kvitto bifogat');
     } catch (e) { toast.error((e as Error).message); }
   };
@@ -200,13 +200,13 @@ const SubVendorOrder = () => {
           {d.expenses.map((e: any) => (
             <div key={e.id} className="flex items-center gap-2 text-sm border-b border-border pb-1">
               <span className="font-semibold">{e.entry_date}</span><span>{EXP_LABEL[e.category] ?? e.category}</span><span>{Number(e.amount).toFixed(2)} kr</span>
-              {e.hasReceipt && <Receipt className="h-3.5 w-3.5 text-primary" aria-label="Kvitto bifogat" />}
+              {e.receiptCount > 0 && <span className="inline-flex items-center gap-0.5 text-xs text-primary"><Receipt className="h-3.5 w-3.5" aria-label="Kvitton bifogade" />{e.receiptCount}</span>}
               {!d.locked && <span className="ml-auto flex">
                 <Button size="icon" variant="ghost" className="h-7 w-7" aria-label="Ta bort" onClick={() => run({ action: 'deleteEntry', kind: 'expense', id: e.id }, 'Borttagen')}><Trash2 className="h-3.5 w-3.5" /></Button>
               </span>}
             </div>
           ))}
-          {!d.locked && !exp && <Button size="sm" variant="outline" onClick={() => setExp({ entry_date: o.start_date, category: 'materials', amount: '', note: '' })}>Lägg till inköp</Button>}
+          {!d.locked && !exp && <Button size="sm" variant="outline" onClick={() => setExp({ entry_date: o.start_date, category: 'materials', amount: '', note: '', receipt_paths: [] })}>Lägg till inköp</Button>}
           {exp && (
             <div className="space-y-2 rounded-lg border border-border p-3">
               <div className="grid grid-cols-2 gap-2">
@@ -222,12 +222,12 @@ const SubVendorOrder = () => {
               <Input type="number" inputMode="decimal" min="0" placeholder="Belopp (kr inkl. moms)" value={exp.amount} onChange={e => setExp({ ...exp, amount: e.target.value })} />
               <Input placeholder="Vad köptes?" value={exp.note} onChange={e => setExp({ ...exp, note: e.target.value })} />
               <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm">
-                <Camera className="h-4 w-4" />{exp.receipt_path ? 'Kvitto bifogat ✓' : 'Fota kvitto'}
-                <input type="file" accept="image/*" capture="environment" className="hidden" onChange={ev => { const f = ev.target.files?.[0]; if (f) uploadReceipt(f); ev.target.value = ''; }} />
+                <Camera className="h-4 w-4" />{exp.receipt_paths.length ? `${exp.receipt_paths.length} kvitto/n bifogade · lägg till fler` : 'Fota kvitto'}
+                <input type="file" accept="image/*" multiple className="hidden" onChange={async ev => { const fs = Array.from(ev.target.files ?? []); ev.target.value = ''; for (const f of fs) await uploadReceipt(f); }} />
               </label>
               <p className="text-xs text-muted-foreground">Kvitto krävs för inköp.</p>
               <div className="flex gap-2">
-                <Button size="sm" disabled={busy || !(Number(exp.amount) > 0)} onClick={async () => { if (await run({ action: 'saveExpense', id: exp.id, entry_date: exp.entry_date, category: exp.category, amount: Number(exp.amount), note: exp.note || undefined, receipt_path: exp.receipt_path }, 'Inköp sparat')) setExp(null); }}>Spara</Button>
+                <Button size="sm" disabled={busy || !(Number(exp.amount) > 0)} onClick={async () => { if (await run({ action: 'saveExpense', id: exp.id, entry_date: exp.entry_date, category: exp.category, amount: Number(exp.amount), note: exp.note || undefined, receipt_paths: exp.receipt_paths }, 'Inköp sparat')) setExp(null); }}>Spara</Button>
                 <Button size="sm" variant="outline" onClick={() => setExp(null)}>Avbryt</Button>
               </div>
             </div>
