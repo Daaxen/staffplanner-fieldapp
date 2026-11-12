@@ -7,7 +7,7 @@ import { ArrowDown, ArrowUp, ArrowUpDown, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchSelect } from '@/components/ui/search-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useTimeReportingRefs, useTimeRows } from '@/hooks/useTimeReporting';
 import {
@@ -109,12 +109,14 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
   };
 
   const sel = (key: keyof typeof f, label: string, opts: { id: string; label: string }[]) => (
-    <div className="min-w-40 flex-1">
+    <div className="min-w-40 flex-1" role="group" aria-label={label}>
       <Label className="text-xs">{label}</Label>
-      <Select value={f[key]} onValueChange={v => setF({ ...f, [key]: v })}>
-        <SelectTrigger><SelectValue /></SelectTrigger>
-        <SelectContent><SelectItem value={ALL}>Alla</SelectItem>{opts.map(o => <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>)}</SelectContent>
-      </Select>
+      <SearchSelect
+        value={f[key]}
+        onChange={v => setF(current => ({ ...current, [key]: v }))}
+        options={[{ value: ALL, label: 'Alla' }, ...opts.map(o => ({ value: o.id, label: o.label }))]}
+        placeholder="Alla"
+      />
     </div>
   );
 
