@@ -288,8 +288,8 @@ export async function buildFieldReportPdf(input: FieldReportData | FieldReportDa
       return [t.entry_date, nm(d, t.installer_id), ...(x.has('comments') ? [] : [t.description || t.note || '']), `${num(Number(t.hours))} h`,
         ...(x.has('prices') ? [] : [rate == null ? '–' : kr(Number(rate)), rate == null ? '–' : kr(r2(Number(t.hours) * Number(rate)))])];
     });
-    const foot = ['Summa arbetstid', '', ...(x.has('comments') ? [] : ['']), `${num(b.total.workHours)} h`, ...(x.has('prices') ? [] : ['', kr(b.total.workAmount)])];
-    const widths: Record<string, number> = { Datum: 21, Montör: 30, Arbetstid: 18, Restid: 18, Timpris: 19, Belopp: 23 };
+    const foot = [{ content: 'Summa arbetstid', colSpan: x.has('comments') ? 2 : 3 }, `${num(b.total.workHours)} h`, ...(x.has('prices') ? [] : ['', kr(b.total.workAmount)])];
+    const widths: Record<string, number> = { Datum: 21, Arbetstid: 18, Restid: 18, Timpris: 19, Belopp: 23 };
     const colStyles = (h: string[]) => Object.fromEntries(h.map((c, i) => [i, { ...(widths[c] ? { cellWidth: widths[c] } : {}), ...(['Arbetstid', 'Restid', 'Timpris', 'Belopp'].includes(c) ? { halign: 'right' as const } : {}) }]));
     autoTable(doc, { ...tableBase, startY: y, head: [head], body: body.length ? body : [[{ content: 'Ingen arbetstid registrerad', colSpan: head.length, styles: { textColor: MUTED } }]], foot: [foot], columnStyles: colStyles(head), showFoot: 'lastPage' });
     y = lastY() + 3;
@@ -300,7 +300,7 @@ export async function buildFieldReportPdf(input: FieldReportData | FieldReportDa
       section(sec++, 'Restid');
       const th = ['Datum', 'Montör', 'Restid'];
       const tb = d.time.filter(t => Number(t.travel_hours)).map(t => [t.entry_date, nm(d, t.installer_id), `${num(Number(t.travel_hours))} h`]);
-      autoTable(doc, { ...tableBase, startY: y, head: [th], body: tb.length ? tb : [[{ content: 'Ingen restid registrerad', colSpan: th.length, styles: { textColor: MUTED } }]], foot: [['Summa restid', '', `${num(b.total.travelHours)} h`]], columnStyles: colStyles(th), showFoot: 'lastPage' });
+      autoTable(doc, { ...tableBase, startY: y, head: [th], body: tb.length ? tb : [[{ content: 'Ingen restid registrerad', colSpan: th.length, styles: { textColor: MUTED } }]], foot: [[{ content: 'Summa restid', colSpan: 2 }, `${num(b.total.travelHours)} h`]], columnStyles: colStyles(th), showFoot: 'lastPage' });
       y = lastY() + 8;
     }
 
