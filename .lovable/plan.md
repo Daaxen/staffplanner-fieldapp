@@ -1,19 +1,16 @@
-# Utlandstraktamente: känn igen landet från ordern
+# Utlandstraktamente: ta landet från Google-platsen
 
 ## Vad som är fel
-Ordern "637 Scandic Vaasa (FI) - Part 1" har landet **Sverige** sparat. Platsen är bara "Scandic Vaasa", utan adress eller land, så appen vet inte att jobbet är i Finland. Felix får därför inrikes traktamente. Appen läser aldrig landet ur platsen, bara ur fältet Land på ordern.
+Ordern "637 Scandic Vaasa (FI) - Part 1" har landet **Sverige** sparat. När platsen väljs från Googles förslag hämtar appen bara adressen och kartpunkten, inte landet. Landet ligger alltså kvar på Sverige, och Felix får inrikes traktamente.
 
 ## Åtgärder
-1. **Rätta Scandic Vaasa nu:** sätt Land = Finland på ordern. Felix får då utlandstraktamente för Finland direkt.
-2. **Gissa landet automatiskt:** när en order sparas med Land = Sverige men platsen eller namnet tydligt pekar utomlands, föreslår appen rätt land:
-   - landskod i namnet, t.ex. "(FI)", "(NO)", "(DK)"
-   - landsnamn i platsen eller adressen (Finland, Norge, Suomi, Norway …)
-   - adressen från kartsökningen när en sådan finns
-   Förslaget visas vid fältet Land ("Ser ut som Finland – byt?") så att admin bekräftar. Inget ändras i tysthet.
-3. **Hitta fler felaktiga ordrar:** en gång går appen igenom ordrar som har Sverige men "(XX)" i namnet och listar dem, så att de kan rättas (de rättas bara om du säger ja).
-4. **Montörens vy:** montören kan redan byta land i traktamentet. Vi lägger till en tydlig rad "Ordern är i Sverige – fel land? Byt här", så att det syns direkt.
+1. **Ta landet från Google:** när man väljer en plats i förslagslistan (ny order, redigera order, kund) hämtar appen även Googles landskod, t.ex. FI, och sätter fältet Land till rätt land, t.ex. Finland. Admin ser det direkt och kan ändra.
+2. **Rätta Scandic Vaasa nu:** sätt Land = Finland på ordern. Felix får då utlandstraktamente för Finland.
+3. **Gamla ordrar:** ordrar som har Sverige men en kartpunkt utanför Sverige, eller "(FI)/(NO)/(DK)…" i namnet, listas så att du kan godkänna rättningen. Inget ändras utan ditt ja.
+4. **Montörens vy:** traktamentet visar "Ordern är i Sverige – fel land? Byt här", så montören ser landet tydligt.
 
 ## Tekniskt
-- Ny `guessCountry(name, location, street)` i src/lib/perDiem.ts: ISO-kod till svenskt landsnamn plus synonymer, matchat mot `per_diem_rates`-länderna. Tester för "(FI)", "Vaasa, Finland", "Oslo" utan land (ingen gissning) och svensk adress.
-- Används i EditWorkOrderDialog vid fältet Land som förslagsknapp.
-- Datafix för Scandic Vaasa görs via datafråga, inte migration.
+- Funktionen `maps-places` (details) lägger till `addressComponents` i fältmasken och returnerar `countryCode` (komponenten med typen `country`, shortText).
+- `PlaceSelection` får `countryCode`. Ny `countryFromCode(iso)` i src/lib/perDiem.ts mappar ISO-kod till svenskt landsnamn som matchar `per_diem_rates`, med tester för FI→Finland, SE→Sverige, NO→Norge och okänd kod (ingen ändring).
+- CreateOrderDialog och EditWorkOrderDialog sätter `country` i onSelect.
+- Rättningen av data görs med en datafråga, inte en migration.
