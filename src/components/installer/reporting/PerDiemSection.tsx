@@ -78,7 +78,7 @@ const PerDiemSection = ({ projectId, country: orderCountry, date, locked }: Prop
       <div className={cn('rounded-md p-2 text-sm', foreign ? 'bg-status-scheduled/10 text-status-scheduled' : 'bg-muted text-foreground')}>
         <p className="font-bold">{foreign ? `Utlandstraktamente: ${country}` : 'Inrikes traktamente'}</p>
         <p className="text-xs">{rate ? `${kr(rate.full_day)} per heldag · Skatteverket ${rate.year}` : 'Belopp saknas för landet'}</p>
-        {!foreign && !locked && <p className="text-xs mt-1">Jobbar du utomlands? Välj land längre ned.</p>}
+        {!foreign && !locked && <p className="text-xs mt-1">Jobbar du utomlands? Be admin ändra land på ordern.</p>}
       </div>
 
       {locked ? (
