@@ -185,9 +185,9 @@ export default function WorkOrderReports({ projects }: { projects: Project[] }) 
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className={tab === 'preview' ? 'max-w-5xl' : 'max-w-lg'}>
+        <DialogContent className={`w-[calc(100vw-1rem)] min-w-0 ${tab === 'preview' ? 'max-w-5xl' : 'max-w-lg'}`}>
           <DialogHeader><DialogTitle>Skapa rapport – {chosen.length} arbetsordrar</DialogTitle></DialogHeader>
-          <Tabs value={tab} onValueChange={v => setTab(v as typeof tab)}>
+          <Tabs className="min-w-0" value={tab} onValueChange={v => setTab(v as typeof tab)}>
             <TabsList>
               <TabsTrigger value="settings">Inställningar</TabsTrigger>
               <TabsTrigger value="preview"><Eye className="w-4 h-4 mr-1" />Förhandsgranska</TabsTrigger>
@@ -219,7 +219,7 @@ export default function WorkOrderReports({ projects }: { projects: Project[] }) 
                 </RadioGroup>
               </div>
             </TabsContent>
-            <TabsContent value="preview" className="pt-2">
+            <TabsContent value="preview" className="pt-2 min-w-0">
               {format === 'pdf' ? (
                 previewBusy || !pdfUrl
                   ? <div className="h-[65vh] grid place-items-center text-sm text-muted-foreground">Skapar förhandsgranskning…</div>
