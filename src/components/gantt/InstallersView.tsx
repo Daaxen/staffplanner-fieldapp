@@ -162,7 +162,7 @@ const InstallersView = ({
 
   const getOccupancy = (inst: Installer, instProjects: Project[]) => {
     const dayStrs = days.map(d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
-    return occupancyPct(dayStrs, instProjects.map(p => getBarDates(p, inst.id)), inst.absences);
+    return occupancyPct(dayStrs, instProjects.map(p => ({ ...getBarDates(p, inst.id), worksWeekends: p.worksWeekends })), inst.absences);
   };
 
   const totalHeight = groups.reduce((sum, _, i) => sum + getRowHeight(groupLayouts[i]?.laneCount ?? 1), 0);
@@ -346,7 +346,7 @@ const InstallersView = ({
                         <div className="shrink-0 w-14 text-right">
                           <span className={cn(
                             "text-sm font-bold",
-                            occupancy > 100 ? "text-status-cancelled" : occupancy >= 80 ? "text-status-completed" : "text-status-on-hold"
+                            occupancy > 100 ? "text-destructive" : occupancy >= 80 ? "text-status-completed" : "text-status-on-hold"
                           )}>{occupancy}%</span>
                         </div>
                       </>
