@@ -7,6 +7,7 @@ import { Package } from 'lucide-react';
 import DraggableBar from './DraggableBar';
 import DateChangeDialog from './DateChangeDialog';
 import { dayCount, dayOffset } from '@/lib/ganttDates';
+import { occupancyPct } from '@/lib/occupancy';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -160,15 +161,8 @@ const InstallersView = ({
   };
 
   const getOccupancy = (inst: Installer, instProjects: Project[]) => {
-    let busySlots = 0;
-    const totalDays = days.length;
-    days.forEach(day => {
-      const dayStr = day.toISOString().split('T')[0];
-      const projCount = instProjects.filter(p => dayStr >= p.startDate && dayStr <= p.endDate).length;
-      const hasAbsenceOnDay = inst.absences.some(a => dayStr >= a.startDate && dayStr <= a.endDate);
-      busySlots += projCount + (hasAbsenceOnDay ? 1 : 0);
-    });
-    return Math.round((busySlots / totalDays) * 100);
+    const dayStrs = days.map(d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+    return occupancyPct(dayStrs, instProjects.map(p => getBarDates(p, inst.id)), inst.absences);
   };
 
   const totalHeight = groups.reduce((sum, _, i) => sum + getRowHeight(groupLayouts[i]?.laneCount ?? 1), 0);
@@ -352,7 +346,7 @@ const InstallersView = ({
                         <div className="shrink-0 w-14 text-right">
                           <span className={cn(
                             "text-sm font-bold",
-                            occupancy > 80 ? "text-status-cancelled" : occupancy > 50 ? "text-status-on-hold" : "text-status-completed"
+                            occupancy > 100 ? "text-status-cancelled" : occupancy >= 80 ? "text-status-completed" : "text-status-on-hold"
                           )}>{occupancy}%</span>
                         </div>
                       </>
