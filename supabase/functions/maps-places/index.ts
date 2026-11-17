@@ -64,7 +64,6 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           input: input.trim(),
           ...(typeof sessionToken === 'string' ? { sessionToken } : {}),
-          includedRegionCodes: ['se'],
         }),
       });
       return relay(res);
@@ -77,9 +76,12 @@ Deno.serve(async (req) => {
       const qs = typeof sessionToken === 'string' ? `?sessionToken=${encodeURIComponent(sessionToken)}` : '';
       const res = await fetch(`${GATEWAY_URL}/places/v1/places/${placeId}${qs}`, {
         method: 'GET',
-        headers: gatewayHeaders('id,formattedAddress,displayName,location'),
+        headers: gatewayHeaders('id,formattedAddress,displayName,location,addressComponents'),
       });
-      return relay(res);
+      if (!res.ok) return relay(res);
+      const place = await res.json();
+      const countryComp = (place.addressComponents ?? []).find((c: { types?: string[] }) => c.types?.includes('country'));
+      return json({ ...place, countryCode: countryComp?.shortText ?? null });
     }
 
     return json({ error: 'Unknown action' }, 400);

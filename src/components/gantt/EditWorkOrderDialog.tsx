@@ -1,3 +1,5 @@
+import AddressAutocomplete from '@/components/maps/AddressAutocomplete';
+import { countryFromCode } from '@/lib/perDiem';
 import { usePerDiemCountries } from '@/hooks/usePerDiem';
 import { SearchSelect } from '@/components/ui/search-select';
 import { useEffect, useMemo, useState } from 'react';
@@ -205,7 +207,8 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label htmlFor="wo-loc">Location</Label>
-              <Input id="wo-loc" value={form.location} onChange={e => set('location', e.target.value)} />
+              <AddressAutocomplete id="wo-loc" value={form.location} onChange={v => set('location', v)}
+                onSelect={p => { const c = countryFromCode(p.countryCode); if (c) { setCountry(c); toast.info(`Land satt till ${c}`); } }} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="wo-start">Start date</Label>

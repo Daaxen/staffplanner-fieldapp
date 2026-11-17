@@ -22,6 +22,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useClients } from '@/lib/clientStore';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import AddressAutocomplete from '@/components/maps/AddressAutocomplete';
+import { countryFromCode } from '@/lib/perDiem';
 import MiniMap from '@/components/maps/MiniMap';
 import ConflictPanel from '@/components/scheduling/ConflictPanel';
 import { detectConflicts, installerConflicts, hasBlocking, type AssignmentDraft } from '@/lib/schedulingConflicts';
@@ -73,6 +74,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [location, setLocation] = useState('');
   const [locationCoords, setLocationCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [country, setCountry] = useState<string | null>(null);
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [startTime, setStartTime] = useState('08:00');
@@ -112,6 +114,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
     setClient('');
     setClientRef('');
     setLocation('');
+    setCountry(null);
     setDescription('');
     setStartDate(undefined);
     setStartTime('08:00');
@@ -332,6 +335,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
       ...(projectType !== 'transport' && locationCoords
         ? { locationLat: locationCoords.lat, locationLng: locationCoords.lng }
         : {}),
+      ...(projectType !== 'transport' && country ? { country } : {}),
       status,
       assigneeIds: selectedInstallers,
       startDate: format(startDate, 'yyyy-MM-dd'),
@@ -597,7 +601,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
                   id="order-location"
                   value={location}
                   onChange={(v) => { setLocation(v); setLocationCoords(null); }}
-                  onSelect={(p) => setLocationCoords(p.lat != null && p.lng != null ? { lat: p.lat, lng: p.lng } : null)}
+                  onSelect={(p) => { setLocationCoords(p.lat != null && p.lng != null ? { lat: p.lat, lng: p.lng } : null); setCountry(countryFromCode(p.countryCode)); }}
                 />
               </div>
             )}

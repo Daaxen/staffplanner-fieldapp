@@ -30,3 +30,19 @@ export function dayTypeFromTimes(kind: 'departure' | 'return' | 'between', time?
   const mins = h * 60 + (m || 0);
   return kind === 'departure' ? (mins < 12 * 60 ? 'full' : 'half') : (mins > 19 * 60 ? 'full' : 'half');
 }
+
+/** Names Skatteverket (per_diem_rates) spells differently from Intl's Swedish names. */
+const COUNTRY_OVERRIDES: Record<string, string> = { GB: 'Storbritannien och Nordirland' };
+
+/** Map a Google/ISO two-letter country code (e.g. "FI") to the Swedish country name used in per_diem_rates. */
+export function countryFromCode(code?: string | null): string | null {
+  const iso = (code ?? '').trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(iso)) return null;
+  if (COUNTRY_OVERRIDES[iso]) return COUNTRY_OVERRIDES[iso];
+  try {
+    const name = new Intl.DisplayNames(['sv'], { type: 'region' }).of(iso);
+    return name && name !== iso ? name : null;
+  } catch {
+    return null;
+  }
+}

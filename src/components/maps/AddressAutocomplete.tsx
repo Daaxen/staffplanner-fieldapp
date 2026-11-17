@@ -9,6 +9,8 @@ export interface PlaceSelection {
   lat?: number;
   lng?: number;
   placeId?: string;
+  /** ISO two-letter country code from Google, e.g. "FI". */
+  countryCode?: string;
 }
 
 interface AddressAutocompleteProps {
@@ -125,6 +127,7 @@ const AddressAutocomplete = ({
         lat: data?.location?.latitude,
         lng: data?.location?.longitude,
         placeId: s.placeId,
+        countryCode: data?.countryCode ?? undefined,
       });
     } catch (err) {
       console.error('Address details failed', err);
