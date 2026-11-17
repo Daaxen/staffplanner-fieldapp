@@ -280,20 +280,29 @@ export async function buildFieldReportPdf(input: FieldReportData | FieldReportDa
 
     let sec = 1;
     // 1. Time
-    section(sec++, x.has('travel') ? 'Arbetstid' : 'Tid & resor');
-    const head = ['Datum', 'Montör', ...(x.has('comments') ? [] : ['Beskrivning']), 'Arbete', ...(x.has('travel') ? [] : ['Restid']), ...(x.has('prices') ? [] : ['Timpris', 'Belopp'])];
-    const body = d.time.map(t => {
+    section(sec++, 'Arbetstid');
+    const head = ['Datum', 'Montör', ...(x.has('comments') ? [] : ['Beskrivning']), 'Arbetstid', ...(x.has('prices') ? [] : ['Timpris', 'Belopp'])];
+    const workRows = d.time.filter(t => Number(t.hours));
+    const body = workRows.map(t => {
       const rate = t.hourly_rate ?? o.hourly_rate ?? d.client?.hourly_rate ?? null;
-      return [t.entry_date, nm(d, t.installer_id), ...(x.has('comments') ? [] : [t.description || t.note || '']), `${num(Number(t.hours))} h`, ...(x.has('travel') ? [] : [`${num(Number(t.travel_hours ?? 0))} h`]),
+      return [t.entry_date, nm(d, t.installer_id), ...(x.has('comments') ? [] : [t.description || t.note || '']), `${num(Number(t.hours))} h`,
         ...(x.has('prices') ? [] : [rate == null ? '–' : kr(Number(rate)), rate == null ? '–' : kr(r2(Number(t.hours) * Number(rate)))])];
     });
-    const foot = ['Summa', '', ...(x.has('comments') ? [] : ['']), `${num(b.total.workHours)} h`, ...(x.has('travel') ? [] : [`${num(b.total.travelHours)} h`]), ...(x.has('prices') ? [] : ['', kr(b.total.workAmount)])];
-    const widths: Record<string, number> = { Datum: 21, Montör: 30, Arbete: 15, Restid: 15, Timpris: 19, Belopp: 23 };
-    const right = Object.fromEntries(head.map((h, i) => [i, { ...(widths[h] ? { cellWidth: widths[h] } : {}), ...(['Arbete', 'Restid', 'Timpris', 'Belopp'].includes(h) ? { halign: 'right' as const } : {}) }]));
-    autoTable(doc, { ...tableBase, startY: y, head: [head], body: body.length ? body : [[{ content: 'Ingen tid registrerad', colSpan: head.length, styles: { textColor: MUTED } }]], foot: [foot], columnStyles: right, showFoot: 'lastPage' });
+    const foot = ['Summa arbetstid', '', ...(x.has('comments') ? [] : ['']), `${num(b.total.workHours)} h`, ...(x.has('prices') ? [] : ['', kr(b.total.workAmount)])];
+    const widths: Record<string, number> = { Datum: 21, Montör: 30, Arbetstid: 18, Restid: 18, Timpris: 19, Belopp: 23 };
+    const colStyles = (h: string[]) => Object.fromEntries(h.map((c, i) => [i, { ...(widths[c] ? { cellWidth: widths[c] } : {}), ...(['Arbetstid', 'Restid', 'Timpris', 'Belopp'].includes(c) ? { halign: 'right' as const } : {}) }]));
+    autoTable(doc, { ...tableBase, startY: y, head: [head], body: body.length ? body : [[{ content: 'Ingen arbetstid registrerad', colSpan: head.length, styles: { textColor: MUTED } }]], foot: [foot], columnStyles: colStyles(head), showFoot: 'lastPage' });
     y = lastY() + 3;
     if (!x.has('prices') && b.total.unpricedRows) { font(8, false, RED); doc.text(`${b.total.unpricedRows} tidsrader saknar timpris och är inte prissatta.`, M, y + 2); y += 5; }
     y += 5;
+
+    if (!x.has('travel')) {
+      section(sec++, 'Restid');
+      const th = ['Datum', 'Montör', 'Restid'];
+      const tb = d.time.filter(t => Number(t.travel_hours)).map(t => [t.entry_date, nm(d, t.installer_id), `${num(Number(t.travel_hours))} h`]);
+      autoTable(doc, { ...tableBase, startY: y, head: [th], body: tb.length ? tb : [[{ content: 'Ingen restid registrerad', colSpan: th.length, styles: { textColor: MUTED } }]], foot: [['Summa restid', '', `${num(b.total.travelHours)} h`]], columnStyles: colStyles(th), showFoot: 'lastPage' });
+      y = lastY() + 8;
+    }
 
     // 2. Mileage, expenses, per diem
     const costs: { date: string; who: string; type: string; desc: string; qty: string; unit: string; amt: number }[] = [];
@@ -356,7 +365,7 @@ export async function buildFieldReportPdf(input: FieldReportData | FieldReportDa
     section(1, 'Sammanställning');
     y += 1;
     kpis(kpiItems({ workHours: tot.hours, travelHours: tot.travelHours, km: tot.km, expenseAmount: tot.expenses }, tot.perDiem, tot.grand));
-    const sh = ['Order', 'Kund', 'Period', 'Arbete', ...(x.has('travel') ? [] : ['Restid']), ...(x.has('prices') ? [] : ['Totalt'])];
+    const sh = ['Order', 'Kund', 'Period', 'Arbetstid', ...(x.has('travel') ? [] : ['Restid']), ...(x.has('prices') ? [] : ['Totalt'])];
     autoTable(doc, {
       ...tableBase, startY: y, head: [sh],
       body: tot.rows.map(r => [label(r.d), r.d.clientName ?? '', `${r.d.startDate ?? ''} – ${r.d.endDate ?? ''}`, `${num(r.t.workHours)} h`, ...(x.has('travel') ? [] : [`${num(r.t.travelHours)} h`]), ...(x.has('prices') ? [] : [kr(r.total)])]),
