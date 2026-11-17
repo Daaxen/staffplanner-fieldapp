@@ -6,5 +6,7 @@
 - [x] Inrikes + utlandstraktamente per land (Skatteverket 2026), måltider "vem betalade", nattraktamente, låsning
 - [x] Land på work order; visning i Field report
 - [ ] Traktamente på sub-vendor-länken
-- [ ] Traktamente i PDF/Excel-export och Tidsöversikt
+- [x] Traktamente i PDF/Excel-export
+- [ ] Traktamente i Tidsöversikt
 - [ ] Admin-sida för att uppdatera belopp nästa år
+- [x] Work order reports v2: Markera alla, FETCH-PDF-mall, platt Excel, förhandsgranskning, traktamente-val

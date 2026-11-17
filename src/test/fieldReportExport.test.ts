@@ -23,3 +23,23 @@ describe('combined report totals', () => {
     expect(DEFAULT_EXCLUDES.internal).toEqual([]);
   });
 });
+
+import { flatReportRows } from '@/lib/fieldReportExport';
+describe('per diem and flat export', () => {
+  const d = (): FieldReportData => ({
+    orderId: 'o', orderName: 'Scandic Vaasa', orderNumber: '1034', clientName: 'Scandic', reports: [], dev: [],
+    time: [{ installer_id: 'i', entry_date: '2026-11-10', hours: 8, travel_hours: 4, hourly_rate: 650 }],
+    mil: [{ installer_id: 'i', entry_date: '2026-11-10', km: 100, amount: 250 }],
+    exp: [{ installer_id: 'i', entry_date: '2026-11-11', category: 'material', amount: 1450 }],
+    perDiem: [{ installer_id: 'i', entry_date: '2026-11-10', country: 'Finland', day_type: 'full', amount: 780 }],
+    names: { i: 'Felix' }, order: null, client: null, photos: {},
+  });
+  it('adds per diem to the total unless excluded', () => {
+    expect(combinedTotals([d()]).grand).toBe(5200 + 250 + 1450 + 780);
+    expect(combinedTotals([d()], ['perdiem']).grand).toBe(5200 + 250 + 1450);
+  });
+  it('gives one row per transaction with a cost type', () => {
+    expect(flatReportRows([d()]).map(r => r.Kostnadsslag)).toEqual(['Arbete', 'Restid', 'Körning', 'Traktamente', 'Utlägg']);
+    expect(flatReportRows([d()], ['perdiem', 'travel']).map(r => r.Kostnadsslag)).toEqual(['Arbete', 'Utlägg']);
+  });
+});
