@@ -138,7 +138,7 @@ export function sumWorkTravel<T extends Pick<TimeRow, 'hours' | 'travel_hours'>>
 
 export const EXPORT_COLUMNS = [
   'Datum', 'Medarbetare', 'Kundnummer', 'Kundnamn', 'Projektnummer', 'Projektnamn',
-  'Ordernummer', 'Aktivitetstyp', 'Arbetstid', 'Restid', 'Antal timmar', 'Orderstatus', 'Timpris', 'Debiterbart (kr)', 'Beskrivning', 'Skapad', 'Senast ändrad',
+  'Ordernummer', 'Aktivitetstyp', 'Arbetstid', 'Restid', 'Antal timmar', 'Utlägg (kr)', 'Mil (km)', 'Mil (kr)', 'Traktamente (kr)', 'Orderstatus', 'Timpris', 'Debiterbart (kr)', 'Beskrivning', 'Skapad', 'Senast ändrad',
 ] as const;
 
 export type ExportLine = Record<(typeof EXPORT_COLUMNS)[number], string | number>;
@@ -223,4 +223,41 @@ export function periodLabel(kind: PeriodKind, anchor: Date): string {
   const th = new Date(f); th.setDate(f.getDate() + 3); const jan4 = new Date(th.getFullYear(), 0, 4);
   const wk = 1 + Math.round(((th.getTime() - jan4.getTime()) / 864e5 - 3 + ((jan4.getDay() + 6) % 7)) / 7);
   return `v.${wk} (${span})`;
+}
+
+// ---- Costs on time rows (utlägg / mil / traktamente) ----
+export type CostEntry = { installer_id: string; project_id: string; entry_date: string; amount: number | string; km?: number | string };
+export type CostFields = { expense: number; km: number; mileage: number; perDiem: number; costOnly?: boolean };
+export type CostedRow = TimeRow & CostFields;
+
+/**
+ * Puts expenses, mileage and per diem on the time row with the same installer, order and date
+ * (first such row). Costs with no matching time row become their own row with zero hours.
+ */
+export function mergeCosts(
+  rows: TimeRow[],
+  costs: { expenses: CostEntry[]; mileage: CostEntry[]; perDiem: CostEntry[] },
+  orders: { id: string; client_id: string | null; project_group_id: string | null }[],
+): CostedRow[] {
+  const out: CostedRow[] = rows.map(r => ({ ...r, expense: 0, km: 0, mileage: 0, perDiem: 0 }));
+  const idx = new Map<string, CostedRow>();
+  out.forEach(r => { const k = `${r.installer_id}|${r.project_id}|${r.entry_date}`; if (!idx.has(k)) idx.set(k, r); });
+  const target = (c: CostEntry) => {
+    const k = `${c.installer_id}|${c.project_id}|${c.entry_date}`;
+    let r = idx.get(k);
+    if (!r) {
+      const o = orders.find(x => x.id === c.project_id);
+      r = {
+        id: `cost-${k}`, installer_id: c.installer_id, entry_date: c.entry_date, client_id: o?.client_id ?? null,
+        project_group_id: o?.project_group_id ?? null, project_id: c.project_id, activity_type_id: null, hours: 0, travel_hours: 0,
+        description: null, note: null, created_at: '', updated_at: '', expense: 0, km: 0, mileage: 0, perDiem: 0, costOnly: true,
+      };
+      idx.set(k, r); out.push(r);
+    }
+    return r;
+  };
+  costs.expenses.forEach(c => { target(c).expense += Number(c.amount || 0); });
+  costs.mileage.forEach(c => { const r = target(c); r.km += Number(c.km || 0); r.mileage += Number(c.amount || 0); });
+  costs.perDiem.forEach(c => { target(c).perDiem += Number(c.amount || 0); });
+  return out.sort((a, b) => a.entry_date.localeCompare(b.entry_date));
 }

@@ -9,11 +9,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SearchSelect } from '@/components/ui/search-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useTimeReportingRefs, useTimeRows } from '@/hooks/useTimeReporting';
+import { useCostRows, useTimeReportingRefs, useTimeRows } from '@/hooks/useTimeReporting';
 import { useResourceData } from '@/hooks/useResourceData';
 import ReportingRateCard from './ReportingRateCard';
 import {
-  INTERNAL_CUSTOMER_NUMBER, reportingRate, periodRange, shiftPeriod, periodLabel, type PeriodKind, billableAmount, billableRate, buildWorkbook, clientLabel, exportFileName, isoDate, rowHours, sumWorkTravel, type ExportLine, type TimeRow,
+  INTERNAL_CUSTOMER_NUMBER, reportingRate, periodRange, shiftPeriod, periodLabel, type PeriodKind, billableAmount, billableRate, buildWorkbook, clientLabel, exportFileName, isoDate, rowHours, sumWorkTravel, mergeCosts, type CostedRow, type ExportLine, type TimeRow,
 } from '@/lib/timeReporting';
 
 const ALL = '__all';
@@ -30,6 +30,7 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
   const applyPeriod = (kind: PeriodKind, anchor: Date) => { const r = periodRange(kind, anchor); setFrom(r.from); setTo(r.to); setPeriod({ kind, anchor }); };
   const [f, setF] = useState({ employee: ALL, client: ALL, group: ALL, order: ALL, activity: ALL });
   const { rows, loading } = useTimeRows({ from, to });
+  const costs = useCostRows({ from, to });
   // Admin-only rates/status (installers never load this screen).
   const [orderRates, setOrderRates] = useState<Rated[]>([]);
   const [clientRates, setClientRates] = useState<Rated[]>([]);
@@ -45,14 +46,15 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
   }, []);
   const ordR = (r: TimeRow) => orderRates.find(x => x.id === r.project_id);
   const cliR = (r: TimeRow) => clientRates.find(x => x.id === r.client_id);
-  const amountOf = (r: TimeRow) => billableAmount(r, ordR(r), cliR(r));
+  const amountOf = (r: CostedRow) => (r.costOnly ? null : billableAmount(r, ordR(r), cliR(r)));
   const statusOf = (r: TimeRow) => { const s = ordR(r)?.status; return s ? svStatusLabels[s] ?? s : ''; };
 
   const by = <T extends { id: string }>(l: T[], id?: string | null) => l.find(x => x.id === id);
-  const filtered = useMemo(() => rows.filter(r =>
+  const merged = useMemo(() => mergeCosts(rows, costs, refs.orders), [rows, costs, refs.orders]);
+  const filtered = useMemo(() => merged.filter(r =>
     (f.employee === ALL || r.installer_id === f.employee) && (f.client === ALL || r.client_id === f.client) &&
     (f.group === ALL || r.project_group_id === f.group) && (f.order === ALL || r.project_id === f.order) &&
-    (f.activity === ALL || r.activity_type_id === f.activity)), [rows, f]);
+    (f.activity === ALL || r.activity_type_id === f.activity)), [merged, f]);
 
   const { absences } = useResourceData();
   const rateRows = useMemo(() => reportingRate(rows, refs.employees.filter(e => f.employee === ALL || e.id === f.employee), absences, { from, to }), [rows, refs.employees, absences, from, to, f.employee]);
@@ -60,17 +62,22 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
   const travel = filtered.reduce((t, r) => t + Number(r.travel_hours ?? 0), 0);
   const total = work + travel;
   const billable = filtered.reduce((t, r) => t + (amountOf(r) ?? 0), 0);
-  const unpriced = filtered.filter(r => amountOf(r) == null).length;
+  const unpriced = filtered.filter(r => !r.costOnly && amountOf(r) == null).length;
+  const expenseSum = filtered.reduce((t, r) => t + r.expense, 0);
+  const kmSum = filtered.reduce((t, r) => t + r.km, 0);
+  const mileageSum = filtered.reduce((t, r) => t + r.mileage, 0);
+  const perDiemSum = filtered.reduce((t, r) => t + r.perDiem, 0);
   const internalId = refs.clients.find(c => c.customer_number === INTERNAL_CUSTOMER_NUMBER)?.id;
   const internalTotal = filtered.filter(r => r.client_id === internalId).reduce((s, r) => s + rowHours(r), 0);
+  const timeOnly = filtered.filter(r => !r.costOnly);
   const summaries = [
-    { title: 'Per kund', data: sumWorkTravel(filtered, r => clientLabel(by(refs.clients, r.client_id)) || '–') },
-    { title: 'Per projekt', data: sumWorkTravel(filtered, r => by(refs.groups, r.project_group_id)?.name ?? 'Inget projekt') },
-    { title: 'Per medarbetare', data: sumWorkTravel(filtered, r => by(refs.employees, r.installer_id)?.name ?? '–') },
-    { title: 'Per aktivitet', data: sumWorkTravel(filtered, r => by(refs.activities, r.activity_type_id)?.name ?? '–') },
+    { title: 'Per kund', data: sumWorkTravel(timeOnly, r => clientLabel(by(refs.clients, r.client_id)) || '–') },
+    { title: 'Per projekt', data: sumWorkTravel(timeOnly, r => by(refs.groups, r.project_group_id)?.name ?? 'Inget projekt') },
+    { title: 'Per medarbetare', data: sumWorkTravel(timeOnly, r => by(refs.employees, r.installer_id)?.name ?? '–') },
+    { title: 'Per aktivitet', data: sumWorkTravel(timeOnly, r => by(refs.activities, r.activity_type_id)?.name ?? '–') },
   ];
 
-  type Col = { label: string; value: (r: TimeRow) => string | number; num?: boolean };
+  type Col = { label: string; value: (r: CostedRow) => string | number; num?: boolean };
   const cols: Col[] = [
     { label: 'Datum', value: r => r.entry_date },
     { label: 'Medarbetare', value: r => by(refs.employees, r.installer_id)?.name ?? '' },
@@ -82,6 +89,10 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
     { label: 'Arbetstid', value: r => Number(r.hours), num: true },
     { label: 'Restid', value: r => Number(r.travel_hours ?? 0), num: true },
     { label: 'Totalt', value: r => rowHours(r), num: true },
+    { label: 'Utlägg (kr)', value: r => r.expense, num: true },
+    { label: 'Mil (km)', value: r => r.km, num: true },
+    { label: 'Mil (kr)', value: r => r.mileage, num: true },
+    { label: 'Traktamente (kr)', value: r => r.perDiem, num: true },
     { label: 'Orderstatus', value: r => statusOf(r) },
     { label: 'Debiterbart (kr)', value: r => amountOf(r) ?? -1, num: true },
     { label: 'Beskrivning', value: r => r.description ?? r.note ?? '' },
@@ -105,10 +116,10 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
       return {
         Datum: r.entry_date, Medarbetare: by(refs.employees, r.installer_id)?.name ?? '', Kundnummer: c?.customer_number ?? '',
         Kundnamn: c?.name ?? '', Projektnummer: g?.project_number ?? '', Projektnamn: g?.name ?? '', Ordernummer: o?.project_number ?? '',
-        Aktivitetstyp: by(refs.activities, r.activity_type_id)?.name ?? '', Arbetstid: Math.round(Number(r.hours) * 100) / 100, Restid: Math.round(Number(r.travel_hours ?? 0) * 100) / 100, 'Antal timmar': Math.round(rowHours(r) * 100) / 100,
+        Aktivitetstyp: by(refs.activities, r.activity_type_id)?.name ?? '', Arbetstid: Math.round(Number(r.hours) * 100) / 100, Restid: Math.round(Number(r.travel_hours ?? 0) * 100) / 100, 'Antal timmar': Math.round(rowHours(r) * 100) / 100, 'Utlägg (kr)': r.expense || '', 'Mil (km)': r.km || '', 'Mil (kr)': r.mileage || '', 'Traktamente (kr)': r.perDiem || '',
         Orderstatus: statusOf(r), Timpris: billableRate(r, ordR(r), cliR(r)) ?? '', 'Debiterbart (kr)': amountOf(r) ?? '',
-        Beskrivning: r.description ?? r.note ?? '', Skapad: new Date(r.created_at).toLocaleString('sv-SE'),
-        'Senast ändrad': new Date(r.updated_at).toLocaleString('sv-SE'),
+        Beskrivning: r.description ?? r.note ?? '', Skapad: r.created_at ? new Date(r.created_at).toLocaleString('sv-SE') : '',
+        'Senast ändrad': r.updated_at ? new Date(r.updated_at).toLocaleString('sv-SE') : '',
       };
     });
     XLSX.writeFile(buildWorkbook(lines), exportFileName(from, to));
@@ -158,7 +169,12 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
         <div className="rounded-md border border-border p-3"><div className="text-xs text-muted-foreground">Total rapporterad tid</div><div className="text-2xl font-semibold">{fmt(total)} h</div><div className="text-xs text-muted-foreground mt-1">Arbetstid {fmt(work)} h · Restid {fmt(travel)} h</div></div>
         <div className="rounded-md border border-border p-3"><div className="text-xs text-muted-foreground">Mot kund 9999</div><div className="text-2xl font-semibold">{fmt(internalTotal)} h</div></div>
         <div className="rounded-md border border-border p-3"><div className="text-xs text-muted-foreground">Debiterbart (arbetstid)</div><div className="text-2xl font-semibold">{kr(billable)} kr</div>{unpriced > 0 && <div className="text-xs text-destructive mt-1">{unpriced} rader saknar timpris</div>}</div>
-        <div className="rounded-md border border-border p-3"><div className="text-xs text-muted-foreground">Tidsrader</div><div className="text-2xl font-semibold">{filtered.length}</div></div>
+        <div className="rounded-md border border-border p-3"><div className="text-xs text-muted-foreground">Tidsrader</div><div className="text-2xl font-semibold">{timeOnly.length}</div></div>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="rounded-md border border-border p-3"><div className="text-xs text-muted-foreground">Utlägg</div><div className="text-2xl font-semibold">{kr(expenseSum)} kr</div></div>
+        <div className="rounded-md border border-border p-3"><div className="text-xs text-muted-foreground">Mil</div><div className="text-2xl font-semibold">{fmt(kmSum)} km · {kr(mileageSum)} kr</div></div>
+        <div className="rounded-md border border-border p-3"><div className="text-xs text-muted-foreground">Traktamente</div><div className="text-2xl font-semibold">{kr(perDiemSum)} kr</div></div>
       </div>
       <div className="grid md:grid-cols-4 gap-3">
         {summaries.map(s => (
@@ -184,11 +200,11 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
               ))}
             </TableRow></TableHeader>
             <TableBody>
-              {loading ? <TableRow><TableCell colSpan={14}>Laddar…</TableCell></TableRow> : sorted.map(r => {
+              {loading ? <TableRow><TableCell colSpan={18}>Laddar…</TableCell></TableRow> : sorted.map(r => {
                 const c = by(refs.clients, r.client_id);
                 const amt = amountOf(r);
                 return (
-                  <TableRow key={r.id} className={amt == null ? 'bg-destructive/5' : undefined}>
+                  <TableRow key={r.id} className={amt == null && !r.costOnly ? 'bg-destructive/5' : r.costOnly ? 'bg-muted/40' : undefined}>
                     <TableCell>{r.entry_date}</TableCell>
                     <TableCell>{by(refs.employees, r.installer_id)?.name}</TableCell>
                     <TableCell>{c?.customer_number}</TableCell>
@@ -199,10 +215,14 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
                     <TableCell className="text-right">{fmt(Number(r.hours))}</TableCell>
                     <TableCell className="text-right">{fmt(Number(r.travel_hours ?? 0))}</TableCell>
                     <TableCell className="text-right font-medium">{fmt(rowHours(r))}</TableCell>
+                    <TableCell className="text-right tabular-nums">{r.expense ? kr(r.expense) : '–'}</TableCell>
+                    <TableCell className="text-right tabular-nums">{r.km ? fmt(r.km) : '–'}</TableCell>
+                    <TableCell className="text-right tabular-nums">{r.mileage ? kr(r.mileage) : '–'}</TableCell>
+                    <TableCell className="text-right tabular-nums">{r.perDiem ? kr(r.perDiem) : '–'}</TableCell>
                     <TableCell>{statusOf(r)}</TableCell>
-                    <TableCell className={amt == null ? 'text-right text-destructive' : 'text-right'} title={amt == null ? 'Saknar timpris' : undefined}>{amt == null ? '–' : kr(amt)}</TableCell>
+                    <TableCell className={amt == null && !r.costOnly ? 'text-right text-destructive' : 'text-right'} title={amt == null && !r.costOnly ? 'Saknar timpris' : undefined}>{amt == null ? '–' : kr(amt)}</TableCell>
                     <TableCell className="max-w-xs"><ExpandableText text={r.description ?? r.note} /></TableCell>
-                    <TableCell>{new Date(r.updated_at).toLocaleString('sv-SE')}</TableCell>
+                    <TableCell>{r.updated_at ? new Date(r.updated_at).toLocaleString('sv-SE') : ''}</TableCell>
                   </TableRow>
                 );
               })}

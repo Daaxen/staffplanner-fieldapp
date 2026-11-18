@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { withoutTestIds, withoutTestRows } from '@/lib/testData';
-import type { TRClient, TRGroup, TROrder, TimeRow } from '@/lib/timeReporting';
+import type { CostEntry, TRClient, TRGroup, TROrder, TimeRow } from '@/lib/timeReporting';
 
 export type ActivityType = { id: string; name: string };
 export type Employee = { id: string; name: string };
@@ -63,4 +63,27 @@ export function useTimeRows(filter: { from: string; to: string; installerId?: st
     return () => { clearTimeout(t); supabase.removeChannel(ch); };
   }, [filter.from, filter.to, filter.installerId]);
   return { rows, loading, reload };
+}
+
+type Costs = { expenses: CostEntry[]; mileage: CostEntry[]; perDiem: CostEntry[] };
+const COST_TABLES = [['expense_entries', 'installer_id,project_id,entry_date,amount'], ['mileage_entries', 'installer_id,project_id,entry_date,amount,km'], ['per_diem_entries', 'installer_id,project_id,entry_date,amount']] as const;
+
+/** Expenses, mileage and per diem in a date range (test rows removed); refreshes live. */
+export function useCostRows(filter: { from: string; to: string }) {
+  const [costs, setCosts] = useState<Costs>({ expenses: [], mileage: [], perDiem: [] });
+  const load = useCallback(async () => {
+    const res = await Promise.all(COST_TABLES.map(([t, cols]) =>
+      supabase.from(t).select(cols).gte('entry_date', filter.from).lte('entry_date', filter.to)));
+    const [e, m, p] = await Promise.all(res.map(r => withoutTestRows((r.data ?? []) as unknown as CostEntry[])));
+    setCosts({ expenses: e, mileage: m, perDiem: p });
+  }, [filter.from, filter.to]);
+  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    let t: ReturnType<typeof setTimeout> | undefined;
+    let ch = supabase.channel(`cost-rows-${Math.random().toString(36).slice(2)}`);
+    COST_TABLES.forEach(([table]) => { ch = ch.on('postgres_changes', { event: '*', schema: 'public', table }, () => { clearTimeout(t); t = setTimeout(load, 400); }); });
+    ch.subscribe();
+    return () => { clearTimeout(t); supabase.removeChannel(ch); };
+  }, [load]);
+  return costs;
 }
