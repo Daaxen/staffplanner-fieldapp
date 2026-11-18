@@ -226,8 +226,8 @@ export function periodLabel(kind: PeriodKind, anchor: Date): string {
 }
 
 // ---- Costs on time rows (utlägg / mil / traktamente) ----
-export type CostEntry = { installer_id: string; project_id: string; entry_date: string; amount: number | string; km?: number | string };
-export type CostFields = { expense: number; km: number; mileage: number; perDiem: number; costOnly?: boolean };
+export type CostEntry = { installer_id: string; project_id: string; entry_date: string; amount: number | string; km?: number | string; [k: string]: unknown };
+export type CostFields = { expense: number; km: number; mileage: number; perDiem: number; costOnly?: boolean; expenseItems?: CostEntry[]; mileageItems?: CostEntry[]; perDiemItems?: CostEntry[] };
 export type CostedRow = TimeRow & CostFields;
 
 /**
@@ -256,8 +256,8 @@ export function mergeCosts(
     }
     return r;
   };
-  costs.expenses.forEach(c => { target(c).expense += Number(c.amount || 0); });
-  costs.mileage.forEach(c => { const r = target(c); r.km += Number(c.km || 0); r.mileage += Number(c.amount || 0); });
-  costs.perDiem.forEach(c => { target(c).perDiem += Number(c.amount || 0); });
+  costs.expenses.forEach(c => { const r = target(c); r.expense += Number(c.amount || 0); (r.expenseItems ??= []).push(c); });
+  costs.mileage.forEach(c => { const r = target(c); r.km += Number(c.km || 0); r.mileage += Number(c.amount || 0); (r.mileageItems ??= []).push(c); });
+  costs.perDiem.forEach(c => { const r = target(c); r.perDiem += Number(c.amount || 0); (r.perDiemItems ??= []).push(c); });
   return out.sort((a, b) => a.entry_date.localeCompare(b.entry_date));
 }

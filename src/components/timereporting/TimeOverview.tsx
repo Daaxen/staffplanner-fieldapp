@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useCostRows, useTimeReportingRefs, useTimeRows } from '@/hooks/useTimeReporting';
 import { useResourceData } from '@/hooks/useResourceData';
 import ReportingRateCard from './ReportingRateCard';
+import CostBreakdownPopover from './CostBreakdownPopover';
 import {
   INTERNAL_CUSTOMER_NUMBER, reportingRate, periodRange, shiftPeriod, periodLabel, type PeriodKind, billableAmount, billableRate, buildWorkbook, clientLabel, exportFileName, isoDate, rowHours, sumWorkTravel, mergeCosts, type CostedRow, type ExportLine, type TimeRow,
 } from '@/lib/timeReporting';
@@ -222,10 +223,10 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
                     <TableCell>{by(refs.activities, r.activity_type_id)?.name}</TableCell>
                     <TableCell className="text-right">{fmt(Number(r.hours))}</TableCell>
                     <TableCell className="text-right">{fmt(Number(r.travel_hours ?? 0))}</TableCell>
-                    <TableCell className="text-right tabular-nums bg-travel-surface/50">{r.expense ? kr(r.expense) : '–'}</TableCell>
+                    <TableCell className="text-right tabular-nums bg-travel-surface/50">{r.expense ? <CostBreakdownPopover kind="expense" items={r.expenseItems ?? []} total={r.expense} label={kr(r.expense)} /> : '–'}</TableCell>
                     <TableCell className="text-right tabular-nums bg-travel-surface/50">{r.km ? fmt(r.km) : '–'}</TableCell>
-                    <TableCell className="text-right tabular-nums bg-travel-surface/50">{r.mileage ? kr(r.mileage) : '–'}</TableCell>
-                    <TableCell className="text-right tabular-nums bg-travel-surface/50">{r.perDiem ? kr(r.perDiem) : '–'}</TableCell>
+                    <TableCell className="text-right tabular-nums bg-travel-surface/50">{r.mileage ? <CostBreakdownPopover kind="mileage" items={r.mileageItems ?? []} total={r.mileage} label={kr(r.mileage)} /> : '–'}</TableCell>
+                    <TableCell className="text-right tabular-nums bg-travel-surface/50">{r.perDiem ? <CostBreakdownPopover kind="perDiem" items={r.perDiemItems ?? []} total={r.perDiem} label={kr(r.perDiem)} /> : '–'}</TableCell>
                     <TableCell className="text-right font-medium">{fmt(rowHours(r))}</TableCell>
                     <TableCell>{statusOf(r)}</TableCell>
                     <TableCell className={amt == null && !r.costOnly ? 'text-right text-destructive' : 'text-right'} title={amt == null && !r.costOnly ? 'Saknar timpris' : undefined}>{amt == null ? '–' : kr(amt)}</TableCell>

@@ -16,4 +16,11 @@ describe('mergeCosts', () => {
     const out = mergeCosts([row('t1', '2026-11-16'), row('t2', '2026-11-16')], { expenses: [{ installer_id: 'i1', project_id: 'o1', entry_date: '2026-11-16', amount: 100 }], mileage: [], perDiem: [] }, []);
     expect(out.reduce((s, r) => s + r.expense, 0)).toBe(100);
   });
+  it('keeps each entry so the breakdown adds up to the cell', () => {
+    const e = (amount: number, category: string) => ({ installer_id: 'i1', project_id: 'o1', entry_date: '2026-11-16', amount, category });
+    const out = mergeCosts([row('t1', '2026-11-16')], { expenses: [e(2150, 'accommodation'), e(893.45, 'materials'), e(400, 'parking')], mileage: [], perDiem: [] }, []);
+    expect(out[0].expenseItems?.map(i => i.category)).toEqual(['accommodation', 'materials', 'parking']);
+    expect(out[0].expenseItems!.reduce((s, i) => s + Number(i.amount), 0)).toBeCloseTo(out[0].expense);
+    expect(out[0].expense).toBeCloseTo(3443.45);
+  });
 });

@@ -66,7 +66,7 @@ export function useTimeRows(filter: { from: string; to: string; installerId?: st
 }
 
 type Costs = { expenses: CostEntry[]; mileage: CostEntry[]; perDiem: CostEntry[] };
-const COST_TABLES = [['expense_entries', 'installer_id,project_id,entry_date,amount'], ['mileage_entries', 'installer_id,project_id,entry_date,amount,km'], ['per_diem_entries', 'installer_id,project_id,entry_date,amount']] as const;
+const COST_TABLES = [['expense_entries', 'id,installer_id,project_id,entry_date,amount,category,note,receipt_path,receipt_paths'], ['mileage_entries', 'id,installer_id,project_id,entry_date,amount,km,rate,note'], ['per_diem_entries', 'id,installer_id,project_id,entry_date,amount,country,day_type,overnight,breakfast_provided,lunch_provided,dinner_provided,note']] as const;
 
 /** Expenses, mileage and per diem in a date range (test rows removed); refreshes live. */
 export function useCostRows(filter: { from: string; to: string }) {
