@@ -86,11 +86,11 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
     { label: 'Aktivitet', value: r => by(refs.activities, r.activity_type_id)?.name ?? '' },
     { label: 'Arbetstid', value: r => Number(r.hours), num: true },
     { label: 'Restid', value: r => Number(r.travel_hours ?? 0), num: true },
-    { label: 'Totalt', value: r => rowHours(r), num: true },
     { label: 'Utlägg (kr)', value: r => r.expense, num: true },
     { label: 'Mil (km)', value: r => r.km, num: true },
     { label: 'Mil (kr)', value: r => r.mileage, num: true },
     { label: 'Traktamente (kr)', value: r => r.perDiem, num: true },
+    { label: 'Totalt', value: r => rowHours(r), num: true },
     { label: 'Orderstatus', value: r => statusOf(r) },
     { label: 'Debiterbart (kr)', value: r => amountOf(r) ?? -1, num: true },
     { label: 'Beskrivning', value: r => r.description ?? r.note ?? '' },
@@ -222,11 +222,11 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
                     <TableCell>{by(refs.activities, r.activity_type_id)?.name}</TableCell>
                     <TableCell className="text-right">{fmt(Number(r.hours))}</TableCell>
                     <TableCell className="text-right">{fmt(Number(r.travel_hours ?? 0))}</TableCell>
-                    <TableCell className="text-right font-medium">{fmt(rowHours(r))}</TableCell>
                     <TableCell className="text-right tabular-nums bg-travel-surface/50">{r.expense ? kr(r.expense) : '–'}</TableCell>
                     <TableCell className="text-right tabular-nums bg-travel-surface/50">{r.km ? fmt(r.km) : '–'}</TableCell>
                     <TableCell className="text-right tabular-nums bg-travel-surface/50">{r.mileage ? kr(r.mileage) : '–'}</TableCell>
                     <TableCell className="text-right tabular-nums bg-travel-surface/50">{r.perDiem ? kr(r.perDiem) : '–'}</TableCell>
+                    <TableCell className="text-right font-medium">{fmt(rowHours(r))}</TableCell>
                     <TableCell>{statusOf(r)}</TableCell>
                     <TableCell className={amt == null && !r.costOnly ? 'text-right text-destructive' : 'text-right'} title={amt == null && !r.costOnly ? 'Saknar timpris' : undefined}>{amt == null ? '–' : kr(amt)}</TableCell>
                     <TableCell className="max-w-xs"><ExpandableText text={r.description ?? r.note} /></TableCell>
