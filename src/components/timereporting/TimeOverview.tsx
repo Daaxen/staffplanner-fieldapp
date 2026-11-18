@@ -3,7 +3,7 @@ import { ExpandableText } from '@/components/ui/expandable-text';
 import { supabase } from '@/integrations/supabase/client';
 import { svStatusLabels } from '@/lib/installerTone';
 import * as XLSX from 'xlsx';
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Car, ChevronLeft, ChevronRight, Clock, Download, Receipt, UtensilsCrossed } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -81,9 +81,7 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
   const cols: Col[] = [
     { label: 'Datum', value: r => r.entry_date },
     { label: 'Medarbetare', value: r => by(refs.employees, r.installer_id)?.name ?? '' },
-    { label: 'Kundnr', value: r => Number(by(refs.clients, r.client_id)?.customer_number) || 0, num: true },
     { label: 'Kund', value: r => by(refs.clients, r.client_id)?.name ?? '' },
-    { label: 'Projekt', value: r => by(refs.groups, r.project_group_id)?.name ?? '' },
     { label: 'Order', value: r => by(refs.orders, r.project_id)?.name ?? '' },
     { label: 'Aktivitet', value: r => by(refs.activities, r.activity_type_id)?.name ?? '' },
     { label: 'Arbetstid', value: r => Number(r.hours), num: true },
@@ -96,8 +94,10 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
     { label: 'Orderstatus', value: r => statusOf(r) },
     { label: 'Debiterbart (kr)', value: r => amountOf(r) ?? -1, num: true },
     { label: 'Beskrivning', value: r => r.description ?? r.note ?? '' },
-    { label: 'Senast ändrad', value: r => r.updated_at },
   ];
+  const COST_COLS = new Set(['Utlägg (kr)', 'Mil (km)', 'Mil (kr)', 'Traktamente (kr)']);
+  const PAGE = 25;
+  const [page, setPage] = useState(0);
   const [sort, setSort] = useState<{ col: number; dir: 'asc' | 'desc' } | null>(null);
   const clickSort = (i: number) => setSort(s => !s || s.col !== i ? { col: i, dir: 'asc' } : s.dir === 'asc' ? { col: i, dir: 'desc' } : null);
   const sorted = useMemo(() => {
@@ -109,6 +109,9 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtered, sort, refs]);
+  const pages = Math.max(1, Math.ceil(sorted.length / PAGE));
+  useEffect(() => { setPage(0); }, [filtered, sort]);
+  const pageRows = sorted.slice(page * PAGE, page * PAGE + PAGE);
 
   const doExport = () => {
     const lines: ExportLine[] = filtered.map(r => {
@@ -165,16 +168,23 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
         {sel('activity', 'Aktivitet', refs.activities.map(a => ({ id: a.id, label: a.name })))}
       </div>
       {!exportMode && <ReportingRateCard rows={rateRows} selected={f.employee === ALL ? undefined : f.employee} onSelect={id => setF(c => ({ ...c, employee: c.employee === id ? ALL : id }))} />}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="rounded-md border border-border p-3"><div className="text-xs text-muted-foreground">Total rapporterad tid</div><div className="text-2xl font-semibold">{fmt(total)} h</div><div className="text-xs text-muted-foreground mt-1">Arbetstid {fmt(work)} h · Restid {fmt(travel)} h</div></div>
-        <div className="rounded-md border border-border p-3"><div className="text-xs text-muted-foreground">Mot kund 9999</div><div className="text-2xl font-semibold">{fmt(internalTotal)} h</div></div>
-        <div className="rounded-md border border-border p-3"><div className="text-xs text-muted-foreground">Debiterbart (arbetstid)</div><div className="text-2xl font-semibold">{kr(billable)} kr</div>{unpriced > 0 && <div className="text-xs text-destructive mt-1">{unpriced} rader saknar timpris</div>}</div>
-        <div className="rounded-md border border-border p-3"><div className="text-xs text-muted-foreground">Tidsrader</div><div className="text-2xl font-semibold">{timeOnly.length}</div></div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+        {[
+          { icon: Clock, tone: 'bg-primary/10 text-primary', label: 'Total rapporterad tid', value: `${fmt(total)} h`, sub: `Arbetstid ${fmt(work)} h · Restid ${fmt(travel)} h` },
+          { icon: Receipt, tone: 'bg-secondary text-secondary-foreground', label: 'Utlägg', value: `${kr(expenseSum)} kr` },
+          { icon: Car, tone: 'bg-accent text-accent-foreground', label: 'Mil', value: `${fmt(kmSum)} km · ${kr(mileageSum)} kr` },
+          { icon: UtensilsCrossed, tone: 'bg-destructive/10 text-destructive', label: 'Traktamente', value: `${kr(perDiemSum)} kr` },
+        ].map(k => (
+          <div key={k.label} className="rounded-xl border border-border bg-card p-4 flex items-center gap-4 shadow-sm">
+            <div className={`h-12 w-12 rounded-full flex items-center justify-center shrink-0 ${k.tone}`}><k.icon className="w-5 h-5" /></div>
+            <div className="min-w-0"><div className="text-xs text-muted-foreground">{k.label}</div><div className="text-xl font-semibold tabular-nums">{k.value}</div>{k.sub && <div className="text-xs text-muted-foreground">{k.sub}</div>}</div>
+          </div>
+        ))}
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="rounded-md border border-border p-3"><div className="text-xs text-muted-foreground">Utlägg</div><div className="text-2xl font-semibold">{kr(expenseSum)} kr</div></div>
-        <div className="rounded-md border border-border p-3"><div className="text-xs text-muted-foreground">Mil</div><div className="text-2xl font-semibold">{fmt(kmSum)} km · {kr(mileageSum)} kr</div></div>
-        <div className="rounded-md border border-border p-3"><div className="text-xs text-muted-foreground">Traktamente</div><div className="text-2xl font-semibold">{kr(perDiemSum)} kr</div></div>
+      <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-muted-foreground px-1">
+        <span>Debiterbart (arbetstid): <b className="text-foreground">{kr(billable)} kr</b>{unpriced > 0 && <span className="text-destructive"> · {unpriced} rader saknar timpris</span>}</span>
+        <span>Mot kund 9999: <b className="text-foreground">{fmt(internalTotal)} h</b></span>
+        <span>Tidsrader: <b className="text-foreground">{timeOnly.length}</b></span>
       </div>
       <div className="grid md:grid-cols-4 gap-3">
         {summaries.map(s => (
@@ -187,11 +197,11 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
         ))}
       </div>
       {!exportMode && (
-        <div className="rounded-md border border-border">
-          <Table>
+        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+          <Table className="text-sm [&_td]:py-2 [&_td]:whitespace-nowrap [&_td]:max-w-[200px] [&_td]:truncate [&_td:last-child]:whitespace-normal">
             <TableHeader><TableRow>
               {cols.map((c, i) => (
-                <TableHead key={c.label} className={c.num ? 'text-right' : undefined}>
+                <TableHead key={c.label} className={`${c.num ? 'text-right' : ''} ${COST_COLS.has(c.label) ? 'bg-travel-surface' : ''} whitespace-nowrap`}>
                   <button className="inline-flex items-center gap-1 hover:text-foreground" onClick={() => clickSort(i)}>
                     {c.label}
                     {sort?.col === i ? (sort.dir === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-40" />}
@@ -200,34 +210,41 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
               ))}
             </TableRow></TableHeader>
             <TableBody>
-              {loading ? <TableRow><TableCell colSpan={18}>Laddar…</TableCell></TableRow> : sorted.map(r => {
+              {loading ? <TableRow><TableCell colSpan={cols.length}>Laddar…</TableCell></TableRow> : pageRows.map(r => {
                 const c = by(refs.clients, r.client_id);
                 const amt = amountOf(r);
                 return (
                   <TableRow key={r.id} className={amt == null && !r.costOnly ? 'bg-destructive/5' : r.costOnly ? 'bg-muted/40' : undefined}>
                     <TableCell>{r.entry_date}</TableCell>
                     <TableCell>{by(refs.employees, r.installer_id)?.name}</TableCell>
-                    <TableCell>{c?.customer_number}</TableCell>
                     <TableCell>{c?.name}</TableCell>
-                    <TableCell>{by(refs.groups, r.project_group_id)?.name}</TableCell>
                     <TableCell>{by(refs.orders, r.project_id)?.name}</TableCell>
                     <TableCell>{by(refs.activities, r.activity_type_id)?.name}</TableCell>
                     <TableCell className="text-right">{fmt(Number(r.hours))}</TableCell>
                     <TableCell className="text-right">{fmt(Number(r.travel_hours ?? 0))}</TableCell>
                     <TableCell className="text-right font-medium">{fmt(rowHours(r))}</TableCell>
-                    <TableCell className="text-right tabular-nums">{r.expense ? kr(r.expense) : '–'}</TableCell>
-                    <TableCell className="text-right tabular-nums">{r.km ? fmt(r.km) : '–'}</TableCell>
-                    <TableCell className="text-right tabular-nums">{r.mileage ? kr(r.mileage) : '–'}</TableCell>
-                    <TableCell className="text-right tabular-nums">{r.perDiem ? kr(r.perDiem) : '–'}</TableCell>
+                    <TableCell className="text-right tabular-nums bg-travel-surface/50">{r.expense ? kr(r.expense) : '–'}</TableCell>
+                    <TableCell className="text-right tabular-nums bg-travel-surface/50">{r.km ? fmt(r.km) : '–'}</TableCell>
+                    <TableCell className="text-right tabular-nums bg-travel-surface/50">{r.mileage ? kr(r.mileage) : '–'}</TableCell>
+                    <TableCell className="text-right tabular-nums bg-travel-surface/50">{r.perDiem ? kr(r.perDiem) : '–'}</TableCell>
                     <TableCell>{statusOf(r)}</TableCell>
                     <TableCell className={amt == null && !r.costOnly ? 'text-right text-destructive' : 'text-right'} title={amt == null && !r.costOnly ? 'Saknar timpris' : undefined}>{amt == null ? '–' : kr(amt)}</TableCell>
                     <TableCell className="max-w-xs"><ExpandableText text={r.description ?? r.note} /></TableCell>
-                    <TableCell>{r.updated_at ? new Date(r.updated_at).toLocaleString('sv-SE') : ''}</TableCell>
                   </TableRow>
                 );
               })}
             </TableBody>
           </Table>
+          <div className="flex items-center justify-between px-4 py-3 border-t border-border text-sm text-muted-foreground">
+            <span>Visar {pageRows.length} av {sorted.length} rader</span>
+            {pages > 1 && <div className="flex items-center gap-1">
+              <Button size="icon" variant="outline" className="h-8 w-8" aria-label="Föregående sida" disabled={page === 0} onClick={() => setPage(p => p - 1)}><ChevronLeft className="w-4 h-4" /></Button>
+              {Array.from({ length: pages }, (_, n) => n).filter(n => n === 0 || n === pages - 1 || Math.abs(n - page) <= 1).map(n => (
+                <Button key={n} size="sm" variant={n === page ? 'secondary' : 'ghost'} className="h-8 min-w-8 px-2" onClick={() => setPage(n)}>{n + 1}</Button>
+              ))}
+              <Button size="icon" variant="outline" className="h-8 w-8" aria-label="Nästa sida" disabled={page >= pages - 1} onClick={() => setPage(p => p + 1)}><ChevronRight className="w-4 h-4" /></Button>
+            </div>}
+          </div>
         </div>
       )}
     </div>
