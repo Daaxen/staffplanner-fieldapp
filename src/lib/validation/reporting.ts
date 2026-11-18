@@ -19,11 +19,11 @@ export type ExpenseRule = {
 
 /** Mirrors public.expense_rules. */
 export const EXPENSE_RULES: Record<string, ExpenseRule> = {
-  materials: { requiresReceipt: true, receiptThreshold: 0, maxAmount: 50000 },
-  travel: { requiresReceipt: true, receiptThreshold: 0, maxAmount: 20000 },
-  parking: { requiresReceipt: true, receiptThreshold: 100, maxAmount: 5000 },
-  meal: { requiresReceipt: true, receiptThreshold: 0, maxAmount: 3000 },
-  other: { requiresReceipt: true, receiptThreshold: 0, maxAmount: 20000 },
+  materials: { requiresReceipt: false, receiptThreshold: 0, maxAmount: 50000 },
+  travel: { requiresReceipt: false, receiptThreshold: 0, maxAmount: 20000 },
+  parking: { requiresReceipt: false, receiptThreshold: 100, maxAmount: 5000 },
+  meal: { requiresReceipt: false, receiptThreshold: 0, maxAmount: 3000 },
+  other: { requiresReceipt: false, receiptThreshold: 0, maxAmount: 20000 },
 };
 
 export const EXPENSE_CATEGORIES = Object.keys(EXPENSE_RULES) as [string, ...string[]];

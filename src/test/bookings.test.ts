@@ -24,10 +24,10 @@ describe('booking model (database)', () => {
     expect(sql).toMatch(/assignments_time_range[\s\S]*planned_end_at >= planned_start_at/);
   });
 
-  it('uses an exclusion constraint for overlapping active bookings', () => {
-    expect(sql).toMatch(/EXCLUDE USING gist/);
-    expect(sql).toMatch(/assignments_no_overlap/);
-    expect(sql).toMatch(/installer_id WITH =/);
+  it('allows overlapping work orders for the same installer (constraint dropped)', () => {
+    const latest = readFileSync('drizzle/migrations/0014_allow_overlapping_assignments.sql', 'utf8');
+    expect(latest).toMatch(/DROP CONSTRAINT IF EXISTS assignments_no_overlap/);
+    expect(latest).not.toMatch(/FROM public\.assignments a/);
   });
 
   it('checks absences and requires an admin reason to override', () => {

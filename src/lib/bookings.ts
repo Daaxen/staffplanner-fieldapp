@@ -52,25 +52,7 @@ export async function findBookingConflicts(
   if (!installerIds.length) return [];
   const out: BookingConflict[] = [];
 
-  const { data: bookings } = await supabase
-    .from('assignments')
-    .select('id, project_id, installer_id, planned_start_at, planned_end_at, assignment_status')
-    .in('installer_id', installerIds)
-    .in('assignment_status', ACTIVE_BOOKING_STATUSES as unknown as string[])
-    .lt('planned_start_at', end)
-    .gt('planned_end_at', start);
-
-  for (const b of bookings ?? []) {
-    if (excludeProjectRowId && b.project_id === excludeProjectRowId) continue;
-    out.push({
-      kind: 'booking',
-      installerId: b.installer_id,
-      detail: 'Already booked on another order in this period',
-      from: b.planned_start_at,
-      to: b.planned_end_at,
-    });
-  }
-
+  // Overlapping bookings on other orders are allowed; only absences count as conflicts.
   const { data: absences } = await supabase
     .from('installer_absences')
     .select('id, installer_id, type, label, start_date, end_date')

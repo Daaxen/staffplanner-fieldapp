@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { missingReceiptMessage, receiptFileName, receiptRequired } from '@/lib/receipts';
+import { receiptFileName, receiptRequired } from '@/lib/receipts';
 import { expenseEntrySchema, firstIssue } from '@/lib/validation/reporting';
 
 const entry = (over: Record<string, unknown> = {}) => ({
@@ -12,24 +12,12 @@ const entry = (over: Record<string, unknown> = {}) => ({
 });
 
 describe('receipt rules', () => {
-  it('requires a receipt for categories that demand one', () => {
-    expect(receiptRequired('materials', 100)).toBe(true);
-    expect(receiptRequired('meal', 80)).toBe(true);
+  it('never requires a receipt, in any category or amount', () => {
+    for (const c of ['materials', 'travel', 'parking', 'meal', 'other']) expect(receiptRequired(c, 10000)).toBe(false);
   });
 
-  it('respects the category threshold', () => {
-    expect(receiptRequired('parking', 80)).toBe(false);
-    expect(receiptRequired('parking', 150)).toBe(true);
-  });
-
-  it('gives a clear Swedish message', () => {
-    expect(missingReceiptMessage('materials')).toMatch(/Kvitto krävs för den här kostnadstypen/);
-    expect(missingReceiptMessage('parking')).toMatch(/över 100 kr/);
-  });
-
-  it('blocks saving an expense without the required receipt', () => {
-    const issue = firstIssue(expenseEntrySchema.safeParse(entry()));
-    expect(issue).toMatch(/Kvitto krävs/);
+  it('saves an expense without a receipt', () => {
+    expect(expenseEntrySchema.safeParse(entry()).success).toBe(true);
   });
 
   it('accepts the expense once a receipt path is attached', () => {

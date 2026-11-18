@@ -110,22 +110,7 @@ export const installerConflicts = (
 
   const theirs = activeProjects(projects, draft).filter(p => p.assigneeIds.includes(installer.id));
 
-  // 2. Project overlap (double booking)
-  theirs.forEach(p0 => {
-    // Only the days this installer actually works on the other order count.
-    const own = p0.installerDateOverrides?.[installer.id];
-    const p = own ? { ...p0, startDate: own.startDate, endDate: own.endDate } : p0;
-    if (bookingsClash(draft, p)) {
-      out.push({
-        id: `overlap-${installer.id}-${p.id}`,
-        kind: 'overlap',
-        severity: 'blocking',
-        installerId: installer.id,
-        title: `${installer.name} is already booked`,
-        detail: `${p.name} (${p.id}) ${p.startDate}${p.startTime ? ` ${p.startTime}` : ''} → ${p.endDate}${p.endTime ? ` ${p.endTime}` : ''}.`,
-      });
-    }
-  });
+  // 2. Overlapping work orders are allowed: installers move between sites and log hours on each.
 
   // 3. Travel time between assignments on the same day
   const draftStart = toMinutes(draft.startTime);
