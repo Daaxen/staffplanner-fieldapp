@@ -50,7 +50,12 @@ const orderDays = (start?: string, end?: string) => {
 const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate, status, isAdmin = false, country }: ProjectLogTabProps) => {
   const closed = isTimeLocked(status);
   const timeLocked = closed && !isAdmin;
-  const [date, setDate] = useState(today);
+  // Default to the order's own calendar day when today is outside the order, so late reports land on the right day.
+  const [date, setDate] = useState(() => {
+    const t = today();
+    const list = orderDays(startDate, endDate);
+    return list.length === 0 || list.includes(t) ? t : (t > list[list.length - 1] ? list[list.length - 1] : list[0]);
+  });
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [hoursInput, setHoursInput] = useState('');
