@@ -226,7 +226,6 @@ const SubVendorOrder = () => {
                 <Camera className="h-4 w-4" />{exp.receipt_paths.length ? `${exp.receipt_paths.length} kvitto/n bifogade · lägg till fler` : 'Fota kvitto'}
                 <input type="file" accept="image/*" multiple className="hidden" onChange={async ev => { const fs = Array.from(ev.target.files ?? []); ev.target.value = ''; for (const f of fs) await uploadReceipt(f); }} />
               </label>
-              <p className="text-xs text-muted-foreground">Kvitto krävs för inköp.</p>
               <div className="flex gap-2">
                 <Button size="sm" disabled={busy || !(Number(exp.amount) > 0)} onClick={async () => { if (await run({ action: 'saveExpense', id: exp.id, entry_date: exp.entry_date, category: exp.category, amount: Number(exp.amount), note: exp.note || undefined, receipt_paths: exp.receipt_paths }, 'Inköp sparat')) setExp(null); }}>Spara</Button>
                 <Button size="sm" variant="outline" onClick={() => setExp(null)}>Avbryt</Button>
