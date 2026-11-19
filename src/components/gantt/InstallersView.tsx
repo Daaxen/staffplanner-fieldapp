@@ -405,8 +405,8 @@ const InstallersView = ({
                         <DraggableBar
                           gridStart={startDate}
                           worksWeekends={project.worksWeekends}
-                          travelBefore={project.travelBefore}
-                          travelAfter={project.travelAfter}
+                          travelBefore={project.projectType !== 'transport' && project.travelBefore}
+                          travelAfter={project.projectType !== 'transport' && project.travelAfter}
                           key={project.id}
                           left={left}
                           width={width}

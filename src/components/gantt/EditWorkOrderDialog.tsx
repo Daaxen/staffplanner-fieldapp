@@ -166,8 +166,8 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
       contactEmail: form.contactEmail.trim() || undefined,
       description: form.description.trim() || undefined,
       worksWeekends,
-      travelBefore,
-      travelAfter,
+      travelBefore: project?.projectType !== 'transport' && travelBefore,
+      travelAfter: project?.projectType !== 'transport' && travelAfter,
       country,
       assigneeIds,
       installerDateOverrides: ownDays,
@@ -237,9 +237,9 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
                 <span className="block text-xs text-muted-foreground">Av: helgdagar planeras inte och kräver ingen tid.</span></span>
               </label>
             </div>
-            <div className="col-span-2">
+            {project?.projectType !== 'transport' && <div className="col-span-2">
               <TravelDayToggles before={travelBefore} after={travelAfter} onBefore={setTravelBefore} onAfter={setTravelAfter} startDate={form.startDate} endDate={form.endDate} />
-            </div>
+            </div>}
             <div className="space-y-1.5">
               <Label htmlFor="wo-stime">Start time</Label>
               <Input id="wo-stime" type="time" value={form.startTime} onChange={e => set('startTime', e.target.value)} />

@@ -11,3 +11,9 @@ describe('resdagar', () => {
   it('utan resdagar ändras inget', () =>
     expect(reportingRange({ startDate: '2026-11-16', endDate: '2026-11-18' })).toEqual({ startDate: '2026-11-16', endDate: '2026-11-18' }));
 });
+
+import { travelDates as td2 } from '@/lib/travelDays';
+import { it as it2, expect as ex2 } from 'vitest';
+it2('transport orders never get travel days', () => {
+  ex2(td2({ projectType: 'transport', startDate: '2026-11-23', endDate: '2026-11-24', travelBefore: true, travelAfter: true })).toEqual({});
+});

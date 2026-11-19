@@ -350,8 +350,8 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
       estimatedHours: projectType !== 'transport' && estimatedHours ? parseFloat(estimatedHours) : undefined,
       isFlexOrder,
       worksWeekends,
-      travelBefore,
-      travelAfter,
+      travelBefore: projectType !== 'transport' && travelBefore,
+      travelAfter: projectType !== 'transport' && travelAfter,
       description: description || undefined,
       ...(projectType === 'transport' && {
         transportStops: transportStops.filter(s => s.address.trim()),
@@ -674,8 +674,8 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
                 <span className="block text-xs text-muted-foreground">Av: helgdagar planeras inte och kräver ingen tid.</span></span>
               </label>
 
-          <TravelDayToggles before={travelBefore} after={travelAfter} onBefore={setTravelBefore} onAfter={setTravelAfter}
-            startDate={startDate ? format(startDate, 'yyyy-MM-dd') : undefined} endDate={endDate ? format(endDate, 'yyyy-MM-dd') : undefined} />
+          {projectType !== 'transport' && <TravelDayToggles before={travelBefore} after={travelAfter} onBefore={setTravelBefore} onAfter={setTravelAfter}
+            startDate={startDate ? format(startDate, 'yyyy-MM-dd') : undefined} endDate={endDate ? format(endDate, 'yyyy-MM-dd') : undefined} />}
 
           {/* Transport Stops */}
           {projectType === 'transport' && (
