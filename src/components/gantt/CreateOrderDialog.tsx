@@ -454,7 +454,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
     estimatedHours: !!estimatedHours.trim(),
     description: !!description.trim(),
   };
-  const requiredFields = template?.requiredFields ?? ['name', 'client', 'startDate', 'endDate'];
+  const requiredFields: TemplateFieldId[] = ['name', 'client', 'startDate', 'endDate'];
   const missingFields = requiredFields.filter(f => !fieldValues[f]);
 
   const dateRangeError = projectDateRangeError(
@@ -477,92 +477,31 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
       <DialogContent className="sm:max-w-[540px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <DialogTitle className="text-lg font-semibold">Create work order</DialogTitle>
+            <DialogTitle className="text-lg font-semibold">Skapa uppdrag</DialogTitle>
             <span className="text-xs font-mono px-2 py-0.5 rounded bg-muted text-muted-foreground">{projectId}</span>
           </div>
         </DialogHeader>
 
         <div className="grid gap-4 py-2">
-          {/* Project Template */}
-          <div className="grid gap-1.5">
-            <Label>Project Template</Label>
-            <div className="grid grid-cols-3 gap-2">
-              {PROJECT_TEMPLATES.map(t => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => selectTemplate(t.id)}
-                  title={t.summary}
-                  className={cn(
-                    "flex flex-col items-start gap-0.5 px-2.5 py-2 rounded-md border text-xs font-medium transition-colors text-left",
-                    templateId === t.id
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-input bg-background text-muted-foreground hover:bg-accent"
-                  )}
-                >
-                  <span className="text-base leading-none">{t.icon}</span>
-                  <span className="leading-tight">{t.label}</span>
-                </button>
-              ))}
-            </div>
-            {template && (
-              <div className="rounded-md border border-border bg-muted/40 px-3 py-2 text-[11px] text-muted-foreground space-y-1">
-                <p className="text-foreground">{template.summary}</p>
-                <p>
-                  Requires {template.checklist.length} checklist items · {template.photos.length} photos ·{' '}
-                  {template.signOffs.map(s => s.label.toLowerCase()).join(' + ')}
-                </p>
-                {missingFields.length > 0 && (
-                  <p className="text-status-on-hold">
-                    Still needed: {missingFields.map(f => TEMPLATE_FIELD_LABELS[f]).join(', ')}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Project Type */}
-          <div className="grid gap-1.5">
-            <Label>Project Type</Label>
-            <div className="flex gap-2">
-              {typeButtons.map(({ value, icon }) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setProjectType(value)}
-                  className={cn(
-                    "flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md border text-sm font-medium transition-colors",
-                    projectType === value
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-input bg-background text-muted-foreground hover:bg-accent"
-                  )}
-                >
-                  <span>{icon}</span>
-                  <span>{projectTypeLabels[value]}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Project Name & PO Number */}
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
-              <Label htmlFor="order-name">Project Name *</Label>
-              <Input id="order-name" placeholder="e.g. IKEA Kitchen Install" value={name} onChange={(e) => setName(e.target.value)} />
+              <Label htmlFor="order-name">Uppdragsnamn *</Label>
+              <Input id="order-name" placeholder="t.ex. Scandic Gävle – montage" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="order-number">Project Number</Label>
-              <Input id="order-number" placeholder="e.g. Client PO number" value={projectNumber} onChange={(e) => setProjectNumber(e.target.value)} />
+              <Label htmlFor="order-number">PO-nummer</Label>
+              <Input id="order-number" placeholder="Kundens ordernummer" value={projectNumber} onChange={(e) => setProjectNumber(e.target.value)} />
             </div>
           </div>
 
           {/* Client (autocomplete) */}
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5 relative" ref={clientInputRef}>
-              <Label htmlFor="order-client">Client *</Label>
+              <Label htmlFor="order-client">Kund *</Label>
               <Input
                 id="order-client"
-                placeholder="Search the customer register..."
+                placeholder="Sök i kundregistret…"
                 value={client}
                 onChange={(e) => handleClientChange(e.target.value)}
                 onFocus={() => handleClientChange(client)}
@@ -574,7 +513,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
                 <p className="text-xs text-muted-foreground">
                   {client.trim()
                     ? 'Pick the customer from the register — free text is not linked to a customer.'
-                    : 'Pick a customer from the register.'}
+                    : 'Välj en kund från registret.'}
                 </p>
               )}
               {showClientSuggestions && clientSuggestions.length > 0 && (
@@ -603,7 +542,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
             {/* Location — only for non-transport */}
             {projectType !== 'transport' && (
               <div className="grid gap-1.5">
-                <Label htmlFor="order-location">Location</Label>
+                <Label htmlFor="order-location">Adress</Label>
                 <AddressAutocomplete
                   id="order-location"
                   value={location}
@@ -622,24 +561,6 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
             )}
           </div>
 
-          {/* Mini Map for non-transport */}
-          {projectType !== 'transport' && location.trim() && (
-            <div className="grid gap-1.5">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs text-muted-foreground">Map Preview</Label>
-                <Button variant="ghost" size="sm" className="h-6 px-2" onClick={() => setMapExpanded(!mapExpanded)}>
-                  {mapExpanded ? <Minimize2 className="h-3 w-3" /> : <Maximize2 className="h-3 w-3" />}
-                </Button>
-              </div>
-              <MiniMap
-                address={location}
-                lat={locationCoords?.lat}
-                lng={locationCoords?.lng}
-                height={mapExpanded ? 220 : 110}
-              />
-            </div>
-          )}
-
           {/* Dates & Times */}
           {projectType === 'transport' && (
             <div className="grid grid-cols-1 gap-3">
@@ -651,7 +572,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
                       <PopoverTrigger asChild>
                         <Button variant="outline" className={cn("justify-start text-left font-normal text-xs px-2", !startDate && "text-muted-foreground")}>
                           <CalendarIcon className="mr-1 h-3 w-3" />
-                          {startDate ? format(startDate, 'MMM d') : 'Pick'}
+                          {startDate ? format(startDate, 'MMM d') : 'Välj'}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
@@ -667,7 +588,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
                       <PopoverTrigger asChild>
                         <Button variant="outline" className={cn("justify-start text-left font-normal text-xs px-2", !endDate && "text-muted-foreground")}>
                           <CalendarIcon className="mr-1 h-3 w-3" />
-                          {endDate ? format(endDate, 'MMM d') : 'Pick'}
+                          {endDate ? format(endDate, 'MMM d') : 'Välj'}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
@@ -686,12 +607,12 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
           {projectType !== 'transport' && (
             <div className="grid grid-cols-4 gap-3">
               <div className="grid gap-1.5">
-                <Label>Earliest Start *</Label>
+                <Label>Start *</Label>
                 <Popover open={startOpen} onOpenChange={setStartOpen}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className={cn("justify-start text-left font-normal text-xs px-2", !startDate && "text-muted-foreground")}>
                       <CalendarIcon className="mr-1 h-3 w-3" />
-                      {startDate ? format(startDate, 'MMM d') : 'Pick'}
+                      {startDate ? format(startDate, 'MMM d') : 'Välj'}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -700,16 +621,16 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
                 </Popover>
               </div>
               <div className="grid gap-1.5">
-                <Label>Start Time</Label>
+                <Label>Starttid</Label>
                 <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className="text-xs px-2" />
               </div>
               <div className="grid gap-1.5">
-                <Label>Deadline *</Label>
+                <Label>Slut *</Label>
                 <Popover open={endOpen} onOpenChange={setEndOpen}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className={cn("justify-start text-left font-normal text-xs px-2", !endDate && "text-muted-foreground")}>
                       <CalendarIcon className="mr-1 h-3 w-3" />
-                      {endDate ? format(endDate, 'MMM d') : 'Pick'}
+                      {endDate ? format(endDate, 'MMM d') : 'Välj'}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -718,7 +639,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
                 </Popover>
               </div>
               <div className="grid gap-1.5">
-                <Label>End Time</Label>
+                <Label>Sluttid</Label>
                 <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} className="text-xs px-2" />
               </div>
             </div>
@@ -729,22 +650,14 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
           )}
 
           {/* Estimated hours & Flex order */}
-          <div className={cn("grid gap-3", projectType !== 'transport' ? "grid-cols-2" : "grid-cols-1")}>
+          <div className="grid gap-3">
             {projectType !== 'transport' && (
               <div className="grid gap-1.5">
-                <Label htmlFor="est-hours">Estimated hours (total for the work order)</Label>
-                <Input id="est-hours" type="number" min="0" step="0.5" placeholder="e.g. 8" value={estimatedHours} onChange={(e) => setEstimatedHours(e.target.value)} />
-                <p className="text-xs text-muted-foreground">Total for the whole work order, shared by all assigned installers.</p>
+                <Label htmlFor="est-hours">Uppskattade timmar</Label>
+                <Input id="est-hours" type="number" min="0" step="0.5" placeholder="t.ex. 8" value={estimatedHours} onChange={(e) => setEstimatedHours(e.target.value)} />
+                <p className="text-xs text-muted-foreground">Totalt för hela uppdraget, delas av alla tilldelade tekniker.</p>
               </div>
             )}
-            <div className="grid gap-1.5">
-              <Label>&nbsp;</Label>
-              <label className="flex items-center gap-2 h-10 cursor-pointer">
-                <Checkbox checked={isFlexOrder} onCheckedChange={(checked) => setIsFlexOrder(!!checked)} />
-                <span className="text-sm">Flex Order</span>
-                <span className="text-xs text-muted-foreground">↔ Flexible within period</span>
-              </label>
-            </div>
           </div>
 
 <label className="flex items-start gap-3 rounded-md border border-border p-3 cursor-pointer">
@@ -923,7 +836,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
 
           {/* Assign Installers with suitability */}
           <div className="grid gap-1.5">
-            <Label>{projectType === 'transport' ? 'Assign Drivers' : 'Assign Installers'}</Label>
+            <Label>{projectType === 'transport' ? 'Assign Drivers' : 'Tilldela tekniker'}</Label>
             <RecommendedInstallers
               recommendations={recommendations}
               selectedIds={selectedInstallers}
@@ -943,7 +856,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
                         <Sparkles className="h-3 w-3" />#{rec.rank}
                       </span>
                     )}
-                    {blocked && <span className="text-[10px] font-medium text-destructive">Conflict</span>}
+                    {blocked && <span className="text-[10px] font-medium text-destructive">Konflikt</span>}
                     {suit && (
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -971,7 +884,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
                         </TooltipContent>
                       </Tooltip>
                     )}
-                    <span className="text-xs text-muted-foreground ml-auto">{inst.type === 'sub-vendor' ? 'Sub' : 'Own'}</span>
+                    <span className="text-xs text-muted-foreground ml-auto">{inst.type === 'sub-vendor' ? 'UE' : 'Egen'}</span>
                   </label>
                 ))}
               </TooltipProvider>
@@ -981,7 +894,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
             )}
             {bookingConflicts.length > 0 && (
               <div className="mt-1 rounded border border-destructive/30 bg-destructive/5 p-2 space-y-1">
-                <p className="text-xs font-medium text-destructive">Booking register conflicts</p>
+                <p className="text-xs font-medium text-destructive">Bokningskonflikter</p>
                 {bookingConflicts.map((c, i) => (
                   <p key={i} className="text-xs text-muted-foreground">
                     {installers.find(inst => inst.id === c.installerId)?.name ?? 'Installer'} — {c.detail}
@@ -992,10 +905,18 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
             )}
           </div>
 
+          <details className="group rounded-md border border-border">
+            <summary className="cursor-pointer select-none px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">Fler alternativ</summary>
+            <div className="grid gap-4 px-3 pb-3 pt-1">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <Checkbox checked={isFlexOrder} onCheckedChange={(checked) => setIsFlexOrder(!!checked)} />
+            <span className="text-sm">Flexuppdrag</span>
+            <span className="text-xs text-muted-foreground">Flexibelt inom perioden</span>
+          </label>
           {/* Description */}
           <div className="grid gap-1.5">
-            <Label htmlFor="order-desc">Description</Label>
-            <Textarea id="order-desc" placeholder="Optional notes..." value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
+            <Label htmlFor="order-desc">Beskrivning</Label>
+            <Textarea id="order-desc" placeholder="Valfria anteckningar…" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
           </div>
 
           {/* Attachments */}
@@ -1003,10 +924,10 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
             <div className="flex items-center justify-between">
               <Label className="flex items-center gap-1.5">
                 <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
-                Attachments
+                Bilagor
               </Label>
               <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => fileInputRef.current?.click()}>
-                <Plus className="h-3 w-3" /> Add Files
+                <Plus className="h-3 w-3" /> Lägg till filer
               </Button>
               <input
                 ref={fileInputRef}
@@ -1042,17 +963,19 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
                 className="border-2 border-dashed border-border rounded-md py-4 flex flex-col items-center gap-1 text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors cursor-pointer"
               >
                 <Paperclip className="h-5 w-5" />
-                <span className="text-xs">Drop files or click to attach</span>
-                <span className="text-[10px]">Images, PDFs, documents</span>
+                <span className="text-xs">Släpp filer eller klicka för att bifoga</span>
+                <span className="text-[10px]">Bilder, PDF, dokument</span>
               </button>
             )}
           </div>
+            </div>
+          </details>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => { resetForm(); onOpenChange(false); }}>Cancel</Button>
+          <Button variant="outline" onClick={() => { resetForm(); onOpenChange(false); }}>Avbryt</Button>
           <Button onClick={handleSubmit} disabled={!isValid || hasBlocking(conflicts)}>
-            {hasBlocking(conflicts) ? 'Resolve conflicts first' : 'Create Project'}
+            {hasBlocking(conflicts) ? 'Lös konflikter först' : 'Skapa uppdrag'}
           </Button>
         </DialogFooter>
       </DialogContent>
