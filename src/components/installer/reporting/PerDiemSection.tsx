@@ -1,3 +1,4 @@
+import { projectRowId } from '@/lib/appData';
 import { useEffect, useMemo, useState } from 'react';
 import { BedDouble, Lock, Trash2, UtensilsCrossed } from 'lucide-react';
 import { toast } from 'sonner';
@@ -28,8 +29,10 @@ const Choice = ({ active, onClick, children, tone = 'blue' }: { active: boolean;
 
 const PerDiemSection = ({ projectId, country: orderCountry, date, locked }: Props) => {
   const { installerId } = useMyInstallerId();
+  // Orders are addressed by ref (P-12345) in the app; per diem rows need the database id.
+  const rowId = projectRowId(projectId) ?? projectId;
   const rates = usePerDiemRates();
-  const { entries, reload } = usePerDiemEntries(projectId, installerId ?? undefined);
+  const { entries, reload } = usePerDiemEntries(rowId, installerId ?? undefined);
   const existing = entries.find(e => e.entry_date === date);
   const [country, setCountry] = useState(orderCountry || DOMESTIC);
   const [dayType, setDayType] = useState<DayType>('full');
@@ -56,11 +59,11 @@ const PerDiemSection = ({ projectId, country: orderCountry, date, locked }: Prop
     if (!confirmed) { toast.error('Bekräfta att resan är över 50 km och med övernattning'); return; }
     setSaving(true);
     const { error } = await supabase.from('per_diem_entries').upsert({
-      project_id: projectId, installer_id: installerId, entry_date: date, country, day_type: dayType, overnight,
+      project_id: rowId, installer_id: installerId, entry_date: date, country, day_type: dayType, overnight,
       breakfast_provided: meals.breakfast, lunch_provided: meals.lunch, dinner_provided: meals.dinner, distance_confirmed: confirmed,
     }, { onConflict: 'project_id,installer_id,entry_date' });
     setSaving(false);
-    if (error) { toast.error(error.message.includes('TIME_LOCKED') ? TIME_LOCKED_MESSAGE : 'Traktamentet kunde inte sparas'); return; }
+    if (error) { toast.error(error.message.includes('TIME_LOCKED') ? TIME_LOCKED_MESSAGE : `Traktamentet kunde inte sparas: ${error.message}`); return; }
     toast.success(`Traktamente sparat för ${date}`);
     void reload();
   };
