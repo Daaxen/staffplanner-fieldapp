@@ -12,6 +12,7 @@ export const DEVIATION_CATEGORIES = [
   { id: 'permit-issue', label: 'Permit issue' },
   { id: 'vehicle-issue', label: 'Vehicle issue' },
   { id: 'incorrect-order', label: 'Incorrect order' },
+  { id: 'ata', label: 'ÄTA' },
 ] as const;
 
 export type DeviationCategory = (typeof DEVIATION_CATEGORIES)[number]['id'];

@@ -40,7 +40,7 @@ export async function loadFieldReportData(orderIds: string[]): Promise<FieldRepo
   if (!orderIds.length) return [];
   const [r, t, dv, m, e, p, pd] = await Promise.all([
     supabase.from('field_reports').select('*').in('project_id', orderIds),
-    supabase.from('time_entries').select('project_id,installer_id,entry_date,hours,travel_hours,hourly_rate,note,description').in('project_id', orderIds).order('entry_date'),
+    supabase.from('time_entries').select('project_id,installer_id,entry_date,hours,travel_hours,hourly_rate,note,description,is_ata').in('project_id', orderIds).order('entry_date'),
     supabase.from('deviations').select('*').in('project_id', orderIds),
     supabase.from('mileage_entries').select('project_id,installer_id,entry_date,km,amount,note').in('project_id', orderIds),
     supabase.from('expense_entries').select('project_id,installer_id,entry_date,category,amount,note,receipt_path,receipt_paths').in('project_id', orderIds),
@@ -129,7 +129,7 @@ export function flatReportRows(list: FieldReportData[], exclude: ExcludeKey[] = 
     for (const t of d.time) {
       const rate = t.hourly_rate ?? d.order?.hourly_rate ?? d.client?.hourly_rate ?? null;
       const desc = x.has('comments') ? '' : (t.description || t.note || '');
-      if (Number(t.hours)) out.push({ ...base, Datum: t.entry_date, Montör: nm(d, t.installer_id), Kostnadsslag: 'Arbete', Beskrivning: desc, Antal: Number(t.hours), Enhet: 'h', 'Á-pris': price(rate), 'Belopp (kr)': price(rate == null ? null : Number(t.hours) * Number(rate)), Kvitton: '' });
+      if (Number(t.hours)) out.push({ ...base, Datum: t.entry_date, Montör: nm(d, t.installer_id), Kostnadsslag: t.is_ata ? 'ÄTA' : 'Arbete', Beskrivning: desc, Antal: Number(t.hours), Enhet: 'h', 'Á-pris': price(rate), 'Belopp (kr)': price(rate == null ? null : Number(t.hours) * Number(rate)), Kvitton: '' });
       if (!x.has('travel') && Number(t.travel_hours)) out.push({ ...base, Datum: t.entry_date, Montör: nm(d, t.installer_id), Kostnadsslag: 'Restid', Beskrivning: '', Antal: Number(t.travel_hours), Enhet: 'h', 'Á-pris': '', 'Belopp (kr)': '', Kvitton: '' });
     }
     if (!x.has('travel')) for (const m of d.mil) out.push({ ...base, Datum: m.entry_date, Montör: nm(d, m.installer_id), Kostnadsslag: 'Körning', Beskrivning: m.note ?? '', Antal: Number(m.km), Enhet: 'km', 'Á-pris': price(Number(m.km) ? Number(m.amount) / Number(m.km) : null), 'Belopp (kr)': price(m.amount), Kvitton: '' });
@@ -285,7 +285,7 @@ export async function buildFieldReportPdf(input: FieldReportData | FieldReportDa
     const workRows = d.time.filter(t => Number(t.hours));
     const body = workRows.map(t => {
       const rate = t.hourly_rate ?? o.hourly_rate ?? d.client?.hourly_rate ?? null;
-      return [t.entry_date, nm(d, t.installer_id), ...(x.has('comments') ? [] : [t.description || t.note || '']), `${num(Number(t.hours))} h`,
+      return [t.entry_date, nm(d, t.installer_id), ...(x.has('comments') ? [] : [t.description || t.note || '']), `${num(Number(t.hours))} h${t.is_ata ? ' (ÄTA)' : ''}`,
         ...(x.has('prices') ? [] : [rate == null ? '–' : kr(Number(rate)), rate == null ? '–' : kr(r2(Number(t.hours) * Number(rate)))])];
     });
     const foot = [{ content: 'Summa arbetstid', colSpan: x.has('comments') ? 2 : 3 }, `${num(b.total.workHours)} h`, ...(x.has('prices') ? [] : ['', kr(b.total.workAmount)])];
@@ -353,9 +353,16 @@ export async function buildFieldReportPdf(input: FieldReportData | FieldReportDa
     }
     // Comments without a report text are still useful internally.
     // 4. Deviations
-    if (!x.has('deviations') && d.dev.length) {
+    const ata = d.dev.filter(v => v.category === 'ata');
+    if (ata.length) {
+      section(sec++, 'ÄTA – ändrings- och tilläggsarbeten');
+      autoTable(doc, { ...tableBase, startY: y, head: [['Datum', 'Montör', 'Beskrivning']], body: ata.map(v => [String(v.occurred_at ?? '').slice(0, 10), nm(d, v.installer_id), v.description]), columnStyles: { 2: { cellWidth: 120 } } });
+      y = lastY() + 8;
+    }
+    const devs = d.dev.filter(v => v.category !== 'ata');
+    if (!x.has('deviations') && devs.length) {
       section(sec++, 'Avvikelser');
-      autoTable(doc, { ...tableBase, startY: y, head: [['Montör', 'Kategori', 'Allvar', 'Status', 'Beskrivning']], body: d.dev.map(v => [nm(d, v.installer_id), v.category, v.severity, v.status ?? '', v.description]), headStyles: { ...tableBase.headStyles, fillColor: RED }, columnStyles: { 4: { cellWidth: 75 } } });
+      autoTable(doc, { ...tableBase, startY: y, head: [['Montör', 'Kategori', 'Allvar', 'Status', 'Beskrivning']], body: devs.map(v => [nm(d, v.installer_id), v.category, v.severity, v.status ?? '', v.description]), headStyles: { ...tableBase.headStyles, fillColor: RED }, columnStyles: { 4: { cellWidth: 75 } } });
       y = lastY() + 8;
     }
   }

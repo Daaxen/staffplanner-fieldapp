@@ -61,6 +61,7 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate, stat
   const [hoursInput, setHoursInput] = useState('');
   const [travelHoursInput, setTravelHoursInput] = useState('');
   const [timeNote, setTimeNote] = useState('');
+  const [isAta, setIsAta] = useState(false);
   const [otherDay, setOtherDay] = useState(false);
   const [km, setKm] = useState('');
   const [mileageNote, setMileageNote] = useState('');
@@ -104,11 +105,11 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate, stat
       projectId, date, startTime, endTime,
       hours: acceptComputed ? undefined : (Number.isFinite(statedHours) ? statedHours : undefined),
       acceptComputed,
-      travelHours: parseHours(travelHoursInput), note: timeNote,
+      travelHours: parseHours(travelHoursInput), note: timeNote, isAta,
     });
     setSaving(false);
     if (!result) return false;
-    setStartTime(''); setEndTime(''); setHoursInput(''); setTravelHoursInput(''); setTimeNote('');
+    setStartTime(''); setEndTime(''); setHoursInput(''); setTravelHoursInput(''); setTimeNote(''); setIsAta(false);
     toast.success('Tiden är sparad');
     return true;
   };
@@ -250,6 +251,10 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate, stat
           <DurationWheel id="travel-hours" label="Restid totalt (tur och retur)" hint="All restid för dagen, båda hållen" value={parseHours(travelHoursInput)} onChange={h => setTravelHoursInput(h ? fmtH(h) : '')} />
         </div>
         <div><Label htmlFor="time-note">Anteckning (gäller dagens arbete och resa)</Label><Textarea id="time-note" placeholder="T.ex. väntetid hos kund, omväg p.g.a. vägarbete" value={timeNote} onChange={e => setTimeNote(e.target.value)} /></div>
+        <label className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer ${isAta ? 'border-status-on-hold bg-status-on-hold/10' : 'border-border'}`}>
+          <input type="checkbox" className="mt-1 h-5 w-5 accent-current" checked={isAta} onChange={e => setIsAta(e.target.checked)} />
+          <span><span className="block text-sm font-semibold text-foreground">ÄTA-timmar</span><span className="block text-xs text-muted-foreground">Bocka i om timmarna är ändrings- eller tilläggsarbete utöver ordern.</span></span>
+        </label>
         <Button className="w-full font-bold bg-status-completed text-primary-foreground hover:bg-status-completed/90" disabled={saving} onClick={() => void submitTime()}>Spara tid för {date}</Button>
       </section>}
 
@@ -333,7 +338,7 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate, stat
       {(timeEntries.length > 0 || expenseEntries.length > 0) && (
         <section className="space-y-2">
           <h2 className="text-sm font-bold text-foreground">Sparat på denna order</h2>
-          {timeEntries.map(entry => <div key={entry.id} className={`flex items-center gap-3 rounded-lg border border-border border-l-4 ${timeLocked ? 'border-l-status-cancelled bg-muted' : 'border-l-status-completed bg-card'} p-3`}><Clock className="w-4 h-4 text-status-completed" /><div className="min-w-0 flex-1"><p className="text-sm font-bold text-foreground">{entry.hours.toFixed(2)} h{entry.travelHours ? ` + ${entry.travelHours.toFixed(2)} h restid` : ''}</p><p className="text-xs text-muted-foreground">{entry.date}{entry.startTime ? ` · ${entry.startTime}–${entry.endTime}` : ''}</p></div>{timeLocked ? <Button variant="ghost" size="icon" aria-label="Tiden är låst" onClick={() => toast.info(TIME_LOCKED_MESSAGE)}><Lock className="w-4 h-4" /></Button> : <><Button variant="ghost" size="icon" aria-label="Ändra tid" onClick={() => setEditing(entry)}><Pencil className="w-4 h-4" /></Button><Button variant="ghost" size="icon" aria-label="Delete time entry" onClick={() => void logs.deleteTime(entry.id)}><Trash2 className="w-4 h-4" /></Button></>}</div>)}
+          {timeEntries.map(entry => <div key={entry.id} className={`flex items-center gap-3 rounded-lg border border-border border-l-4 ${timeLocked ? 'border-l-status-cancelled bg-muted' : 'border-l-status-completed bg-card'} p-3`}><Clock className="w-4 h-4 text-status-completed" /><div className="min-w-0 flex-1"><p className="text-sm font-bold text-foreground">{entry.hours.toFixed(2)} h{entry.travelHours ? ` + ${entry.travelHours.toFixed(2)} h restid` : ''}{entry.isAta && <span className="ml-2 rounded bg-status-on-hold/15 px-1.5 py-0.5 text-[11px] font-bold text-foreground">ÄTA</span>}</p><p className="text-xs text-muted-foreground">{entry.date}{entry.startTime ? ` · ${entry.startTime}–${entry.endTime}` : ''}</p></div>{timeLocked ? <Button variant="ghost" size="icon" aria-label="Tiden är låst" onClick={() => toast.info(TIME_LOCKED_MESSAGE)}><Lock className="w-4 h-4" /></Button> : <><Button variant="ghost" size="icon" aria-label="Ändra tid" onClick={() => setEditing(entry)}><Pencil className="w-4 h-4" /></Button><Button variant="ghost" size="icon" aria-label="Delete time entry" onClick={() => void logs.deleteTime(entry.id)}><Trash2 className="w-4 h-4" /></Button></>}</div>)}
           {expenseEntries.map(entry => <div key={entry.id} className="flex items-center gap-3 rounded-lg border border-border border-l-4 border-l-status-completed bg-card p-3"><Wallet className="w-4 h-4 text-status-completed" /><div className="min-w-0 flex-1"><p className="text-sm font-bold text-foreground">{expenseCategoryLabels[entry.category]} · {money(entry.amount)}</p><p className="text-xs text-muted-foreground">{entry.date}{entry.km ? ` · ${entry.km} km` : ''}</p></div><Button variant="ghost" size="icon" aria-label="Delete cost entry" onClick={() => void logs.deleteExpense(entry.id)}><Trash2 className="w-4 h-4" /></Button></div>)}
         </section>
       )}

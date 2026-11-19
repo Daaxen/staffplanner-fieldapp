@@ -134,7 +134,7 @@ const DeviationForm = ({ projectRef, projectName, installerName, onDone, classNa
       <div>
         <p className="text-sm font-semibold text-foreground mb-2">What happened?</p>
         <div className="grid grid-cols-2 gap-2">
-          {DEVIATION_CATEGORIES.map(c => (
+          {DEVIATION_CATEGORIES.filter(c => c.id !== 'ata').map(c => (
             <button
               key={c.id}
               onClick={() => setCategory(c.id)}

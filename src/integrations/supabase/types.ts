@@ -2340,6 +2340,7 @@ export type Database = {
           hours: number
           id: string
           installer_id: string
+          is_ata: boolean
           note: string | null
           project_group_id: string | null
           project_id: string | null
@@ -2362,6 +2363,7 @@ export type Database = {
           hours?: number
           id?: string
           installer_id: string
+          is_ata?: boolean
           note?: string | null
           project_group_id?: string | null
           project_id?: string | null
@@ -2384,6 +2386,7 @@ export type Database = {
           hours?: number
           id?: string
           installer_id?: string
+          is_ata?: boolean
           note?: string | null
           project_group_id?: string | null
           project_id?: string | null

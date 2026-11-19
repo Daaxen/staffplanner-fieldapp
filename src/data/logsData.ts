@@ -10,6 +10,8 @@ export type TimeEntry = {
   /** Travel time to and from the job. Total time = hours + travelHours. */
   travelHours?: number;
   note?: string;
+  /** Hours earmarked as ÄTA (change/additional work). */
+  isAta?: boolean;
   source: 'timer' | 'manual';
   createdAt: string;
 };

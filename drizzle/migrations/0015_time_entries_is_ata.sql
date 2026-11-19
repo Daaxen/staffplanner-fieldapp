@@ -1,0 +1,1 @@
+ALTER TABLE public.time_entries ADD COLUMN IF NOT EXISTS is_ata boolean NOT NULL DEFAULT false;

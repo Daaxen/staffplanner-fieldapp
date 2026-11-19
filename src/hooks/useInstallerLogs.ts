@@ -49,7 +49,7 @@ export function useInstallerLogs(projects: Project[] = []) {
     setTime((t.data ?? []).map(r => ({
       id: r.id, projectId: projectRefForRowId(r.project_id) ?? r.project_id, installerId: r.installer_id, date: r.entry_date,
       startTime: r.start_time ?? undefined, endTime: r.end_time ?? undefined,
-      hours: Number(r.hours), travelHours: Number(r.travel_hours ?? 0), note: r.note ?? undefined,
+      hours: Number(r.hours), travelHours: Number(r.travel_hours ?? 0), note: r.note ?? undefined, isAta: !!r.is_ata,
       source: (r.source === 'timer' ? 'timer' : 'manual'), createdAt: r.created_at,
     })));
 
@@ -81,7 +81,7 @@ export function useInstallerLogs(projects: Project[] = []) {
 
   const addTime = useCallback(async (entry: {
     projectId: string; date: string; startTime?: string; endTime?: string; hours?: number;
-    travelHours?: number; note?: string; source?: TimeEntry['source'];
+    travelHours?: number; note?: string; source?: TimeEntry['source']; isAta?: boolean;
     /** Set once the user has accepted the figure calculated from the times. */
     acceptComputed?: boolean;
   }) => {
@@ -115,7 +115,7 @@ export function useInstallerLogs(projects: Project[] = []) {
       project_id: projectRowId, snapshot_project_name: meta.projectName, snapshot_client_name: meta.clientName,
       installer_id: installerId, entry_date: entry.date, start_time: entry.startTime ?? null,
       end_time: entry.endTime ?? null, hours, travel_hours: travelHours,
-      note: entry.note ?? null, source: entry.source ?? 'manual',
+      note: entry.note ?? null, source: entry.source ?? 'manual', is_ata: entry.isAta ?? false,
       hourly_rate: ratesForClient(project?.client, project?.clientId).hourlyRate ?? null,
     }).select().maybeSingle();
     if (error) { toast.error(error.message); return null; }

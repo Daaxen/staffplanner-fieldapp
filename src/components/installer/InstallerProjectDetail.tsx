@@ -29,6 +29,7 @@ import PhotoManager from '@/components/installer/PhotoManager';
 import { useFieldWork } from '@/hooks/useFieldWork';
 import { useAuth } from '@/hooks/useAuth';
 import DeviationForm from '@/components/installer/DeviationForm';
+import AtaForm from '@/components/installer/AtaForm';
 import OrderDocumentsSection from '@/components/documents/OrderDocumentsSection';
 
 interface InstallerProjectDetailProps {
@@ -177,7 +178,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onPickUp, in
           </TabsTrigger>
           <TabsTrigger value="deviation" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-[11px] h-full gap-1">
             <AlertTriangle className="w-3 h-3" />
-            Deviation
+            ÄTA/Avv.
           </TabsTrigger>
           <TabsTrigger value="summary" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-[11px] h-full gap-1">
             <ClipboardCheck className="w-3 h-3" />
@@ -195,7 +196,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onPickUp, in
                   ['log', 'Tid', Clock, timeCover.tone],
                   ['log', 'Utlägg', Receipt, reportTone(logs.expensesFor(project.id).some(e => e.category !== 'mileage'))],
                   ['log', 'Körning', MapPin, reportTone(logs.expensesFor(project.id).some(e => e.category === 'mileage'))],
-                  ['deviation', 'Avvikelse', AlertTriangle, 'problem'],
+                  ['deviation', 'ÄTA / Avvikelse', AlertTriangle, 'problem'],
                   ['report', 'Foto', Camera, reportTone(photoCount > 0, 'neutral')],
                   ['summary', 'Rapport & signering', ClipboardCheck, missing.length > 0 ? 'progress' : 'done'],
                 ] as const).map(([target, label, Icon, tone]) => (
@@ -427,8 +428,12 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onPickUp, in
         </TabsContent>
 
         <TabsContent value="deviation" className="flex-1 overflow-auto mt-0">
-          <div className="p-4">
-            <DeviationForm projectRef={project.id} projectName={project.name} installerName={installer.name} />
+          <div className="p-4 space-y-4">
+            <AtaForm projectRef={project.id} projectName={project.name} installerName={installer.name} />
+            <details className="rounded-2xl border border-border">
+              <summary className="cursor-pointer p-3 text-sm font-semibold text-foreground">Rapportera avvikelse (problem på plats)</summary>
+              <DeviationForm className="border-0" projectRef={project.id} projectName={project.name} installerName={installer.name} />
+            </details>
           </div>
         </TabsContent>
 
