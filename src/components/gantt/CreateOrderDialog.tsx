@@ -483,6 +483,14 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
         </DialogHeader>
 
         <div className="grid gap-4 py-2">
+          <div className="grid grid-cols-2 gap-2">
+            {([['installation','🔧 Montage'],['transport','🚛 Transport']] as const).map(([v,l]) => (
+              <button key={v} type="button" onClick={() => { setProjectType(v); setTemplateId(v === 'transport' ? (PROJECT_TEMPLATES.find(t => t.projectType === 'transport')?.id ?? DEFAULT_TEMPLATE_ID) : DEFAULT_TEMPLATE_ID); }}
+                className={cn("rounded-md border px-3 py-2 text-sm font-medium transition-colors",
+                  projectType === v ? "border-primary bg-primary/10 text-primary" : "border-input bg-background text-muted-foreground hover:bg-accent")}>{l}</button>
+            ))}
+          </div>
+
           {/* Project Name & PO Number */}
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
@@ -555,8 +563,8 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
             {/* Vehicle type — transport only */}
             {projectType === 'transport' && (
               <div className="grid gap-1.5">
-                <Label htmlFor="vehicle-type">Vehicle Type</Label>
-                <Input id="vehicle-type" placeholder="e.g. Van, Truck" value={vehicleType} onChange={(e) => setVehicleType(e.target.value)} />
+                <Label htmlFor="vehicle-type">Fordonstyp</Label>
+                <Input id="vehicle-type" placeholder="t.ex. skåpbil, lastbil" value={vehicleType} onChange={(e) => setVehicleType(e.target.value)} />
               </div>
             )}
           </div>
@@ -565,7 +573,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
           {projectType === 'transport' && (
             <div className="grid grid-cols-1 gap-3">
               <div className="grid gap-1.5">
-                <Label>Date and Time *</Label>
+                <Label>Datum och tid *</Label>
                 <div className="grid grid-cols-4 gap-3">
                   <div className="grid gap-1.5">
                     <Popover open={startOpen} onOpenChange={setStartOpen}>
@@ -673,9 +681,9 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
           {projectType === 'transport' && (
             <div className="grid gap-2">
               <div className="flex items-center justify-between">
-                <Label>Route Stops</Label>
+                <Label>Stopp på rutten</Label>
                 <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={addStop}>
-                  <Plus className="h-3 w-3" /> Add Stop
+                  <Plus className="h-3 w-3" /> Lägg till stopp
                 </Button>
               </div>
               <div className="border border-input rounded-md divide-y divide-border">
@@ -836,7 +844,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
 
           {/* Assign Installers with suitability */}
           <div className="grid gap-1.5">
-            <Label>{projectType === 'transport' ? 'Assign Drivers' : 'Tilldela tekniker'}</Label>
+            <Label>{projectType === 'transport' ? 'Tilldela förare' : 'Tilldela tekniker'}</Label>
             <RecommendedInstallers
               recommendations={recommendations}
               selectedIds={selectedInstallers}
