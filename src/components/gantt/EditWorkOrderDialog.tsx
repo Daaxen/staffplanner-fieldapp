@@ -1,3 +1,4 @@
+import TravelDayToggles from '@/components/gantt/TravelDayToggles';
 import AddressAutocomplete from '@/components/maps/AddressAutocomplete';
 import { countryFromCode } from '@/lib/perDiem';
 import { usePerDiemCountries } from '@/hooks/usePerDiem';
@@ -38,6 +39,8 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
   const [allProjects] = useProjects();
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
   const [worksWeekends, setWorksWeekends] = useState(false);
+  const [travelBefore, setTravelBefore] = useState(false);
+  const [travelAfter, setTravelAfter] = useState(false);
   const [country, setCountry] = useState('Sverige');
   const countries = usePerDiemCountries();
   const [overrides, setOverrides] = useState<Record<string, InstallerDates>>({});
@@ -62,6 +65,8 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
     if (!project || !open) return;
     setAssigneeIds(project.assigneeIds ?? []);
     setWorksWeekends(!!project.worksWeekends);
+    setTravelBefore(!!project.travelBefore);
+    setTravelAfter(!!project.travelAfter);
     setCountry(project.country || 'Sverige');
     setOverrides({ ...(project.installerDateOverrides ?? {}) });
     setForm({
@@ -161,6 +166,8 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
       contactEmail: form.contactEmail.trim() || undefined,
       description: form.description.trim() || undefined,
       worksWeekends,
+      travelBefore,
+      travelAfter,
       country,
       assigneeIds,
       installerDateOverrides: ownDays,
@@ -229,6 +236,9 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
                 <span><span className="text-sm font-semibold">Arbete pågår över helg (lör–sön)</span>
                 <span className="block text-xs text-muted-foreground">Av: helgdagar planeras inte och kräver ingen tid.</span></span>
               </label>
+            </div>
+            <div className="col-span-2">
+              <TravelDayToggles before={travelBefore} after={travelAfter} onBefore={setTravelBefore} onAfter={setTravelAfter} startDate={form.startDate} endDate={form.endDate} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="wo-stime">Start time</Label>

@@ -141,6 +141,10 @@ export interface Project {
   isFlexOrder?: boolean;
   /** Work continues over Saturday–Sunday. Default false: weekends are not planned. */
   worksWeekends?: boolean;
+  /** Travel day the day before start (e.g. Sunday before a Monday start). */
+  travelBefore?: boolean;
+  /** Travel day home the day after the last work day. */
+  travelAfter?: boolean;
   /** Country where the work is done (Swedish name, matches Skatteverket's list). Default Sverige. */
   country?: string;
   description?: string;

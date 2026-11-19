@@ -294,6 +294,8 @@ async function loadProjects() {
           estimatedHours: col('estimated_hours', d.estimatedHours),
           isFlexOrder: col('is_flex_order', d.isFlexOrder),
           worksWeekends: col('works_weekends', d.worksWeekends) ?? false,
+          travelBefore: !!d.travelBefore,
+          travelAfter: !!d.travelAfter,
           country: col('country', d.country) ?? 'Sverige',
           description: col('description', d.description),
           hourlyRate: col('hourly_rate', d.hourlyRate),

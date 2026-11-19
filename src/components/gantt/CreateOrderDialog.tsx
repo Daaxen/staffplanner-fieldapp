@@ -33,6 +33,7 @@ import { recommendInstallers } from '@/lib/assignmentRecommendations';
 import { projectDateRangeError } from '@/lib/validation/dates';
 import { saveBookings, findBookingConflicts, type BookingConflict } from '@/lib/bookings';
 import { registerBookingOverride } from '@/lib/appData';
+import TravelDayToggles from '@/components/gantt/TravelDayToggles';
 import BookingOverrideDialog from '@/components/scheduling/BookingOverrideDialog';
 
 interface CreateOrderDialogProps {
@@ -83,6 +84,8 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
   const [estimatedHours, setEstimatedHours] = useState('');
   const [isFlexOrder, setIsFlexOrder] = useState(false);
   const [worksWeekends, setWorksWeekends] = useState(false);
+  const [travelBefore, setTravelBefore] = useState(false);
+  const [travelAfter, setTravelAfter] = useState(false);
   const [pendingProject, setPendingProject] = useState<Project | null>(null);
   const [overrideOpen, setOverrideOpen] = useState(false);
   const [bookingConflicts, setBookingConflicts] = useState<BookingConflict[]>([]);
@@ -108,6 +111,8 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
 
   const resetForm = () => {
     setTemplateId(DEFAULT_TEMPLATE_ID);
+    setTravelBefore(false);
+    setTravelAfter(false);
     setProjectType('installation');
     setName('');
     setProjectNumber('');
@@ -345,6 +350,8 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
       estimatedHours: projectType !== 'transport' && estimatedHours ? parseFloat(estimatedHours) : undefined,
       isFlexOrder,
       worksWeekends,
+      travelBefore,
+      travelAfter,
       description: description || undefined,
       ...(projectType === 'transport' && {
         transportStops: transportStops.filter(s => s.address.trim()),
@@ -745,6 +752,9 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
                 <span><span className="text-sm font-semibold">Arbete pågår över helg (lör–sön)</span>
                 <span className="block text-xs text-muted-foreground">Av: helgdagar planeras inte och kräver ingen tid.</span></span>
               </label>
+
+          <TravelDayToggles before={travelBefore} after={travelAfter} onBefore={setTravelBefore} onAfter={setTravelAfter}
+            startDate={startDate ? format(startDate, 'yyyy-MM-dd') : undefined} endDate={endDate ? format(endDate, 'yyyy-MM-dd') : undefined} />
 
           {/* Transport Stops */}
           {projectType === 'transport' && (

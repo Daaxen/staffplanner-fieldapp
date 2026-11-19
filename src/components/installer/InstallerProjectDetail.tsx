@@ -21,6 +21,7 @@ import {
   signOffsFor,
 } from '@/lib/completionRequirements';
 import { templateForProject } from '@/lib/projectTemplates';
+import { reportingRange } from '@/lib/travelDays';
 import ProjectLogTab from '@/components/installer/reporting/ProjectLogTab';
 import type { InstallerLogs } from '@/hooks/useInstallerLogs';
 import MiniMap from '@/components/maps/MiniMap';
@@ -422,7 +423,7 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onPickUp, in
 
         {/* LOG TAB */}
         <TabsContent value="log" className="flex-1 overflow-auto mt-0">
-          <ProjectLogTab projectId={project.id} logs={logs} plannedHours={project.estimatedHours} startDate={project.startDate} endDate={project.endDate} status={project.status} isAdmin={isAdmin} country={project.country} />
+          <ProjectLogTab projectId={project.id} logs={logs} plannedHours={project.estimatedHours} {...reportingRange(project)} status={project.status} isAdmin={isAdmin} country={project.country} />
         </TabsContent>
 
         <TabsContent value="deviation" className="flex-1 overflow-auto mt-0">

@@ -1,4 +1,5 @@
 import { useRef, type ReactNode } from 'react';
+import { Car } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { weekendSegments } from '@/lib/ganttDates';
 
@@ -19,6 +20,8 @@ interface DraggableBarProps {
   /** First visible grid day (yyyy-mm-dd); enables the weekend overlay. */
   gridStart?: Date;
   worksWeekends?: boolean;
+  travelBefore?: boolean;
+  travelAfter?: boolean;
 }
 
 const DraggableBar = ({
@@ -26,6 +29,7 @@ const DraggableBar = ({
   projectStartDate, projectEndDate,
   className, style, children, onClick, onDragEnd,
   allowVerticalDrag = false, gridStart, worksWeekends = false,
+  travelBefore = false, travelAfter = false,
 }: DraggableBarProps) => {
   const barRef = useRef<HTMLDivElement>(null);
   const dragInfo = useRef<{
@@ -130,6 +134,14 @@ const DraggableBar = ({
       style={{ left, width, top, height, ...style }}
       onMouseDown={(e) => handleMouseDown(e, 'move')}
     >
+      {travelBefore && (
+        <div aria-label="Resdag dit" title="Resdag dit" className="absolute inset-y-0 pointer-events-none rounded-l-md bg-travel text-foreground text-[10px] font-bold flex items-center justify-center gap-0.5 overflow-hidden"
+          style={{ left: -colWidth, width: colWidth - 2 }}><Car className="w-3 h-3 shrink-0" />Resa</div>
+      )}
+      {travelAfter && (
+        <div aria-label="Resdag hem" title="Resdag hem" className="absolute inset-y-0 pointer-events-none rounded-r-md bg-travel text-foreground text-[10px] font-bold flex items-center justify-center gap-0.5 overflow-hidden"
+          style={{ left: width + 2, width: colWidth - 2 }}><Car className="w-3 h-3 shrink-0" />Resa</div>
+      )}
       {/* Left resize handle */}
       <div
         className="absolute left-0 top-0 w-2 h-full cursor-col-resize z-10 group"
