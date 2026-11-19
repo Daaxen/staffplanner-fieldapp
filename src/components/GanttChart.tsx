@@ -1,3 +1,4 @@
+import { periodButtonLabel } from '@/lib/ganttDates';
 import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, LayoutList, Users, Building2, Plus, Send, Folder } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -25,14 +26,6 @@ type ViewMode = 'day' | 'week' | 'month';
 type GanttMode = 'workorders' | 'projects' | 'installers' | 'clients';
 
 const allStatuses: ProjectStatus[] = ['open', 'scheduled', 'in-progress', 'completed', 'on-hold', 'cancelled'];
-
-function getISOWeekNumber(date: Date): number {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-}
 
 interface GanttChartProps {
   onPendingChangesCount?: (count: number) => void;
@@ -145,17 +138,7 @@ const GanttChart = ({ onPendingChangesCount }: GanttChartProps) => {
     return `${first.toLocaleDateString('en', { month: 'short', day: 'numeric' })} – ${last.toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' })}`;
   }, [days]);
 
-  const todayLabel = useMemo(() => {
-    const now = new Date();
-    switch (viewMode) {
-      case 'day':
-        return now.toLocaleDateString('en', { month: 'short', day: 'numeric' });
-      case 'week':
-        return `Week ${getISOWeekNumber(now)}`;
-      case 'month':
-        return now.toLocaleDateString('en', { month: 'long' });
-    }
-  }, [viewMode]);
+  const todayLabel = useMemo(() => periodButtonLabel(viewMode, startDate), [viewMode, startDate]);
 
   const getInstaller = (id: string | null) => id ? installers.find(i => i.id === id) ?? null : null;
 

@@ -63,3 +63,18 @@ export function weekendSegments(start: string, end: string, gridStart: Date): nu
   }
   return out;
 }
+
+export function getISOWeekNumber(date: Date): number {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+}
+
+/** Label for the planner's "today" button, describing the period actually shown. */
+export function periodButtonLabel(view: string, shownStart: Date): string {
+  if (view === 'week') return `Vecka ${getISOWeekNumber(shownStart)}`;
+  if (view === 'month') return shownStart.toLocaleDateString('sv-SE', { month: 'long' });
+  return shownStart.toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' });
+}
