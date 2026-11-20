@@ -46,3 +46,20 @@ export function countryFromCode(code?: string | null): string | null {
     return null;
   }
 }
+
+const CITY_COUNTRY: [RegExp, string][] = [
+  [/\b(oslo|bergen|trondheim|stavanger|troms(ø|o)|fornebu|hamar|haugesund|flesland|holmenkollen|lerkendal|solli|kristiansand|bod(ø|o)|ålesund|alesund|drammen|lillehammer)\b/i, 'Norge'],
+  [/\b(helsinki|helsingfors|vaasa|vasa|tampere|oulu|turku|åbo|espoo|vantaa|jyväskylä|kuopio|lahti|rovaniemi|laajavuori|hakaniemi|saaristonkatu)\b/i, 'Finland'],
+  [/\b(københavn|kobenhavn|köpenhamn|copenhagen|cph|aarhus|århus|odense|aalborg|horsens|nørreport|norreport)\b/i, 'Danmark'],
+  [/\b(berlin|hamburg|münchen|munich|frankfurt|stuttgart|hafenpark|köln|cologne|düsseldorf)\b/i, 'Tyskland'],
+];
+
+/** Guess country from free text (e.g. "Scandic Oslo City SU - NO"). Returns null when unsure. */
+export function countryFromText(text?: string | null): string | null {
+  const t = (text ?? '').trim();
+  if (!t) return null;
+  const code = t.match(/(?:^|[\s(\-,])(NO|FI|DK|DE|SE)(?:\)|\s*$|[\s,])/);
+  if (code) return countryFromCode(code[1]);
+  for (const [re, c] of CITY_COUNTRY) if (re.test(t)) return c;
+  return null;
+}

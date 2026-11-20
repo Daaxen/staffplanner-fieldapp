@@ -22,7 +22,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useClients } from '@/lib/clientStore';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import AddressAutocomplete from '@/components/maps/AddressAutocomplete';
-import { countryFromCode } from '@/lib/perDiem';
+import { countryFromCode, countryFromText } from '@/lib/perDiem';
+import { SearchSelect } from '@/components/ui/search-select';
+import { usePerDiemCountries } from '@/hooks/usePerDiem';
 import MiniMap from '@/components/maps/MiniMap';
 import ConflictPanel from '@/components/scheduling/ConflictPanel';
 import { detectConflicts, installerConflicts, hasBlocking, type AssignmentDraft } from '@/lib/schedulingConflicts';
@@ -76,6 +78,8 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
   const [location, setLocation] = useState('');
   const [locationCoords, setLocationCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [country, setCountry] = useState<string | null>(null);
+  const [countryManual, setCountryManual] = useState(false);
+  const countries = usePerDiemCountries();
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [startTime, setStartTime] = useState('08:00');
@@ -120,6 +124,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
     setClientRef('');
     setLocation('');
     setCountry(null);
+    setCountryManual(false);
     setDescription('');
     setStartDate(undefined);
     setStartTime('08:00');
@@ -340,7 +345,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
       ...(projectType !== 'transport' && locationCoords
         ? { locationLat: locationCoords.lat, locationLng: locationCoords.lng }
         : {}),
-      ...(projectType !== 'transport' && country ? { country } : {}),
+      ...(projectType !== 'transport' ? { country: country ?? countryFromText(`${name} ${location}`) ?? 'Sverige' } : {}),
       status,
       assigneeIds: selectedInstallers,
       startDate: format(startDate, 'yyyy-MM-dd'),
@@ -554,9 +559,12 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
                 <AddressAutocomplete
                   id="order-location"
                   value={location}
-                  onChange={(v) => { setLocation(v); setLocationCoords(null); }}
+                  onChange={(v) => { setLocation(v); setLocationCoords(null); if (!countryManual) setCountry(countryFromText(`${name} ${v}`)); }}
                   onSelect={(p) => { setLocationCoords(p.lat != null && p.lng != null ? { lat: p.lat, lng: p.lng } : null); setCountry(countryFromCode(p.countryCode)); }}
                 />
+                <Label className="mt-2">Land (styr traktamente)</Label>
+                <SearchSelect value={country ?? 'Sverige'} onChange={v => { setCountry(v || 'Sverige'); setCountryManual(true); }} placeholder="Sverige"
+                  options={countries.map(c => ({ value: c, label: c }))} />
               </div>
             )}
 
