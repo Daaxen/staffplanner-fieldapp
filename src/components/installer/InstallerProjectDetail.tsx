@@ -1,3 +1,4 @@
+import DraftRestoredNote from '@/components/installer/DraftRestoredNote';
 import { ArrowLeft, MapPin, Clock, Users, FileText, Phone, Camera, CheckSquare, ExternalLink, Info, Paperclip, ClipboardCheck, Mail, Receipt, AlertCircle, AlertTriangle, Check, X } from 'lucide-react';
 import { type Project, type Installer, projectTypeIcons, projectTypeLabels, statusLabels, installers } from '@/data/mockData';
 import { cn } from '@/lib/utils';
@@ -54,7 +55,9 @@ const statusDotMap: Record<string, string> = {
 
 const InstallerProjectDetail = ({ project, installer, logs, onBack, onPickUp, initialTab = 'info', topAction }: InstallerProjectDetailProps) => {
   
-  const [tab, setTab] = useState(initialTab);
+  const tabKey = `fetch.tab.${project.id}`;
+  const [tab, setTabState] = useState<typeof initialTab>(() => (sessionStorage.getItem(tabKey) as typeof initialTab | null) ?? initialTab);
+  const setTab = (t: typeof initialTab) => { sessionStorage.setItem(tabKey, t); setTabState(t); };
   // Same saved field report, offline queue and sync as technician mode.
   const { isAdmin } = useAuth();
   const { work, state: completionState, update, submitReport, replace, loaded, online } = useFieldWork(project.id, project.name);
@@ -156,6 +159,8 @@ const InstallerProjectDetail = ({ project, installer, logs, onBack, onPickUp, in
       )}
 
       {topAction && <div className="shrink-0 px-4 py-2 border-b border-border bg-card">{topAction}</div>}
+
+      <DraftRestoredNote projectId={project.id} />
 
       {/* Tabbed content */}
       <Tabs value={tab} onValueChange={value => setTab(value as typeof tab)} className="flex-1 flex flex-col overflow-hidden">

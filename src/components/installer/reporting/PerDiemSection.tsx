@@ -1,5 +1,6 @@
+import { useDraftState, draftScope } from '@/hooks/useDraftState';
 import { projectRowId } from '@/lib/appData';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { BedDouble, Lock, Trash2, UtensilsCrossed } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -41,13 +42,28 @@ const PerDiemSection = ({ projectId, country: orderCountry, date, locked }: Prop
   const [confirmed, setConfirmed] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Unsaved choices for this day survive app switches until saved.
+  type PdDraft = { dayType: DayType; overnight: Overnight; meals: Meals; confirmed: boolean };
+  const [draft, setDraft] = useDraftState<PdDraft | null>(draftScope(projectId) + `perdiem.${date}`, null);
+  const applied = useRef<string | null>(null);
+
   useEffect(() => {
+    applied.current = null;
     setCountry(existing?.country ?? orderCountry ?? DOMESTIC);
-    setDayType(existing?.day_type ?? 'full');
-    setOvernight(existing?.overnight ?? 'hotel');
-    setMeals({ breakfast: !!existing?.breakfast_provided, lunch: !!existing?.lunch_provided, dinner: !!existing?.dinner_provided });
-    setConfirmed(!!existing?.distance_confirmed);
+    setDayType(draft?.dayType ?? existing?.day_type ?? 'full');
+    setOvernight(draft?.overnight ?? existing?.overnight ?? 'hotel');
+    setMeals(draft?.meals ?? { breakfast: !!existing?.breakfast_provided, lunch: !!existing?.lunch_provided, dinner: !!existing?.dinner_provided });
+    setConfirmed(draft?.confirmed ?? !!existing?.distance_confirmed);
+    applied.current = date;
   }, [existing?.id, date, orderCountry]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (applied.current !== date) return;
+    const changed = !existing || existing.day_type !== dayType || existing.overnight !== overnight || !!existing.breakfast_provided !== meals.breakfast
+      || !!existing.lunch_provided !== meals.lunch || !!existing.dinner_provided !== meals.dinner || !!existing.distance_confirmed !== confirmed;
+    const isDefault = !existing && dayType === 'full' && overnight === 'hotel' && !meals.breakfast && !meals.lunch && !meals.dinner && !confirmed;
+    setDraft(changed && !isDefault ? { dayType, overnight, meals, confirmed } : null);
+  }, [dayType, overnight, meals, confirmed]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const rate = rateFor(rates, country, date);
   const preview = useMemo(() => rate ? perDiemAmount({ fullDayRate: rate.full_day, country, dayType, overnight, meals }) : null, [rate, country, dayType, overnight, meals]);
@@ -64,6 +80,7 @@ const PerDiemSection = ({ projectId, country: orderCountry, date, locked }: Prop
     }, { onConflict: 'project_id,installer_id,entry_date' });
     setSaving(false);
     if (error) { toast.error(error.message.includes('TIME_LOCKED') ? TIME_LOCKED_MESSAGE : `Traktamentet kunde inte sparas: ${error.message}`); return; }
+    setDraft(null);
     toast.success(`Traktamente sparat för ${date}`);
     void reload();
   };

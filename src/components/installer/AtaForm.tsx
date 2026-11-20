@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { useDraftState, draftScope } from '@/hooks/useDraftState';
 import { Camera, FilePlus2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -13,10 +14,10 @@ interface Props { projectRef: string; projectName?: string; installerName?: stri
 
 /** Quick ÄTA registration on site: what, extra time/material, who approved, optional photo. */
 const AtaForm = ({ projectRef, projectName, installerName }: Props) => {
-  const [what, setWhat] = useState('');
-  const [extra, setExtra] = useState('');
-  const [approvedBy, setApprovedBy] = useState('');
-  const [photoIds, setPhotoIds] = useState<string[]>([]);
+  const [what, setWhat] = useDraftState(draftScope(projectRef) + 'ata.what', '');
+  const [extra, setExtra] = useDraftState(draftScope(projectRef) + 'ata.extra', '');
+  const [approvedBy, setApprovedBy] = useDraftState(draftScope(projectRef) + 'ata.approvedBy', '');
+  const [photoIds, setPhotoIds] = useDraftState<string[]>(draftScope(projectRef) + 'ata.photos', []);
   const [saving, setSaving] = useState(false);
   const file = useRef<HTMLInputElement>(null);
   const online = useOnlineStatus();

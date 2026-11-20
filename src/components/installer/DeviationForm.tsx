@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useDraftState, draftScope } from '@/hooks/useDraftState';
 import { format } from 'date-fns';
 import { AlertTriangle, Camera, Clock, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -33,10 +34,10 @@ const severityStyle: Record<DeviationSeverity, string> = {
 };
 
 const DeviationForm = ({ projectRef, projectName, installerName, onDone, className }: DeviationFormProps) => {
-  const [category, setCategory] = useState<DeviationCategory | null>(null);
-  const [severity, setSeverity] = useState<DeviationSeverity>('medium');
-  const [description, setDescription] = useState('');
-  const [photoIds, setPhotoIds] = useState<string[]>([]);
+  const [category, setCategory] = useDraftState<DeviationCategory | null>(draftScope(projectRef) + 'dev.category', null);
+  const [severity, setSeverity] = useDraftState<DeviationSeverity>(draftScope(projectRef) + 'dev.severity', 'medium');
+  const [description, setDescription] = useDraftState(draftScope(projectRef) + 'dev.description', '');
+  const [photoIds, setPhotoIds] = useDraftState<string[]>(draftScope(projectRef) + 'dev.photos', []);
   const [saved, setSaved] = useState<{ label: string; description: string; photos: number; offline: boolean } | null>(null);
   const [previews, setPreviews] = useState<Record<string, string>>({});
   const [occurredAt] = useState(() => new Date());

@@ -1,3 +1,4 @@
+import { setDraftUser } from '@/hooks/useDraftState';
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Session, User } from '@supabase/supabase-js';
@@ -35,6 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_ev, s) => {
       setSession(s);
+      setDraftUser(s?.user?.id);
       setUser(s?.user ?? null);
       if (s?.user) {
         setTimeout(() => loadRoles(s.user.id), 0);
@@ -44,6 +46,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
     supabase.auth.getSession().then(async ({ data }) => {
       setSession(data.session);
+      setDraftUser(data.session?.user?.id);
       setUser(data.session?.user ?? null);
       if (data.session?.user) await loadRoles(data.session.user.id);
       setLoading(false);

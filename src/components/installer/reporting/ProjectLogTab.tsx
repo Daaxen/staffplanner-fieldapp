@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
+import { useDraftState, draftScope } from '@/hooks/useDraftState';
 import { Camera, Clock, Lock, MapPin, Paperclip, Pencil, Receipt, Trash2, Wallet, X } from 'lucide-react';
 import { missingReceiptMessage, receiptRequired, uploadReceipt, RECEIPT_ACCEPT } from '@/lib/receipts';
 import { toast } from 'sonner';
@@ -51,24 +52,25 @@ const ProjectLogTab = ({ projectId, logs, plannedHours, startDate, endDate, stat
   const closed = isTimeLocked(status);
   const timeLocked = closed && !isAdmin;
   // Default to the order's own calendar day when today is outside the order, so late reports land on the right day.
-  const [date, setDate] = useState(() => {
+  const dk = (f: string) => draftScope(projectId) + f;
+  const [date, setDate] = useDraftState(dk('log.date'), () => {
     const t = today();
     const list = orderDays(startDate, endDate);
     return list.length === 0 || list.includes(t) ? t : (t > list[list.length - 1] ? list[list.length - 1] : list[0]);
   });
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
-  const [hoursInput, setHoursInput] = useState('');
-  const [travelHoursInput, setTravelHoursInput] = useState('');
-  const [timeNote, setTimeNote] = useState('');
-  const [isAta, setIsAta] = useState(false);
-  const [otherDay, setOtherDay] = useState(false);
-  const [km, setKm] = useState('');
-  const [mileageNote, setMileageNote] = useState('');
-  const [category, setCategory] = useState<ExpenseCategory>('materials');
-  const [amount, setAmount] = useState('');
-  const [expenseNote, setExpenseNote] = useState('');
-  const [receipts, setReceipts] = useState<{ path: string; label: string }[]>([]);
+  const [startTime, setStartTime] = useDraftState(dk('log.startTime'), '');
+  const [endTime, setEndTime] = useDraftState(dk('log.endTime'), '');
+  const [hoursInput, setHoursInput] = useDraftState(dk('log.hoursInput'), '');
+  const [travelHoursInput, setTravelHoursInput] = useDraftState(dk('log.travelHoursInput'), '');
+  const [timeNote, setTimeNote] = useDraftState(dk('log.timeNote'), '');
+  const [isAta, setIsAta] = useDraftState(dk('log.isAta'), false);
+  const [otherDay, setOtherDay] = useDraftState(dk('log.otherDay'), false);
+  const [km, setKm] = useDraftState(dk('log.km'), '');
+  const [mileageNote, setMileageNote] = useDraftState(dk('log.mileageNote'), '');
+  const [category, setCategory] = useDraftState<ExpenseCategory>(dk('log.category'), 'materials');
+  const [amount, setAmount] = useDraftState(dk('log.amount'), '');
+  const [expenseNote, setExpenseNote] = useDraftState(dk('log.expenseNote'), '');
+  const [receipts, setReceipts] = useDraftState<{ path: string; label: string }[]>(dk('log.receipts'), []);
   const [uploading, setUploading] = useState(false);
   const cameraInput = useRef<HTMLInputElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
