@@ -18,7 +18,7 @@ export function useTimeReportingRefs() {
       const [c, g, o, a, e] = await Promise.all([
         supabase.rpc('time_report_clients'),
         supabase.from('project_groups').select('id,name,project_number,client_id').order('name'),
-        supabase.from('projects').select('id,name,project_number,client_id,project_group_id,status').eq('sandbox', false).neq('status', 'cancelled').order('name'),
+        supabase.from('projects').select('id,name,ref,project_number,client_id,project_group_id,status').eq('sandbox', false).neq('status', 'cancelled').order('name'),
         supabase.from('time_activity_types').select('id,name').eq('active', true).order('sort_order'),
         supabase.from('installers').select('id,name').order('name'),
       ]);
@@ -32,7 +32,7 @@ export function useTimeReportingRefs() {
   return { clients, groups, orders, activities, employees };
 }
 
-const COLS = 'id,installer_id,entry_date,client_id,project_group_id,project_id,activity_type_id,hours,travel_hours,description,note,created_at,updated_at,hourly_rate';
+const COLS = 'id,installer_id,entry_date,client_id,project_group_id,project_id,activity_type_id,hours,travel_hours,description,note,created_at,updated_at,hourly_rate,is_ata';
 
 export function useTimeRows(filter: { from: string; to: string; installerId?: string | null }) {
   const [rows, setRows] = useState<TimeRow[]>([]);

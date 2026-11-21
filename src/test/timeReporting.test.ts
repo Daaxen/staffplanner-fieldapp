@@ -77,12 +77,16 @@ describe('summaries and export', () => {
     expect(weekDays('2026-09-26')).toEqual(['2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25', '2026-09-26', '2026-09-27']);
   });
   it('exports exactly the spec columns and total', () => {
-    const line = Object.fromEntries(EXPORT_COLUMNS.map(c => [c, c === 'Antal timmar' ? 2 : 'x'])) as never;
+    const line = Object.fromEntries(EXPORT_COLUMNS.map(c => [c, c === 'Antal timmar' || c === 'Arbetstid' ? 2 : 'x'])) as never;
     const wb = buildWorkbook([line, line]);
     const rows = XLSX.utils.sheet_to_json<unknown[]>(wb.Sheets.Tidsrapport, { header: 1 });
     expect(rows[0]).toEqual([...EXPORT_COLUMNS]);
     expect(rows[0]).toContain("Debiterbart (kr)");
-    expect(rows[rows.length - 1][8]).toBe(4);
+    expect(rows[0]).toEqual(expect.arrayContaining(['Ordernummer', 'Order', 'PO-nummer', 'ÄTA']));
+    const last = rows[rows.length - 1];
+    expect(last[0]).toBe('Totalt');
+    expect(last[EXPORT_COLUMNS.indexOf('Antal timmar')]).toBe(4);
+    expect(last[EXPORT_COLUMNS.indexOf('Arbetstid')]).toBe(4);
     expect(exportFileName('2026-09-01', '2026-09-30')).toBe('tidsrapport_2026-09-01_2026-09-30.xlsx');
   });
   it('keeps work time and travel time apart in summaries', () => {

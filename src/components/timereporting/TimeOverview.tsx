@@ -119,7 +119,7 @@ export default function TimeOverview({ exportMode = false }: { exportMode?: bool
       const c = by(refs.clients, r.client_id), g = by(refs.groups, r.project_group_id), o = by(refs.orders, r.project_id);
       return {
         Datum: r.entry_date, Medarbetare: by(refs.employees, r.installer_id)?.name ?? '', Kundnummer: c?.customer_number ?? '',
-        Kundnamn: c?.name ?? '', Projektnummer: g?.project_number ?? '', Projektnamn: g?.name ?? '', Ordernummer: o?.project_number ?? '',
+        Kundnamn: c?.name ?? '', Projektnummer: g?.project_number ?? '', Projektnamn: g?.name ?? '', Ordernummer: o?.ref ?? '', Order: o?.name ?? '', 'PO-nummer': o?.project_number ?? '', ÄTA: r.is_ata ? 'Ja' : '',
         Aktivitetstyp: by(refs.activities, r.activity_type_id)?.name ?? '', Arbetstid: Math.round(Number(r.hours) * 100) / 100, Restid: Math.round(Number(r.travel_hours ?? 0) * 100) / 100, 'Antal timmar': Math.round(rowHours(r) * 100) / 100, 'Utlägg (kr)': r.expense || '', 'Mil (km)': r.km || '', 'Mil (kr)': r.mileage || '', 'Traktamente (kr)': r.perDiem || '',
         Orderstatus: statusOf(r), Timpris: billableRate(r, ordR(r), cliR(r)) ?? '', 'Debiterbart (kr)': amountOf(r) ?? '',
         Beskrivning: r.description ?? r.note ?? '', Skapad: r.created_at ? new Date(r.created_at).toLocaleString('sv-SE') : '',

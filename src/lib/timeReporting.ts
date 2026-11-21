@@ -27,7 +27,7 @@ const GENERIC = new Set(['internt', 'intern', 'övrigt', 'ovrigt', 'diverse', 'd
 
 export type TRClient = { id: string; name: string; customer_number: string | null };
 export type TRGroup = { id: string; name: string; project_number: string | null; client_id: string | null };
-export type TROrder = { id: string; name: string; project_number: string | null; client_id: string | null; project_group_id: string | null; status?: string | null };
+export type TROrder = { id: string; name: string; ref?: string | null; project_number: string | null; client_id: string | null; project_group_id: string | null; status?: string | null };
 
 /** Time on a completed order is locked for installers; admins may still edit (with a warning). */
 export const isTimeLocked = (status?: string | null) => status === 'completed';
@@ -49,6 +49,7 @@ export type TimeRow = {
   created_at: string;
   updated_at: string;
   hourly_rate?: number | null;
+  is_ata?: boolean | null;
 };
 
 const posRate = (v: unknown) => { const n = Number(v); return v != null && v !== '' && Number.isFinite(n) && n > 0 ? n : null; };
@@ -138,7 +139,7 @@ export function sumWorkTravel<T extends Pick<TimeRow, 'hours' | 'travel_hours'>>
 
 export const EXPORT_COLUMNS = [
   'Datum', 'Medarbetare', 'Kundnummer', 'Kundnamn', 'Projektnummer', 'Projektnamn',
-  'Ordernummer', 'Aktivitetstyp', 'Arbetstid', 'Restid', 'Antal timmar', 'Utlägg (kr)', 'Mil (km)', 'Mil (kr)', 'Traktamente (kr)', 'Orderstatus', 'Timpris', 'Debiterbart (kr)', 'Beskrivning', 'Skapad', 'Senast ändrad',
+  'Ordernummer', 'Order', 'PO-nummer', 'ÄTA', 'Aktivitetstyp', 'Arbetstid', 'Restid', 'Antal timmar', 'Utlägg (kr)', 'Mil (km)', 'Mil (kr)', 'Traktamente (kr)', 'Orderstatus', 'Timpris', 'Debiterbart (kr)', 'Beskrivning', 'Skapad', 'Senast ändrad',
 ] as const;
 
 export type ExportLine = Record<(typeof EXPORT_COLUMNS)[number], string | number>;
@@ -147,8 +148,13 @@ export const exportFileName = (from: string, to: string) => `tidsrapport_${from}
 
 export function buildWorkbook(lines: ExportLine[]) {
   const ws = XLSX.utils.json_to_sheet(lines, { header: [...EXPORT_COLUMNS] });
-  const total = lines.reduce((s, l) => s + Number(l['Antal timmar'] || 0), 0);
-  XLSX.utils.sheet_add_aoa(ws, [[], ['Totalt', '', '', '', '', '', '', '', Math.round(total * 100) / 100]], { origin: -1 });
+  const sumCols = ['Arbetstid', 'Restid', 'Antal timmar', 'Utlägg (kr)', 'Mil (km)', 'Mil (kr)', 'Traktamente (kr)', 'Debiterbart (kr)'] as const;
+  const totalRow: (string | number)[] = EXPORT_COLUMNS.map(() => '');
+  totalRow[0] = 'Totalt';
+  sumCols.forEach(c => { totalRow[EXPORT_COLUMNS.indexOf(c)] = Math.round(lines.reduce((s, l) => s + Number(l[c] || 0), 0) * 100) / 100; });
+  XLSX.utils.sheet_add_aoa(ws, [[], totalRow], { origin: -1 });
+  ws['!cols'] = EXPORT_COLUMNS.map(c => ({ wch: Math.min(40, Math.max(c.length + 2, ...lines.map(l => String(l[c] ?? '').length + 1))) }));
+  ws['!autofilter'] = { ref: `A1:${XLSX.utils.encode_col(EXPORT_COLUMNS.length - 1)}${lines.length + 1}` };
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Tidsrapport');
   return wb;
