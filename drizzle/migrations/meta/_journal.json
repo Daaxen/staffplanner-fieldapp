@@ -120,6 +120,13 @@
       "when": 1795123353736,
       "tag": "0016_auto_in_progress_on_time",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1795275668408,
+      "tag": "0017_restrict_activity_types_read",
+      "breakpoints": true
     }
   ]
 }
