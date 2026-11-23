@@ -20,6 +20,7 @@ export type ExpenseRule = {
 /** Mirrors public.expense_rules. */
 export const EXPENSE_RULES: Record<string, ExpenseRule> = {
   materials: { requiresReceipt: false, receiptThreshold: 0, maxAmount: 50000 },
+  accommodation: { requiresReceipt: false, receiptThreshold: 0, maxAmount: 50000 },
   travel: { requiresReceipt: false, receiptThreshold: 0, maxAmount: 20000 },
   parking: { requiresReceipt: false, receiptThreshold: 100, maxAmount: 5000 },
   meal: { requiresReceipt: false, receiptThreshold: 0, maxAmount: 3000 },
