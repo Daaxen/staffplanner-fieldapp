@@ -2990,6 +2990,10 @@ export type Database = {
       }
       purge_expired_employee_private_details: { Args: never; Returns: number }
       schedule_reminders_scan: { Args: { _cron?: string }; Returns: string }
+      set_installer_home_country: {
+        Args: { _country: string; _installer_id: string }
+        Returns: undefined
+      }
       shares_project_with_installer: {
         Args: { _installer_id: string }
         Returns: boolean

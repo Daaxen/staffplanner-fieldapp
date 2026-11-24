@@ -39,7 +39,7 @@ export default function ForeignWorkSection({ profileId, installerId: givenId, ca
 
   const setHome = async (v: string) => {
     if (!inst) return;
-    const { error } = await (supabase as any).from('installers').update({ home_country: v === 'none' ? null : v }).eq('id', inst.id);
+    const { error } = await (supabase as any).rpc('set_installer_home_country', { _installer_id: inst.id, _country: v === 'none' ? null : v });
     if (error) toast.error(error.message); else { toast.success('Hemland sparat'); load(); }
   };
 
