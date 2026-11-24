@@ -973,6 +973,223 @@ export type Database = {
           },
         ]
       }
+      foreign_work_documents: {
+        Row: {
+          countries: string[]
+          created_at: string
+          created_by: string | null
+          doc_type: string
+          document_id: string | null
+          id: string
+          installer_id: string
+          notes: string | null
+          reference_number: string | null
+          status: string
+          updated_at: string
+          updated_by: string | null
+          valid_from: string | null
+          valid_to: string | null
+          voided_at: string | null
+        }
+        Insert: {
+          countries?: string[]
+          created_at?: string
+          created_by?: string | null
+          doc_type: string
+          document_id?: string | null
+          id?: string
+          installer_id: string
+          notes?: string | null
+          reference_number?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          valid_from?: string | null
+          valid_to?: string | null
+          voided_at?: string | null
+        }
+        Update: {
+          countries?: string[]
+          created_at?: string
+          created_by?: string | null
+          doc_type?: string
+          document_id?: string | null
+          id?: string
+          installer_id?: string
+          notes?: string | null
+          reference_number?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          valid_from?: string | null
+          valid_to?: string | null
+          voided_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "foreign_work_documents_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "foreign_work_documents_installer_id_fkey"
+            columns: ["installer_id"]
+            isOneToOne: false
+            referencedRelation: "installers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      foreign_work_periods: {
+        Row: {
+          corrects_id: string | null
+          country: string
+          created_at: string
+          created_by: string | null
+          end_at: string
+          id: string
+          installer_id: string
+          kind: string
+          notes: string | null
+          project_id: string | null
+          source: string
+          start_at: string
+          updated_at: string
+          updated_by: string | null
+          verification_status: string
+          void_reason: string | null
+          voided_at: string | null
+        }
+        Insert: {
+          corrects_id?: string | null
+          country: string
+          created_at?: string
+          created_by?: string | null
+          end_at: string
+          id?: string
+          installer_id: string
+          kind?: string
+          notes?: string | null
+          project_id?: string | null
+          source?: string
+          start_at: string
+          updated_at?: string
+          updated_by?: string | null
+          verification_status?: string
+          void_reason?: string | null
+          voided_at?: string | null
+        }
+        Update: {
+          corrects_id?: string | null
+          country?: string
+          created_at?: string
+          created_by?: string | null
+          end_at?: string
+          id?: string
+          installer_id?: string
+          kind?: string
+          notes?: string | null
+          project_id?: string | null
+          source?: string
+          start_at?: string
+          updated_at?: string
+          updated_by?: string | null
+          verification_status?: string
+          void_reason?: string | null
+          voided_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "foreign_work_periods_corrects_id_fkey"
+            columns: ["corrects_id"]
+            isOneToOne: false
+            referencedRelation: "foreign_work_periods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "foreign_work_periods_installer_id_fkey"
+            columns: ["installer_id"]
+            isOneToOne: false
+            referencedRelation: "installers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "foreign_work_periods_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      foreign_work_rules: {
+        Row: {
+          countries: string[]
+          created_at: string
+          created_by: string | null
+          critical_threshold: number
+          effective_from: string
+          effective_to: string | null
+          enabled: boolean
+          explanation: string | null
+          id: string
+          internal_note: string | null
+          metric: string
+          name: string
+          review_threshold: number
+          updated_at: string
+          updated_by: string | null
+          watch_threshold: number
+          window_end: string | null
+          window_start: string | null
+          window_type: string
+        }
+        Insert: {
+          countries?: string[]
+          created_at?: string
+          created_by?: string | null
+          critical_threshold: number
+          effective_from?: string
+          effective_to?: string | null
+          enabled?: boolean
+          explanation?: string | null
+          id?: string
+          internal_note?: string | null
+          metric: string
+          name: string
+          review_threshold: number
+          updated_at?: string
+          updated_by?: string | null
+          watch_threshold: number
+          window_end?: string | null
+          window_start?: string | null
+          window_type: string
+        }
+        Update: {
+          countries?: string[]
+          created_at?: string
+          created_by?: string | null
+          critical_threshold?: number
+          effective_from?: string
+          effective_to?: string | null
+          enabled?: boolean
+          explanation?: string | null
+          id?: string
+          internal_note?: string | null
+          metric?: string
+          name?: string
+          review_threshold?: number
+          updated_at?: string
+          updated_by?: string | null
+          watch_threshold?: number
+          window_end?: string | null
+          window_start?: string | null
+          window_type?: string
+        }
+        Relationships: []
+      }
       installer_absences: {
         Row: {
           created_at: string
@@ -1026,6 +1243,7 @@ export type Database = {
           base_location: string | null
           color: number
           created_at: string
+          home_country: string | null
           id: string
           name: string
           profile_id: string | null
@@ -1037,6 +1255,7 @@ export type Database = {
           base_location?: string | null
           color?: number
           created_at?: string
+          home_country?: string | null
           id?: string
           name: string
           profile_id?: string | null
@@ -1048,6 +1267,7 @@ export type Database = {
           base_location?: string | null
           color?: number
           created_at?: string
+          home_country?: string | null
           id?: string
           name?: string
           profile_id?: string | null
@@ -2691,10 +2911,26 @@ export type Database = {
           street: string
         }[]
       }
+      country_iso: { Args: { _name: string }; Returns: string }
       current_installer_id: { Args: never; Returns: string }
       delete_employee_private_details: {
         Args: { _profile_id: string; _reason?: string }
         Returns: undefined
+      }
+      foreign_work_days: {
+        Args: { _from: string; _installer_id?: string; _to: string }
+        Returns: {
+          conflict: boolean
+          country: string
+          day: string
+          installer_id: string
+          is_presence: boolean
+          is_work: boolean
+          presence_source: string
+          project_ids: string[]
+          verification: string
+          work_source: string
+        }[]
       }
       get_employee_private_details: {
         Args: { _profile_id: string; _reason?: string }

@@ -134,6 +134,13 @@
       "when": 1795508552647,
       "tag": "0018_create_release_announcements",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1795515864641,
+      "tag": "0019_foreign_work_compliance",
+      "breakpoints": true
     }
   ]
 }
