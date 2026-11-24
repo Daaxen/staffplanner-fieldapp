@@ -18,7 +18,7 @@ describe('workflow navigation', () => {
 
   it('shows all workflow groups to admins', () => {
     expect(navigationForRoles(['admin']).map(group => group.id)).toEqual([
-      'dashboard', 'orders', 'planning', 'field-operations', 'time-reporting', 'finance', 'customers', 'resources', 'reports', 'compliance', 'administration',
+      'dashboard', 'orders', 'planning', 'field-operations', 'time-reporting', 'finance', 'customers', 'resources', 'reports', 'administration',
     ]);
   });
 
