@@ -17,4 +17,6 @@
 
 ## Utlandsarbete (compliance)
 - [x] Hemland, räknare, regler, vistelseperioder, A1-metadata, adminrapport + XLSX, bokningsvarning, montörens egen vy
+- [x] Riktad stabilisering: granskning av angiven version, aktiv databas och påverkan; 338 befintliga tester passerar.
+- [ ] Stabilisering A–M och behörighetstester: STOPP i underlaget utlöst; inväntar ägargodkännande eftersom 91 redovisade vistelsedagar för 6 montörer saknar bekräftade vistelseperioder. Ingen app- eller databasrättning utförd.
 - [ ] Bakåtfyllning av historik – väntar på godkännande (ingen körd; arbetsdagar från tidsposter räknas redan automatiskt)
