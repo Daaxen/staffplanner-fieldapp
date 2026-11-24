@@ -2185,6 +2185,104 @@ export type Database = {
         }
         Relationships: []
       }
+      release_announcement_acknowledgements: {
+        Row: {
+          acknowledged_at: string
+          announcement_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string
+          announcement_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string
+          announcement_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "release_announcement_acknowledgements_announcement_id_fkey"
+            columns: ["announcement_id"]
+            isOneToOne: false
+            referencedRelation: "release_announcements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "release_announcement_acknowledgements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      release_announcements: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          ends_at: string | null
+          how_it_works: string
+          id: string
+          is_active: boolean
+          meaning: string
+          published_at: string | null
+          release_date: string
+          severity: string
+          summary: string
+          target_roles: Database["public"]["Enums"]["app_role"][]
+          title: string
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          how_it_works: string
+          id?: string
+          is_active?: boolean
+          meaning: string
+          published_at?: string | null
+          release_date?: string
+          severity?: string
+          summary: string
+          target_roles?: Database["public"]["Enums"]["app_role"][]
+          title: string
+          updated_at?: string
+          version: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          how_it_works?: string
+          id?: string
+          is_active?: boolean
+          meaning?: string
+          published_at?: string | null
+          release_date?: string
+          severity?: string
+          summary?: string
+          target_roles?: Database["public"]["Enums"]["app_role"][]
+          title?: string
+          updated_at?: string
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "release_announcements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reminder_events: {
         Row: {
           channel: string | null

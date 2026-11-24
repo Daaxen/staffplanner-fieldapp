@@ -15,6 +15,7 @@ import {
   FolderKanban,
   Gauge,
   LayoutDashboard,
+  Megaphone,
   Percent,
   Receipt,
   Repeat,
@@ -164,6 +165,7 @@ export const navigationGroups: NavigationGroup[] = [
     defaultView: 'documents',
     items: [
       { id: 'documents', label: 'Document management', icon: BookOpen, roles: adminHr },
+      { id: 'release-announcements', label: 'Nyheter', icon: Megaphone, roles: admin },
       { id: 'audit', label: 'Audit logs', icon: ScrollText, roles: adminHr },
     ],
   },

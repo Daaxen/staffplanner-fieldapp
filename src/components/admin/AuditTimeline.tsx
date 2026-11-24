@@ -55,6 +55,7 @@ const ENTITY_LABELS: Record<string, string> = {
   expense_rule: 'Utläggsregel',
   status_transition: 'Statussteg',
   commercial_status: 'Affärsstatus',
+  release_announcement: 'Nyhet',
 };
 
 const ACTION_LABELS: Record<string, string> = {
@@ -136,6 +137,15 @@ const FIELD_LABELS: Record<string, string> = {
   max_amount: 'Maxbelopp',
   from_status: 'Från status',
   to_status: 'Till status',
+  version: 'Version',
+  release_date: 'Releasedatum',
+  summary: 'Kort förklaring',
+  meaning: 'Vad det betyder för användaren',
+  how_it_works: 'Hur det fungerar',
+  target_roles: 'Målgrupper',
+  is_active: 'Publicerad',
+  published_at: 'Publiceringstid',
+  ends_at: 'Slutar visas',
 };
 
 const fieldLabel = (key: string) => FIELD_LABELS[key] ?? key;

@@ -29,6 +29,7 @@ import AuditTimeline from '@/components/admin/AuditTimeline';
 import MyTime from '@/components/timereporting/MyTime';
 import TimeOverview from '@/components/timereporting/TimeOverview';
 import FeedbackModule from '@/components/feedback/FeedbackModule';
+import ReleaseAnnouncementsManager from '@/components/releases/ReleaseAnnouncementsManager';
 import { useAuth } from '@/hooks/useAuth';
 import { canAccessNavigationView, canonicalViewPath, type AppRole } from '@/lib/navigation';
 
@@ -170,6 +171,9 @@ const Index = () => {
         )}
         {activeView === 'audit' && (
           <AuditTimeline />
+        )}
+        {activeView === 'release-announcements' && (
+          <ReleaseAnnouncementsManager />
         )}
         {activeView === 'my-time' && <MyTime />}
         {activeView === 'time-overview' && <TimeOverview />}

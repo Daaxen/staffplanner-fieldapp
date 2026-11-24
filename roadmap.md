@@ -11,3 +11,6 @@
 - [ ] Admin-sida för att uppdatera belopp nästa år
 - [x] Work order reports v2: Markera alla, FETCH-PDF-mall, platt Excel, förhandsgranskning, traktamente-val
 - [x] Behåll transportval i Skapa uppdrag
+
+## Releasekommunikation
+- [x] Rollriktade svenska nyheter, bestående kvitteringar, administration och verifiering

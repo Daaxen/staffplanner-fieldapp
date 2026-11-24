@@ -15,6 +15,7 @@ import SubVendorOrder from "./pages/SubVendorOrder";
 import { AuthProvider } from "@/hooks/useAuth";
 import BookingConflictPrompt from "@/components/scheduling/BookingConflictPrompt";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import ReleaseAnnouncementGate from "@/components/releases/ReleaseAnnouncementGate";
 import { legacyViewPaths } from "@/lib/navigation";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <ReleaseAnnouncementGate />
           <BookingConflictPrompt />
           <Routes>
             <Route path="/auth" element={<Auth />} />

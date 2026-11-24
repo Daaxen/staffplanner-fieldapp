@@ -13,3 +13,4 @@
 - Travel days are stored as `travelBefore`/`travelAfter` flags in the project's data snapshot and resolved via src/lib/travelDays.ts, so planning bars and installer report dates share one rule without changing the work period.
 - A work order moves from scheduled/open to in-progress via the start_project_on_time_entry DB trigger when time is first logged, so every time-entry path behaves the same.
 - Technician form input is kept with useDraftState (localStorage, scoped per user and order, cleared when the form resets after save, 7-day expiry), so app switches or back navigation never lose unsaved input.
+- Release announcements are a standalone role-targeted module with backend acknowledgements per user and announcement, never local-only state, so release messaging stays durable across devices without touching business workflows.
