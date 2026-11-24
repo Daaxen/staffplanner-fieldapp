@@ -133,7 +133,9 @@ const ProjectDetailPanel = ({ project, installer, onClose, onEdit, onDispatch, o
             </div>
             {(isAdmin || isHr) && project.status !== 'completed' && project.status !== 'cancelled' && (
               <ForeignBookingWarning
-                country={project.country}
+                country={project.countryCode ?? project.country}
+                countryProvenance={project.countryProvenance}
+                worksWeekends={project.worksWeekends}
                 assignees={assignees.map(a => ({ id: a.id, name: a.name, start: project.installerDateOverrides?.[a.id]?.startDate ?? project.startDate, end: project.installerDateOverrides?.[a.id]?.endDate ?? project.endDate }))}
               />
             )}

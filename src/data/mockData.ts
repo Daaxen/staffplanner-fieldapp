@@ -147,6 +147,8 @@ export interface Project {
   travelAfter?: boolean;
   /** Country where the work is done (Swedish name, matches Skatteverket's list). Default Sverige. */
   country?: string;
+  countryCode?: string | null;
+  countryProvenance?: 'CONFIRMED' | 'DERIVED' | 'DEFAULTED' | 'UNKNOWN';
   description?: string;
   contactName?: string;
   contactPhone?: string;

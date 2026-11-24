@@ -19,6 +19,7 @@ import { installerConflicts } from '@/lib/schedulingConflicts';
 import { isValidInstallerRange, type InstallerDates } from '@/lib/bookings';
 import { toast } from 'sonner';
 import SubVendorLinks from '@/components/orders/SubVendorLinks';
+import { normalizeCountry, type CountryProvenance } from '@/lib/foreignWork/countries';
 
 const statuses: ProjectStatus[] = ['open', 'scheduled', 'in-progress', 'completed', 'on-hold', 'cancelled'];
 
@@ -42,6 +43,7 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
   const [travelBefore, setTravelBefore] = useState(false);
   const [travelAfter, setTravelAfter] = useState(false);
   const [country, setCountry] = useState('Sverige');
+  const [countryProvenance, setCountryProvenance] = useState<CountryProvenance>('UNKNOWN');
   const countries = usePerDiemCountries();
   const [overrides, setOverrides] = useState<Record<string, InstallerDates>>({});
   const [form, setForm] = useState({
@@ -68,6 +70,7 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
     setTravelBefore(!!project.travelBefore);
     setTravelAfter(!!project.travelAfter);
     setCountry(project.country || 'Sverige');
+    setCountryProvenance(project.countryProvenance ?? 'UNKNOWN');
     setOverrides({ ...(project.installerDateOverrides ?? {}) });
     setForm({
       name: project.name ?? '',
@@ -169,6 +172,8 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
       travelBefore: project?.projectType !== 'transport' && travelBefore,
       travelAfter: project?.projectType !== 'transport' && travelAfter,
       country,
+      countryCode: normalizeCountry(country),
+      countryProvenance,
       assigneeIds,
       installerDateOverrides: ownDays,
     });
@@ -214,8 +219,8 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label htmlFor="wo-loc">Location</Label>
-              <AddressAutocomplete id="wo-loc" value={form.location} onChange={v => set('location', v)}
-                onSelect={p => { const c = countryFromCode(p.countryCode); if (c) { setCountry(c); toast.info(`Land satt till ${c}`); } }} />
+              <AddressAutocomplete id="wo-loc" value={form.location} onChange={v => { set('location', v); if (v !== project?.location) setCountryProvenance('UNKNOWN'); }}
+                onSelect={p => { const c = countryFromCode(p.countryCode); if (c) { setCountry(c); setCountryProvenance('DERIVED'); toast.info(`Land satt till ${c}`); } }} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="wo-start">Start date</Label>
@@ -227,7 +232,7 @@ const EditWorkOrderDialog = ({ project, open, onOpenChange, onSave }: Props) => 
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>Land (styr traktamente)</Label>
-              <SearchSelect value={country} onChange={v => setCountry(v || 'Sverige')} placeholder="Sverige"
+              <SearchSelect value={country} onChange={v => { setCountry(v || 'Sverige'); setCountryProvenance(v ? 'CONFIRMED' : 'DEFAULTED'); }} placeholder="Sverige"
                 options={countries.map(c => ({ value: c, label: c }))} />
             </div>
             <div className="col-span-2">

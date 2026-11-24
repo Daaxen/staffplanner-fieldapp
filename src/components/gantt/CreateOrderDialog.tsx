@@ -37,6 +37,7 @@ import { saveBookings, findBookingConflicts, type BookingConflict } from '@/lib/
 import { registerBookingOverride } from '@/lib/appData';
 import TravelDayToggles from '@/components/gantt/TravelDayToggles';
 import BookingOverrideDialog from '@/components/scheduling/BookingOverrideDialog';
+import { normalizeCountry, type CountryProvenance } from '@/lib/foreignWork/countries';
 
 interface CreateOrderDialogProps {
   open: boolean;
@@ -79,6 +80,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
   const [locationCoords, setLocationCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [country, setCountry] = useState<string | null>(null);
   const [countryManual, setCountryManual] = useState(false);
+  const [countryProvenance, setCountryProvenance] = useState<CountryProvenance>('DEFAULTED');
   const countries = usePerDiemCountries();
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
@@ -125,6 +127,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
     setLocation('');
     setCountry(null);
     setCountryManual(false);
+    setCountryProvenance('DEFAULTED');
     setDescription('');
     setStartDate(undefined);
     setStartTime('08:00');
@@ -345,7 +348,7 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
       ...(projectType !== 'transport' && locationCoords
         ? { locationLat: locationCoords.lat, locationLng: locationCoords.lng }
         : {}),
-      ...(projectType !== 'transport' ? { country: country ?? countryFromText(`${name} ${location}`) ?? 'Sverige' } : {}),
+      ...(projectType !== 'transport' ? { country: country ?? countryFromText(`${name} ${location}`) ?? 'Sverige', countryCode: normalizeCountry(country ?? countryFromText(`${name} ${location}`) ?? 'Sverige'), countryProvenance: country ? countryProvenance : countryFromText(`${name} ${location}`) ? 'DERIVED' : 'DEFAULTED' } : { countryProvenance: 'UNKNOWN' as const }),
       status,
       assigneeIds: selectedInstallers,
       startDate: format(startDate, 'yyyy-MM-dd'),
@@ -559,11 +562,11 @@ const CreateOrderDialog = ({ open, onOpenChange, onCreateOrder, projectGroupId }
                 <AddressAutocomplete
                   id="order-location"
                   value={location}
-                  onChange={(v) => { setLocation(v); setLocationCoords(null); if (!countryManual) setCountry(countryFromText(`${name} ${v}`)); }}
-                  onSelect={(p) => { setLocationCoords(p.lat != null && p.lng != null ? { lat: p.lat, lng: p.lng } : null); setCountry(countryFromCode(p.countryCode)); }}
+                  onChange={(v) => { setLocation(v); setLocationCoords(null); if (!countryManual) { setCountry(countryFromText(`${name} ${v}`)); setCountryProvenance('DERIVED'); } }}
+                  onSelect={(p) => { setLocationCoords(p.lat != null && p.lng != null ? { lat: p.lat, lng: p.lng } : null); if (!countryManual) { setCountry(countryFromCode(p.countryCode)); setCountryProvenance(p.countryCode ? 'DERIVED' : 'UNKNOWN'); } }}
                 />
                 <Label className="mt-2">Land (styr traktamente)</Label>
-                <SearchSelect value={country ?? 'Sverige'} onChange={v => { setCountry(v || 'Sverige'); setCountryManual(true); }} placeholder="Sverige"
+                <SearchSelect value={country ?? 'Sverige'} onChange={v => { setCountry(v || 'Sverige'); setCountryManual(true); setCountryProvenance(v ? 'CONFIRMED' : 'DEFAULTED'); }} placeholder="Sverige"
                   options={countries.map(c => ({ value: c, label: c }))} />
               </div>
             )}

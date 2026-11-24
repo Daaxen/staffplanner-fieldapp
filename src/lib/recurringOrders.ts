@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Project, ProjectType } from '@/data/mockData';
 import { clientRefForRowId } from '@/lib/appData';
 import { expandSeries, type RecurrencePause } from '@/lib/recurrence';
+import { countryFromCode } from '@/lib/perDiem';
 
 /**
  * A standing work order: the rule that generates real, independent work orders.
@@ -22,6 +23,8 @@ export interface RecurringSeries {
   street?: string;
   postalCode?: string;
   region?: string;
+  countryCode?: string | null;
+  countryProvenance?: Project['countryProvenance'];
   contactName?: string;
   contactPhone?: string;
   contactEmail?: string;
@@ -41,7 +44,7 @@ export interface RecurringSeries {
 export type RecurringSeriesInput = Omit<RecurringSeries, 'id'>;
 
 const COLUMNS =
-  'id,name,client_id,project_group_id,project_type,location,street,postal_code,region,' +
+  'id,name,client_id,project_group_id,project_type,location,street,postal_code,region,country_code,country_provenance,' +
   'contact_name,contact_phone,contact_email,start_time,end_time,estimated_hours,description,' +
   'weekdays,interval_weeks,series_start,series_end,skip_holidays,pauses,active';
 
@@ -60,6 +63,8 @@ function fromRow(r: Row): RecurringSeries {
     street: (r.street as string | null) ?? undefined,
     postalCode: (r.postal_code as string | null) ?? undefined,
     region: (r.region as string | null) ?? undefined,
+    countryCode: (r.country_code as string | null) ?? null,
+    countryProvenance: (r.country_provenance as Project['countryProvenance']) ?? 'UNKNOWN',
     contactName: (r.contact_name as string | null) ?? undefined,
     contactPhone: (r.contact_phone as string | null) ?? undefined,
     contactEmail: (r.contact_email as string | null) ?? undefined,
@@ -88,6 +93,8 @@ function toRow(s: RecurringSeriesInput, clientRowId?: string) {
     street: s.street || null,
     postal_code: s.postalCode || null,
     region: s.region || null,
+    country_code: s.countryCode ?? null,
+    country_provenance: s.countryProvenance ?? 'UNKNOWN',
     contact_name: s.contactName || null,
     contact_phone: s.contactPhone || null,
     contact_email: s.contactEmail || null,
@@ -177,6 +184,9 @@ export function buildOrdersForSeries(
       street: series.street,
       postalCode: series.postalCode,
       region: series.region,
+      countryCode: series.countryCode ?? null,
+      countryProvenance: series.countryProvenance ?? 'UNKNOWN',
+      country: countryFromCode(series.countryCode) ?? undefined,
       status: 'open',
       commercialStatus: 'quote',
       assigneeIds: [],

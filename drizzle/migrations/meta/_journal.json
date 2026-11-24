@@ -148,6 +148,48 @@
       "when": 1795516455720,
       "tag": "0020_set_installer_home_country_rpc",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1795554442949,
+      "tag": "0021_stabilize_foreign_work_evidence",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1795554716333,
+      "tag": "0022_complete_foreign_work_guards",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1795554901810,
+      "tag": "0023_verify_foreign_work_in_rollback",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1795554947719,
+      "tag": "0024_correct_foreign_work_fixture_and_unknown_days",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1795555054133,
+      "tag": "0025_align_foreign_export_audit_and_document_window",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1795555475347,
+      "tag": "0026_remove_temporary_foreign_work_verifier",
+      "breakpoints": true
     }
   ]
 }

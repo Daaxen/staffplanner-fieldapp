@@ -973,6 +973,70 @@ export type Database = {
           },
         ]
       }
+      foreign_work_country_evidence: {
+        Row: {
+          corrects_id: string | null
+          created_at: string
+          created_by: string | null
+          destination_country: string
+          home_country: string
+          id: string
+          installer_id: string
+          project_id: string
+          reason: string
+          time_entry_id: string
+          voided_at: string | null
+        }
+        Insert: {
+          corrects_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          destination_country: string
+          home_country: string
+          id?: string
+          installer_id: string
+          project_id: string
+          reason: string
+          time_entry_id: string
+          voided_at?: string | null
+        }
+        Update: {
+          corrects_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          destination_country?: string
+          home_country?: string
+          id?: string
+          installer_id?: string
+          project_id?: string
+          reason?: string
+          time_entry_id?: string
+          voided_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "foreign_work_country_evidence_corrects_id_fkey"
+            columns: ["corrects_id"]
+            isOneToOne: false
+            referencedRelation: "foreign_work_country_evidence"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "foreign_work_country_evidence_installer_id_fkey"
+            columns: ["installer_id"]
+            isOneToOne: false
+            referencedRelation: "installers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "foreign_work_country_evidence_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       foreign_work_documents: {
         Row: {
           countries: string[]
@@ -980,6 +1044,7 @@ export type Database = {
           created_by: string | null
           doc_type: string
           document_id: string | null
+          expiry_warning_days: number
           id: string
           installer_id: string
           notes: string | null
@@ -997,6 +1062,7 @@ export type Database = {
           created_by?: string | null
           doc_type: string
           document_id?: string | null
+          expiry_warning_days?: number
           id?: string
           installer_id: string
           notes?: string | null
@@ -1014,6 +1080,7 @@ export type Database = {
           created_by?: string | null
           doc_type?: string
           document_id?: string | null
+          expiry_warning_days?: number
           id?: string
           installer_id?: string
           notes?: string | null
@@ -1049,6 +1116,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           end_at: string
+          home_country_snapshot: string | null
           id: string
           installer_id: string
           kind: string
@@ -1068,6 +1136,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           end_at: string
+          home_country_snapshot?: string | null
           id?: string
           installer_id: string
           kind?: string
@@ -1087,6 +1156,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           end_at?: string
+          home_country_snapshot?: string | null
           id?: string
           installer_id?: string
           kind?: string
@@ -1814,6 +1884,8 @@ export type Database = {
           contact_name: string | null
           contact_phone: string | null
           country: string
+          country_code: string | null
+          country_provenance: string
           created_at: string
           data: Json
           description: string | null
@@ -1855,6 +1927,8 @@ export type Database = {
           contact_name?: string | null
           contact_phone?: string | null
           country?: string
+          country_code?: string | null
+          country_provenance?: string
           created_at?: string
           data?: Json
           description?: string | null
@@ -1896,6 +1970,8 @@ export type Database = {
           contact_name?: string | null
           contact_phone?: string | null
           country?: string
+          country_code?: string | null
+          country_provenance?: string
           created_at?: string
           data?: Json
           description?: string | null
@@ -2009,6 +2085,8 @@ export type Database = {
           contact_email: string | null
           contact_name: string | null
           contact_phone: string | null
+          country_code: string | null
+          country_provenance: string
           created_at: string
           created_by: string | null
           description: string | null
@@ -2043,6 +2121,8 @@ export type Database = {
           contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
+          country_code?: string | null
+          country_provenance?: string
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -2077,6 +2157,8 @@ export type Database = {
           contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
+          country_code?: string | null
+          country_provenance?: string
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -2911,6 +2993,14 @@ export type Database = {
           street: string
         }[]
       }
+      correct_foreign_country_evidence: {
+        Args: { _country: string; _home: string; _id: string; _reason: string }
+        Returns: string
+      }
+      correct_foreign_work_period: {
+        Args: { _id: string; _reason: string; _values: Json }
+        Returns: string
+      }
       country_iso: { Args: { _name: string }; Returns: string }
       current_installer_id: { Args: never; Returns: string }
       delete_employee_private_details: {
@@ -2932,6 +3022,21 @@ export type Database = {
           work_source: string
         }[]
       }
+      foreign_work_installers: {
+        Args: never
+        Returns: {
+          home_country: string
+          id: string
+          name: string
+          sandbox: boolean
+          type: string
+        }[]
+      }
+      foreign_work_my_documents: {
+        Args: { _installer_id: string }
+        Returns: Json
+      }
+      foreign_work_rule_data: { Args: { _internal?: boolean }; Returns: Json }
       get_employee_private_details: {
         Args: { _profile_id: string; _reason?: string }
         Returns: {
@@ -2973,6 +3078,7 @@ export type Database = {
         Returns: undefined
       }
       is_project_member: { Args: { _project_id: string }; Returns: boolean }
+      log_foreign_work_export: { Args: { _metadata: Json }; Returns: undefined }
       log_portal_access: {
         Args: {
           _action: string

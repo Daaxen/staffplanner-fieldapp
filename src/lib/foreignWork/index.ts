@@ -8,6 +8,7 @@ export type Metric = 'WORK_DAYS' | 'PRESENCE_DAYS' | 'CONTINUOUS_ASSIGNMENT_DURA
 export type WindowType = 'CALENDAR_YEAR' | 'ROLLING_12_MONTHS' | 'FIXED_DATE_RANGE' | 'CONTINUOUS_ASSIGNMENT';
 export type FlagStatus = 'NORMAL' | 'WATCH' | 'REVIEW' | 'REACHED' | 'NOT_VERIFIED';
 export type DocStatus = 'VALID' | 'EXPIRING' | 'EXPIRED' | 'MISSING' | 'NOT_REQUIRED' | 'NOT_VERIFIED';
+export { COUNTRY_NAMES, countryName, normalizeCountry, destinationEvidence } from './countries';
 
 export interface ForeignDay {
   installer_id: string;
@@ -59,12 +60,6 @@ export const METRIC_LABEL: Record<Metric, string> = {
 export const WINDOW_LABEL: Record<WindowType, string> = {
   CALENDAR_YEAR: 'Kalenderår', ROLLING_12_MONTHS: 'Rullande 12 månader', FIXED_DATE_RANGE: 'Fast datumintervall', CONTINUOUS_ASSIGNMENT: 'Sammanhängande uppdrag',
 };
-export const COUNTRY_NAMES: Record<string, string> = {
-  SE: 'Sverige', NO: 'Norge', FI: 'Finland', DK: 'Danmark', DE: 'Tyskland', IS: 'Island', EE: 'Estland', LV: 'Lettland',
-  LT: 'Litauen', PL: 'Polen', NL: 'Nederländerna', BE: 'Belgien', FR: 'Frankrike', GB: 'Storbritannien', ES: 'Spanien',
-  IT: 'Italien', AT: 'Österrike', CH: 'Schweiz', IE: 'Irland', PT: 'Portugal',
-};
-export const countryName = (iso: string) => COUNTRY_NAMES[iso] ?? iso;
 
 /** Date helpers work purely on YYYY-MM-DD strings (no timezone drift). */
 const toUTC = (d: string) => Date.UTC(+d.slice(0, 4), +d.slice(5, 7) - 1, +d.slice(8, 10));
@@ -82,13 +77,22 @@ export function dedupeDays(days: ForeignDay[]): ForeignDay[] {
   for (const d of days) {
     const k = `${d.installer_id}|${d.country}|${d.day}`;
     const prev = map.get(k);
-    if (!prev) map.set(k, { ...d });
-    else map.set(k, { ...prev, is_work: prev.is_work || d.is_work, is_presence: prev.is_presence || d.is_presence, conflict: prev.conflict || d.conflict });
+    if (d.verification === 'VOIDED') continue;
+    if (!prev) map.set(k, { ...d, project_ids: [...(d.project_ids ?? [])] });
+    else {
+      const confirmed = (x: ForeignDay) => x.presence_source === 'presence_period' && ['VERIFIED', 'MANUALLY_CONFIRMED'].includes(x.verification);
+      const ver = ['INSUFFICIENT_DATA', 'DERIVED', 'MANUALLY_CONFIRMED', 'VERIFIED'] as Verification[];
+      map.set(k, { ...prev, is_work: prev.is_work || d.is_work, is_presence: prev.is_presence || d.is_presence,
+        presence_source: confirmed(prev) || confirmed(d) ? 'presence_period' : [prev.presence_source, d.presence_source].filter(Boolean).sort()[0] ?? null,
+        work_source: [prev.work_source, d.work_source].filter(Boolean).sort()[0] ?? null,
+        verification: ver[Math.max(ver.indexOf(prev.verification), ver.indexOf(d.verification))] ?? 'INSUFFICIENT_DATA',
+        project_ids: [...new Set([...(prev.project_ids ?? []), ...(d.project_ids ?? [])])].sort(), conflict: prev.conflict || d.conflict });
+    }
   }
   return [...map.values()];
 }
 
-export interface Counter { work: number; presence: number; first: string | null; last: string | null; verification: Verification; conflicts: number; projectIds: string[] }
+export interface Counter { work: number; presence: number; confirmedPresence: number; inferredPresence: number; verifiedWork: number; derivedWork: number; presenceVerified: boolean; unresolved: number; first: string | null; last: string | null; verification: Verification; conflicts: number; projectIds: string[] }
 
 const VER_ORDER: Verification[] = ['INSUFFICIENT_DATA', 'DERIVED', 'MANUALLY_CONFIRMED', 'VERIFIED'];
 export function countDays(days: ForeignDay[]): Counter {
@@ -105,6 +109,12 @@ export function countDays(days: ForeignDay[]): Counter {
   return {
     work: d.filter(x => x.is_work).length,
     presence: d.filter(x => x.is_presence).length,
+    confirmedPresence: d.filter(x => x.is_presence && x.presence_source === 'presence_period').length,
+    inferredPresence: d.filter(x => x.is_presence && x.presence_source !== 'presence_period').length,
+    verifiedWork: d.filter(x => x.is_work && ['VERIFIED', 'MANUALLY_CONFIRMED'].includes(x.verification) && x.work_source !== 'time_entry').length,
+    derivedWork: d.filter(x => x.is_work && (x.verification === 'DERIVED' || x.work_source === 'time_entry')).length,
+    presenceVerified: d.some(x => x.is_presence && x.presence_source === 'presence_period') && !d.some(x => x.is_presence && x.presence_source !== 'presence_period'),
+    unresolved: d.filter(x => x.verification === 'INSUFFICIENT_DATA').length,
     first, last, conflicts,
     verification: d.length ? VER_ORDER[worst] : 'INSUFFICIENT_DATA',
     projectIds: [...pids],
@@ -113,7 +123,7 @@ export function countDays(days: ForeignDay[]): Counter {
 
 /** Longest run of consecutive presence days ending inside [from,to]. */
 export function longestContinuous(days: ForeignDay[]): number {
-  const sorted = [...new Set(dedupeDays(days).filter(d => d.is_presence).map(d => d.day))].sort();
+  const sorted = [...new Set(dedupeDays(days).filter(d => d.is_presence && d.presence_source === 'presence_period').map(d => d.day))].sort();
   let best = 0, run = 0, prev: string | null = null;
   for (const d of sorted) {
     run = prev && addDays(prev, 1) === d ? run + 1 : 1;
@@ -134,15 +144,16 @@ export const ruleAppliesTo = (rule: ForeignRule, country: string) => rule.countr
 /** Measurement window for a rule as of a date. null = cannot be calculated safely. */
 export function ruleWindow(rule: ForeignRule, asOf: string): { from: string; to: string } | null {
   switch (rule.window_type) {
-    case 'CALENDAR_YEAR': return { from: `${asOf.slice(0, 4)}-01-01`, to: `${asOf.slice(0, 4)}-12-31` };
+    case 'CALENDAR_YEAR': return { from: `${asOf.slice(0, 4)}-01-01`, to: asOf };
     case 'ROLLING_12_MONTHS': {
       const y = +asOf.slice(0, 4) - 1;
       let from = `${y}${asOf.slice(4)}`;
       if (from.endsWith('-02-29')) from = `${y}-03-01`; else from = addDays(from, 1);
       return { from, to: asOf };
     }
-    case 'FIXED_DATE_RANGE': return rule.window_start && rule.window_end ? { from: rule.window_start, to: rule.window_end } : null;
-    case 'CONTINUOUS_ASSIGNMENT': return { from: addDays(asOf, -1095), to: asOf };
+    case 'FIXED_DATE_RANGE':
+    case 'CONTINUOUS_ASSIGNMENT': return rule.window_start && rule.window_end && rule.window_start <= rule.window_end && daysBetweenInclusive(rule.window_start, rule.window_end) <= 1101
+      ? { from: rule.window_start, to: rule.window_end < asOf ? rule.window_end : asOf } : null;
   }
 }
 
@@ -168,8 +179,10 @@ export function evaluateRule(rule: ForeignRule, country: string, days: ForeignDa
   const window = ruleWindow(rule, asOf);
   if (!homeConfigured || !window) return { rule, country, window, value: null, status: 'NOT_VERIFIED', nextThreshold: null, remaining: null, dayCount: 0 };
   const inWin = days.filter(d => d.country === country && d.day >= window.from && d.day <= window.to);
-  const value = rule.metric === 'WORK_DAYS' ? countDays(inWin).work
-    : rule.metric === 'PRESENCE_DAYS' ? countDays(inWin).presence
+  const counter = countDays(inWin);
+  if (counter.unresolved || (rule.metric !== 'WORK_DAYS' && !counter.presenceVerified)) return { rule, country, window, value: null, status: 'NOT_VERIFIED', nextThreshold: null, remaining: null, dayCount: inWin.length };
+  const value = rule.metric === 'WORK_DAYS' ? counter.work
+    : rule.metric === 'PRESENCE_DAYS' ? counter.confirmedPresence
     : longestContinuous(inWin);
   const nt = nextThreshold(value, rule);
   return { rule, country, window, value, status: statusFor(value, rule), nextThreshold: nt, remaining: nt == null ? null : nt - value, dayCount: inWin.length };
@@ -181,22 +194,24 @@ export function worstStatus(flags: (Flag | null)[]): FlagStatus {
 
 /** Projected impact of a booking: adds only days not already counted. Missing dates -> NOT_VERIFIED. */
 export function projectBooking(rule: ForeignRule, country: string, days: ForeignDay[], asOf: string,
-  booking: { installer_id: string; start?: string | null; end?: string | null }) {
+  booking: { installer_id: string; start?: string | null; end?: string | null; worksWeekends?: boolean; presenceStart?: string | null; presenceEnd?: string | null }) {
   const current = evaluateRule(rule, country, days, asOf);
   if (!current) return null;
-  if (!booking.start || !booking.end || current.status === 'NOT_VERIFIED') return { current, added: null, projected: null, status: 'NOT_VERIFIED' as FlagStatus };
-  const existing = new Set(days.filter(d => d.country === country).map(d => d.day));
-  const extra: ForeignDay[] = datesInRange(booking.start, booking.end).filter(d => !existing.has(d)).map(day => ({
-    installer_id: booking.installer_id, country, day, is_work: true, is_presence: true, work_source: 'booking', presence_source: 'booking', verification: 'DERIVED', project_ids: [], conflict: false,
+  const presenceMetric = rule.metric !== 'WORK_DAYS';
+  const start = presenceMetric ? booking.presenceStart : booking.start, end = presenceMetric ? booking.presenceEnd : booking.end;
+  if (!start || !end || end < start || daysBetweenInclusive(start, end) > 1101 || current.status === 'NOT_VERIFIED') return { current, added: null, projected: null, status: 'NOT_VERIFIED' as FlagStatus };
+  const existing = new Set(days.filter(d => d.country === country && (presenceMetric ? d.is_presence && d.presence_source === 'presence_period' : d.is_work)).map(d => d.day));
+  const extra: ForeignDay[] = datesInRange(start, end).filter(d => presenceMetric || booking.worksWeekends || ![0, 6].includes(new Date(toUTC(d)).getUTCDay())).filter(d => !existing.has(d)).map(day => ({
+    installer_id: booking.installer_id, country, day, is_work: !presenceMetric, is_presence: presenceMetric, work_source: 'projected_booking', presence_source: presenceMetric ? 'presence_period' : null, verification: 'DERIVED', project_ids: [], conflict: false,
   }));
-  const evalAt = booking.end > asOf ? booking.end : asOf;
+  const evalAt = end > asOf ? end : asOf;
   const projected = evaluateRule(rule, country, [...days, ...extra], evalAt);
-  return { current, added: projected && current.value != null && projected.value != null ? projected.value - current.value : extra.length, projected: projected?.value ?? null, status: projected?.status ?? 'NOT_VERIFIED' };
+  return { current, added: extra.length, projected: projected?.value ?? null, status: projected?.status ?? 'NOT_VERIFIED', projectedOnly: true };
 }
 
-export function docStatus(doc: { status: DocStatus; valid_from: string | null; valid_to: string | null } | null, asOf: string, expiringDays = 30): DocStatus {
+export function docStatus(doc: { status: DocStatus; valid_from: string | null; valid_to: string | null; expiry_warning_days?: number } | null, asOf: string, expiringDays = doc?.expiry_warning_days ?? 30): DocStatus {
   if (!doc) return 'MISSING';
-  if (doc.status === 'NOT_REQUIRED') return 'NOT_REQUIRED';
+  if (['NOT_REQUIRED', 'NOT_VERIFIED', 'MISSING'].includes(doc.status)) return doc.status;
   if (!doc.valid_to || !doc.valid_from) return 'NOT_VERIFIED';
   if (doc.valid_to < asOf) return 'EXPIRED';
   if (doc.valid_from > asOf) return 'NOT_VERIFIED';
@@ -211,11 +226,17 @@ export function summarizeInstaller(installerId: string, days: ForeignDay[], rule
   const mine = days.filter(d => d.installer_id === installerId);
   const countries = [...new Set(mine.map(d => d.country))].sort();
   return countries.map(country => {
-    const inPeriod = mine.filter(d => d.country === country && d.day >= period.from && d.day <= period.to);
+    const inPeriod = mine.filter(d => d.country === country && d.day >= period.from && d.day <= period.to && d.day <= asOf);
     const flags = rules.map(r => evaluateRule(r, country, mine, asOf, homeConfigured)).filter(Boolean) as Flag[];
-    const next = flags.filter(f => f.remaining != null).sort((a, b) => a.remaining! - b.remaining!)[0] ?? null;
+    const next = flags.filter(f => f.remaining != null).sort((a, b) => (a.remaining ?? Infinity) - (b.remaining ?? Infinity))[0] ?? null;
     let status = worstStatus(flags);
-    if (!homeConfigured) status = 'NOT_VERIFIED';
+    if (!homeConfigured || countDays(inPeriod).unresolved || !countDays(inPeriod).presenceVerified) status = status === 'NORMAL' ? 'NOT_VERIFIED' : status;
     return { country, counter: countDays(inPeriod), flags, status, next };
-  }).filter(s => s.counter.presence > 0 || s.flags.some(f => (f.value ?? 0) > 0));
+  }).filter(s => s.counter.work > 0 || s.counter.presence > 0 || s.counter.unresolved > 0 || s.flags.some(f => (f.value ?? 0) > 0));
+}
+
+export function reportWindow(mode: 'year' | 'rolling' | 'range', year: string, range: { from: string; to: string }, asOf: string) {
+  if (mode === 'rolling') return ruleWindow({ window_type: 'ROLLING_12_MONTHS' } as ForeignRule, asOf) ?? range;
+  const w = mode === 'year' ? { from: `${year}-01-01`, to: `${year}-12-31` } : range;
+  return { from: w.from, to: w.to < asOf ? w.to : asOf };
 }

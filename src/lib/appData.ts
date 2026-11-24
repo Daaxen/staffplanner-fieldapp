@@ -13,6 +13,7 @@ import {
 } from '@/data/mockData';
 import { parseClientMetadata, parseProjectMetadata } from '@/lib/validation/appJson';
 import { bookingErrorMessage, shiftInstallerOverrides, syncProjectBookings } from '@/lib/bookings';
+import { destinationEvidence } from '@/lib/foreignWork/countries';
 
 
 /**
@@ -215,7 +216,7 @@ async function loadProjects() {
       'id,ref,updated_at,data,name,status,commercial_status,start_date,end_date,project_type,location,' +
         'contact_name,contact_phone,contact_email,project_number,template_id,' +
         'client_ref,client_name,street,postal_code,region,location_lat,location_lng,' +
-        'start_time,end_time,estimated_hours,is_flex_order,works_weekends,country,description,' +
+        'start_time,end_time,estimated_hours,is_flex_order,works_weekends,country,country_code,country_provenance,description,' +
         'hourly_rate,mileage_rate,vehicle_type,project_group_id,recurrence_series_id,' +
         'project_assignees(installer_id),' +
         'project_economy(fixed_price,additional_revenue,budget_hours,internal_hourly_cost,' +
@@ -297,6 +298,8 @@ async function loadProjects() {
           travelBefore: !!d.travelBefore,
           travelAfter: !!d.travelAfter,
           country: col('country', d.country) ?? 'Sverige',
+          countryCode: (r.country_code as string | null) ?? null,
+          countryProvenance: (r.country_provenance as Project['countryProvenance']) ?? 'UNKNOWN',
           description: col('description', d.description),
           hourlyRate: col('hourly_rate', d.hourlyRate),
           mileageRate: col('mileage_rate', d.mileageRate),
@@ -410,6 +413,8 @@ async function upsertProjectRow(p: Project) {
         is_flex_order: p.isFlexOrder ?? false,
         works_weekends: p.worksWeekends ?? false,
         country: p.country || 'Sverige',
+        country_code: destinationEvidence(p.countryCode ?? p.country, p.countryProvenance).code,
+        country_provenance: destinationEvidence(p.countryCode ?? p.country, p.country ? p.countryProvenance : 'DEFAULTED').provenance,
         description: p.description || null,
         hourly_rate: p.hourlyRate ?? null,
         mileage_rate: p.mileageRate ?? null,

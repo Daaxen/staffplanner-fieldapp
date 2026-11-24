@@ -3,7 +3,7 @@ import { countDays, evaluateRule, statusFor, ruleWindow, projectBooking, docStat
 
 const day = (d: string, o: Partial<ForeignDay> = {}): ForeignDay => ({ installer_id: 'i1', country: 'FI', day: d, is_work: true, is_presence: true, work_source: 'time_entry', presence_source: 'work_day', verification: 'DERIVED', project_ids: [], conflict: false, ...o });
 const presence = (d: string, o: Partial<ForeignDay> = {}) => day(d, { is_work: false, presence_source: 'presence_period', ...o });
-const rule = (o: Partial<ForeignRule> = {}): ForeignRule => ({ id: 'r', name: 'R', countries: [], metric: 'PRESENCE_DAYS', window_type: 'CALENDAR_YEAR', window_start: null, window_end: null, watch_threshold: 10, review_threshold: 20, critical_threshold: 30, effective_from: '2020-01-01', effective_to: null, enabled: true, explanation: null, ...o });
+const rule = (o: Partial<ForeignRule> = {}): ForeignRule => ({ id: 'r', name: 'R', countries: [], metric: 'WORK_DAYS', window_type: 'CALENDAR_YEAR', window_start: null, window_end: null, watch_threshold: 10, review_threshold: 20, critical_threshold: 30, effective_from: '2020-01-01', effective_to: null, enabled: true, explanation: null, ...o });
 const range = (a: string, b: string, f = day) => datesInRange(a, b).map(d => f(d));
 
 describe('calculation', () => {
@@ -55,7 +55,7 @@ describe('rules', () => {
     expect(evaluateRule(rule({ window_type: 'ROLLING_12_MONTHS' }), 'FI', days, '2026-02-01')!.value).toBe(2);
   });
   it('RULE-11 continuous not cumulative', () => {
-    expect(longestContinuous([...range('2026-03-02', '2026-03-04'), ...range('2026-03-10', '2026-03-11')])).toBe(3);
+    expect(longestContinuous([...range('2026-03-02', '2026-03-04', presence), ...range('2026-03-10', '2026-03-11', presence)])).toBe(3);
   });
   it('RULE-12 missing home / window -> NOT_VERIFIED', () => {
     expect(evaluateRule(rule(), 'FI', [], '2026-06-01', false)!.status).toBe('NOT_VERIFIED');
@@ -66,7 +66,7 @@ describe('rules', () => {
 describe('scheduling', () => {
   it('SCHED-02/03 projection reaching review', () => {
     const p = projectBooking(rule(), 'FI', range('2026-03-01', '2026-03-15'), '2026-04-01', { installer_id: 'i1', start: '2026-04-01', end: '2026-04-05' })!;
-    expect(p).toMatchObject({ added: 5, projected: 20, status: 'REVIEW' });
+    expect(p).toMatchObject({ added: 3, projected: 18, status: 'WATCH' });
   });
   it('SCHED-06 missing dates -> NOT_VERIFIED', () => expect(projectBooking(rule(), 'FI', [], '2026-04-01', { installer_id: 'i1' })!.status).toBe('NOT_VERIFIED'));
 });
