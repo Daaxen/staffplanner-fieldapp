@@ -9,6 +9,8 @@ import CancelWorkOrderDialog from '@/components/gantt/CancelWorkOrderDialog';
 import OrderDocumentsSection from '@/components/documents/OrderDocumentsSection';
 import WorkOrderFieldReport from '@/components/orders/WorkOrderFieldReport';
 import { projectRowId } from '@/lib/appData';
+import ForeignBookingWarning from '@/components/compliance/ForeignBookingWarning';
+import { useAuth } from '@/hooks/useAuth';
 
 const statusColorMap: Record<ProjectStatus, string> = {
   'open': 'bg-status-open/15 text-status-open',
@@ -40,6 +42,7 @@ interface Props {
 const ProjectDetailPanel = ({ project, installer, onClose, onEdit, onDispatch, onCancel }: Props) => {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const assignees = project.assigneeIds.map(id => installers.find(i => i.id === id)).filter(Boolean) as Installer[];
+  const { isAdmin, isHr } = useAuth();
   const canCancel = onCancel && project.status !== 'cancelled' && project.status !== 'completed';
   const orderRowId = projectRowId(project.id);
   const formatDate = (d: string) => new Date(d).toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' });
@@ -128,6 +131,12 @@ const ProjectDetailPanel = ({ project, installer, onClose, onEdit, onDispatch, o
                 )}
               </div>
             </div>
+            {(isAdmin || isHr) && project.status !== 'completed' && project.status !== 'cancelled' && (
+              <ForeignBookingWarning
+                country={project.country}
+                assignees={assignees.map(a => ({ id: a.id, name: a.name, start: project.installerDateOverrides?.[a.id]?.startDate ?? project.startDate, end: project.installerDateOverrides?.[a.id]?.endDate ?? project.endDate }))}
+              />
+            )}
           </div>
 
           {/* Contact */}

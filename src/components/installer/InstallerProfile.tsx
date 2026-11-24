@@ -1,5 +1,6 @@
 import { MapPin, Briefcase, Calendar } from 'lucide-react';
 import { type Installer } from '@/data/mockData';
+import ForeignWorkSection from '@/components/compliance/ForeignWorkSection';
 
 interface InstallerProfileProps {
   installer: Installer;
@@ -37,6 +38,9 @@ const InstallerProfile = ({ installer, projectCount }: InstallerProfileProps) =>
           </div>
         </div>
       </div>
+
+      {/* Own foreign-work summary (read-only; DB returns only own data) */}
+      <ForeignWorkSection installerId={installer.id} canEdit={false} />
 
       {/* Upcoming Absences */}
       {installer.absences.length > 0 && (

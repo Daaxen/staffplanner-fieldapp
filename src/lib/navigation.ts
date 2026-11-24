@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import {
+  Globe2,
   Activity,
   AlertTriangle,
   BookOpen,
@@ -155,6 +156,16 @@ export const navigationGroups: NavigationGroup[] = [
     items: [
       { id: 'reports', label: 'Report centre', icon: FileText, roles: adminHr },
       { id: 'variance', label: 'Estimate accuracy', icon: Percent, roles: adminHr },
+    ],
+  },
+  {
+    id: 'compliance',
+    section: 'admin',
+    label: 'Compliance',
+    icon: Globe2,
+    defaultView: 'foreign-work',
+    items: [
+      { id: 'foreign-work', label: 'Utlandsarbete', icon: Globe2, roles: adminHr },
     ],
   },
   {

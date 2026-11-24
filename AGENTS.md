@@ -14,3 +14,4 @@
 - A work order moves from scheduled/open to in-progress via the start_project_on_time_entry DB trigger when time is first logged, so every time-entry path behaves the same.
 - Technician form input is kept with useDraftState (localStorage, scoped per user and order, cleared when the form resets after save, 7-day expiry), so app switches or back navigation never lose unsaved input.
 - Release announcements are a standalone role-targeted module with backend acknowledgements per user and announcement, never local-only state, so release messaging stays durable across devices without touching business workflows.
+- Foreign-work counters come only from the `foreign_work_days` DB function (one row per installer/country/day, role-scoped) and are aggregated by `summarizeInstaller` in src/lib/foreignWork, so the installer card, admin report, export and booking warning never diverge; thresholds are admin-configured rules, never hardcoded legal limits.

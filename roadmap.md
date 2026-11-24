@@ -14,3 +14,7 @@
 
 ## Releasekommunikation
 - [x] Rollriktade svenska nyheter, bestående kvitteringar, administration och verifiering
+
+## Utlandsarbete (compliance)
+- [x] Hemland, räknare, regler, vistelseperioder, A1-metadata, adminrapport + XLSX, bokningsvarning, montörens egen vy
+- [ ] Bakåtfyllning av historik – väntar på godkännande (ingen körd; arbetsdagar från tidsposter räknas redan automatiskt)

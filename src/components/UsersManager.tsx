@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Trash2, UserPlus, Shield, User as UserIcon, Copy, Pencil, KeyRound, Mail, ChevronDown, ChevronRight, Lock, BriefcaseMedical } from 'lucide-react';
+import ForeignWorkSection from '@/components/compliance/ForeignWorkSection';
 import {
   EmployeePrivate, emptyEmployeePrivate,
   loadEmployeePrivate, saveEmployeePrivate, useHrAccess,
@@ -340,6 +341,8 @@ const UsersManager = () => {
                 </div>
               </div>
             </div>
+
+            {edit && <ForeignWorkSection profileId={edit.id} />}
 
             <div className="rounded-lg border p-4 space-y-3">
               <p className="text-sm font-semibold flex items-center gap-2">
