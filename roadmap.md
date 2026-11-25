@@ -25,6 +25,7 @@
 - [x] Bekräfta borttagning av föregående tillfälligt auth-konto; inloggningskonto, profil, roller och montör saknas vid ny databaskontroll. Skyddade auditposter behållna.
 - [x] Final-exit-kontroll körd och stoppad: 108 roll/API-kontroller passerade, administratörens utökade regeländringskontroll nekades (fältet updated_at saknar läsgrant); ordinarie redigering ej slutverifierad, ingen policy ändrad.
 - [x] Slutstädning bekräftad: tillfälliga konto, profil, roller, två montörer, kund, två order, testtid och regel borttagna; audit bevarad, verklig tid och 91 härledda dagar identiska; full regression 377/377.
-- [ ] Fortsatt adminredigeringskontroll, fylld dokument-/periodmatris, audit, bokningsvarning och ny report/export-matchning väntar på System Owner efter stoppet.
+- [ ] Fylld dokument-/periodmatris, återstående audit, bokningsvarning och ny report/export-matchning väntar på System Owner efter A03; inga fortsatta kontroller godkända.
+- [x] Godkänd A03-kontroll PASS: ordinarie regel skapad, 10→20 sparat och återläst; audit verifierad, HR/montör/rollös-mutationer blockerade, internanteckning skyddad, testkonto/profil/roller/montör/regel borttagna; 6 skyddade auditposter kvar. Ingen kod/policy/grant ändrad. STOP enligt underlaget.
 - [ ] Releasenyhet och publicering hålls tills återstående acceptans passerar; release är NOT READY. Se final-exit-rapporten.
 - [ ] Bakåtfyllning av historik – väntar på godkännande (ingen körd; arbetsdagar från tidsposter räknas redan automatiskt)
